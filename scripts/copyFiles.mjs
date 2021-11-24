@@ -8,7 +8,7 @@ import { execSync } from 'child_process'
 console.log(argv)
 console.log(process.env.PWD)
 
-import blacklist from './blacklist.mjs'
+import blacklist from './ignore.mjs'
 
 const packages = execSync('npx lerna ls -p --all')
 	.toString()
@@ -28,20 +28,20 @@ console.log(packages)
 const COPY_TS_CONFIG = true
 
 if (COPY_TS_CONFIG) {
-	// const _sharedBaseConfig = path.resolve(process.cwd(), 'shared', './tsconfig.json')
+	const _sharedBaseConfig = path.resolve(process.cwd(), 'shared', './tsconfig.json')
 	const sharedBaseConfig = path.resolve(process.cwd(), 'shared', './tsconfig.base.json')
 	const sharedBuildConfig = path.resolve(process.cwd(), 'shared', './tsconfig.build.json')
 	for (const pkg of packages) {
 		// console.log(pkg)
-		// const _target = path.resolve(pkg, 'tsconfig.json')
+		const _target = path.resolve(pkg, 'tsconfig.json')
 		const target = path.resolve(pkg, 'tsconfig.base.json')
 		const targetBuild = path.resolve(pkg, 'tsconfig.build.json')
 
 		// const targetBuildOld = path.resolve(pkg, 'tsconfig.base.package.json')
 		// console.log(execSync(`rm -f ${targetBuildOld}`).toString())
 
-		// exe(`rm -f ${_target}`)
-		// exe(`cp ${_sharedBaseConfig} ${_target}`)
+		exe(`rm -f ${_target}`)
+		exe(`cp ${_sharedBaseConfig} ${_target}`)
 
 		exe(`rm -f ${target}`)
 		exe(`cp ${sharedBaseConfig} ${target}`)

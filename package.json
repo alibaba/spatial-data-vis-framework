@@ -10,12 +10,13 @@
     ],
     "nohoist": [
       "**/@polaris.gl/examples/**",
-      "**/@polaris.gl/projection/**",
       "**/@types/**"
     ]
   },
   "scripts": {
     "setup": "node scripts/setup.mjs",
+    "setup:core": "node scripts/setup.mjs --no-examples",
+    "setup:examples": "./scripts/setupExamples.sh",
     "clean": "rm -rf ./yarn.lock && rm -rf gsi-packages && rm -rf ./node_modules && lerna clean -y && lerna run --no-private --stream --parallel clean",
     "build": "lerna run build --ignore @gs.i/* --stream --no-private",
     "rebuild": "lerna run rebuild --ignore @gs.i/* --stream --no-private",
@@ -31,7 +32,6 @@
     "shelljs": "^0.8.4",
     "jsonc-parser": "^3.0.0"
   },
-  "optionalDependencies": {
-  },
+  "optionalDependencies": {},
   "dependencies": {}
 }

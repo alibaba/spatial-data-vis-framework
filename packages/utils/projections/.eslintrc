@@ -1,0 +1,20 @@
+{
+	"extends": "standard",
+	"env": {
+		"browser": true,
+		"mocha": true,
+		"node": true,
+		"jasmine": true,
+		"jest": true
+	},
+	"parser": "babel-eslint",
+	"rules": {
+		"space-before-function-paren": 0,
+		"indent": [0, "tab"],
+		"no-tabs": 0,
+		"no-multiple-empty-lines": 0,
+		"curly": 0,
+		"no-mixed-spaces-and-tabs": 0,
+		"comma-dangle": 0
+	}
+}

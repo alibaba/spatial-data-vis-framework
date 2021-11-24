@@ -16,7 +16,7 @@ console.log(argv)
 console.log(process.env.PWD)
 
 // 不处理的package
-import packageBlacklist from './blacklist.mjs'
+import packageBlacklist from './ignore.mjs'
 
 const packagesJSON = execSync('npx lerna ls --json --all').toString()
 const packageALL = JSON.parse(packagesJSON)

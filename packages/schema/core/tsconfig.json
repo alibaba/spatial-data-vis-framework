@@ -1,0 +1,18 @@
+{
+	"extends": "./tsconfig.base.json",
+	"compilerOptions": {
+		"rootDir": "src",
+		"outDir": "dist",
+		"composite": true
+	},
+	"include": ["src", "typings"],
+	"exclude": ["dist"],
+	"references": [
+		{
+			"path": "../../utils/props-manager"
+		},
+		{
+			"path": "../../utils/projections"
+		}
+	]
+}

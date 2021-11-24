@@ -8,6 +8,11 @@ import { execSync, spawn, exec, execFileSync } from 'child_process'
 console.log(argv)
 console.log(process.env.PWD)
 
+import { fileURLToPath } from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+console.log(__dirname)
+
 // 是否使用本地 GSI 代码库
 const localGSIArgv = argv.filter((a) => a.includes('--gsi='))[0]
 
@@ -27,13 +32,6 @@ if (useLocalGSI) {
 		throw 'GSI 路径无法解析'
 	}
 
-	// try {
-	// 	await access(path.resolve(process.env.PWD, gsiPath, './node_modules/@gs.i-no-hoist'))
-	// } catch (error) {
-	// 	console.error(error)
-	// 	throw 'GSI 项目没有setup，请先去 GSI 目录 setup'
-	// }
-
 	try {
 		await access(path.resolve(process.env.PWD, './gsi-packages'))
 		await unlink(path.resolve(process.env.PWD, './gsi-packages'))
@@ -46,12 +44,25 @@ if (useLocalGSI) {
 	)
 }
 
-import blist from './blacklist.mjs'
+const id = Math.floor(Math.random() * 9999) + ''
+console.log(id)
+
+execSync(`node ${path.resolve(__dirname, './packageJsonBackup.mjs')} --id=${id}`, {
+	stdio: 'inherit',
+})
+
+import blist from './ignore.mjs'
 
 // process.exit(0)
 
 // 不处理的package
-const packageBlacklist = [...blist, 'examples']
+const packageBlacklist = [...blist]
+
+const NO_EXAMPLES = argv.includes('--no-examples')
+
+if (NO_EXAMPLES) {
+	packageBlacklist.push('examples')
+}
 
 const packagesJSON = execSync('npx lerna ls --json --all').toString()
 const packageALL = JSON.parse(packagesJSON)
@@ -65,143 +76,71 @@ const ignoredPackages = packageALL.filter((pac) => {
 
 	return inBL
 })
-console.log('黑名单', ignoredPackages)
-// const unignoredPackages = packageALL.filter((pac) => {
-// 	let inBL = false
-// 	packageBlacklist.forEach((rule) => {
-// 		inBL = inBL || pac.location.includes(rule)
-// 	})
+console.log('ignoredPackages', ignoredPackages)
 
-// 	return !inBL
-// })
-// console.log('白名单', unignoredPackages)
+await Promise.all(
+	ignoredPackages.map(async (pkg) => {
+		console.log('ignore package: ', pkg.name)
+		const pjsonPath = path.resolve(pkg.location, 'package.json')
 
-const changedFiles = []
+		const pjson = await readFile(pjsonPath)
+		const originalJson = JSON.parse(pjson)
 
-// 处理黑名单中不安装依赖的包
-for (const pkg of ignoredPackages) {
-	console.log('ignore package: ', pkg.name)
-	const pjsonPath = path.resolve(pkg.location, 'package.json')
-	const pjsonBacPath = path.resolve(pkg.location, 'package.json.bac')
+		// NOTE can not be {} or yarn will throw
+		delete originalJson.scripts
+		delete originalJson.dependencies
+		delete originalJson.devDependencies
+		delete originalJson.peerDependencies
+		delete originalJson.bundledDependencies
+		delete originalJson.optionalDependencies
 
-	const pjson = await readFile(pjsonPath)
-	const originalJson = JSON.parse(pjson)
+		try {
+			await writeFile(pjsonPath, JSON.stringify(originalJson))
+		} catch (error) {
+			console.error(pkg.name, tsconfigPath, error)
+		}
+	})
+)
 
-	// NOTE can not be {} or yarn will throw
-	delete originalJson.scripts
-	delete originalJson.dependencies
-	delete originalJson.devDependencies
-	delete originalJson.peerDependencies
-	delete originalJson.bundledDependencies
-	delete originalJson.optionalDependencies
+// remove optinal dependents from package.json
+await Promise.all(
+	packageALL.map(async (pkg) => {
+		const pjsonPath = path.resolve(pkg.location, 'package.json')
 
-	// backup
+		const pjson = await readFile(pjsonPath)
+		const originalJson = JSON.parse(pjson)
 
-	try {
-		console.log('临时修改 pjson ', pjsonPath, '->', pjsonBacPath)
-		await rename(pjsonPath, pjsonBacPath)
-		await writeFile(pjsonPath, JSON.stringify(originalJson))
+		if (originalJson.optionalDependencies) {
+			console.log('fix package optinal dep: ', pkg.name)
 
-		changedFiles.push([pjsonPath, pjsonBacPath])
-	} catch (error) {
-		await unlink(pjsonPath)
-		await rename(pjsonBacPath, pjsonPath)
+			// NOTE can not be {} or yarn will throw
+			delete originalJson.optionalDependencies
 
-		console.error(error)
-		console.log(pkg.name, tsconfigPath)
-	}
-}
-
-// function deleteGSIFromDep(dep) {
-// 	if (!dep) {
-// 		return
-// 	}
-
-// 	const keys = Object.keys(dep)
-
-// 	keys.forEach((name) => {
-// 		if (name.includes('@gs.i/')) {
-// 			delete dep[name]
-// 		}
-// 	})
-// }
-
-// // 处理 GSI 本地link
-// if (useLocalGSI) {
-// 	for (const pkg of unignoredPackages) {
-// 		console.log('忽略 GSI: ', pkg.name)
-// 		const pjsonPath = path.resolve(pkg.location, 'package.json')
-// 		const pjsonBacPath = path.resolve(pkg.location, 'package.json.bac')
-
-// 		const pjson = await readFile(pjsonPath)
-// 		const originalJson = JSON.parse(pjson)
-
-// 		// NOTE can not be {} or yarn will throw
-// 		deleteGSIFromDep(originalJson.dependencies)
-// 		deleteGSIFromDep(originalJson.devDependencies)
-// 		deleteGSIFromDep(originalJson.peerDependencies)
-// 		deleteGSIFromDep(originalJson.bundledDependencies)
-// 		deleteGSIFromDep(originalJson.optionalDependencies)
-
-// 		// backup
-
-// 		try {
-// 			console.log('临时修改 pjson ', pjsonPath, '->', pjsonBacPath)
-// 			await rename(pjsonPath, pjsonBacPath)
-// 			await writeFile(pjsonPath, JSON.stringify(originalJson))
-
-// 			changedFiles.push([pjsonPath, pjsonBacPath])
-// 		} catch (error) {
-// 			await unlink(pjsonPath)
-// 			await rename(pjsonBacPath, pjsonPath)
-
-// 			console.error(error)
-// 			console.log(pkg.name, tsconfigPath)
-// 		}
-// 	}
-// }
+			try {
+				await writeFile(pjsonPath, JSON.stringify(originalJson))
+			} catch (error) {
+				console.error(pkg.name, tsconfigPath, error)
+			}
+		}
+	})
+)
 
 try {
-	execSync(`lerna bootstrap -- --force-local`, { stdio: 'inherit' })
+	execSync(`lerna bootstrap --force-local`, { stdio: 'inherit' })
 
 	// # https://github.com/lerna/lerna/issues/2352
 	// # lerna link is needed
 	execSync(`lerna link --force-local`, { stdio: 'inherit' })
 
 	// # should not hoist local packages
-	// execSync(`rm -rf ./node_modules/@gs.i`, { stdio: 'inherit' })
-
-	// if (useLocalGSI) {
-	// 	console.log('link 本地 gsi')
-
-	// 	try {
-	// 		await access(path.resolve(process.env.PWD, './node_modules/@gs.i'))
-	// 		await unlink(path.resolve(process.env.PWD, './node_modules/@gs.i'))
-	// 	} catch (error) {}
-
-	// 	await symlink(
-	// 		path.resolve(process.env.PWD, gsiPath, './node_modules/@gs.i-no-hoist'),
-	// 		path.resolve(process.env.PWD, './node_modules/@gs.i'),
-	// 		'dir'
-	// 	)
-	// }
-
-	for (const changedFile of changedFiles) {
-		const [pjsonPath, pjsonBacPath] = changedFile
-
-		await unlink(pjsonPath)
-		await rename(pjsonBacPath, pjsonPath)
-	}
+	execSync(`rm -rf ./node_modules/@polaris.gl`, { stdio: 'inherit' })
 } catch (error) {
-	for (const changedFile of changedFiles) {
-		const [pjsonPath, pjsonBacPath] = changedFile
-
-		await unlink(pjsonPath)
-		await rename(pjsonBacPath, pjsonPath)
-	}
-
 	console.error(error)
 }
+
+execSync(`node ${path.resolve(__dirname, './packageJsonRestore.mjs')} --id=${id}`, {
+	stdio: 'inherit',
+})
 
 console.log('本次安装不会安装以下package的依赖，如果需要，可以自行到文件夹中安装')
 console.log(packageBlacklist)
