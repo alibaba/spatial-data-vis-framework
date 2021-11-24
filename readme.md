@@ -1,4 +1,4 @@
-# 基于 Web 的空间数据可视化框架
+# 分层空间数据可视化框架
 
 Layered Spatial Data Vis Framework
 
