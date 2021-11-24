@@ -1,0 +1,37 @@
+{
+  "name": "polaris.gl",
+  "_name": "@polaris.gl/root",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "gsi-packages/**",
+      "packages/**",
+      "examples"
+    ],
+    "nohoist": [
+      "**/@polaris.gl/examples/**",
+      "**/@polaris.gl/projection/**",
+      "**/@types/**"
+    ]
+  },
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "clean": "rm -rf ./yarn.lock && rm -rf gsi-packages && rm -rf ./node_modules && lerna clean -y && lerna run --no-private --stream --parallel clean",
+    "build": "lerna run build --ignore @gs.i/* --stream --no-private",
+    "rebuild": "lerna run rebuild --ignore @gs.i/* --stream --no-private",
+    "watch": "echo \"TODO\"",
+    "build:umd": "lerna run build:umd --ignore @gs.i/* --parallel --stream --no-private",
+    "serve:umd": "node ./umdserver.js"
+  },
+  "devDependencies": {
+    "typescript": "^4.5.2",
+    "webpack": "^5.64.2",
+    "eslint": "7.32.0",
+    "eslint-config-prettier": "^8.3.0",
+    "shelljs": "^0.8.4",
+    "jsonc-parser": "^3.0.0"
+  },
+  "optionalDependencies": {
+  },
+  "dependencies": {}
+}

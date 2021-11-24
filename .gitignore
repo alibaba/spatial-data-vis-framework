@@ -1,0 +1,33 @@
+.log
+.DS_Store
+.jest-*
+lib
+node_modules
+
+dist
+build
+tsconfig.tsbuildinfo
+
+*.log
+assets
+asset
+imgs
+static
+
+packages/utils/projections/__tests__
+# packages/utils/projections/.vscode
+# packages/utils/projections/csharp
+
+Lerna-Profile*
+**/profile.json
+
+logs
+
+addCopyright.mjs
+# tsconfig.package.mjs
+
+tsconfig.build.tsbuildinfo
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+gsi-packages
