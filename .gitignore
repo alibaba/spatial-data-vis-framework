@@ -31,3 +31,5 @@ tsconfig.build.tsbuildinfo
 **/*.tsbuildinfo
 
 gsi-packages
+
+openPackageJson.mjs

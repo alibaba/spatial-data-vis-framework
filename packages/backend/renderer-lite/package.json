@@ -1,0 +1,32 @@
+{
+  "name": "@polaris.gl/renderer-lite",
+  "version": "0.0.0-beta",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "license": "MIT",
+  "files": [
+    "README.md",
+    "dist/*"
+  ],
+  "scripts": {
+    "rollup": "npx rollup -c ./rollup.config.js",
+    "build": "./scripts/build.sh",
+    "clean": "./scripts/clean.sh",
+    "rebuild": "./scripts/rebuild.sh",
+    "watch": "echo \"NO IMPLEMENT. TODO: WATCH GLSL\""
+  },
+  "dependencies": {
+    "@gs.i/all": "^0.0.0-beta",
+    "@polaris.gl/schema": "^0.0.0-beta",
+    "@polaris.gl/view-gsi": "^0.0.0-beta"
+  },
+  "devDependencies": {
+    "@types/offscreencanvas": "latest",
+    "@types/webvr-api": "latest",
+    "typescript": ">4.4.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

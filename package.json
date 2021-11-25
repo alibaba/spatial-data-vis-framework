@@ -14,6 +14,7 @@
     ]
   },
   "scripts": {
+    "start": "cd ./examples && npm start",
     "setup": "node scripts/setup.mjs",
     "setup:core": "node scripts/setup.mjs --no-examples",
     "setup:examples": "./scripts/setupExamples.sh",
