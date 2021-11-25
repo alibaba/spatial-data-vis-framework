@@ -13,6 +13,6 @@ echo "NOT IMPLEMENTED YET!!!"
 # actually，tsc 内置的 watch 只能用于维护完全由 ts 一种语言构成的项目；
 # 多语言的项目（like this）必须另寻他路。
 
-npx tsc -v
+# npx tsc -v
 
-tsc --project tsconfig.build.json --incremental false --watch
+# tsc --project tsconfig.build.json --incremental false --watch

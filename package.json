@@ -27,7 +27,6 @@
   },
   "devDependencies": {
     "typescript": "^4.5.2",
-    "webpack": "^5.64.2",
     "eslint": "7.32.0",
     "eslint-config-prettier": "^8.3.0",
     "shelljs": "^0.8.4",

@@ -18,6 +18,12 @@
 			"path": "../../utils/utils"
 		},
 		{
+			"path": "../view-html"
+		},
+		{
+			"path": "../view-gsi"
+		},
+		{
 			"path": "../../utils/projections"
 		}
 	]

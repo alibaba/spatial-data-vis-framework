@@ -18,7 +18,7 @@ async function fetchData() {
 	const data: any[] = []
 
 	const response = await fetch(
-		'https://polaris-geo.oss-cn-hangzhou.aliyuncs.com/all.json' // geojson china all
+		'assets/all.json' // geojson china all
 	)
 	const json = await response.json()
 	data.push(json)
@@ -92,7 +92,7 @@ fetchData().then((data) => {
 		baseAlt: 0,
 		lodZoomLvs: [3, 5, 7, 9, 11],
 		lodPercentages: [0.1, 0.3, 0.5, 0.7, 1.0],
-		data: 'https://polaris-geo.oss-cn-hangzhou.aliyuncs.com/world-coastline.json',
+		data: 'assetss/world-coastline.json',
 		debug: true,
 	}))
 	p.add(lineLayer2)
@@ -114,9 +114,7 @@ const polygonLayer2 = (window['layer2'] = new PolygonLayer({
 	// projection: new SphereProjection({}),
 }))
 p.add(polygonLayer2)
-polygonLayer2.updateData(
-	'https://polaris-geo.oss-cn-hangzhou.aliyuncs.com/examples/country_unemployment_from_kepler.geojson'
-)
+polygonLayer2.updateData('assetss/country_unemployment_from_kepler.geojson')
 // polygonLayer2.onPicked = (info) => {
 // 	console.log('onPicked', info)
 // }

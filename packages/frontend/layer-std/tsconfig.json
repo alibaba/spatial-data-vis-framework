@@ -12,6 +12,9 @@
 			"path": "../../schema/core"
 		},
 		{
+			"path": "../../utils/projections"
+		},
+		{
 			"path": "../view-gsi"
 		},
 		{

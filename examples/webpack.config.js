@@ -48,6 +48,9 @@ var config = {
 	mode: 'development',
 	resolve: {
 		extensions: ['.js', '.scss', '.css', '.ts'],
+		// !!! 十分重要 Important
+		// monorepo will broke without this!!
+		symlinks: false,
 	},
 	module: {
 		rules: [

@@ -1013,7 +1013,7 @@ export class GSIGL2Renderer extends Renderer {
 			}
 
 			// Attemp to set pass material.depthWrite
-			if (pass.getFullscreenMaterial) {
+			if (pass.getFullscreenMaterial && pass.getFullscreenMaterial()) {
 				pass.getFullscreenMaterial().depthWrite = !!props.depthWrite
 			} else if (pass['setMaterialsProps']) {
 				pass['setMaterialsProps']({

@@ -13,9 +13,9 @@
     "dist/*"
   ],
   "scripts": {
-    "build": "echo \"TODO: FIX ME\" || ./scripts/build.sh",
+    "build": "./scripts/build.sh",
     "clean": "./scripts/clean.sh",
-    "rebuild": "echo \"TODO: FIX ME\" || ./scripts/rebuild.sh",
+    "rebuild": "./scripts/rebuild.sh",
     "postbuild": "echo \"TODO: FIX ME\" || npm run build:worker",
     "postrebuild": "echo \"TODO: FIX ME\" || npm run build:worker",
     "watch": "echo \"NO IMPLEMENT. TODO: WATCH GLSL\"",
@@ -24,6 +24,8 @@
   },
   "dependencies": {
     "@gs.i/all": "^0.0.0-beta",
+    "@polaris.gl/gsi": "^0.0.0-beta",
+    "jsts": "^2.7.3",
     "@polaris.gl/layer-std": "^0.0.0-beta",
     "@polaris.gl/schema": "^0.0.0-beta",
     "@polaris.gl/utils": "^0.0.0-beta",

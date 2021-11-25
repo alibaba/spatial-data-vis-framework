@@ -33,3 +33,5 @@ tsconfig.build.tsbuildinfo
 gsi-packages
 
 openPackageJson.mjs
+
+package.json.bac*

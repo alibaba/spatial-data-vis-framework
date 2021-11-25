@@ -13,14 +13,9 @@ import inside from 'point-in-polygon'
 // import classifyPoint from 'robust-point-in-polygon'
 
 // jsts
-import ConformingDelaunayTriangulationBuilder from '@ali/jstsfix/src/org/locationtech/jts/triangulate/ConformingDelaunayTriangulationBuilder'
-// import ConformingDelaunayTriangulator from '@ali/jstsfix/src/org/locationtech/jts/triangulate/ConformingDelaunayTriangulator'
-// import Segment from '@ali/jstsfix/src/org/locationtech/jts/triangulate/Segment'
-// import Geometry from '@ali/jstsfix/src/org/locationtech/jts/geom/Geometry'
-import GeometryFactory from '@ali/jstsfix/src/org/locationtech/jts/geom/GeometryFactory'
-import Coordinate from '@ali/jstsfix/src/org/locationtech/jts/geom/Coordinate'
-// import ConstraintVertex from '@ali/jstsfix/src/org/locationtech/jts/triangulate/ConstraintVertex'
-// import ArrayList from '@ali/jstsfix/src/java/util/ArrayList'
+import ConformingDelaunayTriangulationBuilder from 'jsts/org/locationtech/jts/triangulate/ConformingDelaunayTriangulationBuilder'
+import GeometryFactory from 'jsts/org/locationtech/jts/geom/GeometryFactory'
+import Coordinate from 'jsts/org/locationtech/jts/geom/Coordinate'
 
 const _self: Worker = self as any
 

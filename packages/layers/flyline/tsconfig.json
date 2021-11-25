@@ -15,6 +15,9 @@
 			"path": "../../schema/core"
 		},
 		{
+			"path": "../../utils/projections"
+		},
+		{
 			"path": "../../utils/utils"
 		}
 	]

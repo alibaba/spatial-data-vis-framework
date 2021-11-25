@@ -57,7 +57,7 @@ const devOption = {
 }
 
 // app.use("/assets", express.static(__dirname + '/assets', {maxAge: 86400000}))
-app.use('/assets', express.static(path.join(__dirname, '../', '/assets')))
+app.use('/assets', express.static(path.join(__dirname, '/assets')))
 
 // gzip
 app.use(comp())
@@ -124,6 +124,8 @@ function getDemoEntries() {
 			filename === 'node_modules' ||
 			filename === 'typings' ||
 			filename === 'proxy' ||
+			filename === 'static' ||
+			filename === 'assets' ||
 			filename === 'design'
 		) {
 			continue

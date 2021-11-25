@@ -15,6 +15,12 @@
 			"path": "../../schema/core"
 		},
 		{
+			"path": "../../utils/projections"
+		},
+		{
+			"path": "../../frontend/polaris-gsi"
+		},
+		{
 			"path": "../../utils/utils"
 		}
 	]
