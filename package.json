@@ -21,7 +21,7 @@
     "clean": "rm -rf ./yarn.lock && rm -rf gsi-packages && rm -rf ./node_modules && lerna clean -y && lerna run --no-private --stream --parallel clean",
     "build": "lerna run build --ignore @gs.i/* --stream --no-private",
     "rebuild": "lerna run rebuild --ignore @gs.i/* --stream --no-private",
-    "watch": "echo \"TODO\"",
+    "watch": "node scripts/watch.mjs",
     "build:umd": "lerna run build:umd --ignore @gs.i/* --parallel --stream --no-private",
     "serve:umd": "node ./umdserver.js"
   },
@@ -30,7 +30,9 @@
     "eslint": "7.32.0",
     "eslint-config-prettier": "^8.3.0",
     "shelljs": "^0.8.4",
-    "jsonc-parser": "^3.0.0"
+    "jsonc-parser": "^3.0.0",
+    "colors": "^1.4.0",
+    "chokidar": "^3.5.2"
   },
   "optionalDependencies": {},
   "dependencies": {}
