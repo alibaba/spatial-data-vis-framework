@@ -10,6 +10,7 @@
     ],
     "nohoist": [
       "**/@polaris.gl/examples/**",
+      "**/@gs.i/*/**",
       "**/@types/**"
     ]
   },
