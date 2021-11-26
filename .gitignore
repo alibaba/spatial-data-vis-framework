@@ -35,3 +35,5 @@ gsi-packages
 openPackageJson.mjs
 
 package.json.bac*
+
+yarn.lock
