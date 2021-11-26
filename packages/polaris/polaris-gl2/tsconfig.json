@@ -1,0 +1,27 @@
+{
+	"extends": "./tsconfig.base.json",
+	"compilerOptions": {
+		"rootDir": "src",
+		"outDir": "dist",
+		"composite": true
+	},
+	"include": ["src", "typings"],
+	"exclude": ["dist"],
+	"references": [
+		{
+			"path": "../../backend/renderer-gl2"
+		},
+		{
+			"path": "../../schema/core"
+		},
+		{
+			"path": "../../utils/utils"
+		},
+		{
+			"path": "../../frontend/view-html"
+		},
+		{
+			"path": "../../frontend/view-three"
+		}
+	]
+}

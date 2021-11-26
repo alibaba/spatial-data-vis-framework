@@ -1,0 +1,81 @@
+{
+	"extends": "./tsconfig.base.json",
+	"compilerOptions": {
+		"rootDir": "src",
+		"outDir": "dist",
+		"composite": true
+	},
+	"include": ["src", "typings"],
+	"exclude": ["dist"],
+	"references": [
+		{
+			"path": "../packages/backend/renderer-gsi-gl2"
+		},
+		{
+			"path": "../packages/backend/renderer-lite"
+		},
+		{
+			"path": "../packages/frontend/layer-std"
+		},
+		{
+			"path": "../packages/frontend/polaris-gsi"
+		},
+		{
+			"path": "../packages/frontend/view-gsi"
+		},
+		{
+			"path": "../packages/frontend/view-html"
+		},
+		{
+			"path": "../packages/layers/amap"
+		},
+		{
+			"path": "../packages/layers/flyline"
+		},
+		{
+			"path": "../packages/layers/geojson"
+		},
+		{
+			"path": "../packages/layers/scatter"
+		},
+		{
+			"path": "../packages/layers/std-gltf2"
+		},
+		{
+			"path": "../packages/layers/std-helper"
+		},
+		{
+			"path": "../packages/layers/std-marker"
+		},
+		{
+			"path": "../packages/polaris/polaris-gsi-gl2"
+		},
+		{
+			"path": "../packages/polaris/polaris-lite"
+		},
+		{
+			"path": "../packages/schema/core"
+		},
+		{
+			"path": "../packages/utils/animation"
+		},
+		{
+			"path": "../packages/utils/easing"
+		},
+		{
+			"path": "../packages/utils/indicator"
+		},
+		{
+			"path": "../packages/utils/projections"
+		},
+		{
+			"path": "../packages/utils/props-manager"
+		},
+		{
+			"path": "../packages/utils/utils"
+		},
+		{
+			"path": "../packages/utils/worker-manager"
+		}
+	]
+}

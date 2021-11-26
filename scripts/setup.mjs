@@ -142,5 +142,15 @@ execSync(`node ${path.resolve(__dirname, './packageJsonRestore.mjs')} --id=${id}
 	stdio: 'inherit',
 })
 
+if (useLocalGSI) {
+	console.log('\n\nGSI repo 需要 重新 setup...')
+
+	execSync(`cd ${gsiPath} && npm run setup`, {
+		stdio: 'inherit',
+	})
+
+	console.log('\n\nGSI repo setup done\n')
+}
+
 console.log('本次安装不会安装以下package的依赖，如果需要，可以自行到文件夹中安装')
 console.log(packageBlacklist)

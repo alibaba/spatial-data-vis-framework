@@ -31,3 +31,9 @@ tsconfig.build.tsbuildinfo
 **/*.tsbuildinfo
 
 gsi-packages
+
+openPackageJson.mjs
+
+package.json.bac*
+
+yarn.lock

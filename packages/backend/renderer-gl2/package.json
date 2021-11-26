@@ -1,0 +1,28 @@
+{
+  "name": "@polaris.gl/renderer-gl2",
+  "version": "0.0.0-beta",
+  "description": "",
+  "private": true,
+  "main": "dist/GL2Renderer.js",
+  "types": "dist/GL2Renderer.d.ts",
+  "license": "MIT",
+  "files": [
+    "README.md",
+    "dist/*"
+  ],
+  "scripts": {
+    "rollup": "npx rollup -c ./rollup.config.js",
+    "build": "./scripts/build.sh",
+    "clean": "./scripts/clean.sh",
+    "rebuild": "./scripts/rebuild.sh"
+  },
+  "dependencies": {
+    "@polaris.gl/schema": "^0.0.0-beta"
+  },
+  "devDependencies": {
+    "typescript": ">4.4.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

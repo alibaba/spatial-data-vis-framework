@@ -1,28 +1,30 @@
 {
-	"name": "@polaris.gl/schema",
-	"version": "0.0.0-beta",
-	"description": "",
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"license": "MIT",
-	"publishConfig": {
-		"access": "public"
-	},
-	"files": [
-		"README.md",
-		"dist/*"
-	],
-	"scripts": {
-		"build": "./scripts/build.sh",
-		"clean": "./scripts/clean.sh",
-		"rebuild": "./scripts/rebuild.sh",
-		"watch": "echo \"NO IMPLEMENT. TODO: WATCH GLSL\""
-	},
-	"dependencies": {
-		"@gs.i/schema-ext-scene": "0.0.0-beta",
-		"@polaris.gl/utils-props-manager": "^0.0.0-beta",
-		"@polaris.gl/projection": "^0.0.0-beta",
-		"ani-timeline": "1.2.19-m",
-		"camera-proxy": "^0.1.22"
-	}
+  "name": "@polaris.gl/schema",
+  "version": "0.0.0-beta",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "README.md",
+    "dist/*"
+  ],
+  "scripts": {
+    "build": "./scripts/build.sh",
+    "clean": "./scripts/clean.sh",
+    "rebuild": "./scripts/rebuild.sh"
+  },
+  "dependencies": {
+    "@gs.i/schema-ext-scene": "^0.0.0-beta",
+    "@polaris.gl/utils-props-manager": "^0.0.0-beta",
+    "@polaris.gl/projection": "^0.0.0-beta",
+    "ani-timeline": "1.2.19-m",
+    "camera-proxy": "^0.1.22"
+  },
+  "devDependencies": {
+    "typescript": ">4.4.0"
+  }
 }

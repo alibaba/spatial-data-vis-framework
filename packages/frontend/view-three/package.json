@@ -1,0 +1,28 @@
+{
+  "name": "@polaris.gl/view-three",
+  "version": "0.0.0-beta",
+  "private": true,
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "license": "MIT",
+  "files": [
+    "README.md",
+    "dist/*"
+  ],
+  "scripts": {
+    "build": "./scripts/build.sh",
+    "clean": "./scripts/clean.sh",
+    "rebuild": "./scripts/rebuild.sh"
+  },
+  "dependencies": {
+    "@polaris.gl/schema": "^0.0.0-beta",
+    "three": "0.111.0"
+  },
+  "devDependencies": {
+    "typescript": ">4.4.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
