@@ -18,6 +18,34 @@ Polaris.gl 并不是一个地图库，没有内置或绑定的地图服务，但
 
 Polaris.gl 致力于提供一个 空间数据视觉组件的 开放标准，所有符合该标准的组件都可以在一个框架下协同工作。基于这套标准，你可以利用通用 3D 渲染引擎的能力，实现天马行空的视觉效果，同时进行严谨的地理可视化展示与分析。你可以使用 Polaris.gl 在地理数据可视化工具的基础上增加视觉效果，也可以把任意 3D 渲染引擎封装成一个地图库。
 
+## Development
+
+- Make sure you have `nodejs`, `yarn` and `lerna` installed
+
+```sh
+node -v # v14 or higher
+
+npx yarn -v # v1.x
+
+npx lerna -v # v4.x recommended
+```
+
+- setup
+
+`npm run setup`
+
+Should not see any error. If something goes wrong (probably caused by a registry). Run `npm run clean` and try it again.
+
+- build packages
+
+`npm run build`
+
+If something goes wrong. You should try `npm run rebuild` which will clean up all the build caches.
+
+- watch files and serve examples
+
+Good old fashioned `npm start`
+
 ## 协议与声明
 
 本项目使用 MIT 开源协议，详见 [LICENSE](./LICENSE)
