@@ -20,7 +20,7 @@ Polaris.gl 致力于提供一个 空间数据视觉组件的 开放标准，所�
 
 ## Development
 
-#### Prerequisites
+### Prerequisites
 
 Make sure you have `nodejs`, `yarn` and `lerna` installed.
 
@@ -32,23 +32,23 @@ npx yarn -v # v1.x
 npx lerna -v # v4.x recommended
 ```
 
-#### Setup
+### Setup
 
 `npm run setup`
 
 Should not see any error. If something goes wrong (probably caused by a registry). Run `npm run clean` and try it again.
 
-#### Build packages
+### Build packages
 
 `npm run build`
 
 If something goes wrong. You should try `npm run rebuild` which will clean up all the build caches.
 
-#### Watch files and serve examples
+### Watch files and serve examples
 
 Good old fashioned `npm start`
 
-#### Co-develop with GSI (the upstream monorepo project)
+### Co-develop with GSI (the upstream monorepo project)
 
 协同开发多个相互依赖的 monorepo 项目。
 
@@ -56,15 +56,13 @@ Good old fashioned `npm start`
 
 - link the upstream monorepo. `npm run setup -- --gsi={PATH_TO_GSI_REPO}`
   - for example `npm run setup -- --gsi={../gsi}`
-  - This will automatically 
+  - This will automatically
     - Create a new folder `gsi-packages` which is a symlink to GSI_FOLDER/packages
     - Setup this repo and link gsi-packages like other local monorepo packages
     - `cd` to gsi repo folder and setup gsi again. (Make sure the former one didn't mess it up.)
-- Dev gsi packages in gsi repo (<u>*Not In Current Repo Through Symlinks Obviously*</u>🙄️)
+- Dev gsi packages in gsi repo (<u>_Not In Current Repo Through Symlinks Obviously_</u>🙄️)
 - Call `build` or `watch` from gsi repo
 - Use live-updated gsi packages in current repo
-
-
 
 The logic of `co-dev multi monorepos` is pretty simple.
 
@@ -74,17 +72,13 @@ The logic of `co-dev multi monorepos` is pretty simple.
   - Do not edit another repo's codes. Do not build another repo's package from your repo.
   - Keep the boundary. Or you will end up merging everything into one gaint repo.
 
+It is common in Javascript/Typescript ecosystem that <u>**\*Only** build result of a package is **robust and compatible with different toolchains**. NOT THE SOURCE CODES.\*</u> It is not the best approach but it's what we got.
 
+_<u>Every package only has one set of toolchain that guarantee to work.</u>_ You should expect errors if you bypass it.
 
-It is common in Javascript/Typescript ecosystem that <u>***Only** build result of a package is **robust and compatible with different toolchains**. NOT THE SOURCE CODES.*</u> It is not the best approach but it's what we got. 
+Unless you can make sure all the repos use exactly same language \* version and toolchain. It's easier to only assume you get all the (live-updated) **build result** of dependents instead of **source code** and everything.
 
-*<u>Every package only has one set of toolchain that guarantee to work.</u>* You should expect errors if you bypass it.
-
-Unless you can make sure all the repos use exactly same language * version and toolchain. It's easier to only assume you get all the (live-updated) **build result** of dependents instead of **source code** and everything.
-
-
-
-## License and disclaimer 
+## License and disclaimer
 
 本项目使用 MIT 开源协议，详见 [LICENSE](./LICENSE)
 
