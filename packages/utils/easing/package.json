@@ -20,6 +20,7 @@
     "@polaris.gl/projection": "^0.0.0-beta",
     "@turf/invariant": "^6.1.2",
     "@turf/meta": "^6.0.2",
+    "@turf/helpers": "^6.5.0",
     "earcut": "^2.2.2",
     "is": "^3.3.0",
     "is-touch-device": "^1.0.1"
