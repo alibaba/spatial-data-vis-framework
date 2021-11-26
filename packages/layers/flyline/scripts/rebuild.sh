@@ -7,4 +7,6 @@ pwd
 
 npx tsc -v
 
-tsc --project tsconfig.build.json --incremental false
+rm -rf tsconfig.build.tsbuildinfo
+
+tsc --project tsconfig.build.json --incremental

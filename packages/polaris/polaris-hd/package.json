@@ -9,8 +9,7 @@
   "scripts": {
     "build": "./scripts/build.sh",
     "clean": "./scripts/clean.sh",
-    "rebuild": "./scripts/rebuild.sh",
-    "watch": "echo \"NO IMPLEMENT. TODO: WATCH GLSL\""
+    "rebuild": "./scripts/rebuild.sh"
   },
   "devDependencies": {
     "@types/offscreencanvas": "latest",

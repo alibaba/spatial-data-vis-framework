@@ -7,4 +7,4 @@ pwd
 
 rm -f ./tsconfig.tsbuildinfo && rm -rf ./dist
 
-echo "warn: Clean do not clear up tsc cache. A rebuild is nessesary!"
+echo "warn: A rebuild is nessesary!"

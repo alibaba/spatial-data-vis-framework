@@ -18,7 +18,6 @@
     "rebuild": "./scripts/rebuild.sh",
     "postbuild": "echo \"TODO: FIX ME\" || npm run build:worker",
     "postrebuild": "echo \"TODO: FIX ME\" || npm run build:worker",
-    "watch": "echo \"NO IMPLEMENT. TODO: WATCH GLSL\"",
     "build:umd": "npx webpack",
     "build:worker": "npx webpack --config webpack.worker.js --stats-children"
   },
