@@ -17,6 +17,8 @@
   },
   "dependencies": {
     "@gs.i/all": "^0.0.0-beta",
+    "three-lite": "0.0.2",
+    "gl2": "0.0.4",
     "@polaris.gl/schema": "^0.0.0-beta",
     "@polaris.gl/view-gsi": "^0.0.0-beta"
   },
