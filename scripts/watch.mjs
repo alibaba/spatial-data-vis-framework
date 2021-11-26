@@ -4,16 +4,23 @@ import path from 'path'
 
 import { execSync, spawn, exec, execFileSync } from 'child_process'
 
+import { argv } from 'process'
+
 import colors from 'colors/safe.js'
 
 function yellow() {
-	console.log(colors.bgBlue.yellow.bold('\n', ...arguments))
+	console.log(colors.bgBlue.brightYellow.bold.underline(...arguments, '      '))
 }
 function green() {
-	console.log(colors.bgBlue.green.bold('\n', ...arguments))
+	console.log(colors.bgBlue.brightGreen.bold.underline(...arguments, '      '))
 }
 
-console.log(colors.green.bold.underline.bgBlue('read local packages...'))
+const FAST_MODE = argv.includes('--fast')
+if (FAST_MODE) {
+	yellow('Enable fast mode.      \nWill not build downstream packages.')
+}
+
+green('read local packages...')
 const packagesJSON = execSync('npx lerna ls --json --all').toString()
 const packageALL = JSON.parse(packagesJSON)
 // console.log(packageALL)
@@ -39,7 +46,7 @@ function getLocalPackageByPath(path) {
 	return pkg
 }
 
-console.log(colors.green.bold.underline.bgBlue('read packages dependents...'))
+green('read packages dependents...')
 const dependentGraphJSON = execSync('npx lerna list --graph').toString()
 const dependentGraph = JSON.parse(dependentGraphJSON)
 // console.log(dependentGraph)
@@ -55,7 +62,7 @@ const impactGraph = {}
 		const pkg = getLocalPackageByName(key)
 
 		if (!pkg) {
-			console.log(colors.yellow('\t', key, '不是monorepo本地package，或者在ignore名单中，将忽略'))
+			console.log(colors.yellow(' - ', key, 'will be ignored.'))
 			return
 		}
 
@@ -63,9 +70,7 @@ const impactGraph = {}
 		deps.forEach((depName) => {
 			const pkg = getLocalPackageByName(depName)
 			if (!pkg) {
-				console.log(
-					colors.yellow('\t', depName, '不是monorepo本地package，或者在ignore名单中，将忽略')
-				)
+				console.log(colors.yellow(' - ', depName, 'will be ignored.'))
 				return
 			}
 
@@ -82,32 +87,43 @@ const impactGraph = {}
 {
 	for (const name of Object.keys(impactGraph)) {
 		console.log(
-			colors.cyan(name.slice(6), '=> [', impactGraph[name].map((a) => a.slice(6)).join(', '), ']')
+			colors.cyan(
+				' - ',
+				name.slice(6),
+				'=> [',
+				impactGraph[name].map((a) => a.slice(6)).join(', '),
+				']'
+			)
 		)
 	}
 }
 
 function findAllDirtPkgs(pkg) {
-	// const dirtList = []
 	const dirtList = new Set()
-	function dirtWalker(pkg) {
-		// 不要重复添加
-		// if (!dirtList.includes(pkg.name)) {
-		// 	dirtList.push(pkg.name)
-		// }
+
+	if (FAST_MODE) {
 		dirtList.add(pkg.name)
-		// 查找 impacts
-		const impacts = impactGraph[pkg.name] || []
-		for (const impactedPkgName of impacts) {
-			const impactedPkg = getLocalPackageByName(impactedPkgName)
-			if (impactedPkg) {
-				dirtWalker(impactedPkg)
+		return dirtList
+	} else {
+		function dirtWalker(pkg) {
+			// 不要重复添加
+			// if (!dirtList.includes(pkg.name)) {
+			// 	dirtList.push(pkg.name)
+			// }
+			dirtList.add(pkg.name)
+			// 查找 impacts
+			const impacts = impactGraph[pkg.name] || []
+			for (const impactedPkgName of impacts) {
+				const impactedPkg = getLocalPackageByName(impactedPkgName)
+				if (impactedPkg) {
+					dirtWalker(impactedPkg)
+				}
 			}
 		}
-	}
 
-	dirtWalker(pkg)
-	return dirtList
+		dirtWalker(pkg)
+		return dirtList
+	}
 }
 
 /**
