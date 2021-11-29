@@ -1,5 +1,8 @@
 {
 	"version": "0.0.0-beta",
 	"npmClient": "yarn",
+	"npmClientArgs": [
+		"--no-lockfile"
+	],
 	"useWorkspaces": true
 }
