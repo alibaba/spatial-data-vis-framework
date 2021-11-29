@@ -43,11 +43,30 @@ var config = {
 	// devtool: 'eval-source-map', // 性能较差但是可以保留原始ts代码，若要优化性能，注释掉这一行
 
 	mode: 'development',
+
+	/**
+	 * node js 解析module时，会把 symlink 解析成真实路径，然后从真实位置向上查找
+	 * 这会给 symlink 的项目带来一些问题，webpack 可以用 symlinks: false 避免这种情况
+	 * 但是该特性会造成更多的问题，尤其是与 node 机制不一致带来的困惑，以及 require cache 失效造成包提及增大、依赖不再是单例
+	 * 无论如何不要使用该特性
+	 */
+
 	resolve: {
 		extensions: ['.js', '.scss', '.css', '.ts'],
-		// !!! 十分重要 Important
-		// monorepo will broke without this!!
-		symlinks: false,
+		// !!! Important
+		// default true, do not set this false
+		// symlinks: false,
+	},
+
+	/**
+	 * webpack 对于一个文件所用到的loader!，和这个文件的 require 查找逻辑一样
+	 * 除非把 webpack 和 loader 都放在 root里，不然 就会导致 loader 查找不到
+	 * 可以通过这种方式解决
+	 */
+	resolveLoader: {
+		alias: {
+			'worker-loader': [path.resolve(__dirname, 'node_modules/worker-loader')],
+		},
 	},
 	module: {
 		rules: [
