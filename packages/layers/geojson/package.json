@@ -1,47 +1,48 @@
 {
-  "name": "@polaris.gl/layer-geojson",
-  "version": "0.0.0-beta",
-  "description": "",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
-  },
-  "files": [
-    "README.md",
-    "dist/*"
-  ],
-  "scripts": {
-    "build": "./scripts/build.sh",
-    "clean": "./scripts/clean.sh",
-    "rebuild": "./scripts/rebuild.sh",
-    "postbuild": "echo \"TODO: FIX ME\" || npm run build:worker",
-    "postrebuild": "echo \"TODO: FIX ME\" || npm run build:worker",
-    "build:umd": "npx webpack",
-    "build:worker": "npx webpack --config webpack.worker.js --stats-children"
-  },
-  "dependencies": {
-    "@gs.i/all": "^0.0.0-beta",
-    "@polaris.gl/gsi": "^0.0.0-beta",
-    "jsts": "^2.7.3",
-    "@polaris.gl/layer-std": "^0.0.0-beta",
-    "@polaris.gl/schema": "^0.0.0-beta",
-    "@polaris.gl/utils": "^0.0.0-beta",
-    "@polaris.gl/utils-indicator": "^0.0.0-beta",
-    "@polaris.gl/utils-worker-manager": "^0.0.0-beta",
-    "@polaris.gl/projection": "^0.0.0-beta",
-    "@turf/bbox": "^6.3.0",
-    "@turf/flatten": "^6.3.0",
-    "@turf/invariant": "^5.1.6",
-    "@turf/meta": "^6.0.2",
-    "@turf/polygon-to-line": "^6.3.0",
-    "earcut": "^2.2.2",
-    "point-in-polygon": "^1.0.1",
-    "robust-point-in-polygon": "^1.0.3",
-    "mapshaper-simplify": "2.0.2"
-  },
-  "devDependencies": {
-    "typescript": ">4.4.0"
-  }
+    "name": "@polaris.gl/layer-geojson",
+    "version": "0.0.0-beta",
+    "description": "",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "license": "MIT",
+    "publishConfig": {
+        "access": "public"
+    },
+    "files": [
+        "README.md",
+        "dist/*"
+    ],
+    "scripts": {
+        "build": "./scripts/build.sh",
+        "clean": "./scripts/clean.sh",
+        "rebuild": "./scripts/rebuild.sh",
+        "postbuild": "echo \"postbuild\"",
+        "postrebuild": "echo \"postrebuild\"",
+        "build:umd": "npx webpack",
+        "build:worker": "npx webpack --config webpack.worker.js --stats-children"
+    },
+    "dependencies": {
+        "@polaris.gl/gsi": "^0.0.0-beta",
+        "jsts": "^2.7.3",
+        "@polaris.gl/layer-std": "^0.0.0-beta",
+        "@polaris.gl/schema": "^0.0.0-beta",
+        "@polaris.gl/utils-indicator": "^0.0.0-beta",
+        "@polaris.gl/utils-worker-manager": "^0.0.0-beta",
+        "@turf/bbox": "^6.3.0",
+        "@turf/flatten": "^6.3.0",
+        "@turf/invariant": "^5.1.6",
+        "@turf/meta": "^6.0.2",
+        "@turf/polygon-to-line": "^6.3.0",
+        "earcut": "^2.2.2",
+        "point-in-polygon": "^1.0.1",
+        "mapshaper-simplify": "2.0.2",
+        "@gs.i/frontend-sdk": "^0.0.0-beta",
+        "@gs.i/utils-gline": "^0.0.0-beta",
+        "@gs.i/utils-math": "^0.0.0-beta",
+        "@gs.i/utils-geometry": "^0.0.0-beta",
+        "@gs.i/schema": "^0.0.0-beta"
+    },
+    "devDependencies": {
+        "typescript": ">4.4.0"
+    }
 }

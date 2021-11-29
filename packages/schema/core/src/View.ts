@@ -6,6 +6,8 @@
 import { Base } from './Base'
 
 export abstract class View {
+	readonly isView = true
+
 	constructor() {}
 
 	/**

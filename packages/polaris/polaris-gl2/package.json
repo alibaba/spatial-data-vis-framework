@@ -1,35 +1,35 @@
 {
-  "name": "@polaris.gl/polaris-gl2",
-  "version": "0.0.0-beta",
-  "description": "",
-  "private": true,
-  "main": "dist/Polaris.GL2.js",
-  "module": "dist/Polaris.gl2.module.js",
-  "types": "dist/Polaris.GL2.d.ts",
-  "license": "MIT",
-  "files": [
-    "README.md",
-    "dist/*"
-  ],
-  "scripts": {
-    "rollup": "npx rollup -c ./rollup.config.js",
-    "build": "./scripts/build.sh",
-    "clean": "./scripts/clean.sh",
-    "rebuild": "./scripts/rebuild.sh"
-  },
-  "dependencies": {
-    "@polaris.gl/renderer-gl2": "^0.0.0-beta",
-    "@polaris.gl/schema": "^0.0.0-beta",
-    "@polaris.gl/utils": "^0.0.0-beta",
-    "@polaris.gl/view-html": "^0.0.0-beta",
-    "@polaris.gl/view-three": "^0.0.0-beta"
-  },
-  "devDependencies": {
-    "@types/offscreencanvas": "latest",
-    "@types/webvr-api": "latest",
-    "typescript": ">4.4.0"
-  },
-  "publishConfig": {
-    "access": "public"
-  }
+    "name": "@polaris.gl/polaris-gl2",
+    "version": "0.0.0-beta",
+    "description": "",
+    "private": true,
+    "main": "dist/Polaris.GL2.js",
+    "module": "dist/Polaris.gl2.module.js",
+    "types": "dist/Polaris.GL2.d.ts",
+    "license": "MIT",
+    "files": [
+        "README.md",
+        "dist/*"
+    ],
+    "scripts": {
+        "rollup": "npx rollup -c ./rollup.config.js",
+        "build": "./scripts/build.sh",
+        "clean": "./scripts/clean.sh",
+        "rebuild": "./scripts/rebuild.sh"
+    },
+    "dependencies": {
+        "@polaris.gl/renderer-gl2": "^0.0.0-beta",
+        "@polaris.gl/schema": "^0.0.0-beta",
+        "@polaris.gl/utils": "^0.0.0-beta",
+        "@polaris.gl/view-html": "^0.0.0-beta",
+        "@polaris.gl/view-three": "^0.0.0-beta"
+    },
+    "devDependencies": {
+        "@types/offscreencanvas": "latest",
+        "@types/webvr-api": "latest",
+        "typescript": ">4.4.0"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
 }

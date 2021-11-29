@@ -24,7 +24,7 @@ for (const devName in interfaces) {
 	}
 }
 
-const port = 2222
+const port = 8111
 
 console.log(`Listening 👉  http://localhost:${port} 👈 \n`)
 

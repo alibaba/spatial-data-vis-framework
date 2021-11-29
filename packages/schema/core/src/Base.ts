@@ -87,12 +87,22 @@ export interface PickEvent {
 	data?: any
 }
 
+export interface OutputPickEvent extends PickEvent {
+	pointerCoords: {
+		canvas: CoordV2
+		ndc: CoordV2
+		screen: CoordV2
+	}
+}
+
 /**
  * Base is ancestors for all renderable object in Polaris
  * Base 是场景数中的每个节点的基类。
  * 只实现节点生命周期管理，不负责视觉元素相关和地理、动画相关的逻辑。
  */
 export abstract class Base {
+	readonly isBase = true
+
 	name: string
 	parent?: Base
 	children = new Set<Base>()
@@ -118,8 +128,8 @@ export abstract class Base {
 	protected _onHover: (polaris: Base, canvasCoords: CoordV2, ndc: CoordV2) => PickEvent | undefined
 
 	// 外部监听picked/hovered事件入口
-	_onPicked: { (event: PickEvent | undefined): void }[] = []
-	_onHovered: { (event: PickEvent | undefined): void }[] = []
+	_onPicked: { (event: OutputPickEvent | undefined): void }[] = []
+	_onHovered: { (event: OutputPickEvent | undefined): void }[] = []
 
 	/**
 	 * Creates an instance of Base.
@@ -224,14 +234,14 @@ export abstract class Base {
 	/**
 	 * callbacks when any object/layer has been picked by user pointer
 	 */
-	set onPicked(f: (event: PickEvent | undefined) => void) {
+	set onPicked(f: (event: OutputPickEvent | undefined) => void) {
 		this._onPicked.push(f)
 	}
 
 	/**
 	 * callbacks when any object/layer has been hovered on by user pointer
 	 */
-	set onHovered(f: (event: PickEvent | undefined) => void) {
+	set onHovered(f: (event: OutputPickEvent | undefined) => void) {
 		this._onHovered.push(f)
 	}
 

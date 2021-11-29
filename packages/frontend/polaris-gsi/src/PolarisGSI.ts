@@ -13,9 +13,10 @@ import {
 	defaultProps as defaultPolarisProps,
 	Renderer,
 	Layer,
-	PickEvent,
+	OutputPickEvent,
 	PickResult,
 	EVENT_NAME,
+	CoordV2,
 } from '@polaris.gl/schema'
 import { PointerControl, TouchControl } from 'camera-proxy'
 import { isTouchDevice } from '@polaris.gl/utils'
@@ -43,9 +44,8 @@ export interface PolarisGSI extends Polaris {
 	addByProjection(layer: Layer, projectionType?: number, center?: number[]): void
 }
 
-export interface LayerPickEvent extends PickEvent {
+export interface LayerPickEvent extends OutputPickEvent {
 	layer: Layer
-	pointerCoords: { [key: string]: any }
 }
 
 export class PolarisGSI extends Polaris implements PolarisGSI {
@@ -537,13 +537,14 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 		// Collect pick results
 		const candidates: LayerPickEvent[] = []
 		this.traverseVisible((obj) => {
-			if (obj instanceof Layer && obj.getProps('pickable') && obj[eventName]) {
-				const layerRes = obj[eventName](this, canvasCoords, ndc) as PickEvent
+			const layer = obj as Layer
+			if (layer.isLayer && layer.getProps('pickable') && layer[eventName]) {
+				const layerRes = layer[eventName](this, canvasCoords, ndc) as OutputPickEvent
 				if (layerRes) {
 					// Layer was picked, add to candidates list
 					candidates.push({
 						...layerRes,
-						layer: obj,
+						layer: layer,
 						// pointer coords
 						pointerCoords: {
 							screen: pxCoords,
@@ -553,7 +554,7 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 					})
 				} else {
 					// Callback with no params
-					obj.triggerEvent(eventCallback)
+					layer.triggerEvent(eventCallback)
 				}
 			}
 		})

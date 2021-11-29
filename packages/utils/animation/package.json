@@ -1,30 +1,29 @@
 {
-  "name": "@polaris.gl/utils-animation",
-  "version": "0.0.0-beta",
-  "description": "",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
-  },
-  "files": [
-    "README.md",
-    "dist/*"
-  ],
-  "scripts": {
-    "build": "./scripts/build.sh",
-    "clean": "./scripts/clean.sh",
-    "rebuild": "./scripts/rebuild.sh"
-  },
-  "dependencies": {
-    "ani-timeline": "1.2.19-m",
-    "@polaris.gl/schema": "^0.0.0-beta",
-    "@polaris.gl/utils-easing": "^0.0.0-beta",
-    "camera-proxy": "^0.1.22"
-  },
-  "devDependencies": {
-    "@types/is": "^0.0.21",
-    "typescript": ">4.4.0"
-  }
+    "name": "@polaris.gl/utils-animation",
+    "version": "0.0.0-beta",
+    "description": "",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "license": "MIT",
+    "publishConfig": {
+        "access": "public"
+    },
+    "files": [
+        "README.md",
+        "dist/*"
+    ],
+    "scripts": {
+        "build": "./scripts/build.sh",
+        "clean": "./scripts/clean.sh",
+        "rebuild": "./scripts/rebuild.sh"
+    },
+    "dependencies": {
+        "ani-timeline": "1.2.19-m",
+        "@polaris.gl/schema": "^0.0.0-beta",
+        "@polaris.gl/utils-easing": "^0.0.0-beta"
+    },
+    "devDependencies": {
+        "@types/is": "^0.0.21",
+        "typescript": ">4.4.0"
+    }
 }

@@ -97,7 +97,7 @@ export class MarkerLayer extends STDLayer {
 		this.onClick = this.onHover = (polaris, canvasCoord, ndc) => {
 			if (!this.getProps('pickable')) return
 			const data = this.getProps('data')
-			const results: PickEvent[] = []
+			const results: Omit<PickEvent, 'pointerCoords'>[] = []
 			for (let i = 0; i < this.markers.length; i++) {
 				const marker = this.markers[i]
 				const result = this._pickMarker(polaris as PolarisGSI, canvasCoord, ndc, marker, i)
@@ -168,13 +168,7 @@ export class MarkerLayer extends STDLayer {
 		})
 	}
 
-	private _pickMarker(
-		polaris: PolarisGSI,
-		canvasCoords,
-		ndc,
-		marker,
-		dataIndex
-	): PickEvent | undefined {
+	private _pickMarker(polaris: PolarisGSI, canvasCoords, ndc, marker, dataIndex) {
 		const data = this.getProps('data')
 		if (!data || data.length === 0) return
 

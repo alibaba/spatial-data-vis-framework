@@ -32,6 +32,8 @@ export type RootLayer = Omit<Layer, 'parent' | 'level' | 'init' | 'afterInit' | 
  * Polaris 根节点 基类
  */
 export abstract class Polaris extends Layer implements RootLayer {
+	readonly isPolaris: boolean
+
 	// canvas: HTMLCanvasElement
 
 	cameraProxy: AnimatedCameraProxy
@@ -94,6 +96,7 @@ export abstract class Polaris extends Layer implements RootLayer {
 		 * Polaris self is also an Layer, do Layer initialization
 		 */
 		super({ ..._props, timeline, projection })
+		this.isPolaris = true
 		this._disposed = false
 		this.name = 'Polaris'
 		this.timeline = timeline

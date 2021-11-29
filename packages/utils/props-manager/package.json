@@ -1,26 +1,26 @@
 {
-  "name": "@polaris.gl/utils-props-manager",
-  "version": "0.0.0-beta",
-  "description": "",
-  "main": "dist/PropsManager.js",
-  "types": "dist/PropsManager.d.ts",
-  "license": "MIT",
-  "files": [
-    "README.md",
-    "dist/*"
-  ],
-  "publishConfig": {
-    "access": "public"
-  },
-  "scripts": {
-    "build": "./scripts/build.sh",
-    "clean": "./scripts/clean.sh",
-    "rebuild": "./scripts/rebuild.sh"
-  },
-  "dependencies": {
-    "lodash": ">4.0.0"
-  },
-  "devDependencies": {
-    "typescript": ">4.4.0"
-  }
+    "name": "@polaris.gl/utils-props-manager",
+    "version": "0.0.0-beta",
+    "description": "",
+    "main": "dist/PropsManager.js",
+    "types": "dist/PropsManager.d.ts",
+    "license": "MIT",
+    "files": [
+        "README.md",
+        "dist/*"
+    ],
+    "publishConfig": {
+        "access": "public"
+    },
+    "scripts": {
+        "build": "./scripts/build.sh",
+        "clean": "./scripts/clean.sh",
+        "rebuild": "./scripts/rebuild.sh"
+    },
+    "dependencies": {
+        "lodash": ">4.0.0"
+    },
+    "devDependencies": {
+        "typescript": ">4.4.0"
+    }
 }

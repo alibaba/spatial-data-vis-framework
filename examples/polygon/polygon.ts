@@ -18,7 +18,7 @@ async function fetchData() {
 	const data: any[] = []
 
 	const response = await fetch(
-		'assets/all.json' // geojson china all
+		'https://gw.alipayobjects.com/os/bmw-prod/69f76d0b-8758-49cc-86e7-6fc5728cb3ea.json' // geojson china all
 	)
 	const json = await response.json()
 	data.push(json)
@@ -92,7 +92,7 @@ fetchData().then((data) => {
 		baseAlt: 0,
 		lodZoomLvs: [3, 5, 7, 9, 11],
 		lodPercentages: [0.1, 0.3, 0.5, 0.7, 1.0],
-		data: 'assetss/world-coastline.json',
+		data: 'https://gw.alipayobjects.com/os/bmw-prod/ce234e33-8a32-4729-965a-242c87b336fd.json',
 		debug: true,
 	}))
 	p.add(lineLayer2)
@@ -114,7 +114,9 @@ const polygonLayer2 = (window['layer2'] = new PolygonLayer({
 	// projection: new SphereProjection({}),
 }))
 p.add(polygonLayer2)
-polygonLayer2.updateData('assetss/country_unemployment_from_kepler.geojson')
+polygonLayer2.updateData(
+	'https://gw.alipayobjects.com/os/bmw-prod/6a0e53c5-3d79-407f-a554-2f97916f7940.json'
+)
 // polygonLayer2.onPicked = (info) => {
 // 	console.log('onPicked', info)
 // }

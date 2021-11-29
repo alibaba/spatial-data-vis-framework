@@ -86,10 +86,8 @@ markerLayer1.onPicked = (info) => {
 }
 markerLayer1.onHovered = (info) => {
 	if (info) {
-		const screenXY = p.getScreenXY(info.point.x, info.point.y, info.point.z)
-		if (!screenXY) return
-		indicator.style.left = screenXY[0] + 'px'
-		indicator.style.bottom = screenXY[1] + 'px'
+		indicator.style.left = info.pointerCoords.canvas.x + 'px'
+		indicator.style.top = info.pointerCoords.canvas.y + 'px'
 		indicator.style.visibility = 'inherit'
 	} else {
 		indicator.style.visibility = 'hidden'
@@ -143,10 +141,8 @@ markerLayer2.onPicked = (info) => {
 }
 markerLayer2.onHovered = (info) => {
 	if (info) {
-		const screenXY = p.getScreenXY(info.point.x, info.point.y, info.point.z)
-		if (!screenXY) return
-		indicator.style.left = screenXY[0] + 'px'
-		indicator.style.bottom = screenXY[1] + 'px'
+		indicator.style.left = info.pointerCoords.canvas.x + 'px'
+		indicator.style.top = info.pointerCoords.canvas.y + 'px'
 		indicator.style.visibility = 'inherit'
 	} else {
 		indicator.style.visibility = 'hidden'

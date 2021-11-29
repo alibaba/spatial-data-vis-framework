@@ -1,33 +1,35 @@
 {
-  "name": "@polaris.gl/layer-std-marker",
-  "version": "0.0.0-beta",
-  "description": "",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "license": "MIT",
-  "files": [
-    "README.md",
-    "dist/*"
-  ],
-  "scripts": {
-    "build": "./scripts/build.sh",
-    "clean": "./scripts/clean.sh",
-    "rebuild": "./scripts/rebuild.sh",
-    "build:umd": "npx webpack"
-  },
-  "dependencies": {
-    "ani-timeline": "1.2.19-m",
-    "@gs.i/all": "^0.0.0-beta",
-    "@polaris.gl/layer-std": "^0.0.0-beta",
-    "@polaris.gl/schema": "^0.0.0-beta",
-    "@polaris.gl/projection": "^0.0.0-beta",
-    "@polaris.gl/gsi": "^0.0.0-beta",
-    "@polaris.gl/utils": "^0.0.0-beta"
-  },
-  "devDependencies": {
-    "typescript": ">4.4.0"
-  },
-  "publishConfig": {
-    "access": "public"
-  }
+    "name": "@polaris.gl/layer-std-marker",
+    "version": "0.0.0-beta",
+    "description": "",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "license": "MIT",
+    "files": [
+        "README.md",
+        "dist/*"
+    ],
+    "scripts": {
+        "build": "./scripts/build.sh",
+        "clean": "./scripts/clean.sh",
+        "rebuild": "./scripts/rebuild.sh",
+        "build:umd": "npx webpack"
+    },
+    "dependencies": {
+        "@polaris.gl/layer-std": "^0.0.0-beta",
+        "@polaris.gl/schema": "^0.0.0-beta",
+        "@polaris.gl/projection": "^0.0.0-beta",
+        "@polaris.gl/gsi": "^0.0.0-beta",
+        "@polaris.gl/utils": "^0.0.0-beta",
+        "@gs.i/utils-math": "^0.0.0-beta",
+        "@gs.i/frontend-sdk": "^0.0.0-beta",
+        "@gs.i/schema": "^0.0.0-beta",
+        "@gs.i/utils-geometry": "^0.0.0-beta"
+    },
+    "devDependencies": {
+        "typescript": ">4.4.0"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
 }
