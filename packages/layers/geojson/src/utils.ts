@@ -18,6 +18,7 @@ import inside from 'point-in-polygon'
 import ConformingDelaunayTriangulationBuilder from 'jsts/org/locationtech/jts/triangulate/ConformingDelaunayTriangulationBuilder'
 import GeometryFactory from 'jsts/org/locationtech/jts/geom/GeometryFactory'
 import Coordinate from 'jsts/org/locationtech/jts/geom/Coordinate'
+import polygonToLine from '@turf/polygon-to-line'
 
 export function triangulateGeoJSON(geojson: any): any {
 	let points: Array<number> = []
@@ -236,13 +237,13 @@ export function pointInsidePolygon(point, boundaries) {
 	// return classifyPoint(polygon, point) === -1
 }
 
-export function getColorUint(color: Color, alpha?: number): Uint32Array {
-	if (alpha !== undefined) {
+export function getColorUint(color: Color, opacity?: number): Uint32Array {
+	if (opacity !== undefined) {
 		return new Uint32Array([
 			Math.round(color.r * 255),
 			Math.round(color.g * 255),
 			Math.round(color.b * 255),
-			Math.round(alpha * 255),
+			Math.round(opacity * 255),
 		])
 	} else {
 		return new Uint32Array([
@@ -263,4 +264,57 @@ export function getFeatureStringKey(feature: any, keyDesc: string): string {
 		}
 	}
 	return curr.toString()
+}
+
+export function featureToLinePositions(feature, projection, alt = 0) {
+	let geom: any = getGeom(feature)
+	if (geom) {
+		const linePositions: number[][] = []
+		// 如果Geojson数据是Polygon类型，需要先转换为LineString
+		if (geom.type === 'Polygon') {
+			const line: any = polygonToLine(feature)
+			geom = getGeom(line)
+			const positionsArr = geomToLinePositions(geom, projection, alt)
+			positionsArr?.forEach((positions) => {
+				linePositions.push(positions)
+			})
+		} else if (geom.type === 'MultiPolygon') {
+			const line: any = polygonToLine(feature)
+			line.features.forEach((feature) => {
+				geom = feature.geometry
+				const positionsArr = geomToLinePositions(geom, projection, alt)
+				positionsArr?.forEach((positions) => {
+					linePositions.push(positions)
+				})
+			})
+		}
+		return linePositions
+	}
+}
+
+export function geomToLinePositions(geom, projection, alt = 0): number[][] | undefined {
+	const results: number[][] = []
+	if (geom.type === 'LineString') {
+		const positions: number[] = []
+		const coords = getCoords(geom)
+		coords.forEach((coord) => {
+			const xyz = projection.project(coord[0], coord[1], alt)
+			positions.push(...xyz)
+		})
+		results.push(positions)
+		return results
+	} else if (geom.type === 'MultiLineString') {
+		const multiCoords: any[] = getCoords(geom)
+		multiCoords.forEach((coords) => {
+			const positions: number[] = []
+			coords.forEach((coord) => {
+				const xyz = projection.project(coord[0], coord[1], alt)
+				positions.push(...xyz)
+			})
+			results.push(positions)
+		})
+		return results
+	} else {
+		console.error('PolygonLayer - Geojson geom type is not valid', geom.type, geom)
+	}
 }

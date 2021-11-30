@@ -6,20 +6,18 @@
 import { Base } from './Base'
 import { Projection } from '@polaris.gl/projection'
 import { Timeline } from 'ani-timeline'
-import { CallBack, PropsManager } from '@polaris.gl/utils-props-manager'
+import { EventCallBack, PropsManager } from '@polaris.gl/utils-props-manager'
 import { Polaris } from './Polaris'
+import { View } from './View'
 
 export interface LayerProps {
 	parent?: Layer
 	timeline?: Timeline
 	projection?: Projection
-	zooms?: number[]
-	view?: { [key: string]: any }
+	views?: { [key: string]: new () => View }
 }
 
 export class Layer extends Base {
-	readonly isLayer = true
-
 	/**
 	 * parent
 	 */
@@ -27,9 +25,9 @@ export class Layer extends Base {
 
 	/**
 	 * view, the actual rendered contents
-	 * can have multi views in on layer, like gsiView + htmlView
+	 * can have multi views in one layer, e.g. gsiView + htmlView
 	 */
-	view: { [key: string]: any } = {}
+	view: { [key: string]: View }
 
 	polaris: Polaris
 
@@ -65,9 +63,17 @@ export class Layer extends Base {
 		this._projectionLocal = props.projection
 		this._timelineLocal = props.timeline
 
-		/**
-		 * if there is a parent parameter，add this layer to parent
-		 */
+		// initialize views by props.views
+		if (props.views) {
+			this.view = {}
+			for (const key in props.views) {
+				const ViewClass = props.views[key]
+				const view = new ViewClass()
+				view.init(this)
+				this.view[key] = view
+			}
+		}
+
 		if (props.parent) {
 			props.parent.add(this)
 		}
@@ -218,10 +224,11 @@ export class Layer extends Base {
 	 * 该方法用来被外部使用者调用
 	 *
 	 * @param {*} data
+	 * @return {*}  {Promise<void>}
 	 * @memberof Layer
 	 */
-	updateData(data: any) {
-		this.setProps({
+	updateData(data: any): Promise<void> {
+		return this.setProps({
 			data: data,
 		})
 	}
@@ -230,21 +237,22 @@ export class Layer extends Base {
 	 * 该方法用来被外部使用者调用
 	 *
 	 * @param {*} props
+	 * @return {*}  {Promise<void>}
 	 * @memberof Layer
 	 */
-	updateProps(props: any) {
-		this.setProps(props)
+	updateProps(props: any): Promise<void> {
+		return this.setProps(props)
 	}
 
 	getProps(key: string) {
 		return this._propsManager.get(key)
 	}
 
-	protected setProps(newProps: any) {
-		this._propsManager.set(newProps)
+	protected setProps(newProps: any): Promise<void> {
+		return this._propsManager.set(newProps)
 	}
 
-	protected listenProps(propsName: string | Array<string>, callback: CallBack) {
+	protected listenProps(propsName: string | Array<string>, callback: EventCallBack) {
 		this._propsManager.listen(propsName, callback)
 	}
 

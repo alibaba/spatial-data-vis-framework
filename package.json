@@ -17,14 +17,9 @@
   "scripts": {
     "start": "npx concurrently --kill-others --names \"watch,examples\" \"npm run watch\" \"cd ./examples && npm start\" ",
     "setup": "node scripts/setup.mjs",
-    "setup:core": "node scripts/setup.mjs --no-examples",
-    "setup:examples": "./scripts/setupExamples.sh",
     "clean": "rm -rf ./yarn.lock && rm -rf gsi-packages && rm -rf ./node_modules && lerna clean -y && lerna run --no-private --stream --parallel clean",
     "build": "lerna run build --ignore @gs.i/* --stream --no-private",
-    "rebuild": "lerna run rebuild --ignore @gs.i/* --stream --no-private",
-    "watch": "node scripts/watch.mjs --fast",
-    "build:umd": "lerna run build:umd --ignore @gs.i/* --parallel --stream --no-private",
-    "serve:umd": "node ./umdserver.js"
+    "watch": "node scripts/watch.mjs --fast"
   },
   "devDependencies": {
     "typescript": "^4.5.2",

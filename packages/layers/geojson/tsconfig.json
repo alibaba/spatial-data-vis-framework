@@ -18,16 +18,10 @@
 			"path": "../../schema/core"
 		},
 		{
-			"path": "../../utils/utils"
-		},
-		{
 			"path": "../../utils/indicator"
 		},
 		{
 			"path": "../../utils/worker-manager"
-		},
-		{
-			"path": "../../utils/projections"
 		}
 	]
 }

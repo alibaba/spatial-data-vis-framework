@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import { MeshDataType } from '@gs.i/schema'
+import { isDISPOSED, MeshDataType } from '@gs.i/schema'
 import { OptimizePass, GSIRefiner } from '@gs.i/utils-optimize'
 import { HtmlView } from '@polaris.gl/view-html'
 import { GSIView } from '@polaris.gl/view-gsi'
@@ -13,7 +13,7 @@ import {
 	defaultProps as defaultPolarisProps,
 	Renderer,
 	Layer,
-	OutputPickEvent,
+	PickEventResult,
 	PickResult,
 	EVENT_NAME,
 	CoordV2,
@@ -25,8 +25,6 @@ import { STDLayer } from '@polaris.gl/layer-std'
 import Hammer from 'hammerjs'
 import { throttle } from './Utils'
 import localForage from 'localforage'
-
-type LocalForage = typeof localForage
 
 export interface PolarisGSIProps extends PolarisProps {
 	enablePicking?: boolean
@@ -44,7 +42,7 @@ export interface PolarisGSI extends Polaris {
 	addByProjection(layer: Layer, projectionType?: number, center?: number[]): void
 }
 
-export interface LayerPickEvent extends OutputPickEvent {
+export interface LayerPickEvent extends PickEventResult {
 	layer: Layer
 }
 
@@ -86,8 +84,9 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 
 	/**
 	 * localStorage
+	 * @TODO fix types
 	 */
-	private _localForage: LocalForage
+	private _localForage: any
 
 	constructor(props: PolarisGSIProps) {
 		const _props = {
@@ -100,8 +99,11 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 		this.name = 'PolarisGSI'
 		this.optimizePasses = []
 		this.view = {
-			html: new HtmlView(this),
-			gsi: new GSIView(this),
+			html: new HtmlView(),
+			gsi: new GSIView(),
+		}
+		for (const key in this.view) {
+			this.view[key].init(this)
 		}
 
 		/**
@@ -225,7 +227,7 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 		this._initLocalStorages()
 	}
 
-	getLocalStorage(type?: string): LocalForage {
+	getLocalStorage(type?: string) {
 		switch (type) {
 			case 'localforage':
 				return this._localForage
@@ -244,7 +246,7 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 
 	setRenderer(renderer: Renderer) {
 		if (this.renderer) {
-			throw new Error('目前不支持动态替换 polaris 的 renderer')
+			throw new Error('PolarisGSI - 目前不支持动态替换 polaris 的 renderer')
 		}
 
 		this.renderer = renderer
@@ -258,7 +260,7 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 
 	render() {
 		if (!this.renderer) {
-			throw new Error('Call .setRenderer() first. ')
+			throw new Error('PolarisGSI - Call .setRenderer() first. ')
 		}
 		// TODO 这里 不应该 允许 view 引用变化
 		this.renderer.render(this.view.gsi)
@@ -266,7 +268,7 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 
 	capture() {
 		if (!this.renderer) {
-			throw new Error('Call .setRenderer() first. ')
+			throw new Error('PolarisGSI - Call .setRenderer() first. ')
 		}
 		this.tick()
 		return this.renderer.capture()
@@ -283,7 +285,7 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 	 */
 	resize(width, height, ratio = 1.0, externalScale) {
 		if (externalScale !== undefined) {
-			console.warn('Please use Polaris.setScale(scale) api. ')
+			console.warn('Polaris - Please use Polaris.setScale(scale) api. ')
 		}
 
 		super.resize(width, height, ratio, externalScale)
@@ -358,11 +360,11 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 				projName = 'GallStereoGraphicProjection'
 				break
 			default:
-				throw new Error(`Polaris - Invalid projectionType: ${projectionType}`)
+				throw new Error(`PolarisGSI - Invalid projectionType: ${projectionType}`)
 		}
 
 		if (Projections[projName] === undefined) {
-			throw new Error(`Polaris - Invalid projectionType: ${projectionType}`)
+			throw new Error(`PolarisGSI - Invalid projectionType: ${projectionType}`)
 		}
 
 		if (!this._projLayerWrappers) {
@@ -399,13 +401,30 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 		options?: { allInters?: boolean; threshold?: number; backfaceCulling?: boolean }
 	): PickResult {
 		if (!this.renderer) {
-			console.error('Call .setRenderer() first. ')
+			console.error('PolarisGSI - Call .setRenderer() first. ')
 			return {
 				hit: false,
 			}
 		}
 		if (this.renderer.pick === undefined) {
-			console.error('Renderer has no pick method implemented')
+			console.error('PolarisGSI - Renderer has no pick method implemented')
+			return {
+				hit: false,
+			}
+		}
+		const geom = object.geometry
+		if (
+			!geom ||
+			!geom.attributes ||
+			!geom.attributes.position ||
+			!geom.attributes.position.array ||
+			isDISPOSED(geom.attributes.position.array) ||
+			geom.attributes.position.count === 0
+		) {
+			// console.warn(
+			// 	'PolarisGSI - Picking is skipped because mesh has no sufficient geometry info',
+			// 	object
+			// )
 			return {
 				hit: false,
 			}
@@ -498,8 +517,8 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 					// Disable hover when:
 					// 1. device has been touched
 					// 2. mouse has been pressed
-					// 3. camera has been stable for x frames
-					// 4. lastTouchedTime has passed for x ms
+					// 3. camera stable frames < x (2)
+					// 4. lastTouchedTime < y (500ms)
 					if (
 						this.getProps('enablePicking') &&
 						isTouched === false &&
@@ -537,14 +556,13 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 		// Collect pick results
 		const candidates: LayerPickEvent[] = []
 		this.traverseVisible((obj) => {
-			const layer = obj as Layer
-			if (layer.isLayer && layer.getProps('pickable') && layer[eventName]) {
-				const layerRes = layer[eventName](this, canvasCoords, ndc) as OutputPickEvent
+			if (obj instanceof Layer && obj.getProps('pickable') && obj[eventName]) {
+				const layerRes = obj[eventName](this, canvasCoords, ndc) as LayerPickEvent
 				if (layerRes) {
 					// Layer was picked, add to candidates list
 					candidates.push({
 						...layerRes,
-						layer: layer,
+						layer: obj,
 						// pointer coords
 						pointerCoords: {
 							screen: pxCoords,
@@ -554,7 +572,7 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 					})
 				} else {
 					// Callback with no params
-					layer.triggerEvent(eventCallback)
+					obj.triggerEvent(eventCallback)
 				}
 			}
 		})

@@ -198,7 +198,7 @@ export class LineIndicator {
 			this.layer.group.remove(this.gline)
 			this.layer = undefined
 		} else {
-			console.warn('Polaris::LineIndicator - LineIndicator has been added to any layer. ')
+			// console.warn('Polaris::LineIndicator - LineIndicator has not been added to any layer. ')
 		}
 	}
 }

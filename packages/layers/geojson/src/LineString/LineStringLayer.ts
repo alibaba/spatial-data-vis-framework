@@ -6,16 +6,15 @@
 import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
 import { GLine } from '@gs.i/utils-gline'
 import { Color } from '@gs.i/utils-math'
-import { Mesh } from '@gs.i/frontend-sdk'
 
 /**
  * 内部逻辑依赖
  */
-import { FeatureCollection, Polygon, LineString, Properties } from '@turf/helpers'
+import { FeatureCollection } from '@turf/helpers'
 import flatten from '@turf/flatten'
 import { getGeom, getCoords } from '@turf/invariant'
-import polygonToLine from '@turf/polygon-to-line'
 import { Polaris } from '@polaris.gl/schema'
+import { featureToLinePositions } from '../utils'
 
 /**
  * 配置项 interface
@@ -114,23 +113,14 @@ export class LineStringLayer extends STDLayer {
 				})
 
 				flattened.features.forEach((feature: any) => {
-					let geom: any = getGeom(feature)
+					const geom: any = getGeom(feature)
 					if (geom) {
-						// 如果Geojson数据是Polygon类型，需要先转换为LineString
-						if (geom.type === 'Polygon') {
-							const line: any = polygonToLine(feature)
-							geom = getGeom(line)
-						} else if (geom.type === 'MultiPolygon') {
-							const line: any = polygonToLine(feature)
-							geom = line.features[0].geometry
+						const positionsSub = featureToLinePositions(feature, projection, baseAlt)
+						if (positionsSub) {
+							positionsSub.forEach((sub) => {
+								positions.push(sub)
+							})
 						}
-						const positionsSub: number[] = []
-						const coords = getCoords(geom)
-						coords.forEach((coord) => {
-							const xyz = projection.project(coord[0], coord[1], baseAlt)
-							positionsSub.push(...xyz)
-						})
-						positions.push(positionsSub)
 					}
 				})
 

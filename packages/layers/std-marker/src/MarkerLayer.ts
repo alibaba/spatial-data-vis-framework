@@ -8,12 +8,13 @@ import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
 import { deepCloneMesh } from '@polaris.gl/utils'
 import { Marker } from './Marker'
 import { PolarisGSI } from '@polaris.gl/gsi'
-import { PickEvent } from '@polaris.gl/schema'
+import { CoordV2, PickEvent } from '@polaris.gl/schema'
 
 /**
  * 配置项 interface
  */
 export interface MarkerLayerProps extends STDLayerProps {
+	data?: any[]
 	lng?: number
 	lat?: number
 	alt?: number
@@ -23,7 +24,11 @@ export interface MarkerLayerProps extends STDLayerProps {
 	style?: { [key: string]: string }
 	object3d?: Mesh | null
 	autoHide?: boolean
-	data?: any[]
+	/**
+	 * enables high performance mode will reduce the calculation of marker.worldMatrix
+	 * which may cause position/screenXY updating lag (a bit)
+	 */
+	highPerfMode?: boolean
 }
 
 /**
@@ -36,7 +41,7 @@ export const defaultProps: MarkerLayerProps = {
 	offsetY: 0,
 	object3d: null,
 	autoHide: false,
-	data: [],
+	highPerfMode: false,
 }
 
 /**
@@ -49,7 +54,6 @@ export const defaultProps: MarkerLayerProps = {
  */
 export class MarkerLayer extends STDLayer {
 	props: any
-	data: any[]
 
 	private markers: Marker[]
 
@@ -97,7 +101,7 @@ export class MarkerLayer extends STDLayer {
 		this.onClick = this.onHover = (polaris, canvasCoord, ndc) => {
 			if (!this.getProps('pickable')) return
 			const data = this.getProps('data')
-			const results: Omit<PickEvent, 'pointerCoords'>[] = []
+			const results: PickEvent[] = []
 			for (let i = 0; i < this.markers.length; i++) {
 				const marker = this.markers[i]
 				const result = this._pickMarker(polaris as PolarisGSI, canvasCoord, ndc, marker, i)
@@ -168,59 +172,21 @@ export class MarkerLayer extends STDLayer {
 		})
 	}
 
-	private _pickMarker(polaris: PolarisGSI, canvasCoords, ndc, marker, dataIndex) {
+	private _pickMarker(
+		polaris: PolarisGSI,
+		canvasCoords: CoordV2,
+		ndc: CoordV2,
+		marker: Marker,
+		dataIndex: number
+	): PickEvent | undefined {
 		const data = this.getProps('data')
 		if (!data || data.length === 0) return
 
-		// 2D DOM picking
-		if (marker.html) {
-			const bbox = marker.html.getBoundingClientRect()
-			const pbox = polaris.view.html.element.getBoundingClientRect()
+		const pickResult = marker.pick(polaris, canvasCoords, ndc)
+		if (!pickResult) return
 
-			// 扣除Polaris element在屏幕上的偏移量
-			const left = Math.round(bbox.left - pbox.left)
-			const right = Math.round(left + bbox.width)
-			const top = Math.round(bbox.top - pbox.top)
-			const bottom = Math.round(top + bbox.height)
-
-			if (
-				canvasCoords.x > left &&
-				canvasCoords.x < right &&
-				canvasCoords.y > top &&
-				canvasCoords.y < bottom
-			) {
-				// HTML has been picked
-				return {
-					distance: !marker.html.style.zIndex ? 0 : parseInt(marker.html.style.zIndex),
-					point: { x: Infinity, y: Infinity, z: Infinity },
-					pointLocal: { x: Infinity, y: Infinity, z: Infinity },
-					index: dataIndex,
-					object: marker,
-					data: data[dataIndex],
-				}
-			}
-		}
-
-		// 3D object picking
-		if (polaris.pick === undefined) return
-
-		if (marker.object3d && marker.object3d.geometry) {
-			const result = polaris.pick(marker.object3d, ndc, {
-				backfaceCulling: true,
-				allInters: false, // The pick process can return as soon as it hits the first triangle
-				threshold: 10, // In case the object3d is a line mesh
-			})
-			if (result.hit && result.intersections) {
-				const inter0 = result.intersections[0]
-				return {
-					distance: inter0.distance as number,
-					point: inter0.point as { x: number; y: number; z: number },
-					pointLocal: inter0.pointLocal as { x: number; y: number; z: number },
-					index: dataIndex,
-					object: marker,
-					data: data[dataIndex],
-				}
-			}
-		}
+		pickResult.index = dataIndex
+		pickResult.data = data[dataIndex]
+		return pickResult
 	}
 }

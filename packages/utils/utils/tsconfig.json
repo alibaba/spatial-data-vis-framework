@@ -9,10 +9,10 @@
 	"exclude": ["dist"],
 	"references": [
 		{
-			"path": "../../schema/core"
+			"path": "../projections"
 		},
 		{
-			"path": "../projections"
+			"path": "../../schema/core"
 		}
 	]
 }

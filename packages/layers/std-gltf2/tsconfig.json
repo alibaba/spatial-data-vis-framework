@@ -12,13 +12,7 @@
 			"path": "../../frontend/layer-std"
 		},
 		{
-			"path": "../../schema/core"
-		},
-		{
 			"path": "../../utils/projections"
-		},
-		{
-			"path": "../../utils/utils"
 		}
 	]
 }

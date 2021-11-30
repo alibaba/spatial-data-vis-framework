@@ -10,7 +10,7 @@ import { default as getByPath } from 'lodash/get'
 import { default as partition } from 'lodash/partition'
 import { default as isEmpty } from 'lodash/isEmpty'
 
-export type CallBack = { (event: Event, ...args: any[]): void }
+export type EventCallBack = { (event: Event, done: () => void): void }
 
 const REGX_HTTP_HTTPS = /^(https:\/\/|http:\/\/)\.*/
 const REGX_GLB_GLTF = /\.(glb|gltf)$/
@@ -22,15 +22,17 @@ export interface Event {
 }
 
 class EventEmitter {
-	listeners: Map<string, CallBack> = new Map()
+	listeners: Map<string, EventCallBack> = new Map()
 
-	on(type: string, callback: CallBack) {
+	on(type: string, callback: EventCallBack) {
 		this.listeners.set(type, callback)
 	}
 
-	emit(event: Event) {
+	emit(event: Event): Promise<void> {
 		const callback = this.listeners.get(event.type)
-		callback?.apply(this, [event])
+		return new Promise<void>((resolve) => {
+			callback?.apply(this, [event, resolve])
+		})
 	}
 
 	getCallback(type: string) {
@@ -70,14 +72,13 @@ export class PropsManager extends EventEmitter {
 	// transform 后的数据
 	cacheData: any = null
 
-	// cache由getXXX生成的Functions
-	cachedGetterFuncs = new Map<string, (...args: any[]) => void>()
-
 	/**
 	 * 初始化/更新属性，可以是增量更新
-	 * @param newProps
+	 * @param {*} newProps
+	 * @param {() => void} [callback]
+	 * @memberof PropsManager
 	 */
-	set(newProps: any) {
+	set(newProps: any, callback?: () => void): Promise<void> {
 		// 获取新旧 Props 的差异
 		const diffProps = shallowDiffProps(newProps, this.props)
 		const partitionDiffProps = partition(
@@ -91,17 +92,26 @@ export class PropsManager extends EventEmitter {
 			...this.props,
 			...newProps,
 		}
-		if (!isEmpty(diffDataProps)) {
-			_getCacheData(this.props['data']).then((cacheData) => {
-				this.cacheData = cacheData
-				// 数据相关属性有变化
+
+		return new Promise<void>((resolve) => {
+			if (!isEmpty(diffDataProps)) {
+				_getCacheData(this.props['data']).then((cacheData) => {
+					this.cacheData = cacheData
+					// 数据相关属性有变化
+					// 非数据相关属性有变化
+					this.trigger(diffOtherProps, diffDataProps).then(() => {
+						if (callback) callback()
+						resolve()
+					})
+				})
+			} else {
 				// 非数据相关属性有变化
-				this.trigger(diffOtherProps, diffDataProps)
-			})
-		} else {
-			// 非数据相关属性有变化
-			this.trigger(diffOtherProps)
-		}
+				this.trigger(diffOtherProps).then(() => {
+					if (callback) callback()
+					resolve()
+				})
+			}
+		})
 	}
 
 	/**
@@ -109,7 +119,7 @@ export class PropsManager extends EventEmitter {
 	 * @param normalProps
 	 * @param dataProps
 	 */
-	trigger(normalProps: string[], dataProps?: string[]) {
+	trigger(normalProps: string[], dataProps?: string[]): Promise<void> {
 		const keyMap = new Map<string, string[]>()
 
 		// Find and set normalProps callback
@@ -144,11 +154,18 @@ export class PropsManager extends EventEmitter {
 			}
 		}
 
+		const emitPromises: Promise<any>[] = []
 		keyMap.forEach((triggerProps, key) => {
-			this.emit({
-				type: key,
-				trigger: triggerProps,
-			})
+			emitPromises.push(
+				this.emit({
+					type: key,
+					trigger: triggerProps,
+				})
+			)
+		})
+
+		return new Promise<void>((resolve) => {
+			Promise.all(emitPromises).then(() => resolve())
 		})
 	}
 
@@ -168,22 +185,10 @@ export class PropsManager extends EventEmitter {
 		// 处理 get 开头的数据图形映射属性，返回一个 mapping 函数，每个数据 item，可以映射为一个图形属性
 		if (key.startsWith('get')) {
 			if (typeof value === 'function') return value
-			if (this.cachedGetterFuncs.has(key)) return this.cachedGetterFuncs.get(key)
-			// if (value?.field && value?.range) {
-			// 	let fn = d3Scale.scaleLinear().range(value.range)
-			// 	if (value?.domain) {
-			// 		fn = fn.domain(value.domain)
-			// 	} else {
-			// 		fn = fn.domain(this._getDataDomain(value.field))
-			// 	}
-			// 	const getter = (item) => fn(item[value['field']])
-			// 	this.cachedGetterFuncs.set(key, getter)
-			// 	return getter
-			// }
 			const getter = () => value
-			this.cachedGetterFuncs.set(key, getter)
 			return getter
 		}
+
 		return value
 	}
 
@@ -192,7 +197,7 @@ export class PropsManager extends EventEmitter {
 	 * @param propsName
 	 * @param callback
 	 */
-	listen(propsName: string | Array<string>, callback: CallBack) {
+	listen(propsName: string | Array<string>, callback: EventCallBack) {
 		if (typeof propsName === 'string') {
 			propsName = [propsName]
 		}

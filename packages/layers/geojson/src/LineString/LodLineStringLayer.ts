@@ -22,6 +22,19 @@ import { LineLodGroup } from './LineLodGroup'
 /**
  * 配置项 interface
  */
+export type LodInfo = {
+	/**
+	 * 需要每一级lod所对应的最大zoom值
+	 * eg. [5, 10, 15, 20, 25, ...]
+	 */
+	zoom: number
+	/**
+	 * [0~1] 代表每个lod对应原始线段的精细程度
+	 * eg. [0.1, 0.3, 0.5, 0.7, ...]
+	 */
+	percentage: number
+}
+
 export interface LodLineStringProps extends STDLayerProps {
 	data?: FeatureCollection
 	level?: number
@@ -35,15 +48,9 @@ export interface LodLineStringProps extends STDLayerProps {
 	usePerspective?: boolean
 	useColors?: boolean
 	/**
-	 * lodZoomLvs需传入每一级lod所对应的最大zoom值
-	 * eg. [5, 10, 15, 20, 25, ...]
+	 * 生成lods所需信息
 	 */
-	lodZoomLvs?: Array<number>
-	/**
-	 * lodPercentages代表每个lod对应原始线段的精细程度[0~1]
-	 * eg. [5, 10, 15, 20, 25, ...]
-	 */
-	lodPercentages?: Array<number>
+	lods?: LodInfo[]
 	/**
 	 * Open debug mode
 	 */
@@ -61,13 +68,26 @@ const defaultProps: LodLineStringProps = {
 	useColors: false,
 	dynamic: false,
 	baseAlt: 0,
-	lodZoomLvs: [5, 10, 15],
-	lodPercentages: [0.1, 0.3, 0.7],
+	lods: [
+		{
+			zoom: 100,
+			percentage: 1.0,
+		},
+	],
 	debug: false,
 }
 
 const textDecoder = new TextDecoder('utf-8')
 
+/**
+ * 通过生成多级Line LOD解决过于精细的线条在zoom较远时的artifacts，LODs采用worker线程计算并返回
+ * @TODO worker可以返回arraybuffer来进一步提高线程间传输data的效率
+ * @LIMIT LODs的显隐只和当前zoom有关，适合于完全俯视视角下的地图浏览，可能不适合于3D空间内过于倾斜时的视角
+ *
+ * @export
+ * @class LodLineStringLayer
+ * @extends {STDLayer}
+ */
 export class LodLineStringLayer extends STDLayer {
 	glineGroup: LineLodGroup
 
@@ -81,28 +101,33 @@ export class LodLineStringLayer extends STDLayer {
 			...props,
 		})
 
-		this.name = this.group.name = 'LineStringLayer'
+		this.name = this.group.name = 'LodLineStringLayer'
 
 		this.glineGroup = new LineLodGroup()
 
 		this.onViewChange = (cam, polaris) => {
-			this.glineGroup.update(cam)
+			if (this.glineGroup) {
+				// Update resolution
+				const p = polaris as Polaris
+				const w = p.canvasWidth
+				const h = p.canvasHeight
+				this.glineGroup.forEach((mesh) => {
+					const gline = mesh as GLine
+					const originRes = gline.material.config['resolution']
+					if (originRes.x !== w || originRes.y !== h) {
+						gline.material.config['resolution'] = {
+							x: p.canvasWidth,
+							y: p.canvasHeight,
+						}
+					}
+				})
+				// Update lods
+				this.glineGroup.update(cam)
+			}
 		}
 	}
 
 	init(projection, timeline, polaris) {
-		// Init WorkerManager
-		// this.listenProps(['workersCount'], () => {
-		// 	const count = this.getProps('workersCount')
-		// 	if (count > 0) {
-		// 		const workers: Worker[] = []
-		// 		for (let i = 0; i < count; i++) {
-		// 			workers.push(new GeomWorker())
-		// 		}
-		// 		this._workerManager = new WorkerManager(workers)
-		// 	}
-		// })
-
 		this._workerManager = new WorkerManager([new GeomWorker()])
 
 		this.listenProps(
@@ -116,23 +141,15 @@ export class LodLineStringLayer extends STDLayer {
 				'usePerspective',
 				'useColors',
 				'dynamic',
-				'lodZoomLvs',
-				'lodPercentages',
+				'lods',
 			],
 			() => {
 				if (this.glineGroup) {
 					this.glineGroup.forEach((gline) => this.group.remove(gline))
 					this.glineGroup.clear()
 				}
-				const lodLvs = this.getProps('lodZoomLvs')
-				const percentages = this.getProps('lodPercentages')
-				if (lodLvs.length !== percentages.length) {
-					console.error(
-						'Polaris::LodLineStringLayer - Length of `lodZoomLvs` and `lodPercentages` are different, check them first. '
-					)
-					return
-				}
-				for (let i = 0; i < lodLvs.length; i++) {
+				const lodInfos = this.getProps('lods') as LodInfo[]
+				for (let i = 0; i < lodInfos.length; i++) {
 					const color = this._getLineColor()
 					const gline = new GLine({
 						level: this.getProps('level'),
@@ -150,7 +167,7 @@ export class LodLineStringLayer extends STDLayer {
 						},
 					})
 					this.group.add(gline)
-					this.glineGroup.add(gline, lodLvs[i])
+					this.glineGroup.add(gline, lodInfos[i].zoom)
 				}
 			}
 		)
@@ -165,13 +182,11 @@ export class LodLineStringLayer extends STDLayer {
 				'usePerspective',
 				'useColors',
 				'dynamic',
-				'lodZoomLvs',
-				'lodPercentages',
+				'lods',
 			],
 			async () => {
 				const data: FeatureCollection<any> = this.getProps('data')
 				const baseAlt = this.getProps('baseAlt')
-
 				if (!(data && Array.isArray(data.features))) {
 					return
 				}
@@ -179,22 +194,23 @@ export class LodLineStringLayer extends STDLayer {
 				/**
 				 * Building geojson lods:
 				 * 1. Transfer to worker
-				 * 2. Get generated geojsons back
+				 * 2. Get generated geojsons back (might be arraybuffer)
 				 * 3. Build lod meshes
 				 */
-				const percentages = this.getProps('lodPercentages')
+				const lodInfos = this.getProps('lods') as LodInfo[]
+				const percentages = lodInfos.map((info) => info.percentage)
 				const res = await this._workerManager.execute({
 					data: {
 						task: 'lods',
 						geojson: data,
 						percentages: percentages,
 					},
+					transferables: undefined,
 				})
 
 				res.results.forEach((lod, i) => {
-					const content = lod[0].content
+					const content = lod
 					if (!content) return
-
 					let geojson
 					if (content.buffer !== undefined) {
 						geojson = JSON.parse(textDecoder.decode(content))
@@ -230,6 +246,7 @@ export class LodLineStringLayer extends STDLayer {
 							positions.push(positionsSub)
 						}
 					})
+
 					const gline = this.glineGroup.get(i).mesh as GLine
 					gline.geometry.updateData({
 						positions: positions,
@@ -240,24 +257,6 @@ export class LodLineStringLayer extends STDLayer {
 				this.glineGroup.update(polaris.cameraProxy)
 			}
 		)
-
-		this.onViewChange = (cameraProxy, polaris) => {
-			if (this.glineGroup) {
-				const p = polaris as Polaris
-				const w = p.canvasWidth
-				const h = p.canvasHeight
-				this.glineGroup.forEach((mesh) => {
-					const gline = mesh as GLine
-					const originRes = gline.material.config['resolution']
-					if (originRes.x !== w || originRes.y !== h) {
-						gline.material.config['resolution'] = {
-							x: p.canvasWidth,
-							y: p.canvasHeight,
-						}
-					}
-				})
-			}
-		}
 	}
 
 	_getLineColor() {

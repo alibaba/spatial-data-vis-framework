@@ -48,6 +48,9 @@
 			"path": "../packages/layers/std-marker"
 		},
 		{
+			"path": "../packages/layers/xyz-poi-tile-layer"
+		},
+		{
 			"path": "../packages/polaris/polaris-gsi-gl2"
 		},
 		{

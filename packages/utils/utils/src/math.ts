@@ -3,30 +3,7 @@
  * All rights reserved.
  */
 
-import { Projection } from '@polaris.gl/projection'
-import { Vector3, Matrix4 } from '@gs.i/utils-math'
 import { ColorLike } from '@gs.i/schema'
-
-const up = new Vector3(0, 1, 0)
-const _v0 = new Vector3()
-export function getOrientationMatrix(
-	lnglatalt: number[],
-	projection: Projection,
-	outNormal: Vector3 | undefined = undefined
-) {
-	lnglatalt[2] = lnglatalt[2] ?? 0
-	const position = projection.project(lnglatalt[0], lnglatalt[1], lnglatalt[2])
-	const position2 = projection.project(lnglatalt[0], lnglatalt[1], lnglatalt[2] + 10)
-
-	if (!outNormal) {
-		outNormal = new Vector3()
-	}
-	outNormal
-		.set(position2[0] - position[0], position2[1] - position[1], position2[2] - position[2])
-		.normalize()
-
-	return new Matrix4().lookAt(outNormal, _v0, up)
-}
 
 export function clamp(x, minVal, maxVal) {
 	return Math.min(Math.max(x, minVal), maxVal)

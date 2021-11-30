@@ -46,6 +46,7 @@ fetchData().then((data) => {
 
 	// Polygons
 	const polygonLayer1 = (window['layer1'] = new PolygonLayer({
+		// projection: new SphereProjection({}),
 		getFillColor: (feature) => {
 			const r = Math.floor(100 + Math.random() * 155).toString(16)
 			const color = `#${r}aa${r}`
@@ -65,35 +66,35 @@ fetchData().then((data) => {
 		selectLineWidth: 4,
 		selectLinesHeight: 2000,
 		workersCount: 4,
-		// projection: new SphereProjection({}),
 	}))
 	p.add(polygonLayer1)
 	polygonLayer1.updateData(newGeo)
 	polygonLayer1.onPicked = (info) => {
 		console.log('onPicked', info)
 	}
-	polygonLayer1.onHovered = (info) => {
-		// console.log('onHovered', info)
-	}
+	polygonLayer1.onHovered = (info) => {}
 
-	// Line
-	// const lineLayer = (window['line'] = new LineStringLayer({
-	// 	color: '#ffffff',
-	// 	lineWidth: 1,
-	// 	baseAlt: 0,
-	// 	texture: undefined,
-	// 	data: 'https://polaris-geo.oss-cn-hangzhou.aliyuncs.com/world-coastline.json',
-	// }))
-	// p.add(lineLayer)
-
+	// line
 	const lineLayer2 = (window['line'] = new LodLineStringLayer({
 		color: '#ffffff',
-		lineWidth: 1,
+		lineWidth: 2,
 		baseAlt: 0,
-		lodZoomLvs: [3, 5, 7, 9, 11],
-		lodPercentages: [0.1, 0.3, 0.5, 0.7, 1.0],
-		data: 'https://gw.alipayobjects.com/os/bmw-prod/ce234e33-8a32-4729-965a-242c87b336fd.json',
-		debug: true,
+		lods: [
+			{
+				zoom: 3,
+				percentage: 0.2,
+			},
+			{
+				zoom: 6,
+				percentage: 0.6,
+			},
+			{
+				zoom: 10,
+				percentage: 1.0,
+			},
+		],
+		data: 'https://gw.alipayobjects.com/os/bmw-prod/a67af908-f9a4-44c6-8912-ddd45bcb56c0.json',
+		debug: true, // Debug mode, with color variance
 	}))
 	p.add(lineLayer2)
 })
@@ -117,12 +118,12 @@ p.add(polygonLayer2)
 polygonLayer2.updateData(
 	'https://gw.alipayobjects.com/os/bmw-prod/6a0e53c5-3d79-407f-a554-2f97916f7940.json'
 )
-// polygonLayer2.onPicked = (info) => {
-// 	console.log('onPicked', info)
-// }
-polygonLayer2.onHovered = (info) => {
-	info && console.log('onHovered', info)
+polygonLayer2.onPicked = (info) => {
+	console.log('onPicked', info)
 }
+// polygonLayer2.onHovered = (info) => {
+// 	info && console.log('onHovered', info)
+// }
 
 p.setStatesCode('1|-1.191044|56.161481|0.000000|0.70540|-0.03000|1.73000')
 // p.setStatesCode('1|110|36|0.000000|0.00000|0.00000|1.73000')

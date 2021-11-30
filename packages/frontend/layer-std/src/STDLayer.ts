@@ -8,7 +8,7 @@
  * 但是 typescript 中 mixin 和 decoration 都会造成一定程度的 interface 混乱
  * 因此在这里把constructor里增加的逻辑拆成函数，
  */
-import { Layer, LayerProps, Polaris } from '@polaris.gl/schema'
+import { Layer, LayerProps, PickEventResult, Polaris, View } from '@polaris.gl/schema'
 import { GSIView } from '@polaris.gl/view-gsi'
 import { Mesh } from '@gs.i/frontend-sdk'
 import { HtmlView } from '@polaris.gl/view-html'
@@ -22,6 +22,8 @@ export interface STDLayerProps extends LayerProps {
 	depthTest?: boolean
 	renderOrder?: number
 	pickable?: boolean
+	onPicked?: (event: PickEventResult | undefined) => void
+	onHovered?: (event: PickEventResult | undefined) => void
 }
 
 export const STDLayerProps: STDLayerProps = {
@@ -31,12 +33,32 @@ export const STDLayerProps: STDLayerProps = {
 }
 
 /**
+ * Temp vars
+ */
+const _mat4 = new Matrix4()
+const _vec3 = new Vector3()
+const _vec2 = new Vector2()
+
+/**
  * Standard Layer
  * 标准 Layer，包含 GSIView 作为 3D 容器，HTMLView 作为 2D 容器
  */
 export class STDLayer extends Layer {
 	constructor(props: STDLayerProps) {
 		super(props)
+
+		if (!this.view) {
+			this.view = {
+				/**
+				 * 挂载 DOM 元素
+				 */
+				html: new HtmlView().init(this),
+				/**
+				 * 挂载 GSI 元素
+				 */
+				gsi: new GSIView().init(this),
+			}
+		}
 
 		this.afterInit = (projection, timeline, polaris) => {
 			/**
@@ -57,12 +79,16 @@ export class STDLayer extends Layer {
 			})
 
 			// Set onPicked callback to props
-			if (this.onPicked === undefined && this.getProps('onPicked') !== undefined) {
+			if (this.getProps('onPicked') !== undefined) {
 				this.onPicked = this.getProps('onPicked')
 			}
 
+			if (this.getProps('onHovered') !== undefined) {
+				this.onHovered = this.getProps('onHovered')
+			}
+
 			this.parent.getProjection().then((parentProjection) => {
-				this.initProjectionAlignment(projection, parentProjection, polaris)
+				this._initProjectionAlignment(projection, parentProjection, polaris)
 			})
 		}
 	}
@@ -70,17 +96,7 @@ export class STDLayer extends Layer {
 	/**
 	 * 视图 interface
 	 */
-	view: { html: HtmlView; gsi: GSIView } = {
-		/**
-		 * 挂载 DOM 元素
-		 */
-		html: new HtmlView(this),
-
-		/**
-		 * 挂载 GSI 元素
-		 */
-		gsi: new GSIView(this),
-	}
+	view: { gsi: GSIView; html: HtmlView; [name: string]: View }
 
 	/**
 	 * syntactic suger
@@ -101,19 +117,12 @@ export class STDLayer extends Layer {
 	/**
 	 * @TODO use generic type to
 	 * correct all the method/callback interfaces
-	 * inherited from  Base
-	 */
-
-	/**
-	 *
+	 * inherited from Base
 	 */
 	add: (child: STDLayer) => void
 	remove: (child: STDLayer) => void
-
-	/**
-	 * Highlight api
-	 */
-	highlightByIndices: (dataIndexArr: number[], style: { [name: string]: any }) => void
+	traverse: (f: (obj: STDLayer) => void) => void
+	traverseVisible: (f: (obj: STDLayer) => void) => void
 
 	/**
 	 * 获取世界坐标在当前layer的经纬度
@@ -129,8 +138,8 @@ export class STDLayer extends Layer {
 		const worldMatrix = transform.worldMatrix ?? transform.matrix
 		const projection = this.localProjection ?? this.resolvedProjection
 		if (!projection) return
-		const inverseMat = new Matrix4().fromArray(worldMatrix).invert()
-		const v = new Vector3(x, y, z)
+		const inverseMat = _mat4.fromArray(worldMatrix).invert()
+		const v = _vec3.set(x, y, z)
 		// Transform to pure world xyz
 		v.applyMatrix4(inverseMat)
 		return projection.unproject(v.x, v.y, v.z)
@@ -154,8 +163,8 @@ export class STDLayer extends Layer {
 			// console.warn('Polaris::STDLayer - Layer has no projection info, define a projection or add it to a parent layer first. ')
 			return
 		}
-		const matrix4 = new Matrix4().fromArray(worldMatrix)
-		const pos = new Vector3().fromArray(projection.project(lng, lat, alt))
+		const matrix4 = _mat4.fromArray(worldMatrix)
+		const pos = _vec3.fromArray(projection.project(lng, lat, alt))
 		pos.applyMatrix4(matrix4)
 		return pos
 	}
@@ -183,11 +192,18 @@ export class STDLayer extends Layer {
 		const screenXY = this.polaris.getScreenXY(worldPos.x, worldPos.y, worldPos.z)
 		if (!screenXY) return
 
-		const xy = new Vector2().fromArray(screenXY)
+		const xy = _vec2.fromArray(screenXY)
+
 		// Align to html dom x/y
 		xy.y = this.polaris.height - xy.y
+
 		return xy
 	}
+
+	/**
+	 * Highlight API
+	 */
+	highlightByIndices: (dataIndexArr: number[], style: { [name: string]: any }) => void
 
 	/**
 	 * depthTest的设定函数，可被子类重写
@@ -213,7 +229,7 @@ export class STDLayer extends Layer {
 		})
 	}
 
-	private initProjectionAlignment(selfProjection, parentProjection, polaris) {
+	private _initProjectionAlignment(selfProjection, parentProjection, polaris) {
 		const DEG2RAD = Math.PI / 180
 		const groupWrapper = this.view.gsi.groupWrapper
 		this.onAdd = () => {

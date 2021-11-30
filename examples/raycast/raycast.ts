@@ -25,6 +25,7 @@ indicator.innerText = 'hovered'
 indicator.style.position = 'absolute'
 indicator.style.background = '#fff'
 indicator.style.fontSize = '24px'
+indicator.style.visibility = 'hidden'
 p.view.html.element.appendChild(indicator)
 
 // Marker objects

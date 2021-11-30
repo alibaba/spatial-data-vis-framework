@@ -104,7 +104,7 @@ async function getPackageImports(pathStr) {
 		subdirs.forEach((dir) => {
 			if (dir === 'node_modules') return
 			const absolute = path.resolve(pathStr, dir)
-			throughDirectory(absolute, (file) => {
+			walkDir(absolute, (file) => {
 				pendings.push(getTsImports(file))
 			})
 		})
@@ -126,7 +126,7 @@ async function getPackageImports(pathStr) {
 	})
 }
 
-function throughDirectory(dir, fileCallback) {
+function walkDir(dir, fileCallback) {
 	const states = fs.statSync(dir)
 	if (states.isFile()) {
 		fileCallback(dir)
@@ -137,7 +137,7 @@ function throughDirectory(dir, fileCallback) {
 			const absolute = path.join(dir, file)
 			const states = fs.statSync(absolute)
 			if (states.isDirectory()) {
-				return throughDirectory(absolute, fileCallback)
+				return walkDir(absolute, fileCallback)
 			} else if (states.isFile()) {
 				fileCallback(absolute)
 			}
@@ -145,16 +145,17 @@ function throughDirectory(dir, fileCallback) {
 	}
 }
 
+const ignorePrefix = ['.', 'worker-loader!']
 function getTsImports(tsFile) {
 	return new Promise((resolve) => {
+		const otherImports = new Set()
+		const gsiImports = new Set()
+
 		const rd = createInterface({
 			input: fs.createReadStream(tsFile),
 		})
-		const otherImports = new Set()
-		const gsiImports = new Set()
 		rd.on('line', (line) => {
-			line = line.trimStart()
-			line = line.trimEnd()
+			line = line.trimStart().trimEnd()
 
 			if (
 				line.startsWith('//') ||
@@ -165,14 +166,17 @@ function getTsImports(tsFile) {
 				return
 			}
 
-			if (line.includes(` from `)) {
+			if (line.includes(` from '`)) {
 				const pkgFullName = line.substring(
-					line.indexOf(' from ') + ' from '.length + 1,
+					line.indexOf(` from '`) + ` from '`.length,
 					line.length - 1
 				)
 
-				if (pkgFullName.startsWith('.') || pkgFullName.startsWith('worker-loader!')) {
-					return
+				for (let i = 0; i < ignorePrefix.length; i++) {
+					const prefix = ignorePrefix[i]
+					if (pkgFullName.startsWith(prefix)) {
+						return
+					}
 				}
 
 				if (pkgFullName.startsWith('@gs.i')) {

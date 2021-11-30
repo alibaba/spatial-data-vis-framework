@@ -12,8 +12,6 @@ import { computeBBox, computeBSphere } from '@gs.i/utils-geometry'
 import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
 import { Mesh, Geom, Attr, MatrPbr } from '@gs.i/frontend-sdk'
 import { Color } from '@gs.i/utils-math'
-import { getGeom, getCoords } from '@turf/invariant'
-import polygonToLine from '@turf/polygon-to-line'
 import { LineIndicator } from '@polaris.gl/utils-indicator'
 
 /**
@@ -25,6 +23,7 @@ import {
 	CDTGeojsonWithSubdivision,
 	getColorUint,
 	getFeatureStringKey,
+	featureToLinePositions,
 } from '../utils'
 import { PolygonMatr } from './PolygonMatr'
 import { Polaris } from '@polaris.gl/schema'
@@ -69,8 +68,8 @@ export interface PolygonSurfaceLayerProps extends STDLayerProps {
 	 */
 	// storeGeomToLocalDB?: boolean
 	// clearStorage?: boolean
-	maxMemCacheCount?: number
-	featureStorageKey?: string
+	// maxMemCacheCount?: number
+	// featureStorageKey?: string
 	/**
 	 * Worker params
 	 */
@@ -101,8 +100,8 @@ const defaultProps: PolygonSurfaceLayerProps = {
 	selectLineColor: '#FFAE0F',
 	// storeGeomToLocalDB: true,
 	// clearStorage: false,
-	maxMemCacheCount: 0,
-	featureStorageKey: 'properties.adcode',
+	// maxMemCacheCount: 0,
+	// featureStorageKey: 'properties.adcode',
 	workersCount: 0,
 }
 
@@ -160,17 +159,19 @@ export class PolygonSurfaceLayer extends STDLayer {
 		this._storeName = 'Polaris_PolygonSurfaceLayer'
 		this._geomCache = new Map()
 
-		this.listenProps(['tessellation'], () => {
+		this.listenProps(['tessellation'], (e, done) => {
 			this._tessellation = this.getProps('tessellation') ?? 0
+			done()
 		})
 
 		this.matr = new PolygonMatr()
 
-		this.listenProps(['transparent', 'doubleSide', 'metallic', 'roughness'], () => {
+		this.listenProps(['transparent', 'doubleSide', 'metallic', 'roughness'], (e, done) => {
 			this.matr.metallicFactor = this.getProps('metallic')
 			this.matr.roughnessFactor = this.getProps('roughness')
 			this.matr.alphaMode = this.getProps('transparent') ? 'BLEND' : 'OPAQUE'
 			this.matr.side = this.getProps('doubleSide') ? 'double' : 'front'
+			done()
 		})
 
 		this.onRenderOrderChange = (renderOrder) => {
@@ -199,7 +200,7 @@ export class PolygonSurfaceLayer extends STDLayer {
 
 	init(projection, timeline, polaris) {
 		// Init WorkerManager
-		this.listenProps(['workersCount'], () => {
+		this.listenProps(['workersCount'], (e, done) => {
 			const count = this.getProps('workersCount')
 			if (count > 0) {
 				const workers: Worker[] = []
@@ -208,6 +209,7 @@ export class PolygonSurfaceLayer extends STDLayer {
 				}
 				this._workerManager = new WorkerManager(workers)
 			}
+			done()
 		})
 
 		// 3D 内容
@@ -233,8 +235,6 @@ export class PolygonSurfaceLayer extends STDLayer {
 			[
 				'data',
 				'getThickness',
-				'getColor',
-				'getOpacity',
 				'baseAlt',
 				'useTessellation',
 				'genSelectLines',
@@ -243,25 +243,33 @@ export class PolygonSurfaceLayer extends STDLayer {
 				'selectLineLevel',
 				'selectLineColor',
 			],
-			async (e) => {
+			(e, done) => {
 				const data = this.getProps('data')
 				if (!(data && Array.isArray(data.features))) {
+					done()
 					return
 				}
-				const cached = this._getCachedGeom(data.features)
-				if (cached) {
-					this.mesh.geometry = cached.geom
-					if (this.getProps('genSelectLines')) {
-						this.selectIndicator = cached.selectIndicator
-						this.hoverIndicator = cached.hoverIndicator
-						this.selectIndicator.addToLayer(this)
-						this.hoverIndicator.addToLayer(this)
-					}
-				} else {
-					await this.createGeom(data, projection, polaris)
-				}
+				this.createGeom(data, projection, polaris).then(() => done())
+				// const cached = undefined
+				// if (cached) {
+				// 	this.mesh.geometry = cached.geom
+				// 	if (this.getProps('genSelectLines')) {
+				// 		this.selectIndicator = cached.selectIndicator
+				// 		this.hoverIndicator = cached.hoverIndicator
+				// 		this.selectIndicator.addToLayer(this)
+				// 		this.hoverIndicator.addToLayer(this)
+				// 	}
+				// } else {
+				// 	this.createGeom(data, projection, polaris)
+				// }
 			}
 		)
+
+		// Only update color attributes
+		this.listenProps(['getColor', 'getOpacity'], (e, done) => {
+			this._updateColorsAttr()
+			done()
+		})
 	}
 
 	private async createGeom(data, projection, polaris) {
@@ -275,6 +283,7 @@ export class PolygonSurfaceLayer extends STDLayer {
 		const getOpacity = this.getProps('getOpacity')
 		const baseAlt = this.getProps('baseAlt')
 		const genSelectLines = this.getProps('genSelectLines')
+		const lineHeight = this.getProps('selectLinesHeight')
 
 		const positions: number[] = []
 		const colors: number[] = []
@@ -369,7 +378,11 @@ export class PolygonSurfaceLayer extends STDLayer {
 
 			// LineIndicator geom info creation
 			if (genSelectLines) {
-				const linePos = this._getLinePositions(feature, projection)
+				const linePos = featureToLinePositions(
+					feature,
+					projection,
+					baseAlt + getThickness(feature) + lineHeight
+				)
 				if (linePos) {
 					linePos.forEach((positions) => {
 						linePosArr.push(positions)
@@ -745,70 +758,6 @@ export class PolygonSurfaceLayer extends STDLayer {
 		}
 	}
 
-	private _getLinePositions(feature, projection, alt = 0) {
-		const baseAlt = this.getProps('baseAlt')
-		const getThickness = this.getProps('getThickness')
-		const lineHeight = this.getProps('selectLinesHeight')
-		let geom: any = getGeom(feature)
-		if (geom) {
-			const linePositions: number[][] = []
-			// 如果Geojson数据是Polygon类型，需要先转换为LineString
-			if (geom.type === 'Polygon') {
-				const line: any = polygonToLine(feature)
-				geom = getGeom(line)
-				const positionsArr = this._getGeomPositions(
-					geom,
-					projection,
-					baseAlt + getThickness(feature) + alt + lineHeight
-				)
-				positionsArr?.forEach((positions) => {
-					linePositions.push(positions)
-				})
-			} else if (geom.type === 'MultiPolygon') {
-				const line: any = polygonToLine(feature)
-				line.features.forEach((feature) => {
-					geom = feature.geometry
-					const positionsArr = this._getGeomPositions(
-						geom,
-						projection,
-						baseAlt + getThickness(feature) + alt + lineHeight
-					)
-					positionsArr?.forEach((positions) => {
-						linePositions.push(positions)
-					})
-				})
-			}
-			return linePositions
-		}
-	}
-
-	private _getGeomPositions(geom, projection, alt): number[][] | undefined {
-		const results: number[][] = []
-		if (geom.type === 'LineString') {
-			const positions: number[] = []
-			const coords = getCoords(geom)
-			coords.forEach((coord) => {
-				const xyz = projection.project(coord[0], coord[1], alt)
-				positions.push(...xyz)
-			})
-			results.push(positions)
-			return results
-		} else if (geom.type === 'MultiLineString') {
-			const multiCoords: any[] = getCoords(geom)
-			multiCoords.forEach((coords) => {
-				const positions: number[] = []
-				coords.forEach((coord) => {
-					const xyz = projection.project(coord[0], coord[1], alt)
-					positions.push(...xyz)
-				})
-				results.push(positions)
-			})
-			return results
-		} else {
-			console.error('PolygonLayer - Geojson geom type is not valid', geom.type, geom)
-		}
-	}
-
 	private _removeIndicator(indicator: LineIndicator) {
 		indicator && indicator.removeFromLayer()
 	}
@@ -833,6 +782,32 @@ export class PolygonSurfaceLayer extends STDLayer {
 			}
 		})
 		return this._geomCache.get(cacheKey)
+	}
+
+	private _updateColorsAttr() {
+		const data = this.getProps('data')
+		if (!(data && Array.isArray(data.features))) {
+			return
+		}
+		if (!this.geom) return
+
+		const attr = this.geom.attributes.color
+		if (!attr || !attr.array || isDISPOSED(attr.array)) {
+			console.warn(
+				'Polaris::PolygonSurfaceLayer - Color attr does not exist, or has been disposed. '
+			)
+			return
+		}
+		const getColor = this.getProps('getColor')
+		const getOpacity = this.getProps('getOpacity')
+		data.features.forEach((feature) => {
+			const color = new Color(getColor(feature))
+			const opacity = getOpacity(feature) ?? 1.0
+			// Update
+			this.updateFeatureColor(feature, color, opacity)
+			// Update cached colorUint
+			this.featColorMap.set(feature, getColorUint(color, opacity))
+		})
 	}
 }
 

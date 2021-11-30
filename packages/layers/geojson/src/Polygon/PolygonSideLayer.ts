@@ -25,7 +25,7 @@ import { getColorUint } from '../utils'
 /**
  * 配置项 interface
  */
-// import { THREE } from 'gl2'
+// import { THREE } from '@ali/GL2'
 export interface PolygonSideLayerProps extends STDLayerProps {
 	getColor?: any
 	getThickness?: any
@@ -149,12 +149,6 @@ export class PolygonSideLayer extends STDLayer {
 					colors[i * 4 + 2 + index] = colorUint[2]
 					colors[i * 4 + 3 + index] = colorUint[3]
 				}
-
-				// indexRange[1] = indices.length - 1
-				// this.featIndexRangeMap.set(feature, indexRange)
-
-				// vertRange[1] = positions.length - 1
-				// this.featVertRangeMap.set(feature, vertRange)
 			})
 
 			this.geom.attributes.position = new Attr(new Float32Array(positions), 3)
@@ -168,12 +162,4 @@ export class PolygonSideLayer extends STDLayer {
 			computeBBox(this.geom)
 		})
 	}
-
-	// getFeatureIndexRange(feature) {
-	// 	return this.featIndexRangeMap.get(feature)
-	// }
-
-	// getFeatureVertexRange(feature) {
-	// 	return this.featVertRangeMap.get(feature)
-	// }
 }

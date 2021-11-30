@@ -10,12 +10,6 @@
 	"references": [
 		{
 			"path": "../../frontend/layer-std"
-		},
-		{
-			"path": "../../schema/core"
-		},
-		{
-			"path": "../../utils/utils"
 		}
 	]
 }

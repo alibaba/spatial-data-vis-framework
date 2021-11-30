@@ -13,16 +13,13 @@ import { View, Layer } from '@polaris.gl/schema'
 const _DIV = document.createElement('DIV')
 
 export class HtmlView extends View {
-	constructor(layer: Layer) {
-		super()
-		this.init(layer)
-	}
 	/**
 	 * 渲染内容
 	 * @note 按需创建，可能根本用不到
 	 * @todo onAdd 回调中的检测会导致这里失效
 	 */
 	private _element: HTMLElement
+
 	public get element(): HTMLElement {
 		if (!this._element) this._element = _DIV.cloneNode(false) as HTMLElement
 		return this._element
@@ -31,59 +28,87 @@ export class HtmlView extends View {
 	/**
 	 * type guard
 	 */
-	isHtmlView = true
+	readonly isHtmlView = true
 
-	/**
-	 * 语法糖 @todo controversal
-	 */
-	html = this
+	constructor() {
+		super()
+		// @qianxun: will be called in Layer initialization
+		// super.init(layer)
+	}
 
-	/**
-	 * 初始化函数，用来向layer上挂事件
-	 * @param layer
-	 */
-	init(layer: Layer) {
+	layer: Layer
+
+	init(layer: Layer): this {
+		this.layer = layer
+
 		/**
 		 * 根据自身可视状态决定具体视觉元素的显示隐藏
 		 */
 		layer.onVisibilityChange = () => {
-			// 继承父节点visibility
-			this.element && (this.element.style.visibility = layer.visible ? 'inherit' : 'hidden')
+			this.onVisibilityChange()
 		}
 
 		/**
 		 * 将具体的视觉元素加入到树中
 		 */
-		layer.onAdd = (parent: Layer) => {
-			const parentView = parent.view.html
-			if (HtmlView.check(parentView)) {
-				parentView.element.appendChild(this.element)
-			} else {
-				/**
-				 * @todo 非连续view节点
-				 */
-				throw new Error('暂未实现非连续view节点，无法把 htmlViewLayer 挂在无 htmlView 的 Layer 上')
-			}
+		layer.onAdd = (parent) => {
+			this.onAdd(parent)
 		}
 
 		/**
 		 * 将具体的视觉元素从树中删除
 		 */
-		layer.onRemove = (parent: Layer) => {
-			const parentView = parent.view.html
-			if (HtmlView.check(parentView)) {
-				parentView.element.removeChild(this.element)
-			} else {
-				/**
-				 * @todo 非连续view节点
-				 */
-				throw new Error('暂未实现非连续view节点，无法把 htmlViewLayer 挂在无 htmlView 的 Layer 上')
-			}
+		layer.onRemove = (parent) => {
+			this.onRemove(parent)
 		}
 
 		/**
 		 * @todo react to viewchange
 		 */
+
+		return this
+	}
+
+	/**
+	 * Implement
+	 */
+	onVisibilityChange() {
+		// 继承父节点visibility: `inherit`
+		this.element && (this.element.style.visibility = this.layer.visible ? 'inherit' : 'hidden')
+	}
+
+	/**
+	 * Implement
+	 */
+	onAdd(parent: Layer) {
+		const parentView = parent.view.html
+		if (!parentView) {
+			throw new Error('Polaris::HtmlView - Parent layer has no HtmlView')
+		}
+		if (HtmlView.check(parentView)) {
+			parentView.element.appendChild(this.element)
+		} else {
+			/**
+			 * @todo 非连续view节点
+			 */
+			throw new Error('Polaris::HtmlView - Cannot append to a different parent view type')
+		}
+	}
+
+	/**
+	 * Implement
+	 */
+	onRemove(parent: Layer) {
+		const parentView = parent.view.html
+		if (!parentView) {
+			return
+		}
+		if (HtmlView.check(parentView)) {
+			// Robust improvement
+			if (this.element.parentNode === parentView.element) {
+				parentView.element.removeChild(this.element)
+			}
+		}
 	}
 
 	static check(view): view is HtmlView {

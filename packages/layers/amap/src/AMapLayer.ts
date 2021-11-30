@@ -10,6 +10,7 @@ export interface AMapLayerProps extends STDLayerProps {
 	key: string
 	renderOrder: number
 	showLogo: boolean
+	showLabel: boolean
 	zooms: [number, number]
 	style: string
 	layers: { name: string; show: boolean }[]
@@ -21,6 +22,7 @@ export const defaultProps: AMapLayerProps = {
 	// key: '550dbc967967e5a778337699e04435fa',
 	renderOrder: -999,
 	showLogo: true, // 是否显示高德logo
+	showLabel: false, // 是否显示地图标注
 	zooms: [3, 20], // 地图缩放上下限,默认3~20
 	style: 'normal', // //主题有: 标准-normal, 幻影黑-dark,月光银-light,远山黛-whitesmoke,草色青-fresh,雅土灰-grey,涂鸦-graffiti,马卡龙-macaron,靛青蓝-blue,极夜蓝-darkblue,酱籽-wine
 	layers: [
@@ -68,21 +70,26 @@ export class AMapLayer extends STDLayer {
 		this.projection = projection
 
 		// amap属性监听
-		this.listenProps(['key', 'renderOrder', 'showLogo', 'style', 'layers', 'features'], () => {
-			const key = this.getProps('key')
-			if (!window.AMap || this.key !== key) {
-				this.key = key
-				this._loadJSAPI(key, () => {
-					this._initAMap(window.AMap)
-					this._initAmapCamera(polaris)
-					this.onViewChange = this._synchronizeCameras
-					// 更新地图
+		this.listenProps(
+			['key', 'renderOrder', 'showLogo', 'showLabel', 'style', 'layers', 'features'],
+			() => {
+				const key = this.getProps('key')
+				if (!window.AMap || this.key !== key) {
+					this.key = key
+					this._loadJSAPI(key, () => {
+						this._initAMap(window.AMap)
+						this._initAmapCamera(polaris)
+						this.onViewChange = (cam) => {
+							this._synchronizeCameras(cam, polaris, projection)
+						}
+						// 更新地图
+						this._updateAMap(window.AMap)
+					})
+				} else {
 					this._updateAMap(window.AMap)
-				})
-			} else {
-				this._updateAMap(window.AMap)
+				}
 			}
-		})
+		)
 	}
 
 	/**
@@ -133,6 +140,8 @@ export class AMapLayer extends STDLayer {
 		this.element.style.zIndex = '-9999'
 
 		if (AMap !== undefined) {
+			// 强制开启webgl渲染
+			window.forceWebGL = true
 			this.map = new AMap.Map(this.element, {
 				// 默认属性
 				viewMode: '3D',
@@ -151,6 +160,7 @@ export class AMapLayer extends STDLayer {
 				features: ['bg', 'road'],
 				// 区别投影
 				crs: this.projection.type === 'MercatorProjection' ? 'EPSG3857' : 'EPSG4326',
+				showLabel: this.getProps('showLabel'),
 			})
 		}
 	}
@@ -251,70 +261,72 @@ export class AMapLayer extends STDLayer {
 	/**
 	 * 相机同步（暂时是polaris操作高德,实现基本视角控制）
 	 */
-	_synchronizeCameras = (cam, polaris) => {
+	_synchronizeCameras = (cameraProxy, polaris, projection) => {
 		if (this.map !== undefined) {
-			// 限制polaris的zoom范围与高德对应
-			const zooms = this.getProps('zooms')
-			const zoomMin = zooms[0]
-			const zoomMax = zooms[1]
-			if (cam.zoom <= zoomMin) {
-				cam.setZoom(zoomMin)
-			}
-			if (cam.zoom >= zoomMax) {
-				cam.setZoom(zoomMax)
-			}
-			// 更新polaris视角
-			const { zoom, pitch, rotation, center, canvasWidth, canvasHeight } = cam
-			const param = zoomToPerspectiveParam(zoom, canvasWidth, canvasHeight)
-			const newFov = (param.fov / Math.PI) * 180.0
+			const { zoom, pitch, rotation, center } = cameraProxy
+			const { canvasWidth, canvasHeight } = polaris
+			const ZOOM_MIN = this.getProps('zooms')[0]
+			const ZOOM_MAX = this.getProps('zooms')[1]
+			const lnglatCenter = projection.unproject(...center)
 
-			if (cam.fov !== newFov) {
-				polaris.renderer.updateProps({ fov: newFov })
-				cam.fov = newFov
-				cam.update()
+			// 限制polaris的zooms与高德对应
+			if (zoom <= ZOOM_MIN) {
+				cameraProxy.setZoom(ZOOM_MIN)
+			}
+			if (zoom >= ZOOM_MAX) {
+				cameraProxy.setZoom(ZOOM_MAX)
 			}
 
 			// 同步高德相机
-			const amapPitch = (pitch / Math.PI) * 180.0
-			const amapRotation = (rotation / Math.PI) * 180.0
-			const amapCenter = this.projection.unproject(...center)
-			this.map.setZoom(zoom)
-			this.map.setCenter([amapCenter[0], amapCenter[1]])
-			this.map.setPitch(amapPitch)
-			this.map.setRotation(amapRotation)
+			if (this.map && canvasWidth && canvasHeight) {
+				const amapPitch = (pitch / Math.PI) * 180.0
+				const amapRotation = (rotation / Math.PI) * 180.0
 
-			/**
-			 * 高德autoResize
-			 */
-			if (
-				this.map.getContainer().clientWidth !== canvasWidth ||
-				this.map.getContainer().clientHeight !== canvasHeight
-			) {
-				this.map.getContainer().style.width = canvasWidth + 'px'
-				this.map.getContainer().style.height = canvasHeight + 'px'
-				this.map.resize && this.map.resize()
-			}
+				this.map.setZoom(zoom)
+				this.map.setCenter([lnglatCenter[0], lnglatCenter[1]])
 
-			// 检测高德地图是否有跟随polaris变化
-			const newZoom = this.map.getZoom()
-			const newCenter = this.map.getCenter()
-			const newPitch = this.map.getPitch()
-			if (
-				!equal(zoom, newZoom) ||
-				!equal(amapCenter[0], newCenter.lng) ||
-				!equal(amapCenter[1], newCenter.lat) ||
-				!equal(amapPitch, newPitch)
-			) {
-				this.hide()
-				if (!this.isWarning) {
-					console.warn('高德地图不支持当前参数, 隐藏')
-					this.isWarning = true
-					setTimeout(() => {
-						this.isWarning = false
-					}, 5000)
+				this.map.setPitch(amapPitch)
+				this.map.setRotation(amapRotation)
+
+				// 更新polaris视角
+				// const param = this._zoomToPerspectiveParam(zoom, canvasWidth, canvasHeight)
+				// const newFov = (param.fov / Math.PI) * 180.0
+				// p.renderer.updateProps({ fov: newFov })
+				// cameraProxy.fov = newFov
+				// cameraProxy.update()
+
+				// 检测高德地图是否有跟随polaris变化
+				const newZoom = this.map.getZoom()
+				const newCenter = this.map.getCenter()
+				const newPitch = this.map.getPitch()
+				const threshold = 0.001
+
+				// 2021.09.27 @qianxun 根据高德的实时lat limits限制polaris视角center
+				if (Math.abs(lnglatCenter[1] - newCenter.lat) > threshold) {
+					cameraProxy.setCenter(projection.project(lnglatCenter[0], newCenter.lat))
 				}
-			} else {
-				this.show()
+
+				// auto resize 高德
+				// if (
+				// 	this.map.getContainer().clientWidth !== polaris.width ||
+				// 	this.map.getContainer().clientHeight !== polaris.height
+				// ) {
+				// 	// 屏幕像素
+				// 	this.map.getContainer().style.width = polaris.width + 'px'
+				// 	this.map.getContainer().style.height = polaris.height + 'px'
+				// 	// 逻辑像素
+				// 	this.map.getContainer().width = polaris.width
+				// 	this.map.getContainer().height = polaris.height
+				// 	this.map.resize && this.map.resize()
+				// }
+
+				// 屏幕像素
+				this.map.getContainer().style.width = polaris.width + 'px'
+				this.map.getContainer().style.height = polaris.height + 'px'
+				// 逻辑像素
+				this.map.getContainer().width = polaris.width
+				this.map.getContainer().height = polaris.height
+				this.map.resize && this.map.resize()
 			}
 		}
 	}

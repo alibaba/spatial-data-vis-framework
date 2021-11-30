@@ -87,7 +87,7 @@ export interface PickEvent {
 	data?: any
 }
 
-export interface OutputPickEvent extends PickEvent {
+export interface PickEventResult extends PickEvent {
 	pointerCoords: {
 		canvas: CoordV2
 		ndc: CoordV2
@@ -128,8 +128,8 @@ export abstract class Base {
 	protected _onHover: (polaris: Base, canvasCoords: CoordV2, ndc: CoordV2) => PickEvent | undefined
 
 	// 外部监听picked/hovered事件入口
-	_onPicked: { (event: OutputPickEvent | undefined): void }[] = []
-	_onHovered: { (event: OutputPickEvent | undefined): void }[] = []
+	_onPicked: { (event: PickEventResult | undefined): void }[] = []
+	_onHovered: { (event: PickEventResult | undefined): void }[] = []
 
 	/**
 	 * Creates an instance of Base.
@@ -234,14 +234,14 @@ export abstract class Base {
 	/**
 	 * callbacks when any object/layer has been picked by user pointer
 	 */
-	set onPicked(f: (event: OutputPickEvent | undefined) => void) {
+	set onPicked(f: (event: PickEventResult | undefined) => void) {
 		this._onPicked.push(f)
 	}
 
 	/**
 	 * callbacks when any object/layer has been hovered on by user pointer
 	 */
-	set onHovered(f: (event: OutputPickEvent | undefined) => void) {
+	set onHovered(f: (event: PickEventResult | undefined) => void) {
 		this._onHovered.push(f)
 	}
 

@@ -12,19 +12,10 @@
 			"path": "../../frontend/polaris-gsi"
 		},
 		{
-			"path": "../../frontend/layer-std"
-		},
-		{
 			"path": "../../backend/renderer-lite"
 		},
 		{
 			"path": "../../schema/core"
-		},
-		{
-			"path": "../../utils/utils"
-		},
-		{
-			"path": "../../utils/animation"
 		}
 	]
 }

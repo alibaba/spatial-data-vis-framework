@@ -1,0 +1,24 @@
+{
+	"extends": "./tsconfig.base.json",
+	"compilerOptions": {
+		"rootDir": "src",
+		"outDir": "dist",
+		"composite": true
+	},
+	"include": ["src", "typings"],
+	"exclude": ["dist"],
+	"references": [
+		{
+			"path": "../../schema/core"
+		},
+		{
+			"path": "../../frontend/layer-std"
+		},
+		{
+			"path": "../projections"
+		},
+		{
+			"path": "../utils"
+		}
+	]
+}

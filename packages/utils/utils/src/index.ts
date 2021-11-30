@@ -13,6 +13,8 @@ export * from './constants'
 export * as poly from './poly'
 export * from './math'
 export * from './capacity'
+export * from './geometry'
+export * from './helpers'
 
 // 判断两个投影之间是否是可以通过简单变换得到的
 export function isSimiliarProjections(p0: Projection, p1: Projection) {
@@ -158,5 +160,61 @@ export function applyMatrixToAttr(attr: AttributeDataType, matrix: Matrix3 | Mat
 			attr.array[idx + 1] = _v1.y
 			attr.array[idx + 2] = _v1.z
 		}
+	}
+}
+
+export function promiseAny<T>(values: Iterable<T | PromiseLike<T>>): Promise<T> {
+	return new Promise<T>((resolve: (value: T) => void, reject: (reason?: any) => void): void => {
+		let hasResolved = false
+		let iterableCount = 0
+		const promiseLikes: Array<T | PromiseLike<T>> = []
+		const rejectionReasons: any[] = []
+
+		function resolveOnce(value: T): void {
+			if (!hasResolved) {
+				hasResolved = true
+				resolve(value)
+			}
+		}
+
+		function rejectionCheck(reason?: any): void {
+			rejectionReasons.push(reason)
+
+			if (rejectionReasons.length >= iterableCount) reject(rejectionReasons)
+		}
+
+		for (const value of values) {
+			iterableCount++
+			promiseLikes.push(value)
+		}
+
+		for (const promiseLike of promiseLikes) {
+			if (
+				(promiseLike as PromiseLike<T>)?.then !== undefined ||
+				(promiseLike as Promise<T>)?.catch !== undefined
+			) {
+				;(promiseLike as Promise<T>)
+					?.then((result: T): void => resolveOnce(result))
+					?.catch((error?: any): void => undefined)
+				;(promiseLike as Promise<T>)?.catch((reason?: any): void => rejectionCheck(reason))
+			} else resolveOnce(promiseLike as T)
+		}
+	})
+}
+
+export function colorToUint8Array(color: { r: number; g: number; b: number }, alpha?: number) {
+	if (alpha !== undefined) {
+		return new Uint8Array([
+			Math.min(Math.round(color.r * 255.0), 255),
+			Math.min(Math.round(color.g * 255.0), 255),
+			Math.min(Math.round(color.b * 255.0), 255),
+			Math.min(Math.round(alpha * 255.0), 255),
+		])
+	} else {
+		return new Uint8Array([
+			Math.min(Math.round(color.r * 255.0), 255),
+			Math.min(Math.round(color.g * 255.0), 255),
+			Math.min(Math.round(color.b * 255.0), 255),
+		])
 	}
 }

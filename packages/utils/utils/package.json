@@ -19,9 +19,7 @@
     },
     "dependencies": {
         "@polaris.gl/projection": "^0.0.0-beta",
-        "@turf/invariant": "^5.1.6",
-        "@turf/meta": "^6.0.2",
-        "earcut": "^2.2.2",
+        "@polaris.gl/schema": "^0.0.0-beta",
         "is-touch-device": "^1.0.1",
         "@gs.i/frontend-sdk": "^0.0.0-beta",
         "@gs.i/schema": "^0.0.0-beta",

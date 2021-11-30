@@ -4,6 +4,7 @@
  */
 
 // import { simplify, importGeoJSON, exportGeoJSON } from '../LineString/mapshaper.js'
+import { patchPreReturnedMessage } from '@polaris.gl/utils-worker-manager'
 import { preBuild, simplify } from 'mapshaper-simplify'
 
 // 创建 this 指针，或者配置 webpack 的 output 的 globalObject 属性
@@ -14,7 +15,6 @@ const _self: Worker = self as any
  */
 _self.addEventListener('message', (e) => {
 	const data = e.data
-	const id = data.id
 	let result: any
 	switch (data.task) {
 		case 'lods': {
@@ -23,10 +23,10 @@ _self.addEventListener('message', (e) => {
 			const dataset = preBuild(geojson)
 			const results: any[] = []
 			percentages.forEach((percentage) => {
-				if (percentage >= 1.0) {
-					results.push([{ content: geojson }])
+				if (percentage >= 1.0 || percentage <= 0.0) {
+					results.push(geojson)
 				} else {
-					results.push([{ content: simplify(dataset, percentage) }])
+					results.push(simplify(dataset, percentage))
 				}
 			})
 			result = {
@@ -39,8 +39,7 @@ _self.addEventListener('message', (e) => {
 			console.error(`Polaris::LineStringLayer - Invalid worker task: ${data.task}`)
 			return
 	}
-	// `id` must be returned in order for WorkerManager to get back message
-	result.data.id = id
+	patchPreReturnedMessage(e, result.data)
 	postMessage(result.data, result.transferables)
 })
 

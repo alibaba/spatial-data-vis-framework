@@ -5,6 +5,6 @@
 
 pwd
 
-rm -f ./tsconfig.tsbuildinfo && rm -rf ./dist
+rm -f ./tsconfig.tsbuildinfo && rm -f ./tsconfig.build.tsbuildinfo && rm -rf ./dist
 
 echo "warn: A rebuild is nessesary!"

@@ -16,6 +16,7 @@ import inside from 'point-in-polygon'
 import ConformingDelaunayTriangulationBuilder from 'jsts/org/locationtech/jts/triangulate/ConformingDelaunayTriangulationBuilder'
 import GeometryFactory from 'jsts/org/locationtech/jts/geom/GeometryFactory'
 import Coordinate from 'jsts/org/locationtech/jts/geom/Coordinate'
+import { patchPreReturnedMessage } from '@polaris.gl/utils-worker-manager'
 
 const _self: Worker = self as any
 
@@ -24,7 +25,6 @@ const _self: Worker = self as any
  */
 _self.addEventListener('message', (e) => {
 	const info = e.data
-	const id = info.id
 	let result: any
 	switch (info.task) {
 		case 'triangulate': {
@@ -43,11 +43,10 @@ _self.addEventListener('message', (e) => {
 		}
 		default:
 			console.error(`Polaris::PolygonSurfaceLayer - Invalid worker task: ${info.task}`)
-			postMessage({ id, error: `Invalid worker task: ${info.task}` })
+			postMessage(patchPreReturnedMessage(e, { error: `Invalid worker task: ${info.task}` }))
 			return
 	}
-	// `id` must be returned in order for WorkerManager to get back message
-	result.data.id = id
+	patchPreReturnedMessage(e, result.data)
 	postMessage(result.data, result.transferables)
 })
 

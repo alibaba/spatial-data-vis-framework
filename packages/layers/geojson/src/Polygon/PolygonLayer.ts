@@ -20,9 +20,6 @@ import { FeatureCollection } from '@turf/helpers'
 import { PolygonSideLayer } from './PolygonSideLayer'
 import { PolygonSurfaceLayer } from './PolygonSurfaceLayer'
 
-/**
- * 配置项 interface
- */
 export interface PolygonLayerProps extends STDLayerProps {
 	data?: FeatureCollection | string
 	/**
@@ -168,7 +165,7 @@ export class PolygonLayer extends STDLayer {
 				'hoverLineWidth',
 				'hoverLineColor',
 			],
-			() => {
+			(e) => {
 				const data = this.getProps('data')
 				const enableExtrude = this.getProps('enableExtrude')
 				const getColor = this.getProps('getFillColor')
@@ -190,31 +187,101 @@ export class PolygonLayer extends STDLayer {
 				const workersCount = this.getProps('workersCount')
 
 				if (!this.surfaceLayer) {
-					const surfaceLayer = new PolygonSurfaceLayer(_props)
+					const surfaceLayer = new PolygonSurfaceLayer({
+						data,
+						getColor,
+						getThickness,
+						getOpacity,
+						transparent,
+						baseAlt,
+						doubleSide,
+						useTessellation,
+						tessellation,
+						genSelectLines,
+						selectLinesHeight,
+						selectLineLevel,
+						selectLineWidth,
+						selectLineColor,
+						hoverLineLevel,
+						hoverLineWidth,
+						hoverLineColor,
+						workersCount,
+					})
 					this.add(surfaceLayer)
 					this.surfaceLayer = surfaceLayer
+					return
 				}
 
-				this.surfaceLayer.updateProps({
-					data,
-					getColor,
-					getThickness,
-					getOpacity,
-					transparent,
-					baseAlt,
-					doubleSide,
-					useTessellation,
-					tessellation,
-					genSelectLines,
-					selectLinesHeight,
-					selectLineLevel,
-					selectLineWidth,
-					selectLineColor,
-					hoverLineLevel,
-					hoverLineWidth,
-					hoverLineColor,
-					workersCount,
-				})
+				// Update
+				if (e.trigger === 'initialize') {
+					// Update all
+					this.surfaceLayer.updateProps({
+						data,
+						getColor,
+						getThickness,
+						getOpacity,
+						transparent,
+						baseAlt,
+						doubleSide,
+						useTessellation,
+						tessellation,
+						genSelectLines,
+						selectLinesHeight,
+						selectLineLevel,
+						selectLineWidth,
+						selectLineColor,
+						hoverLineLevel,
+						hoverLineWidth,
+						hoverLineColor,
+						workersCount,
+					})
+				} else if (e.trigger.indexOf('data') >= 0) {
+					// Update props/data independently
+					this.surfaceLayer.updateProps({
+						data,
+						getColor,
+						getThickness,
+						getOpacity,
+						transparent,
+						baseAlt,
+						doubleSide,
+						useTessellation,
+						tessellation,
+						genSelectLines,
+						selectLinesHeight,
+						selectLineLevel,
+						selectLineWidth,
+						selectLineColor,
+						hoverLineLevel,
+						hoverLineWidth,
+						hoverLineColor,
+						workersCount,
+					})
+					// .then(() => {
+					// 	this.surfaceLayer.updateData(data)
+					// })
+				} else {
+					// Update props only
+					this.surfaceLayer.updateProps({
+						getColor,
+						getThickness,
+						getOpacity,
+						transparent,
+						baseAlt,
+						doubleSide,
+						useTessellation,
+						tessellation,
+						genSelectLines,
+						selectLinesHeight,
+						selectLineLevel,
+						selectLineWidth,
+						selectLineColor,
+						hoverLineLevel,
+						hoverLineWidth,
+						hoverLineColor,
+						workersCount,
+					})
+				}
 
 				// // Clear selection info
 				// this.hoveredFeature = undefined
@@ -233,7 +300,7 @@ export class PolygonLayer extends STDLayer {
 				'doubleSide',
 				'enableExtrude',
 			],
-			() => {
+			(e) => {
 				const data = this.getProps('data')
 				const enableExtrude = this.getProps('enableExtrude')
 				const getColor = this.getProps('getSideColor')
@@ -247,23 +314,55 @@ export class PolygonLayer extends STDLayer {
 					// `SideLayer` must be added first before `SurfaceLayer`
 					// It should be rendered before surface to get correct alpha blending result
 					if (!this.sideLayer) {
-						const sideLayer = new PolygonSideLayer(_props)
+						const sideLayer = new PolygonSideLayer({
+							data,
+							getColor,
+							getThickness,
+							opacity,
+							transparent,
+							baseAlt,
+							doubleSide,
+						})
 						this.add(sideLayer)
 						this.sideLayer = sideLayer
+						return
 					}
-
-					this.sideLayer.visible = true
-					this.sideLayer.updateProps({
-						data,
-						getColor,
-						getThickness,
-						opacity,
-						transparent,
-						baseAlt,
-						doubleSide,
-					})
+					// Update
+					if (e.trigger === 'initialize') {
+						// Update all
+						this.sideLayer.updateProps({
+							data,
+							getColor,
+							getThickness,
+							opacity,
+							transparent,
+							baseAlt,
+							doubleSide,
+						})
+					} else if (e.trigger.indexOf('data') >= 0) {
+						// Update props/data independently
+						this.sideLayer.updateProps({
+							getColor,
+							getThickness,
+							opacity,
+							transparent,
+							baseAlt,
+							doubleSide,
+						})
+						this.sideLayer.updateData(data)
+					} else {
+						// Update props only
+						this.sideLayer.updateProps({
+							getColor,
+							getThickness,
+							opacity,
+							transparent,
+							baseAlt,
+							doubleSide,
+						})
+					}
 				} else if (this.sideLayer) {
-					this.sideLayer.visible = false
+					this.remove(this.sideLayer)
 				}
 
 				// // Clear selection info
