@@ -20,7 +20,8 @@
         "@polaris.gl/projection": "0.0.0-beta",
         "@polaris.gl/utils": "0.0.0-beta",
         "global-mercator": "3.1.0",
-        "@gs.i/schema": "^0.0.0-beta"
+        "@gs.i/schema": "^0.0.0-beta",
+        "ani-timeline": "1.2.19-m"
     },
     "devDependencies": {
         "@types/is": "^0.0.21",

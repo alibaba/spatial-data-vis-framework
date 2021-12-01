@@ -1,6 +1,5 @@
 import { POILayer } from '@polaris.gl/layer-xyz-poi-tile'
 import { PolarisGSIGL2 } from '@polaris.gl/gsi-gl2'
-import { HelperLayer } from '@polaris.gl/layer-std-helper'
 import { AMapLayer } from '@polaris.gl/layer-amap'
 
 const p = new PolarisGSIGL2({
@@ -13,12 +12,60 @@ const p = new PolarisGSIGL2({
 })
 p.timeline.config.ignoreErrors = false
 
+const getUrl = (x, y, z) => {
+	const params = {
+		PostgreSQL: {
+			dbname: 'EXAMPLE',
+			user: 'EXAMPLE',
+			password: 'EXAMPLE',
+			host: 'EXAMPLE',
+			port: '1921',
+		},
+		fc_param: {
+			x,
+			y,
+			z,
+			id_column: 'id',
+			geometry_column: 'geometry',
+			clip_geometry: null,
+			area_code: null,
+			source: 'hz_house_order',
+			output_format: 'geojson',
+			layer: {
+				default: {
+					geometry_type: 'point',
+					visible_columns: ['count'],
+					filter_expression: [],
+					visible_zlevel: [3, 20],
+					clickable_zlevel: [15, 20],
+					aggregation: {
+						zlevel: [3, 15],
+						clustering_method: 'bin',
+						clustering_scalar: 50,
+						fields: {
+							count_number: ['id', 'count'],
+							sum_number: ['count', 'sum'],
+						},
+					},
+				},
+			},
+		},
+	}
+	return (
+		'EXAMPLE' +
+		JSON.stringify(params)
+	)
+}
+
 //
 let lastHovered
 const layer = new POILayer({
+	minZoom: 3,
+	maxZoom: 20,
+	getUrl,
 	clusterNumFilter: (feature) => {
-		if (feature.properties.num > 20) {
-			return Math.round(feature.properties.num)
+		if (feature.properties.number_of_point > 1) {
+			return Math.round(feature.properties.number_of_point)
 		}
 	},
 	getPointColor: () => {
@@ -43,9 +90,10 @@ const layer = new POILayer({
 		if (!data || data.data.curr === undefined) return
 
 		const feature = data.data.curr
-
-		layer.highlightByIds([feature.properties.id], { type: 'hover' })
-		lastHovered = feature.properties.id
+		const id = feature.properties.id
+		if (!id) return
+		layer.highlightByIds([id], { type: 'hover' })
+		lastHovered = id
 	},
 })
 p.add(layer)
