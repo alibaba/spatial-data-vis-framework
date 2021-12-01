@@ -8,25 +8,26 @@ declare let window: any
 
 export interface AMapLayerProps extends STDLayerProps {
 	key: string
-	renderOrder: number
 	showLogo: boolean
 	showLabel: boolean
 	zooms: [number, number]
 	style: string
 	layers: { name: string; show: boolean }[]
 	features: { name: string; show: boolean }[]
+	zIndex: number
 }
 
 export const defaultProps: AMapLayerProps = {
 	key: 'f8d835e1abdb0e4355b19aa454f4de65', // 高德API使用key,可以缺省
 	// key: '550dbc967967e5a778337699e04435fa',
-	renderOrder: -999,
+	zIndex: -999,
 	showLogo: true, // 是否显示高德logo
 	showLabel: false, // 是否显示地图标注
 	zooms: [3, 20], // 地图缩放上下限,默认3~20
 	style: 'normal', // //主题有: 标准-normal, 幻影黑-dark,月光银-light,远山黛-whitesmoke,草色青-fresh,雅土灰-grey,涂鸦-graffiti,马卡龙-macaron,靛青蓝-blue,极夜蓝-darkblue,酱籽-wine
 	layers: [
 		// 地图显示图层集合: 卫星图层-Satellite,路网图层RoadNet,实施交通图层-Traffic
+		{ name: 'TileLayer', show: true },
 		{ name: 'Satellite', show: false },
 		{ name: 'RoadNet', show: false },
 		{ name: 'Traffic', show: false },
@@ -71,7 +72,7 @@ export class AMapLayer extends STDLayer {
 
 		// amap属性监听
 		this.listenProps(
-			['key', 'renderOrder', 'showLogo', 'showLabel', 'style', 'layers', 'features'],
+			['key', 'zIndex', 'showLogo', 'showLabel', 'style', 'layers', 'features'],
 			() => {
 				const key = this.getProps('key')
 				if (!window.AMap || this.key !== key) {
@@ -105,7 +106,7 @@ export class AMapLayer extends STDLayer {
 				console.warn(`高德JSAPI未能成功加载，请检查key是否正确!`)
 			}
 		}
-		const url = 'https://webapi.amap.com/maps?v=1.4.15&key=' + key + '&callback=onLoad'
+		const url = 'https://webapi.amap.com/maps?v=1.4.17&key=' + key + '&callback=onLoad'
 		// const url = 'https://webapi.amap.com/maps?v=2.0&key=' + key + '&callback=onLoad'
 		const jsapi = document.createElement('script')
 		jsapi.charset = 'utf-8'
@@ -170,9 +171,10 @@ export class AMapLayer extends STDLayer {
 	 */
 	_updateAMap = (AMap) => {
 		// 图层顺序
-		const renderOrder = this.getProps('renderOrder')
+		const zIndex = this.getProps('zIndex')
+
 		if (this.element) {
-			this.element.style.zIndex = renderOrder
+			this.element.style.zIndex = zIndex
 		}
 		const style = this.getProps('style')
 		const layers = this.getProps('layers')
@@ -180,17 +182,27 @@ export class AMapLayer extends STDLayer {
 		if (AMap !== undefined) {
 			// 改变样式
 			this.map.setMapStyle('amap://styles/' + style)
+
 			// 添加图层
-			const layerArr = [new AMap.TileLayer({})]
+			const layerArr: any[] = []
 			if (layers) {
 				for (let i = 0; i < layers.length; i++) {
-					if (layers[i].show) {
-						const newLayer = new AMap.TileLayer[layers[i].name]({})
+					const layer = layers[i]
+					if (layer.show) {
+						const newLayer =
+							layer.name === 'TileLayer'
+								? new AMap.TileLayer({})
+								: new AMap.TileLayer[layer.name]({})
 						layerArr.push(newLayer)
 					}
 				}
 			}
+			if (layerArr.length === 0) {
+				console.warn('AMapLayer - No layers found, add default TileLayer')
+				layerArr.push(new AMap.TileLayer({}))
+			}
 			this.map.setLayers(layerArr)
+
 			// 添加要素
 			const featuresArr = new Array<string>()
 			if (features) {

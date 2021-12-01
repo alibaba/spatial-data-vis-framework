@@ -1,23 +1,8 @@
-import { STDLayer } from '@polaris.gl/layer-std'
 import { Polaris } from '@polaris.gl/schema'
-import { CommonTileManager } from './CommonTileManager'
-import { TileRenderables, TileToken } from './types'
+import { CommonTileManager, CommonTileManagerConfig } from './CommonTileManager'
 import { lngLatToGoogle } from 'global-mercator'
 
-export type GoogleXYZTileManagerConfig = {
-	/**
-	 * layer
-	 */
-	layer: STDLayer
-
-	/**
-	 * 通过tileTokens获取tile可渲染元素的方法
-	 */
-	getTileRenderables: (
-		token: TileToken,
-		tileManager: GoogleXYZTileManager
-	) => Promise<TileRenderables>
-}
+export type GoogleXYZTileManagerConfig = Omit<CommonTileManagerConfig, 'getViewTiles'>
 
 export class GoogleXYZTileManager extends CommonTileManager {
 	constructor(config: GoogleXYZTileManagerConfig) {
@@ -28,7 +13,7 @@ export class GoogleXYZTileManager extends CommonTileManager {
 	}
 }
 
-const getViewTiles = (polaris: Polaris) => {
+const getViewTiles = (polaris: Polaris, minZoom: number, maxZoom: number) => {
 	const geoRange = polaris.getGeoRange()
 	const lnglatMin = [Infinity, Infinity]
 	const lnglatMax = [-Infinity, -Infinity]
@@ -40,7 +25,8 @@ const getViewTiles = (polaris: Polaris) => {
 		lnglatMax[1] = Math.max(lnglat[1], lnglatMax[1])
 	})
 
-	const zoom = Math.floor(polaris.cameraProxy.zoom)
+	let zoom = Math.floor(polaris.cameraProxy.zoom)
+	zoom = Math.min(Math.max(minZoom, zoom), maxZoom)
 	const xyz0 = lngLatToGoogle(lnglatMin, zoom)
 	const xyz1 = lngLatToGoogle(lnglatMax, zoom)
 

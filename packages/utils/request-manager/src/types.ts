@@ -2,7 +2,7 @@ export type ConfigType = {
 	/**
 	 * The return data type
 	 */
-	dataType: 'json' | 'arraybuffer'
+	dataType: 'auto' | 'json' | 'arraybuffer' | 'text'
 
 	/**
 	 * The default data fetch method can be overwritten

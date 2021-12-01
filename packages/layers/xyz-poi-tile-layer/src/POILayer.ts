@@ -15,24 +15,31 @@ import { Color } from '@gs.i/utils-math'
 /**
  * 配置项 interface
  */
-export interface POILayerProps extends STDLayerProps {
-	/**
-	 * GoogleTile base request url, use [x], [y], [z] for tile numbers
-	 * @example 'https://fbi-geography.oss-cn-hangzhou.aliyuncs.com/tests/poi/[z]/geojson_[x]_[y].bin'
-	 */
-	url: string
 
+export type UrlGenerator = (
+	x: number | string,
+	y: number | string,
+	z: number | string
+) => string | { url: string; params?: any }
+
+export interface POILayerProps extends STDLayerProps {
 	/**
 	 * Set requested Tile data type
 	 * Not needed if the requestManager instance has been set
 	 */
-	dataType?: 'geojson' | 'arraybuffer'
+	dataType?: 'auto' | 'geojson' | 'arraybuffer'
 
 	/**
-	 * The 'id' prop in feature.properties is essential for XYZ tiles
-	 * especially for user interactions such as styling
-	 * the default idPropKey is 'id', but you can change it for your own applications
-	 * this property value should be UNIQUE for each valid geo feature
+	 * XYZ tile url generator
+	 * if this prop is provided, the 'url' prop will be ignored
+	 */
+	getUrl: UrlGenerator
+
+	/**
+	 * The 'id' prop key in feature.properties is essential for XYZ tiles,
+	 * especially for user interactions such as styling/picking.
+	 * The default idPropKey is 'id', but you can change it for your own applications.
+	 * This property value should be UNIQUE for each valid geo feature in tile data
 	 */
 	idPropKey: string
 
@@ -40,6 +47,16 @@ export interface POILayerProps extends STDLayerProps {
 	 * Geometry base alt
 	 */
 	baseAlt: number
+
+	/**
+	 * default is 3
+	 */
+	minZoom?: number
+
+	/**
+	 * default is 20
+	 */
+	maxZoom?: number
 
 	/**
 	 * POI image url
@@ -105,8 +122,12 @@ export interface POILayerProps extends STDLayerProps {
  * 配置项 默认值
  */
 const defaultProps: POILayerProps = {
-	url: 'https://fbi-geography.oss-cn-hangzhou.aliyuncs.com/tests/poi/[z]/geojson_[x]_[y].bin',
-	dataType: 'arraybuffer',
+	dataType: 'auto',
+	getUrl: (x, y, z) => {
+		throw new Error('getUrl prop is not defined')
+	},
+	minZoom: 3,
+	maxZoom: 20,
 	idPropKey: 'id',
 	baseAlt: 0,
 	pointImage:
@@ -183,8 +204,10 @@ export class POILayer extends STDLayer {
 
 		this.listenProps(
 			[
-				'url',
+				'getUrl',
 				'dataType',
+				'minZoom',
+				'maxZoom',
 				'idPropKey',
 				'baseAlt',
 				'pointImage',
@@ -223,6 +246,8 @@ export class POILayer extends STDLayer {
 					dataType = 'arraybuffer'
 				} else if (this.getProps('dataType') === 'geojson') {
 					dataType = 'json'
+				} else if (this.getProps('dataType') === 'auto') {
+					dataType = 'auto'
 				} else {
 					throw new Error(`Invalid dataType prop value: ${this.getProps('dataType')}`)
 				}
@@ -235,6 +260,8 @@ export class POILayer extends STDLayer {
 
 				this.tileManager = new GoogleXYZTileManager({
 					layer: this,
+					minZoom: this.getProps('minZoom'),
+					maxZoom: this.getProps('maxZoom'),
 					getTileRenderables: (tileToken) => {
 						return this._createTileRenderables(tileToken, projection, polaris)
 					},
@@ -327,29 +354,50 @@ export class POILayer extends STDLayer {
 
 	private _createTileRenderables(token, projection, polaris) {
 		const dataType = this.getProps('dataType')
+		const getUrl = this.getProps('getUrl')
 		const x = token[0],
 			y = token[1],
 			z = token[2]
-		const url = this.getProps('url').replace('[x]', x).replace('[y]', y).replace('[z]', z)
-		const req = this.requestManager.request(url)
+
+		const reqObj = getUrl(x, y, z)
+		const url = typeof reqObj === 'string' ? reqObj : reqObj.url
+		const params = typeof reqObj === 'string' ? undefined : reqObj.params
+
+		const req = this.requestManager.request(url, params)
 		const cacheKey = this._getCacheKey(x, y, z)
 
 		return new Promise<TileRenderables>((resolve, reject) => {
 			req
-				.then((response) => {
+				.then((data) => {
 					let geojson: any
 					if (dataType === 'arraybuffer') {
-						geojson = decode(new Pbf(response))
+						geojson = decode(new Pbf(data))
 					} else if (dataType === 'geojson') {
-						geojson = response
+						geojson = data
+					} else if (dataType === 'auto') {
+						if (data.constructor === ArrayBuffer) {
+							geojson = decode(new Pbf(data))
+						} else if (typeof data === 'string') {
+							geojson = JSON.parse(data)
+						} else if (typeof data === 'object') {
+							geojson = data
+						}
 					} else {
 						console.error(`Invalid dataType prop value: ${dataType}`)
+						reject()
+						return
+					}
+
+					if (!geojson.type || geojson.type !== 'FeatureCollection') {
+						console.error('POILayer - The response data type is not a valid GeoJSON')
+						reject()
 						return
 					}
 
 					const tile = this._createTileMesh(geojson, projection, polaris)
 					if (tile) {
 						resolve(tile)
+						reject()
 						return
 					}
 					resolve({
@@ -370,7 +418,13 @@ export class POILayer extends STDLayer {
 			baseColorFactor: { r: 1, g: 1, b: 1 },
 			baseColorTexture: {
 				image: { uri: this.getProps('pointImage'), flipY: true },
-				sampler: { minFilter: 'NEAREST_MIPMAP_LINEAR', magFilter: 'LINEAR' },
+				sampler: {
+					minFilter: 'NEAREST_MIPMAP_LINEAR',
+					magFilter: 'LINEAR',
+					wrapS: 'CLAMP_TO_EDGE',
+					wrapT: 'CLAMP_TO_EDGE',
+					anisotropy: 1,
+				},
 			},
 			attributes: {
 				aSize: 'float',
@@ -427,15 +481,6 @@ export class POILayer extends STDLayer {
 				return
 			}
 
-			// check id key
-			const id = feature.properties[idPropKey] as number | string
-			if (id === undefined || id === null) {
-				console.error(
-					`feature does not have idPropKey: ${idPropKey}, please check tile data or layer config`
-				)
-				return
-			}
-
 			// apply filter
 			if (featureFilter) {
 				const filterResult = featureFilter(feature)
@@ -466,8 +511,17 @@ export class POILayer extends STDLayer {
 				this._renderableFeatureMap.set(cluster, feature)
 				const meshInfo = { obj: cluster, objIdx: 0 }
 				this._setIndexMeshMap(feature.index, meshInfo)
-				this._setIdMeshesMap(id, meshInfo)
+				// this._setIdMeshesMap(id, meshInfo)
 			} else {
+				// check id key
+				const id = feature.properties[idPropKey] as number | string
+				if (id === undefined || id === null) {
+					console.error(
+						`feature does not have idPropKey: ${idPropKey}, please check tile data or layer config`
+					)
+					return
+				}
+
 				// non-cluster point
 				const xyz = projection.project(coords[0], coords[1], (coords[2] ?? 0) + baseAlt)
 				const color = getPointColor(feature)

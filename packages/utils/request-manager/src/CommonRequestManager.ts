@@ -29,9 +29,32 @@ export class CommonRequestManager implements IRequestManager {
 			fetch(url, requestParams).then((res) => {
 				if (!res.ok) {
 					reject(res)
+					return
 				}
-				if (this.config.dataType === 'arraybuffer') resolve(res.arrayBuffer())
-				if (this.config.dataType === 'json') resolve(res.json())
+				switch (this.config.dataType) {
+					case 'auto': {
+						const data = this._getDataFromResponse(res)
+						if (data) {
+							resolve(data)
+						} else {
+							reject(new Error('Unknown Response Content-Type'))
+						}
+						break
+					}
+					case 'arraybuffer': {
+						resolve(res.arrayBuffer())
+						break
+					}
+					case 'json': {
+						resolve(res.json())
+						break
+					}
+					case 'text': {
+						resolve(res.text())
+					}
+					default: {
+					}
+				}
 			})
 		})
 
@@ -99,5 +122,31 @@ export class CommonRequestManager implements IRequestManager {
 
 	private _getCacheKey(url: string, requestParams?: any) {
 		return `${url}|${JSON.stringify(requestParams)}`
+	}
+
+	private _getDataFromResponse(res: Response) {
+		const contentType = res.headers.get('Content-Type')
+		if (!contentType) {
+			console.error(
+				'CommonRequestManager - No Content-Type was found in response headers, use .json() by default'
+			)
+			return res.json()
+		}
+		const type = contentType.split(';')[0]
+		switch (type) {
+			case 'application/json': {
+				return res.json()
+			}
+			case 'application/octet-stream': {
+				return res.arrayBuffer()
+			}
+			case 'text/plain': {
+				return res.text()
+			}
+			default: {
+				console.error(`CommonRequestManager - Unknown Response Content-Type: ${contentType}`)
+				return
+			}
+		}
 	}
 }
