@@ -1,5 +1,5 @@
 import { isDISPOSED } from '@gs.i/schema'
-import { GoogleXYZTileManager } from '@polaris.gl/utils-tile-manager'
+import { XYZTileManager } from '@polaris.gl/utils-tile-manager'
 import { Marker } from '@polaris.gl/layer-std-marker'
 import { IRequestManager, CommonRequestManager } from '@polaris.gl/utils-request-manager'
 import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
@@ -24,10 +24,16 @@ export type UrlGenerator = (
 
 export interface POILayerProps extends STDLayerProps {
 	/**
-	 * Set requested Tile data type
-	 * Not needed if the requestManager instance has been set
+	 * Tile response data type,
+	 * not essential if the 'requestManager' prop has been set
 	 */
-	dataType?: 'auto' | 'geojson' | 'arraybuffer'
+	dataType?: 'auto' | 'geojson' | 'pbf'
+
+	/**
+	 * Pass in user custom RequestManager to replace the default one
+	 * Usually you want to pass a requestManager from outside because you want several layers using the same tile resource
+	 */
+	requestManager?: IRequestManager
 
 	/**
 	 * XYZ tile url generator
@@ -36,10 +42,11 @@ export interface POILayerProps extends STDLayerProps {
 	getUrl: UrlGenerator
 
 	/**
-	 * The 'id' prop key in feature.properties is essential for XYZ tiles,
+	 * The id prop key in feature.properties is essential for XYZ tiles,
 	 * especially for user interactions such as styling/picking.
 	 * The default idPropKey is 'id', but you can change it for your own applications.
-	 * This property value should be UNIQUE for each valid geo feature in tile data
+	 * This property value should be UNIQUE for each valid geo feature in tile data.
+	 * @NOTE Clustered features MAY not have id prop in properties
 	 */
 	idPropKey: string
 
@@ -62,11 +69,6 @@ export interface POILayerProps extends STDLayerProps {
 	 * POI image url
 	 */
 	pointImage: string
-
-	/**
-	 * Cluster image url
-	 */
-	clusterImage: string
 
 	/**
 	 * point size (px)
@@ -94,12 +96,6 @@ export interface POILayerProps extends STDLayerProps {
 	clusterDOMStyle: any
 
 	/**
-	 * Pass in user custom RequestManager to replace the default one
-	 * Usually you want to pass a requestManager from outside because you want several layers using the same tile resource
-	 */
-	requestManager?: IRequestManager
-
-	/**
 	 * Custom feature filter, return true to mark that poi as valid point
 	 * return {false} to skip this feature
 	 */
@@ -116,6 +112,13 @@ export interface POILayerProps extends STDLayerProps {
 	 * point hover size
 	 */
 	hoverSize: number
+
+	/**
+	 * The point image is rendered at lnglat center by default,
+	 * setting offsets can let the point image be rendered at position XY = [size * offset],
+	 * both numbers are normally between [-1.0, 1.0], but not necessary.
+	 */
+	pointOffset: [number, number]
 }
 
 /**
@@ -132,17 +135,16 @@ const defaultProps: POILayerProps = {
 	baseAlt: 0,
 	pointImage:
 		'https://img.alicdn.com/imgextra/i3/O1CN01naDbsE1HeeoOqvic6_!!6000000000783-2-tps-256-256.png',
-	clusterImage:
-		'https://img.alicdn.com/imgextra/i2/O1CN01vMISA21Vf1htL2Sza_!!6000000002679-2-tps-256-256.png',
-	pointSize: 16,
-	clusterSize: 64,
 	getPointColor: '#ffafff',
+	pointSize: 16,
 	getClusterImage:
 		'https://img.alicdn.com/imgextra/i1/O1CN01yyOfXC23ffGrhohq7_!!6000000007283-2-tps-53-52.png',
+	clusterSize: 64,
 	clusterDOMStyle: {},
 	featureFilter: (feature) => true,
 	clusterNumFilter: (feature) => undefined,
 	hoverSize: 32,
+	pointOffset: [0.0, 0.0],
 }
 
 export type TileRenderables = {
@@ -154,9 +156,13 @@ export class POILayer extends STDLayer {
 	matr: MatrPoint
 	// geoMap: Map<string, any>
 	requestManager: IRequestManager
-	tileManager: GoogleXYZTileManager
+	tileManager: XYZTileManager
 
 	private _featureCount: number
+
+	/**
+	 * Element for point picking test
+	 */
 	private _pointImgElem: HTMLImageElement
 
 	/**
@@ -211,7 +217,6 @@ export class POILayer extends STDLayer {
 				'idPropKey',
 				'baseAlt',
 				'pointImage',
-				'clusterImage',
 				'getPointColor',
 				'getClusterImage',
 				'clusterStyle',
@@ -220,6 +225,7 @@ export class POILayer extends STDLayer {
 				'featureFilter',
 				'clusterNumFilter',
 				'requestManager',
+				'pointOffset',
 			],
 			() => {
 				this._featureCount = 0
@@ -234,22 +240,31 @@ export class POILayer extends STDLayer {
 
 				this._createPointImgElement()
 
-				this.matr = this._createPointMatr()
+				this.matr = this._createPointMatr(polaris)
 
 				if (this.requestManager) {
 					console.error('Cannot change/modify RequestManager in runtime! ')
 					return
 				}
 
+				const dtConfig = this.getProps('dataType')
 				let dataType
-				if (this.getProps('dataType') === 'arraybuffer') {
-					dataType = 'arraybuffer'
-				} else if (this.getProps('dataType') === 'geojson') {
-					dataType = 'json'
-				} else if (this.getProps('dataType') === 'auto') {
-					dataType = 'auto'
-				} else {
-					throw new Error(`Invalid dataType prop value: ${this.getProps('dataType')}`)
+				switch (dtConfig) {
+					case 'pbf': {
+						dataType = 'arraybuffer'
+						break
+					}
+					case 'geojson': {
+						dataType = 'json'
+						break
+					}
+					case 'auto': {
+						dataType = 'auto'
+						break
+					}
+					default: {
+						throw new Error(`Invalid dataType prop value: ${dtConfig}`)
+					}
 				}
 
 				this.requestManager =
@@ -258,7 +273,7 @@ export class POILayer extends STDLayer {
 						dataType,
 					})
 
-				this.tileManager = new GoogleXYZTileManager({
+				this.tileManager = new XYZTileManager({
 					layer: this,
 					minZoom: this.getProps('minZoom'),
 					maxZoom: this.getProps('maxZoom'),
@@ -266,11 +281,16 @@ export class POILayer extends STDLayer {
 						return this._createTileRenderables(tileToken, projection, polaris)
 					},
 				})
+
+				this.tileManager.start()
 			}
 		)
 
-		this.onViewChange = () => {
-			this.tileManager.update(p, projection)
+		this.onViewChange = (cam, p) => {
+			const polaris = p as Polaris
+			if (this.matr) {
+				this.matr.uniforms.uResolution.value = { x: polaris.width, y: polaris.height }
+			}
 		}
 
 		/** picking */
@@ -370,7 +390,9 @@ export class POILayer extends STDLayer {
 			req
 				.then((data) => {
 					let geojson: any
-					if (dataType === 'arraybuffer') {
+
+					// parse response to geojson
+					if (dataType === 'pbf') {
 						geojson = decode(new Pbf(data))
 					} else if (dataType === 'geojson') {
 						geojson = data
@@ -388,18 +410,26 @@ export class POILayer extends STDLayer {
 						return
 					}
 
-					if (!geojson.type || geojson.type !== 'FeatureCollection') {
-						console.error('POILayer - The response data type is not a valid GeoJSON')
+					if (
+						!geojson.type ||
+						geojson.type !== 'FeatureCollection' ||
+						!geojson.features ||
+						!Array.isArray(geojson.features)
+					) {
+						console.warn('POILayer - The response data is not a valid GeoJSON, skip. ')
 						reject()
 						return
 					}
 
-					const tile = this._createTileMesh(geojson, projection, polaris)
-					if (tile) {
-						resolve(tile)
-						reject()
-						return
+					if (geojson.features.length > 0) {
+						const tile = this._createTileMesh(geojson, projection, polaris, cacheKey)
+						if (tile) {
+							resolve(tile)
+							reject()
+							return
+						}
 					}
+
 					resolve({
 						meshes: [],
 						layers: [],
@@ -411,7 +441,8 @@ export class POILayer extends STDLayer {
 		})
 	}
 
-	private _createPointMatr() {
+	private _createPointMatr(polaris: Polaris) {
+		const pointOffset = this.getProps('pointOffset')
 		const matr = new MatrPoint({
 			alphaMode: 'BLEND',
 			size: this.getProps('pointSize'),
@@ -419,11 +450,21 @@ export class POILayer extends STDLayer {
 			baseColorTexture: {
 				image: { uri: this.getProps('pointImage'), flipY: true },
 				sampler: {
-					minFilter: 'NEAREST_MIPMAP_LINEAR',
+					minFilter: 'LINEAR_MIPMAP_LINEAR',
 					magFilter: 'LINEAR',
 					wrapS: 'CLAMP_TO_EDGE',
 					wrapT: 'CLAMP_TO_EDGE',
 					anisotropy: 1,
+				},
+			},
+			uniforms: {
+				uOffset: {
+					type: 'vec2',
+					value: { x: pointOffset[0], y: pointOffset[1] },
+				},
+				uResolution: {
+					type: 'vec2',
+					value: { x: polaris.width, y: polaris.height },
 				},
 			},
 			attributes: {
@@ -432,12 +473,18 @@ export class POILayer extends STDLayer {
 			},
 			varyings: {
 				vColor: 'vec3',
+				vG: 'vec4',
 			},
 			vertPointSize: `
 				pointSize = aSize;
 			`,
 			vertOutput: `
 				vColor = aColor / 255.0;
+				glPosition = projectionMatrix * modelViewPosition;
+				glPosition /= glPosition.w;
+				vec2 pxRange = vec2(aSize) / uResolution;
+				vec2 offset = uOffset;
+				glPosition.xy += offset * pxRange;
 			`,
 			fragColor: `
 				fragColor.rgb = vColor;
@@ -449,14 +496,15 @@ export class POILayer extends STDLayer {
 	private _createTileMesh(
 		geojson: any,
 		projection: Projection,
-		polaris: Polaris
+		polaris: Polaris,
+		key?: string
 	): TileRenderables | undefined {
 		if (!geojson.type || geojson.type !== 'FeatureCollection') {
 			return
 		}
 
 		const mesh = new Mesh({
-			name: 'points-mesh',
+			name: key ? key : 'pois',
 		})
 
 		const idPropKey = this.getProps('idPropKey')
@@ -464,9 +512,9 @@ export class POILayer extends STDLayer {
 		const featureFilter = this.getProps('featureFilter')
 		const clusterNumFilter = this.getProps('clusterNumFilter')
 		const clusterSize = this.getProps('clusterSize')
-		const pointSize = Math.round(this.getProps('pointSize'))
 		const getPointColor = this.getProps('getPointColor')
 		const getClusterImage = this.getProps('getClusterImage')
+		const pointOffset = this.getProps('pointOffset')
 
 		const layers: Marker[] = []
 		const meshes: Mesh[] = []
@@ -488,6 +536,8 @@ export class POILayer extends STDLayer {
 					return
 				}
 			}
+
+			const id = feature.properties[idPropKey] as number | string
 
 			// add 'index' prop to feature
 			feature.index = this._featureCount
@@ -511,10 +561,9 @@ export class POILayer extends STDLayer {
 				this._renderableFeatureMap.set(cluster, feature)
 				const meshInfo = { obj: cluster, objIdx: 0 }
 				this._setIndexMeshMap(feature.index, meshInfo)
-				// this._setIdMeshesMap(id, meshInfo)
+				this._setIdMeshesMap(id, meshInfo)
 			} else {
 				// check id key
-				const id = feature.properties[idPropKey] as number | string
 				if (id === undefined || id === null) {
 					console.error(
 						`feature does not have idPropKey: ${idPropKey}, please check tile data or layer config`
@@ -557,7 +606,13 @@ export class POILayer extends STDLayer {
 
 		mesh.geometry = geom
 		mesh.material = this.matr
-		mesh.extras.pickHelper = new PointsMeshPickHelper(mesh, this._pointImgElem, polaris, 'aSize')
+		mesh.extras.pickHelper = new PointsMeshPickHelper(
+			mesh,
+			this._pointImgElem,
+			polaris,
+			'aSize',
+			pointOffset
+		)
 		meshes.push(mesh)
 		this._renderableFeatureMap.set(mesh, meshFeatures)
 
@@ -572,7 +627,7 @@ export class POILayer extends STDLayer {
 		const div = document.createElement('div')
 		div.innerText = text
 
-		const style = div.style
+		const style = div.style as any
 		for (const key in clusterDOMStyle) {
 			if (Object.prototype.hasOwnProperty.call(clusterDOMStyle, key)) {
 				const value = clusterDOMStyle[key]
@@ -585,8 +640,15 @@ export class POILayer extends STDLayer {
 		style.width = pxSize + 'px'
 		style.height = pxSize + 'px'
 		style.background = `url(${img})`
+		// style.backgroundColor = '#ff00ff'
+		// style.backgroundBlendMode = 'multiply'
 		style.backgroundPosition = 'center'
 		style.backgroundSize = pxSize + 'px'
+		// style.filter = 'opacity(.5) drop-shadow(0 0 0 yellow)'
+		// style.maskImage = `url(${img})`
+		// style.maskMode = 'alpha'
+		// style.mask = `url(${img})`
+		// style.maskMode = 'alpha'
 
 		return div
 	}
@@ -654,6 +716,11 @@ export class POILayer extends STDLayer {
 	}
 
 	private _setIdMeshesMap(id: number | string, obj: any) {
+		if (id === undefined || id === null) {
+			// cluster may not have ids
+			return
+		}
+
 		id = id.toString()
 		if (this._idMeshesMap.has(id)) {
 			this._idMeshesMap.get(id)?.push(obj)

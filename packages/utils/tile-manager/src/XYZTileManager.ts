@@ -2,10 +2,10 @@ import { Polaris } from '@polaris.gl/schema'
 import { CommonTileManager, CommonTileManagerConfig } from './CommonTileManager'
 import { lngLatToGoogle } from 'global-mercator'
 
-export type GoogleXYZTileManagerConfig = Omit<CommonTileManagerConfig, 'getViewTiles'>
+export type XYZTileManagerConfig = Omit<CommonTileManagerConfig, 'getViewTiles'>
 
-export class GoogleXYZTileManager extends CommonTileManager {
-	constructor(config: GoogleXYZTileManagerConfig) {
+export class XYZTileManager extends CommonTileManager {
+	constructor(config: XYZTileManagerConfig) {
 		super({
 			...config,
 			getViewTiles,
@@ -44,5 +44,18 @@ const getViewTiles = (polaris: Polaris, minZoom: number, maxZoom: number) => {
 		}
 	}
 
+	// sort tileTokens from view mid to view edge
+	// to let the mid view tiles request earlier
+	const mid = [(xMin + xMax) * 0.5, (yMin + yMax) * 0.5]
+	tileList.sort(
+		(a, b) =>
+			manhattanDistance([a[0] + 0.5, a[1] + 0.5], mid) -
+			manhattanDistance([b[0] + 0.5, b[1] + 0.5], mid)
+	)
+
 	return tileList
+}
+
+const manhattanDistance = (a: number[], b: number[]) => {
+	return Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1])
 }

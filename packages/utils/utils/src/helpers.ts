@@ -2,28 +2,36 @@ import { Vector3, Matrix4, Box2, Vector2 } from '@gs.i/utils-math'
 import { MeshDataType, isDISPOSED } from '@gs.i/schema'
 import { CoordV2, PickEvent } from '@polaris.gl/schema'
 
+// const div = document.createElement('div')
+// div.style.position = 'absolute'
+// div.style.border = '1px solid red'
+// document.body.appendChild(div)
+
 export class PointsMeshPickHelper {
 	mesh: MeshDataType
 	polaris: any
 	sizeAttrName: string
+	offset: number[]
 	private _imgAlphaData: number[] | Uint8Array
 	private _imgWidth: number
 	private _imgHeight: number
 	private _worldMatrix = new Matrix4()
 	private _position = new Vector3()
 	private _vec3 = new Vector3()
-	private _box2 = new Box2()
+	private _pointBox = new Box2()
 	private _uv = new Vector2()
 
 	constructor(
 		mesh: MeshDataType,
 		img: string | HTMLImageElement,
 		polaris: any,
-		sizeAttrName: string
+		sizeAttrName: string,
+		offset = [0.0, 0.0]
 	) {
 		this.mesh = mesh
 		this.polaris = polaris
 		this.sizeAttrName = sizeAttrName
+		this.offset = offset
 		this._createMapAlphaData(img)
 	}
 
@@ -74,17 +82,33 @@ export class PointsMeshPickHelper {
 			this._position.copy(localPos)
 			this._position.applyMatrix4(this._worldMatrix)
 			const screenXY = polaris.getScreenXY(this._position.x, this._position.y, this._position.z)
+
+			const offsetX = halfSize * this.offset[0]
+			const offsetY = halfSize * this.offset[1]
+			screenXY[0] = screenXY[0] + offsetX
+			screenXY[1] = screenXY[1] + offsetY
+
 			// pointerCoords 坐标以 container 左下角为原点，polaris.getScreenXY以左上角为原点
 			screenXY[1] = polaris.height - screenXY[1]
 
-			this._box2.min.set(screenXY[0] - halfSize, screenXY[1] - halfSize)
-			this._box2.max.set(screenXY[0] + halfSize, screenXY[1] + halfSize)
+			this._pointBox.min.set(screenXY[0] - halfSize, screenXY[1] - halfSize)
+			this._pointBox.max.set(screenXY[0] + halfSize, screenXY[1] + halfSize)
+
+			// DEBUG
+			// const bsize = new Vector2()
+			// this._pointBox.getSize(bsize)
+			// const bcenter = new Vector2()
+			// this._pointBox.getCenter(bcenter)
+			// div.style.width = bsize.x + 'px'
+			// div.style.height = bsize.y + 'px'
+			// div.style.left = bcenter.x - halfSize + 'px'
+			// div.style.top = bcenter.y - halfSize + 'px'
 
 			if (
-				pointerCoords.x < this._box2.min.x ||
-				pointerCoords.x > this._box2.max.x ||
-				pointerCoords.y < this._box2.min.y ||
-				pointerCoords.y > this._box2.max.y
+				pointerCoords.x < this._pointBox.min.x ||
+				pointerCoords.x > this._pointBox.max.x ||
+				pointerCoords.y < this._pointBox.min.y ||
+				pointerCoords.y > this._pointBox.max.y
 			) {
 				continue
 			}
@@ -92,8 +116,8 @@ export class PointsMeshPickHelper {
 			// Point hitted
 			// Check px alpha
 			this._uv.set(
-				(pointerCoords.x - this._box2.min.x) / size,
-				(pointerCoords.y - this._box2.min.y) / size
+				(pointerCoords.x - this._pointBox.min.x) / size,
+				(pointerCoords.y - this._pointBox.min.y) / size
 			)
 			const x = Math.floor(this._uv.x * w)
 			const y = Math.floor(this._uv.y * h)

@@ -15,14 +15,14 @@ export class CommonRequestManager implements IRequestManager {
 	}
 
 	/**
-	 * Can be overwritten in other cases
+	 * Can be overwritten by user
 	 * @param url
 	 * @param requestParams
 	 * @returns
 	 */
 	fetchData(url: string, requestParams?: any): Promise<any> {
 		if (this.config.fetcher) {
-			return Promise.resolve(this.config.fetcher(url, requestParams))
+			return this.config.fetcher(url, requestParams)
 		}
 
 		return new Promise((resolve, reject) => {
@@ -138,6 +138,9 @@ export class CommonRequestManager implements IRequestManager {
 				return res.json()
 			}
 			case 'application/octet-stream': {
+				return res.arrayBuffer()
+			}
+			case 'application/x-protobuf': {
 				return res.arrayBuffer()
 			}
 			case 'text/plain': {

@@ -1,7 +1,5 @@
 import { STDLayer } from '@polaris.gl/layer-std'
 import { MeshDataType } from '@gs.i/schema'
-import { Projection } from '@polaris.gl/projection'
-import { Polaris } from '@polaris.gl/schema'
 
 export type TileToken = (number | string)[]
 
@@ -10,8 +8,31 @@ export type TileRenderables = {
 	layers: STDLayer[]
 }
 
+export type CachedTileRenderables = {
+	meshes: MeshDataType[]
+	layers: STDLayer[]
+	lastVisTime: number
+	key: string
+}
+
 export interface ITileManager {
-	update(polaris: Polaris, projection: Projection): void
+	/**
+	 * Start updating tiles
+	 */
+	start(): void
+
+	/**
+	 * Stop updating tiles
+	 */
+	stop(): void
+
+	/**
+	 * Get current visible tiles list
+	 */
 	getCurrVisibleTiles(): TileRenderables[]
+
+	/**
+	 * Dispose
+	 */
 	dispose(): void
 }
