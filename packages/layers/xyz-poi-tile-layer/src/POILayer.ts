@@ -15,13 +15,6 @@ import { Color } from '@gs.i/utils-math'
 /**
  * 配置项 interface
  */
-
-export type UrlGenerator = (
-	x: number | string,
-	y: number | string,
-	z: number | string
-) => string | { url: string; params?: any }
-
 export interface POILayerProps extends STDLayerProps {
 	/**
 	 * Tile response data type,
@@ -36,10 +29,13 @@ export interface POILayerProps extends STDLayerProps {
 	requestManager?: IRequestManager
 
 	/**
-	 * XYZ tile url generator
-	 * if this prop is provided, the 'url' prop will be ignored
+	 * URL generator for xyz tile
 	 */
-	getUrl: UrlGenerator
+	getUrl: (
+		x: number | string,
+		y: number | string,
+		z: number | string
+	) => string | { url: string; params?: any }
 
 	/**
 	 * The id prop key in feature.properties is essential for XYZ tiles,
@@ -76,17 +72,29 @@ export interface POILayerProps extends STDLayerProps {
 	pointSize: number
 
 	/**
+	 * point hover size (px)
+	 */
+	pointHoverSize: number
+
+	/**
+	 * The point image is rendered at center of lnglat location by default,
+	 * setting offsets can let the point image be rendered at position [size * offset],
+	 * usually both numbers are between [-1.0, 1.0], but not necessary.
+	 */
+	pointOffset: [number, number]
+
+	/**
 	 * cluster size (px)
 	 */
 	clusterSize: number
 
 	/**
-	 * get poi color (bot clustered)
+	 * Get poi color
 	 */
 	getPointColor: number | string | ((feature: any) => number | string)
 
 	/**
-	 * get clustered poi image
+	 * Get clustered poi image
 	 */
 	getClusterImage: string | ((feature: any) => string)
 
@@ -96,29 +104,22 @@ export interface POILayerProps extends STDLayerProps {
 	clusterDOMStyle: any
 
 	/**
-	 * Custom feature filter, return true to mark that poi as valid point
-	 * return {false} to skip this feature
+	 * Get cluster feature count
+	 * @return => {number} to set this feature as a cluster, the number will be rendered onto marker
+	 * @return => {undefined} to set this feature as non-clusted point, it will be rendered as normal point
 	 */
-	featureFilter: (feature: any) => boolean
+	getClusterCount: (feature: any) => number | undefined
 
 	/**
-	 * custom cluster filter
-	 * return {number} to mark this feature as cluster, the number will be rendered on marker
-	 * return {undefined} to mark this feature as point
+	 * Custom geojson filter
 	 */
-	clusterNumFilter: (feature: any) => number | undefined
+	geojsonFilter?: (geojson: any) => any
 
 	/**
-	 * point hover size
+	 * Custom feature filter, return true to set this feature as valid feature
+	 * @return => {false} to skip this feature
 	 */
-	hoverSize: number
-
-	/**
-	 * The point image is rendered at lnglat center by default,
-	 * setting offsets can let the point image be rendered at position XY = [size * offset],
-	 * both numbers are normally between [-1.0, 1.0], but not necessary.
-	 */
-	pointOffset: [number, number]
+	featureFilter?: (feature: any) => boolean
 }
 
 /**
@@ -137,14 +138,15 @@ const defaultProps: POILayerProps = {
 		'https://img.alicdn.com/imgextra/i3/O1CN01naDbsE1HeeoOqvic6_!!6000000000783-2-tps-256-256.png',
 	getPointColor: '#ffafff',
 	pointSize: 16,
+	pointHoverSize: 32,
+	pointOffset: [0.0, 0.0],
 	getClusterImage:
 		'https://img.alicdn.com/imgextra/i1/O1CN01yyOfXC23ffGrhohq7_!!6000000007283-2-tps-53-52.png',
 	clusterSize: 64,
 	clusterDOMStyle: {},
 	featureFilter: (feature) => true,
-	clusterNumFilter: (feature) => undefined,
-	hoverSize: 32,
-	pointOffset: [0.0, 0.0],
+	getClusterCount: (feature) => undefined,
+	geojsonFilter: (geojson) => geojson,
 }
 
 export type TileRenderables = {
@@ -223,9 +225,10 @@ export class POILayer extends STDLayer {
 				'pointSize',
 				'clusterSize',
 				'featureFilter',
-				'clusterNumFilter',
+				'getClusterCount',
 				'requestManager',
 				'pointOffset',
+				'geojsonFilter',
 			],
 			() => {
 				this._featureCount = 0
@@ -304,7 +307,7 @@ export class POILayer extends STDLayer {
 
 			const type = style.type
 			const pointSize = this.getProps('pointSize')
-			const hoverSize = this.getProps('hoverSize')
+			const pointHoverSize = this.getProps('pointHoverSize')
 			dataIndexArr.forEach((index) => {
 				const idxInfo = this._indexMeshMap.get(index)
 				if (!idxInfo) return
@@ -317,7 +320,7 @@ export class POILayer extends STDLayer {
 					if (type === 'none') {
 						this._updatePointSizeByIndex(obj, objIdx, pointSize)
 					} else if (type === 'hover') {
-						this._updatePointSizeByIndex(obj, objIdx, hoverSize)
+						this._updatePointSizeByIndex(obj, objIdx, pointHoverSize)
 					}
 				}
 			})
@@ -330,7 +333,7 @@ export class POILayer extends STDLayer {
 
 			const type = style.type
 			const pointSize = this.getProps('pointSize')
-			const hoverSize = this.getProps('hoverSize')
+			const pointHoverSize = this.getProps('pointHoverSize')
 			idsArr.forEach((id) => {
 				const idStr = id.toString()
 				const meshInfos = this._idMeshesMap.get(idStr)
@@ -346,7 +349,7 @@ export class POILayer extends STDLayer {
 							this._updatePointSizeByIndex(obj, objIdx, pointSize)
 							this._styledIdsMap.delete(idStr)
 						} else if (type === 'hover') {
-							this._updatePointSizeByIndex(obj, objIdx, hoverSize)
+							this._updatePointSizeByIndex(obj, objIdx, pointHoverSize)
 							this._styledIdsMap.set(idStr, 'hover')
 						}
 					}
@@ -375,6 +378,7 @@ export class POILayer extends STDLayer {
 	private _createTileRenderables(token, projection, polaris) {
 		const dataType = this.getProps('dataType')
 		const getUrl = this.getProps('getUrl')
+		const geojsonFilter = this.getProps('geojsonFilter')
 		const x = token[0],
 			y = token[1],
 			z = token[2]
@@ -410,22 +414,25 @@ export class POILayer extends STDLayer {
 						return
 					}
 
+					geojson = geojsonFilter(geojson) || geojson
+
 					if (
 						!geojson.type ||
 						geojson.type !== 'FeatureCollection' ||
 						!geojson.features ||
 						!Array.isArray(geojson.features)
 					) {
-						console.warn('POILayer - The response data is not a valid GeoJSON, skip. ')
+						console.warn(
+							`POILayer - Tile source is not a valid GeoJSON, skip. If necessary please use the 'geojsonFilter' prop to modify the response data. `
+						)
 						reject()
 						return
 					}
 
 					if (geojson.features.length > 0) {
-						const tile = this._createTileMesh(geojson, projection, polaris, cacheKey)
+						const tile = this._createTileMeshAndMarkers(geojson, projection, polaris, cacheKey)
 						if (tile) {
 							resolve(tile)
-							reject()
 							return
 						}
 					}
@@ -493,7 +500,7 @@ export class POILayer extends STDLayer {
 		return matr
 	}
 
-	private _createTileMesh(
+	private _createTileMeshAndMarkers(
 		geojson: any,
 		projection: Projection,
 		polaris: Polaris,
@@ -510,7 +517,7 @@ export class POILayer extends STDLayer {
 		const idPropKey = this.getProps('idPropKey')
 		const baseAlt = this.getProps('baseAlt')
 		const featureFilter = this.getProps('featureFilter')
-		const clusterNumFilter = this.getProps('clusterNumFilter')
+		const getClusterCount = this.getProps('getClusterCount')
 		const clusterSize = this.getProps('clusterSize')
 		const getPointColor = this.getProps('getPointColor')
 		const getClusterImage = this.getProps('getClusterImage')
@@ -544,7 +551,7 @@ export class POILayer extends STDLayer {
 			this._featureCount++
 
 			const coords = feature.geometry.coordinates as number[]
-			const clusterNum = clusterNumFilter(feature)
+			const clusterNum = getClusterCount(feature)
 			if (clusterNum !== undefined && clusterNum !== null) {
 				// cluster point
 				const div = this._createClusterDiv(clusterNum, getClusterImage(feature))
@@ -735,7 +742,7 @@ export class POILayer extends STDLayer {
 
 	private _getPointStyledSize(style?: string): number {
 		const pointSize = this.getProps('pointSize')
-		const hoverSize = this.getProps('hoverSize')
+		const pointHoverSize = this.getProps('pointHoverSize')
 		if (!style) {
 			return pointSize
 		}
@@ -743,7 +750,7 @@ export class POILayer extends STDLayer {
 			return pointSize
 		}
 		if (style === 'hover') {
-			return hoverSize
+			return pointHoverSize
 		}
 		return pointSize
 	}

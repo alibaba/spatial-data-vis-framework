@@ -107,19 +107,18 @@ async function getImage(): Promise<string> {
 }
 
 //
-
 async function initPOI() {
 	let lastHovered
 	const layer = new POILayer({
 		// pointImage: await getImage(),
 		pointSize: size,
-		hoverSize: 48,
+		pointHoverSize: 48,
 		pointOffset: [0.0, 0.5],
 		dataType: 'pbf',
 		minZoom: 3,
 		maxZoom: 20,
 		getUrl,
-		clusterNumFilter: (feature) => {
+		getClusterCount: (feature) => {
 			if (feature.properties.number_of_point > 1) {
 				return Math.round(feature.properties.number_of_point)
 			}
