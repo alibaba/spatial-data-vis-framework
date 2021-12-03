@@ -1,6 +1,7 @@
 export type ConfigType = {
 	/**
 	 * The return data type
+	 * @type 'auto' indicates RequestManager to automatically parse the response according to headers.Content-Type
 	 */
 	dataType: 'auto' | 'json' | 'arraybuffer' | 'text'
 
