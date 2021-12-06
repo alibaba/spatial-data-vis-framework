@@ -12,7 +12,7 @@ export class PointsMeshPickHelper {
 	polaris: any
 	sizeAttrName: string
 	offset: number[]
-	private _imgAlphaData: number[] | Uint8Array
+	private _imgAlphaData: Uint8Array
 	private _imgWidth: number
 	private _imgHeight: number
 	private _worldMatrix = new Matrix4()
@@ -94,7 +94,7 @@ export class PointsMeshPickHelper {
 			this._pointBox.min.set(screenXY[0] - halfSize, screenXY[1] - halfSize)
 			this._pointBox.max.set(screenXY[0] + halfSize, screenXY[1] + halfSize)
 
-			// DEBUG
+			// ----- DEBUG -----
 			// const bsize = new Vector2()
 			// this._pointBox.getSize(bsize)
 			// const bcenter = new Vector2()
@@ -103,6 +103,7 @@ export class PointsMeshPickHelper {
 			// div.style.height = bsize.y + 'px'
 			// div.style.left = bcenter.x - halfSize + 'px'
 			// div.style.top = bcenter.y - halfSize + 'px'
+			// ----- DEBUG -----
 
 			if (
 				pointerCoords.x < this._pointBox.min.x ||
@@ -122,7 +123,7 @@ export class PointsMeshPickHelper {
 			const x = Math.floor(this._uv.x * w)
 			const y = Math.floor(this._uv.y * h)
 			const alpha = this._imgAlphaData[w * y + x]
-			if (alpha !== 0) {
+			if (alpha >= 127) {
 				// Intersection is valid
 				const dataIndex = i
 				const cam = polaris.cameraProxy
