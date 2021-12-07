@@ -6,6 +6,12 @@ export type ConfigType = {
 	dataType: 'auto' | 'json' | 'arraybuffer' | 'text'
 
 	/**
+	 * Cache size limit for requests
+	 * default is 1024
+	 */
+	cacheSize?: number
+
+	/**
 	 * The default data fetch method can be overwritten
 	 */
 	fetcher?: (url: string, requestParams?: any) => Promise<any>

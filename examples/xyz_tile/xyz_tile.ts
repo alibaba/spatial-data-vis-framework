@@ -1,4 +1,5 @@
-import { POILayer } from '@polaris.gl/layer-xyz-poi-tile'
+import { MercatorProjection } from '@polaris.gl/projection'
+import { POILayer, AOILayer } from '@polaris.gl/layer-xyz-poi-tile'
 import { PolarisGSIGL2 } from '@polaris.gl/gsi-gl2'
 import { AMapLayer } from '@polaris.gl/layer-amap'
 
@@ -11,10 +12,13 @@ const p = new PolarisGSIGL2({
 	lights: {},
 	autoResize: true,
 	asyncRendering: true,
+	projection: new MercatorProjection({
+		center: [104, 35.4],
+	}),
 })
 p.timeline.config.ignoreErrors = false
 
-const getUrl = (x, y, z) => {
+const getPOIUrl = (x, y, z) => {
 	const params = {
 		PostgreSQL: {
 			dbname: 'test-1',
@@ -49,6 +53,45 @@ const getUrl = (x, y, z) => {
 							sum_number: ['count', 'sum'],
 						},
 					},
+				},
+			},
+		},
+	}
+	return (
+		'http://223675737204339375.cn-zhangjiakou-test-corp.test.fc.aliyun-inc.com/2016-08-15/proxy/fbi-geo.py-get-mvt__stable/py-get-mvt/api?data=' +
+		JSON.stringify(params)
+	)
+}
+
+const getAOIUrl = (x, y, z) => {
+	const params = {
+		PostgreSQL: {
+			dbname: 'test-1',
+			user: 'kou_admin',
+			password: 'kou_admin1234',
+			host: 'pgm-bp1oi8k60xk5861j146270.pg.rds.aliyuncs.com',
+			port: '1921',
+		},
+		fc_param: {
+			x,
+			y,
+			z,
+			id_column: 'id',
+			geometry_column: 'geometry',
+			clip_geometry: null,
+			area_code: null,
+			source: '浙江省_杭州市_building',
+			output_format: 'geojson_pbf',
+			layer: {
+				default: {
+					geometry_type: 'Polygon',
+					visible_columns: [],
+					simplify_scalar: 7,
+					filter_expression: null,
+					preserve_collapsed: false,
+					with_boundary: true,
+					visible_zlevel: [3, 20],
+					clickable_zlevel: [13, 20],
 				},
 			},
 		},
@@ -109,7 +152,7 @@ async function getImage(): Promise<string> {
 //
 async function initPOI() {
 	let lastHovered
-	const layer = new POILayer({
+	const poi = new POILayer({
 		// pointImage: await getImage(),
 		pointSize: size,
 		pointHoverSize: 48,
@@ -117,7 +160,7 @@ async function initPOI() {
 		dataType: 'pbf',
 		minZoom: 3,
 		maxZoom: 20,
-		getUrl,
+		getUrl: getPOIUrl,
 		getClusterCount: (feature) => {
 			if (feature.properties.number_of_point > 1) {
 				return Math.round(feature.properties.number_of_point)
@@ -139,7 +182,7 @@ async function initPOI() {
 		},
 		onHovered: (data) => {
 			if (lastHovered !== undefined) {
-				layer.highlightByIds([lastHovered], { type: 'none' })
+				poi.highlightByIds([lastHovered], { type: 'none' })
 			}
 
 			if (!data || data.data.curr === undefined) return
@@ -147,16 +190,41 @@ async function initPOI() {
 			const feature = data.data.curr
 			const id = feature.properties.id
 			if (!id) return
-			layer.highlightByIds([id], { type: 'hover' })
+			poi.highlightByIds([id], { type: 'hover' })
 			lastHovered = id
 		},
 	})
-	p.add(layer)
+	p.add(poi)
 
-	window['layer'] = layer
+	window['poi'] = poi
 }
 
-initPOI()
+// initPOI()
+
+// AOI
+const highlighted: any[] = []
+const aoi = new AOILayer({
+	getUrl: getAOIUrl,
+	getColor: 0xffaf88,
+	getOpacity: 0.5,
+	transparent: true,
+	pickable: true,
+	onPicked: (info) => {
+		console.log('info', info)
+		if (info && info.data && info.data.feature) {
+			const feature = info.data.feature
+			const id = feature.properties.id
+			aoi.highlightByIds([id], { type: 'select' })
+			highlighted.push(id)
+			console.log('feature id', id)
+		} else {
+			aoi.highlightByIds(highlighted, { type: 'none' })
+			highlighted.length = 0
+		}
+	},
+})
+p.add(aoi)
+window['aoi'] = aoi
 
 // amap
 const amapLayer = new AMapLayer({

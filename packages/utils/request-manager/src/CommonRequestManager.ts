@@ -97,8 +97,8 @@ export class CommonRequestManager implements IRequestManager {
 		const promise = new Promise<any>((resolve, reject) => {
 			this.fetchData(url, requestParams)
 				.then((result) => {
-					this._requestCacheMap.delete(cacheKey)
 					this._dataCacheMap.set(cacheKey, result)
+					this._requestCacheMap.delete(cacheKey)
 					resolve(result)
 				})
 				.catch((e) => {
