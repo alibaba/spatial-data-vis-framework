@@ -29,7 +29,17 @@ export interface ITileManager {
 	/**
 	 * Get current visible tiles list
 	 */
-	getCurrVisibleTiles(): TileRenderables[]
+	getVisibleTiles(): TileRenderables[]
+
+	/**
+	 * forEach call for every cached tiles
+	 */
+	forEachTile(f: (TileRenderables: TileRenderables, index?: number) => any)
+
+	/**
+	 * forEach call for every visible tiles
+	 */
+	forEachVisibleTile(f: (TileRenderables: TileRenderables, index?: number) => any)
 
 	/**
 	 * Dispose

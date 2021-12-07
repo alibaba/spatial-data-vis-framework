@@ -52,7 +52,7 @@ export type CommonTileManagerConfig = {
 const defaultConfig = {
 	minZoom: 3,
 	maxZoom: 20,
-	cacheSize: 2048,
+	cacheSize: 1024,
 	stableFramesBeforeUpdate: 3,
 	printErrors: false,
 }
@@ -87,9 +87,23 @@ export class CommonTileManager implements ITileManager {
 	 * @return {*}  {TileRenderables[]}
 	 * @memberof CommonTileManager
 	 */
-	getCurrVisibleTiles(): TileRenderables[] {
+	getVisibleTiles(): TileRenderables[] {
 		return this._currVisibleTiles.filter((tile) => {
 			if (tile.layers.length > 0 || tile.meshes.length > 0) return tile
+		})
+	}
+
+	forEachTile(f: (TileRenderables: TileRenderables, index?: number) => any) {
+		this._tiles.forEach((tile, index) => {
+			f(tile, index)
+		})
+	}
+
+	forEachVisibleTile(f: (TileRenderables: TileRenderables, index?: number) => any) {
+		this._currVisibleTiles.forEach((tile, index) => {
+			if (tile.layers.length > 0 || tile.meshes.length > 0) {
+				f(tile, index)
+			}
 		})
 	}
 
