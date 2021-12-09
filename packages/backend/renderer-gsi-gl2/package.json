@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/renderer-gsi-gl2",
-    "version": "0.0.0-beta",
+    "version": "0.0.0-alpha.0",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -15,14 +15,14 @@
         "rebuild": "./scripts/rebuild.sh"
     },
     "dependencies": {
-        "@polaris.gl/schema": "^0.0.0-beta",
-        "@polaris.gl/view-gsi": "^0.0.0-beta",
-        "postprocessing": "^4.10.0",
-        "@gs.i/schema": "^0.0.0-beta",
         "@gs.i/backend-gl2": "^0.0.0-beta",
         "@gs.i/frontend-sdk": "^0.0.0-beta",
+        "@gs.i/schema": "^0.0.0-beta",
         "@gs.i/utils-raycast": "^0.0.0-beta",
-        "gl2": "0.0.4"
+        "@polaris.gl/schema": "^0.0.0-alpha.0",
+        "@polaris.gl/view-gsi": "^0.0.0-alpha.0",
+        "gl2": "0.0.4",
+        "postprocessing": "^4.10.0"
     },
     "devDependencies": {
         "@types/offscreencanvas": "latest",

@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/utils-worker-manager",
-    "version": "0.0.0-beta",
+    "version": "0.0.0-alpha.0",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -20,6 +20,5 @@
     "devDependencies": {
         "@types/is": "^0.0.21",
         "typescript": ">4.4.0"
-    },
-    "dependencies": {}
+    }
 }

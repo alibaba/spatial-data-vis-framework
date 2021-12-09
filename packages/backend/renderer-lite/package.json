@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/renderer-lite",
-    "version": "0.0.0-beta",
+    "version": "0.0.0-alpha.0",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -16,13 +16,13 @@
         "rebuild": "./scripts/rebuild.sh"
     },
     "dependencies": {
-        "three-lite": "0.0.2",
-        "@polaris.gl/schema": "^0.0.0-beta",
-        "@polaris.gl/view-gsi": "^0.0.0-beta",
-        "@gs.i/schema": "^0.0.0-beta",
         "@gs.i/backend-threelite": "^0.0.0-beta",
         "@gs.i/frontend-sdk": "^0.0.0-beta",
-        "@gs.i/utils-raycast": "^0.0.0-beta"
+        "@gs.i/schema": "^0.0.0-beta",
+        "@gs.i/utils-raycast": "^0.0.0-beta",
+        "@polaris.gl/schema": "^0.0.0-alpha.0",
+        "@polaris.gl/view-gsi": "^0.0.0-alpha.0",
+        "three-lite": "0.0.2"
     },
     "devDependencies": {
         "@types/offscreencanvas": "latest",

@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/layer-std-marker",
-    "version": "0.0.0-beta",
+    "version": "0.0.0-alpha.0",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -16,16 +16,16 @@
         "build:umd": "npx webpack"
     },
     "dependencies": {
-        "@polaris.gl/layer-std": "^0.0.0-beta",
-        "@polaris.gl/schema": "^0.0.0-beta",
-        "@polaris.gl/projection": "^0.0.0-beta",
-        "@polaris.gl/gsi": "^0.0.0-beta",
-        "@polaris.gl/utils": "^0.0.0-beta",
-        "@polaris.gl/view-gsi": "^0.0.0-beta",
-        "@gs.i/utils-math": "^0.0.0-beta",
         "@gs.i/frontend-sdk": "^0.0.0-beta",
         "@gs.i/schema": "^0.0.0-beta",
-        "@gs.i/utils-geometry": "^0.0.0-beta"
+        "@gs.i/utils-geometry": "^0.0.0-beta",
+        "@gs.i/utils-math": "^0.0.0-beta",
+        "@polaris.gl/gsi": "^0.0.0-alpha.0",
+        "@polaris.gl/layer-std": "^0.0.0-alpha.0",
+        "@polaris.gl/projection": "^0.0.0-alpha.0",
+        "@polaris.gl/schema": "^0.0.0-alpha.0",
+        "@polaris.gl/utils": "^0.0.0-alpha.0",
+        "@polaris.gl/view-gsi": "^0.0.0-alpha.0"
     },
     "devDependencies": {
         "typescript": ">4.4.0"

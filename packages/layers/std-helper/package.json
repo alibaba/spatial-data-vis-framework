@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/layer-std-helper",
-    "version": "0.0.0-beta",
+    "version": "0.0.0-alpha.0",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -16,9 +16,9 @@
         "build:umd": "npx webpack"
     },
     "dependencies": {
-        "@polaris.gl/layer-std": "^0.0.0-beta",
         "@gs.i/frontend-sdk": "^0.0.0-beta",
-        "@gs.i/utils-geom-builders": "^0.0.0-beta"
+        "@gs.i/utils-geom-builders": "^0.0.0-beta",
+        "@polaris.gl/layer-std": "^0.0.0-alpha.0"
     },
     "devDependencies": {
         "typescript": ">4.4.0"
