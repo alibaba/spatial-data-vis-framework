@@ -202,6 +202,8 @@ export class STDLayer extends Layer {
 
 	/**
 	 * Highlight API
+	 *
+	 * @memberof STDLayer
 	 */
 	highlightByIndices: (dataIndexArr: number[], style: { [name: string]: any }) => void
 

@@ -1,5 +1,5 @@
 {
-    "name": "@polaris.gl/layer-xyz-poi-tile",
+    "name": "@polaris.gl/layer-xyz-aoi-tile",
     "version": "0.0.0-beta",
     "description": "",
     "main": "dist/index.js",
@@ -23,8 +23,9 @@
         "@polaris.gl/utils": "^0.0.0-beta",
         "@polaris.gl/utils-request-manager": "^0.0.0-beta",
         "@polaris.gl/utils-tile-manager": "^0.0.0-beta",
-        "@polaris.gl/layer-std-marker": "^0.0.0-beta",
+        "@polaris.gl/utils-indicator": "^0.0.0-beta",
         "@gs.i/utils-math": "^0.0.0-beta",
+        "@gs.i/utils-geometry": "^0.0.0-beta",
         "@gs.i/frontend-sdk": "^0.0.0-beta",
         "@gs.i/schema": "^0.0.0-beta",
         "geobuf": "^3.0.2",

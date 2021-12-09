@@ -137,8 +137,7 @@ export class PointsMeshPickHelper {
 					/**
 					 * 碰撞点与视点距离
 					 */
-					// distance: this._position.distanceTo(this._vec30),
-					distance: 0, // 暂时用0，使得BubbleLayer的picking优先级最高
+					distance: this._position.distanceTo(this._vec3),
 
 					/**
 					 * data item 索引

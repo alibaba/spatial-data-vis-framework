@@ -12,14 +12,14 @@ export type ConfigType = {
 	cacheSize?: number
 
 	/**
-	 * The default data fetch method can be overwritten
+	 * The data fetch method which can be customized by user
 	 */
-	fetcher?: (url: string, requestParams?: any) => Promise<any>
+	fetcher?: (...args) => Promise<any>
 }
 
-export interface IRequestManager {
+export interface IRequestManager<RequestArgsType> {
 	readonly config: ConfigType
-	request(url: string, requestParams?: any): Promise<any>
-	getCachedData(url: string, requestParams?: any): any
+	request(args: RequestArgsType): Promise<any>
+	getCacheKey(args: RequestArgsType): string
 	dispose(): void
 }

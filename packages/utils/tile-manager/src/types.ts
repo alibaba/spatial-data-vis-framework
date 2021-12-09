@@ -8,9 +8,7 @@ export type TileRenderables = {
 	layers: STDLayer[]
 }
 
-export type CachedTileRenderables = {
-	meshes: MeshDataType[]
-	layers: STDLayer[]
+export type CachedTileRenderables = TileRenderables & {
 	lastVisTime: number
 	key: string
 }
@@ -19,17 +17,22 @@ export interface ITileManager {
 	/**
 	 * Start updating tiles
 	 */
-	start(): void
+	start(): Promise<void>
 
 	/**
 	 * Stop updating tiles
 	 */
-	stop(): void
+	stop(): Promise<void>
 
 	/**
 	 * Get current visible tiles list
 	 */
 	getVisibleTiles(): TileRenderables[]
+
+	/**
+	 * Get current pending (requesting/generating) tiles count
+	 */
+	getPendingTilesCount(): number
 
 	/**
 	 * forEach call for every cached tiles

@@ -52,6 +52,9 @@
 			"path": "../packages/layers/xyz-poi-tile-layer"
 		},
 		{
+			"path": "../packages/layers/xyz-aoi-tile-layer"
+		},
+		{
 			"path": "../packages/polaris/polaris-gsi-gl2"
 		},
 		{

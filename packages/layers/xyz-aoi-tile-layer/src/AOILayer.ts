@@ -1,7 +1,7 @@
 import { MeshDataType } from '@gs.i/schema'
 import { computeBBox, computeBSphere } from '@gs.i/utils-geometry'
-import { XYZTileManager, TileRenderables } from '@polaris.gl/utils-tile-manager'
-import { IRequestManager, CommonRequestManager } from '@polaris.gl/utils-request-manager'
+import { XYZTileManager, TileRenderables, TileToken } from '@polaris.gl/utils-tile-manager'
+import { XYZTileRequestManager } from '@polaris.gl/utils-request-manager'
 import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
 import { Mesh, MatrUnlit, Geom, Attr } from '@gs.i/frontend-sdk'
 import { Base, CoordV2, CoordV3, PickEvent, Polaris } from '@polaris.gl/schema'
@@ -11,7 +11,7 @@ import { Projection } from '@polaris.gl/projection'
 import { colorToUint8Array } from '@polaris.gl/utils'
 import { PolarisGSI } from '@polaris.gl/gsi'
 import { Color } from '@gs.i/utils-math'
-import { triangulateGeoJSON, featureToLinePositions } from './utils'
+import { triangulateGeoJSON, featureToLinePositions, createRangeArray } from './utils'
 import { LineIndicator } from '@polaris.gl/utils-indicator'
 
 /**
@@ -24,19 +24,15 @@ export interface AOILayerProps extends STDLayerProps {
 	dataType: 'auto' | 'geojson' | 'pbf'
 
 	/**
-	 * Pass in user custom RequestManager to replace the default one
-	 * Set a requestManager from outside and managed by user to let different layers share http resources.
+	 * Pass in a user customized RequestManager to replace the default one
+	 * Set a requestManager from outside and managed by user to let different layers share the same http resources.
 	 */
-	requestManager?: IRequestManager
+	requestManager?: XYZTileRequestManager
 
 	/**
 	 * URL generator for xyz tile
 	 */
-	getUrl: (
-		x: number | string,
-		y: number | string,
-		z: number | string
-	) => string | { url: string; params?: any }
+	getUrl: (x: number, y: number, z: number) => string | { url: string; requestParams?: any }
 
 	/**
 	 * The id key in feature.properties is essential for XYZ tiles,
@@ -62,24 +58,54 @@ export interface AOILayerProps extends STDLayerProps {
 	 */
 	maxZoom?: number
 
+	/**
+	 * get feature color
+	 */
 	getColor: number | string | ((feature: any) => number | string)
 
+	/**
+	 * get feature opacity
+	 */
 	getOpacity: number | ((feature: any) => number)
 
+	/**
+	 * is AOIs transparent
+	 */
 	transparent: boolean
 
-	selectLinesHeight: number
+	/**
+	 * Indicator lines base height
+	 */
+	indicatorLinesHeight: number
 
+	/**
+	 * Hover LineIndicator level
+	 */
 	hoverLineLevel: number
 
+	/**
+	 *
+	 */
 	hoverLineWidth: number
 
+	/**
+	 *
+	 */
 	hoverLineColor: number | string
 
+	/**
+	 * Select LineIndicator level
+	 */
 	selectLineLevel: number
 
+	/**
+	 *
+	 */
 	selectLineWidth: number
 
+	/**
+	 *
+	 */
 	selectLineColor: number | string
 
 	/**
@@ -97,6 +123,23 @@ export interface AOILayerProps extends STDLayerProps {
 	 * Stable frames before sending tile requests
 	 */
 	stableFramesBeforeRequest?: number
+
+	/**
+	 * The limit of tile cache count
+	 * default is 512
+	 */
+	cacheSize?: number
+
+	/**
+	 * User customized fetch method to replace the default layer fetcher
+	 * If this prop has been set, the 'getUrl' props will be ignored
+	 */
+	customFetcher?: (x: number, y: number, z: number) => Promise<any>
+
+	/**
+	 * User customized fetch cache key generator
+	 */
+	customTileKeyGen?: (x: number, y: number, z: number) => string
 }
 
 /**
@@ -114,16 +157,15 @@ const defaultProps: AOILayerProps = {
 	getColor: '#ffffff',
 	getOpacity: 1.0,
 	transparent: false,
-	selectLinesHeight: 0,
+	indicatorLinesHeight: 0,
 	hoverLineLevel: 2,
 	hoverLineWidth: 1,
 	hoverLineColor: '#333333',
 	selectLineLevel: 2,
 	selectLineWidth: 2,
 	selectLineColor: '#00ffff',
-	geojsonFilter: (geojson) => geojson,
-	featureFilter: (feature) => true,
 	stableFramesBeforeRequest: 15,
+	cacheSize: 512,
 }
 
 type IndicatorRangeInfo = {
@@ -136,10 +178,14 @@ export class AOILayer extends STDLayer {
 	matr: MatrUnlit
 	// geoMap: Map<string, any>
 
-	requestManager: IRequestManager
+	requestManager: XYZTileRequestManager
 
 	tileManager: XYZTileManager
 
+	/**
+	 * For feature.index counter
+	 * @NOTE this count will always increment even tiles may be released from memory, also means it will not decrease in any cases.
+	 */
 	private _featureCount: number
 
 	/**
@@ -148,14 +194,15 @@ export class AOILayer extends STDLayer {
 	private _renderableFeatureMap: Map<MeshDataType, any[]>
 
 	/**
-	 * Map for Feature <-> GeomIndexRange
+	 * Map for Feature <-> GeomIndexRange in the current Mesh
+	 * RangeType: [start, end]
 	 */
-	private _featureIndexRangeMap: Map<any, Uint32Array>
+	private _featureIndexRangeMap: Map<any, Uint8Array | Uint16Array | Uint32Array>
 
 	/**
 	 * LineIndicators list
 	 */
-	private _indicators: LineIndicator[]
+	private _indicators: Set<LineIndicator>
 
 	/**
 	 * Map for hover/pick styles
@@ -166,7 +213,14 @@ export class AOILayer extends STDLayer {
 	 * Map for storing styled feature ids
 	 * for setting styles among different tiles for the same geo
 	 */
-	private _idStyleMap: Map<number | string, { [name: string]: any }>
+	private _hoveredIds: Set<number | string>
+
+	private _selectedIds: Set<number | string>
+
+	/**
+	 * Performance info
+	 */
+	private _info: any
 
 	constructor(props: Partial<AOILayerProps> = {}) {
 		const _props = {
@@ -189,17 +243,34 @@ export class AOILayer extends STDLayer {
 			throw new Error('AOILayer - TileLayer can only be used in plane projections')
 		}
 
+		this._info = {
+			tileGenTimes: new Map<number | string, number>(),
+		}
+
 		this.listenProps(
 			[
-				'getUrl',
 				'dataType',
+				'getUrl',
 				'minZoom',
 				'maxZoom',
 				'featureIdKey',
 				'baseAlt',
-				'requestManager',
-				'featureFilter',
+				'getColor',
+				'getOpacity',
+				'transparent',
+				'indicatorLinesHeight',
+				'hoverLineLevel',
+				'hoverLineWidth',
+				'hoverLineColor',
+				'selectLineLevel',
+				'selectLineWidth',
+				'selectLineColor',
 				'geojsonFilter',
+				'featureFilter',
+				'stableFramesBeforeRequest',
+				'customFetcher',
+				'customTileKeyGen',
+				'cacheSize',
 			],
 			() => {
 				this._featureCount = 0
@@ -210,9 +281,11 @@ export class AOILayer extends STDLayer {
 
 				this._idIndicatorRangeMap = new Map()
 
-				this._idStyleMap = new Map()
+				this._hoveredIds = new Set()
 
-				this._indicators = []
+				this._selectedIds = new Set()
+
+				this._indicators = new Set()
 
 				this.matr = this._createPolygonMatr()
 
@@ -241,19 +314,30 @@ export class AOILayer extends STDLayer {
 					}
 				}
 
+				const customFetcher = this.getProps('customFetcher')
+				const customTileKeyGen = this.getProps('customTileKeyGen')
 				this.requestManager =
 					this.getProps('requestManager') ??
-					new CommonRequestManager({
+					new XYZTileRequestManager({
 						dataType,
+						fetcher: customFetcher ? ({ x, y, z }) => customFetcher(x, y, z) : undefined,
+						getCacheKey: customTileKeyGen ? ({ x, y, z }) => customTileKeyGen(x, y, z) : undefined,
+						getUrl: (requestArgs) => {
+							return this.getProps('getUrl')(requestArgs.x, requestArgs.y, requestArgs.z)
+						},
 					})
 
 				this.tileManager = new XYZTileManager({
 					layer: this,
 					minZoom: this.getProps('minZoom'),
 					maxZoom: this.getProps('maxZoom'),
+					cacheSize: this.getProps('cacheSize'),
 					stableFramesBeforeUpdate: this.getProps('stableFramesBeforeRequest'),
 					getTileRenderables: (tileToken) => {
 						return this._createTileRenderables(tileToken, projection, polaris)
+					},
+					onTileRelease: (tile, token) => {
+						this._releaseTile(tile, token)
 					},
 				})
 
@@ -287,13 +371,15 @@ export class AOILayer extends STDLayer {
 				return
 			}
 			idsArr.forEach((id) => {
-				this._setStyleById(id, style)
-
+				this._setStyleById(id, type)
 				// cache or delete style
 				if (type === 'none') {
-					this._idStyleMap.delete(id)
-				} else {
-					this._idStyleMap.set(id, { ...style })
+					this._hoveredIds.delete(id)
+					this._selectedIds.delete(id)
+				} else if (type === 'hover') {
+					this._hoveredIds.add(id)
+				} else if (type === 'select') {
+					this._selectedIds.add(id)
 				}
 			})
 		}
@@ -304,25 +390,23 @@ export class AOILayer extends STDLayer {
 		this._renderableFeatureMap = new Map()
 		this._featureIndexRangeMap = new Map()
 		this._idIndicatorRangeMap = new Map()
-		this._idStyleMap = new Map()
-		this._indicators = []
+		this._hoveredIds = new Set()
+		this._selectedIds = new Set()
+		this._indicators = new Set()
 		this.requestManager.dispose()
 		this.tileManager.dispose()
 	}
 
+	getLoadingState() {}
+
 	private _createTileRenderables(token, projection, polaris) {
 		const dataType = this.getProps('dataType')
-		const getUrl = this.getProps('getUrl')
 		const geojsonFilter = this.getProps('geojsonFilter')
 		const x = token[0],
 			y = token[1],
 			z = token[2]
 
-		const reqObj = getUrl(x, y, z)
-		const url = typeof reqObj === 'string' ? reqObj : reqObj.url
-		const params = typeof reqObj === 'string' ? undefined : reqObj.params
-
-		const req = this.requestManager.request(url, params)
+		const req = this.requestManager.request({ x, y, z })
 		const cacheKey = this._getCacheKey(x, y, z)
 
 		return new Promise<TileRenderables>((resolve, reject) => {
@@ -349,7 +433,7 @@ export class AOILayer extends STDLayer {
 						return
 					}
 
-					geojson = geojsonFilter(geojson) || geojson
+					geojson = geojsonFilter ? geojsonFilter(geojson) : geojson
 
 					if (
 						!geojson.type ||
@@ -428,12 +512,12 @@ export class AOILayer extends STDLayer {
 		const featureFilter = this.getProps('featureFilter')
 		const getColor = this.getProps('getColor')
 		const getOpacity = this.getProps('getOpacity')
-		const lineHeight = this.getProps('selectLinesHeight')
+		const lineHeight = this.getProps('indicatorLinesHeight')
 		const pickable = this.getProps('pickable')
 
 		// caches
 		const meshFeatures: any[] = []
-		const tileRenderables: Mesh[] = [mesh]
+		const tileRenderables: Mesh[] = []
 		const idLineRangeMap: Map<number | string, { offset: number; count: number }[]> = new Map()
 
 		// attrs
@@ -476,7 +560,8 @@ export class AOILayer extends STDLayer {
 				const result = triangulateGeoJSON(feature)
 				const { points, triangles } = result
 
-				const indexRange = new Uint32Array([indices.length, 0])
+				const indexStart = indices.length
+				// const indexRange = new Uint32Array([indices.length, 0])
 				// const colorRange = new Uint32Array([offset * 4, 0])
 
 				for (let i = 0; i < points.length; i += 2) {
@@ -503,11 +588,13 @@ export class AOILayer extends STDLayer {
 				offset += count
 
 				// Store index range for feature
-				indexRange[1] = indices.length - 1
+				const indexEnd = indices.length - 1
+				// indexRange[1] = indices.length - 1
+
 				// // Store feature vert range
 				// colorRange[1] = offset * 4
 
-				this._featureIndexRangeMap.set(feature, indexRange)
+				this._featureIndexRangeMap.set(feature, createRangeArray(indexStart, indexEnd))
 			} else if (
 				pickable &&
 				(geometry.type === 'LineString' || geometry.type === 'MultiLineString')
@@ -565,16 +652,17 @@ export class AOILayer extends STDLayer {
 		// LineIndicators
 		if (pickable && linePosArr.length > 0) {
 			const { hoverIndicator, selectIndicator } = this._genLineIndicators(polaris, linePosArr)
-			this._indicators.push(hoverIndicator, selectIndicator)
 			tileRenderables.push(hoverIndicator.gline, selectIndicator.gline)
+			this._indicators.add(hoverIndicator)
+			this._indicators.add(selectIndicator)
 			this._cacheIndicatorRanges(idLineRangeMap, hoverIndicator, selectIndicator)
 			idLineRangeMap.forEach((ranges, id) => {
-				const cachedStyle = this._idStyleMap.get(id)
-				if (cachedStyle) {
-					this._setStyleById(id, cachedStyle)
-				}
+				if (this._hoveredIds.has(id)) this._setStyleById(id, 'hover')
+				if (this._selectedIds.has(id)) this._setStyleById(id, 'select')
 			})
 		}
+
+		tileRenderables.push(mesh)
 
 		return { meshes: tileRenderables, layers: [] }
 	}
@@ -603,8 +691,7 @@ export class AOILayer extends STDLayer {
 			texture: undefined,
 			renderOrder: this.getProps('renderOrder'),
 			depthTest: true,
-			transparent: false,
-			alphaTest: 0.0001,
+			transparent: true,
 		}
 		const hoverIndicator = new LineIndicator(selectPosArr, hoverLineConfig, {
 			defaultColor: new Color(0.0, 0.0, 0.0),
@@ -637,8 +724,7 @@ export class AOILayer extends STDLayer {
 			texture: undefined,
 			renderOrder: this.getProps('renderOrder'),
 			depthTest: true,
-			transparent: false,
-			alphaTest: 0.0001,
+			transparent: true,
 		}
 		const selectIndicator = new LineIndicator(selectPosArr, selectLineConfig, {
 			defaultColor: new Color(0.0, 0.0, 0.0),
@@ -673,17 +759,18 @@ export class AOILayer extends STDLayer {
 				const index = intersection.index
 				const features = this._renderableFeatureMap.get(mesh)
 				if (index === undefined || !features) return
-				const index3 = index * 3
 
 				// find the hitted feature by feature indexRange
 				let hittedFeature
-				features.forEach((feature) => {
-					if (hittedFeature) return
+				const indexTri = index * 3
+				for (let j = 0; j < features.length; j++) {
+					const feature = features[j]
 					const indexRange = this._featureIndexRangeMap.get(feature)
-					if (indexRange && index3 >= indexRange[0] && index3 <= indexRange[1]) {
+					if (indexRange && indexTri >= indexRange[0] && indexTri <= indexRange[1]) {
 						hittedFeature = feature
+						break
 					}
-				})
+				}
 
 				if (!hittedFeature) return
 
@@ -740,8 +827,7 @@ export class AOILayer extends STDLayer {
 		})
 	}
 
-	private _setStyleById(id: number | string, style: { [name: string]: any }) {
-		const type = style.type
+	private _setStyleById(id: number | string, type: string) {
 		const rangeInfos = this._idIndicatorRangeMap.get(id)
 		if (!rangeInfos || !type) return
 		rangeInfos.forEach((info) => {
@@ -760,6 +846,40 @@ export class AOILayer extends STDLayer {
 					selectIndicator.restoreHighlightByOffsetCount(range.offset, range.count)
 				})
 			}
+		})
+	}
+
+	private _releaseTile(tile: TileRenderables, token: TileToken) {
+		const featureIdKey = this.getProps('featureIdKey')
+		tile.meshes.forEach((mesh) => {
+			const meshFeatures = this._renderableFeatureMap.get(mesh)
+			if (!meshFeatures) return
+
+			meshFeatures.forEach((feature) => {
+				const id = feature.properties[featureIdKey] as number | string
+
+				// release feature range map
+				this._featureIndexRangeMap.delete(feature)
+
+				// delete indicators & indicatorsInfo map
+				// NOTE: do not delete the entire IndicatorInfoList,
+				// because all levels info are store in the same map with same id key
+				const indicatorsInfos = this._idIndicatorRangeMap.get(id)
+				if (indicatorsInfos) {
+					indicatorsInfos.forEach((info) => {
+						const { hoverIndicator, selectIndicator } = info
+						if (tile.meshes.includes(hoverIndicator.gline)) {
+							this._indicators.delete(hoverIndicator)
+						}
+						if (tile.meshes.includes(selectIndicator.gline)) {
+							this._indicators.delete(selectIndicator)
+						}
+					})
+				}
+			})
+
+			// delete renderableFeatures map
+			this._renderableFeatureMap.delete(mesh)
 		})
 	}
 }

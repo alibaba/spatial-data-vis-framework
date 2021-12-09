@@ -1,5 +1,6 @@
 import { MercatorProjection } from '@polaris.gl/projection'
-import { POILayer, AOILayer } from '@polaris.gl/layer-xyz-poi-tile'
+import { POILayer } from '@polaris.gl/layer-xyz-poi-tile'
+import { AOILayer } from '@polaris.gl/layer-xyz-aoi-tile'
 import { PolarisGSIGL2 } from '@polaris.gl/gsi-gl2'
 import { AMapLayer } from '@polaris.gl/layer-amap'
 
@@ -154,12 +155,13 @@ async function initPOI() {
 	let lastHovered
 	const poi = new POILayer({
 		// pointImage: await getImage(),
+		dataType: 'pbf',
 		pointSize: size,
 		pointHoverSize: 48,
 		pointOffset: [0.0, 0.5],
-		dataType: 'pbf',
 		minZoom: 3,
 		maxZoom: 20,
+		renderOrder: 100,
 		getUrl: getPOIUrl,
 		getClusterCount: (feature) => {
 			if (feature.properties.number_of_point > 1) {
@@ -167,10 +169,12 @@ async function initPOI() {
 			}
 		},
 		getPointColor: () => {
-			const r = Math.round(16 + Math.random() * 239)
-			const g = Math.round(Math.random() * 255)
-			const b = Math.round(16 + Math.random() * 239)
-			return `#${r.toString(16)}9f${b.toString(16)}`
+			// const r = Math.round(16 + Math.random() * 239)
+			// const g = Math.round(Math.random() * 255)
+			// const b = Math.round(16 + Math.random() * 239)
+			// return `#${r.toString(16)}9f${b.toString(16)}`
+
+			return '#88af99'
 		},
 		clusterDOMStyle: {
 			color: '#ffffff',
@@ -199,28 +203,57 @@ async function initPOI() {
 	window['poi'] = poi
 }
 
-// initPOI()
+initPOI()
 
 // AOI
-const highlighted: any[] = []
+const picked: Set<number> = new Set()
+let hovered
 const aoi = new AOILayer({
-	getUrl: getAOIUrl,
+	customFetcher: (x, y, z) => {
+		const url = getAOIUrl(x, y, z)
+		return new Promise((resolve) => {
+			fetch(url).then((res) => {
+				resolve(res.arrayBuffer())
+			})
+		})
+	},
+	// getUrl: getAOIUrl,
 	getColor: 0xffaf88,
 	getOpacity: 0.5,
 	transparent: true,
+	hoverLineWidth: 2,
+	hoverLineColor: '#333333',
+	selectLineWidth: 4,
+	selectLineColor: '#00ffff',
 	pickable: true,
 	onPicked: (info) => {
 		console.log('info', info)
+		// aoi.highlightByIds(Array.from(picked), { type: 'none' })
+		// picked.clear()
 		if (info && info.data && info.data.feature) {
 			const feature = info.data.feature
 			const id = feature.properties.id
 			aoi.highlightByIds([id], { type: 'select' })
-			highlighted.push(id)
+			picked.add(id)
 			console.log('feature id', id)
 		} else {
-			aoi.highlightByIds(highlighted, { type: 'none' })
-			highlighted.length = 0
+			aoi.highlightByIds(Array.from(picked), { type: 'none' })
+			picked.clear()
 		}
+	},
+	onHovered: (info) => {
+		if (info && info.data && info.data.feature) {
+			const feature = info.data.feature
+			const id = feature.properties.id
+			aoi.highlightByIds([hovered], { type: 'none' })
+			aoi.highlightByIds([id], { type: 'hover' })
+			hovered = id
+		} else {
+			aoi.highlightByIds([hovered], { type: 'none' })
+		}
+		picked.forEach((id) => {
+			aoi.highlightByIds([id], { type: 'select' })
+		})
 	},
 })
 p.add(aoi)
@@ -232,6 +265,7 @@ const amapLayer = new AMapLayer({
 })
 p.add(amapLayer)
 
-p.setStatesCode('1|120.184300|30.265237|0.000000|0.00000|0.00000|8.00000')
+// p.setStatesCode('1|120.184300|30.265237|0.000000|0.00000|0.00000|8.00000')
+p.setStatesCode('1|120.184301|30.265237|0.000000|0.00000|0.00000|18.70400') // closer hz
 
 window['p'] = p
