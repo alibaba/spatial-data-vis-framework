@@ -455,8 +455,8 @@ export class PolygonSurfaceLayer extends STDLayer {
 			texture: undefined,
 			renderOrder: this.getProps('renderOrder'),
 			depthTest: true,
-			transparent: false,
-			alphaTest: 0.0001,
+			transparent: true,
+			// alphaTest: 0.0001,
 		}
 		const hoverIndicator = new LineIndicator(selectPosArr, hoverLineConfig, {
 			defaultColor: new Color(0.0, 0.0, 0.0),
@@ -489,8 +489,8 @@ export class PolygonSurfaceLayer extends STDLayer {
 			texture: undefined,
 			renderOrder: this.getProps('renderOrder'),
 			depthTest: true,
-			transparent: false,
-			alphaTest: 0.0001,
+			transparent: true,
+			// alphaTest: 0.0001,
 		}
 		const selectIndicator = new LineIndicator(selectPosArr, selectLineConfig, {
 			defaultColor: new Color(0.0, 0.0, 0.0),

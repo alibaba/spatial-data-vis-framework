@@ -1,7 +1,7 @@
 import { isDISPOSED } from '@gs.i/schema'
 import { XYZTileManager, TileRenderables } from '@polaris.gl/utils-tile-manager'
 import { Marker } from '@polaris.gl/layer-std-marker'
-import { IRequestManager, CommonRequestManager } from '@polaris.gl/utils-request-manager'
+import { XYZTileRequestManager } from '@polaris.gl/utils-request-manager'
 import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
 import { Mesh, MatrPoint, Geom, Attr } from '@gs.i/frontend-sdk'
 import { Base, CoordV2, PickEvent, Polaris } from '@polaris.gl/schema'
@@ -23,19 +23,15 @@ export interface POILayerProps extends STDLayerProps {
 	dataType: 'auto' | 'geojson' | 'pbf'
 
 	/**
-	 * Pass in user custom RequestManager to replace the default one
-	 * Set a requestManager from outside and managed by user to let different layers share http resources.
+	 * Pass in a user customized RequestManager to replace the default one
+	 * Set a requestManager from outside and managed by user to let different layers share the same http resources.
 	 */
-	requestManager?: IRequestManager
+	requestManager?: XYZTileRequestManager
 
 	/**
 	 * URL generator for xyz tile
 	 */
-	getUrl: (
-		x: number | string,
-		y: number | string,
-		z: number | string
-	) => string | { url: string; params?: any }
+	getUrl: (x: number, y: number, z: number) => string | { url: string; requestParams?: any }
 
 	/**
 	 * The id prop key in feature.properties is essential for XYZ tiles,
@@ -125,12 +121,29 @@ export interface POILayerProps extends STDLayerProps {
 	 * Stable frames before sending tile requests
 	 */
 	stableFramesBeforeRequest?: number
+
+	/**
+	 * The limit of tile cache count
+	 * default is 512
+	 */
+	cacheSize?: number
+
+	/**
+	 * User customized fetch method to replace the default layer fetcher
+	 * If this prop has been set, the 'getUrl' props will be ignored
+	 */
+	customFetcher?: (x: number, y: number, z: number) => Promise<any>
+
+	/**
+	 * User customized fetch cache key generator
+	 */
+	customTileKeyGen?: (x: number, y: number, z: number) => string
 }
 
 /**
  * 配置项 默认值
  */
-const defaultProps: POILayerProps = {
+export const defaultProps: POILayerProps = {
 	dataType: 'auto',
 	getUrl: (x, y, z) => {
 		throw new Error('getUrl prop is not defined')
@@ -149,17 +162,16 @@ const defaultProps: POILayerProps = {
 		'https://img.alicdn.com/imgextra/i1/O1CN01yyOfXC23ffGrhohq7_!!6000000007283-2-tps-53-52.png',
 	clusterSize: 64,
 	clusterDOMStyle: {},
-	featureFilter: (feature) => true,
 	getClusterCount: (feature) => undefined,
-	geojsonFilter: (geojson) => geojson,
 	stableFramesBeforeRequest: 5,
+	cacheSize: 512,
 }
 
 export class POILayer extends STDLayer {
 	matr: MatrPoint
 	// geoMap: Map<string, any>
 
-	requestManager: IRequestManager
+	requestManager: XYZTileRequestManager
 
 	tileManager: XYZTileManager
 
@@ -237,6 +249,9 @@ export class POILayer extends STDLayer {
 				'pointOffset',
 				'geojsonFilter',
 				'stableFramesBeforeRequest',
+				'customFetcher',
+				'customTileKeyGen',
+				'cacheSize',
 			],
 			() => {
 				this._featureCount = 0
@@ -278,16 +293,24 @@ export class POILayer extends STDLayer {
 					}
 				}
 
+				const customFetcher = this.getProps('customFetcher')
+				const customTileKeyGen = this.getProps('customTileKeyGen')
 				this.requestManager =
 					this.getProps('requestManager') ??
-					new CommonRequestManager({
+					new XYZTileRequestManager({
 						dataType,
+						fetcher: customFetcher ? ({ x, y, z }) => customFetcher(x, y, z) : undefined,
+						getCacheKey: customTileKeyGen ? ({ x, y, z }) => customTileKeyGen(x, y, z) : undefined,
+						getUrl: (requestArgs) => {
+							return this.getProps('getUrl')(requestArgs.x, requestArgs.y, requestArgs.z)
+						},
 					})
 
 				this.tileManager = new XYZTileManager({
 					layer: this,
 					minZoom: this.getProps('minZoom'),
 					maxZoom: this.getProps('maxZoom'),
+					cacheSize: this.getProps('cacheSize'),
 					stableFramesBeforeUpdate: this.getProps('stableFramesBeforeRequest'),
 					getTileRenderables: (tileToken) => {
 						return this._createTileRenderables(tileToken, projection, polaris)
@@ -314,7 +337,6 @@ export class POILayer extends STDLayer {
 			console.error(
 				'POILayer - This method is not implemented, please use .highlightByIds() instead. '
 			)
-
 			// if (!this._indexMeshMap) return
 			// if (!style || !style.type) return
 			// const type = style.type
@@ -379,6 +401,8 @@ export class POILayer extends STDLayer {
 		this.tileManager.dispose()
 	}
 
+	getLoadingState() {}
+
 	private _createPointImgElement() {
 		this._pointImgElem = new Image()
 		this._pointImgElem.setAttribute('crossOrigin', 'anonymous')
@@ -387,17 +411,12 @@ export class POILayer extends STDLayer {
 
 	private _createTileRenderables(token, projection, polaris) {
 		const dataType = this.getProps('dataType')
-		const getUrl = this.getProps('getUrl')
 		const geojsonFilter = this.getProps('geojsonFilter')
 		const x = token[0],
 			y = token[1],
 			z = token[2]
 
-		const reqObj = getUrl(x, y, z)
-		const url = typeof reqObj === 'string' ? reqObj : reqObj.url
-		const params = typeof reqObj === 'string' ? undefined : reqObj.params
-
-		const req = this.requestManager.request(url, params)
+		const req = this.requestManager.request({ x, y, z })
 		const cacheKey = this._getCacheKey(x, y, z)
 
 		return new Promise<TileRenderables>((resolve, reject) => {
@@ -424,7 +443,7 @@ export class POILayer extends STDLayer {
 						return
 					}
 
-					geojson = geojsonFilter(geojson) || geojson
+					geojson = geojsonFilter ? geojsonFilter(geojson) : geojson
 
 					if (
 						!geojson.type ||
@@ -520,11 +539,6 @@ export class POILayer extends STDLayer {
 			return
 		}
 
-		const mesh = new Mesh({
-			name: key ? key : 'pois',
-			renderOrder: this.getProps('renderOrder'),
-		})
-
 		const featureIdKey = this.getProps('featureIdKey')
 		const baseAlt = this.getProps('baseAlt')
 		const featureFilter = this.getProps('featureFilter')
@@ -533,6 +547,12 @@ export class POILayer extends STDLayer {
 		const getPointColor = this.getProps('getPointColor')
 		const getClusterImage = this.getProps('getClusterImage')
 		const pointOffset = this.getProps('pointOffset')
+		const renderOrder = this.getProps('renderOrder')
+
+		const mesh = new Mesh({
+			name: key ? key : 'pois',
+			renderOrder,
+		})
 
 		const layers: Marker[] = []
 		const meshes: Mesh[] = []
@@ -573,6 +593,7 @@ export class POILayer extends STDLayer {
 					html: div,
 					offsetX: -0.5 * clusterSize,
 					offsetY: -0.5 * clusterSize,
+					renderOrder,
 				})
 				layers.push(cluster)
 

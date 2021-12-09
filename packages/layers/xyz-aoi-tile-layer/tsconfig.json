@@ -1,0 +1,37 @@
+{
+	"extends": "./tsconfig.base.json",
+	"compilerOptions": {
+		"rootDir": "src",
+		"outDir": "dist",
+		"composite": true,
+		"incremental": true
+	},
+	"include": ["src", "typings"],
+	"exclude": ["dist"],
+	"references": [
+		{
+			"path": "../../frontend/layer-std"
+		},
+		{
+			"path": "../../schema/core"
+		},
+		{
+			"path": "../../utils/projections"
+		},
+		{
+			"path": "../../frontend/polaris-gsi"
+		},
+		{
+			"path": "../../utils/utils"
+		},
+		{
+			"path": "../../utils/request-manager"
+		},
+		{
+			"path": "../../utils/tile-manager"
+		},
+		{
+			"path": "../../utils/indicator"
+		}
+	]
+}

@@ -64,13 +64,18 @@ fetchData().then((data) => {
 		selectColor: false,
 		hoverLineWidth: 1,
 		selectLineWidth: 4,
-		selectLinesHeight: 2000,
+		selectLinesHeight: 0,
 		workersCount: 4,
 	}))
 	p.add(polygonLayer1)
 	polygonLayer1.updateData(newGeo)
 	polygonLayer1.onPicked = (info) => {
 		console.log('onPicked', info)
+		if (info && info.data && info.data.feature) {
+			const feature = info.data.feature
+			const index = feature.index
+			polygonLayer1.highlightByIndices([index], { type: 'select' })
+		}
 	}
 	polygonLayer1.onHovered = (info) => {}
 
@@ -120,10 +125,12 @@ polygonLayer2.updateData(
 )
 polygonLayer2.onPicked = (info) => {
 	console.log('onPicked', info)
+	if (info && info.data && info.data.feature) {
+		const feature = info.data.feature
+		const index = feature.index
+		polygonLayer2.highlightByIndices([index], { type: 'select' })
+	}
 }
-// polygonLayer2.onHovered = (info) => {
-// 	info && console.log('onHovered', info)
-// }
 
 p.setStatesCode('1|-1.191044|56.161481|0.000000|0.70540|-0.03000|1.73000')
 // p.setStatesCode('1|110|36|0.000000|0.00000|0.00000|1.73000')

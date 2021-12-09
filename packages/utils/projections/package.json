@@ -1,1 +1,49 @@
-{"name":"@polaris.gl/projection","version":"0.0.0-beta","keywords":["unity3d-package"],"main":"dist/index.js","module":"dist/index.js","types":"dist/index.d.ts","csharp":"csharp","author":"西萌","description":"","license":"MIT","files":["package.json","README.md","dist/*","csharp/*Projection.cs"],"publishConfig":{"access":"public"},"devDependencies":{"typescript":">4.4.0"},"scripts":{"build":"./scripts/build.sh","rebuild":"./scripts/rebuild.sh","dist":"npm run rebuild && webpack --config webpack.config.prod.js && npm run test","start":"node --max-old-space-size=8192 server.js","test":"jest","autofix":"eslint --fix ./","lint":"eslint ./","v":"webpack -v"},"lint-staged":{"src/**/*.js":["prettier --write","eslint --fix","git add"]},"husky":{"hooks":{"pre-commit":"lint-staged"}},"dependencies":{}}
+{
+    "name": "@polaris.gl/projection",
+    "version": "0.0.0-beta",
+    "keywords": [
+        "unity3d-package"
+    ],
+    "main": "dist/index.js",
+    "module": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "csharp": "csharp",
+    "author": "西萌",
+    "description": "",
+    "license": "MIT",
+    "files": [
+        "package.json",
+        "README.md",
+        "dist/*",
+        "csharp/*Projection.cs"
+    ],
+    "publishConfig": {
+        "access": "public"
+    },
+    "devDependencies": {
+        "typescript": ">4.4.0"
+    },
+    "scripts": {
+        "build": "./scripts/build.sh",
+        "rebuild": "./scripts/rebuild.sh",
+        "dist": "npm run rebuild && webpack --config webpack.config.prod.js && npm run test",
+        "start": "node --max-old-space-size=8192 server.js",
+        "test": "jest",
+        "autofix": "eslint --fix ./",
+        "lint": "eslint ./",
+        "v": "webpack -v"
+    },
+    "lint-staged": {
+        "src/**/*.js": [
+            "prettier --write",
+            "eslint --fix",
+            "git add"
+        ]
+    },
+    "husky": {
+        "hooks": {
+            "pre-commit": "lint-staged"
+        }
+    },
+    "dependencies": {}
+}

@@ -90,7 +90,7 @@ export const defaultProps: PolygonLayerProps = {
 
 export interface SelectionDataType {
 	curr: any
-	// all: any[]
+	feature: any
 }
 
 export class PolygonLayer extends STDLayer {
@@ -282,10 +282,6 @@ export class PolygonLayer extends STDLayer {
 						workersCount,
 					})
 				}
-
-				// // Clear selection info
-				// this.hoveredFeature = undefined
-				// this.pickedFeatures.length = 0
 			}
 		)
 
@@ -364,39 +360,12 @@ export class PolygonLayer extends STDLayer {
 				} else if (this.sideLayer) {
 					this.remove(this.sideLayer)
 				}
-
-				// // Clear selection info
-				// this.hoveredFeature = undefined
-				// this.pickedFeatures.length = 0
 			}
 		)
 
-		// this.listenProps(['multiSelect'], () => {
-		// 	this.multiSelect = this.getProps('multiSelect')
-
-		// 	// Restore
-		// 	if (this.selectColor && this.surfaceLayer) {
-		// 		this.pickedFeatures.forEach((feature) => {
-		// 			this._restoreFeatureColor(feature)
-		// 		})
-		// 	}
-
-		// 	if (this.hoverColor && this.surfaceLayer) {
-		// 		this._restoreFeatureColor(this.hoveredFeature)
-		// 	}
-		// 	this._restoreSelectLines()
-		// 	this._restoreHoverLines()
-
-		// 	// Clear
-		// 	this.hoveredFeature = undefined
-		// 	this.pickedFeatures.length = 0
-		// })
-
-		// Set the events asap
+		// Set picking events
 		this.onClick = this._executeClick
 		this.onHover = this._executeHover
-		// this.onPicked = this._reactOnPicked
-		// this.onHovered = this._reactOnHovered
 
 		/**
 		 * Highilight api
@@ -465,25 +434,9 @@ export class PolygonLayer extends STDLayer {
 					inter0.index >= range[0] / 3 &&
 					inter0.index <= range[1] / 3
 				) {
-					// const all: any[] = []
-					// if (this.multiSelect) {
-					// 	this.pickedFeatures.forEach((picked) => {
-					// 		all.push(picked)
-					// 	})
-					// 	if (all.indexOf(feature) >= 0) {
-					// 		// Remove if already picked
-					// 		all.splice(all.indexOf(feature), 1)
-					// 	} else {
-					// 		// Add if not picked before
-					// 		all.push(feature)
-					// 	}
-					// } else {
-					// 	all.push(feature)
-					// }
-
 					const data: SelectionDataType = {
 						curr: feature,
-						// all: all,
+						feature,
 					}
 
 					if (event) {
@@ -523,7 +476,7 @@ export class PolygonLayer extends STDLayer {
 				) {
 					const data: SelectionDataType = {
 						curr: feature,
-						// all: [feature],
+						feature,
 					}
 					event.object = this.surfaceLayer.mesh
 					event.index = feature.index
@@ -534,116 +487,6 @@ export class PolygonLayer extends STDLayer {
 
 		return event
 	}
-
-	// private _reactOnPicked(event) {
-	// 	if (!this.surfaceLayer || !this.surfaceLayer.geom || !this.surfaceLayer.geom.attributes.color)
-	// 		return
-
-	// 	const data = this.getProps('data')
-	// 	if (!data || data.type !== 'FeatureCollection') return
-
-	// 	// Restore last picked color
-	// 	if (this.selectColor) {
-	// 		this.pickedFeatures.forEach((feature) => {
-	// 			this._restoreFeatureColor(feature)
-	// 		})
-	// 	}
-	// 	this._restoreSelectLines()
-	// 	this._restoreHoverLines()
-
-	// 	if (event && (event.index !== undefined || event.data.curr !== undefined)) {
-	// 		const feature = event.index !== undefined ? data.features[event.index] : event.data.curr
-	// 		// Add to array if not picked before
-	// 		// Remove from array if picked before
-	// 		const index = this.pickedFeatures.indexOf(feature)
-	// 		if (index >= 0) {
-	// 			// if (this.selectColor) {
-	// 			// 	this._restoreFeatureColor(feature)
-	// 			// }
-	// 			// this._restoreSelectLines()
-	// 			// Remove
-	// 			this.pickedFeatures.splice(index, 1)
-	// 		} else {
-	// 			if (!this.multiSelect) {
-	// 				this.pickedFeatures.length = 0
-	// 			}
-	// 			this.pickedFeatures.push(feature)
-	// 		}
-
-	// 		// For client callback info
-	// 		event.index = event.index ?? feature.index
-	// 		event.data = event.data ?? {}
-	// 		event.data.curr = event.data.curr ?? feature
-	// 		event.data.all = event.data.all ?? Array.from(this.pickedFeatures)
-	// 	} else {
-	// 		// if (this.selectColor) {
-	// 		// 	this.pickedFeatures.forEach((feature) => {
-	// 		// 		this._restoreFeatureColor(feature)
-	// 		// 	})
-	// 		// }
-	// 		// this._restoreSelectLines()
-	// 		// 未pick中则清空
-	// 		if (this.getProps('clearWhenPickNothing')) {
-	// 			this.pickedFeatures.length = 0
-	// 		}
-	// 	}
-
-	// 	// Fill selected feature color from last picked results
-	// 	this.pickedFeatures.forEach((feature) => {
-	// 		if (this.selectColor) {
-	// 			this._updateFeatureColor(feature, this.selectColor, 1.0)
-	// 		}
-	// 		if (!this.multiSelect) {
-	// 			this._restoreSelectLines()
-	// 		}
-	// 		this._updateSelectLines(feature)
-	// 	})
-	// }
-
-	// private _reactOnHovered(event) {
-	// 	if (!this.surfaceLayer || !this.surfaceLayer.geom || !this.surfaceLayer.geom.attributes.color)
-	// 		return
-
-	// 	const data = this.getProps('data')
-	// 	if (!data || data.type !== 'FeatureCollection') return
-
-	// 	// Restore color first
-	// 	if (this.hoverColor) {
-	// 		this._restoreFeatureColor(this.hoveredFeature)
-	// 	}
-	// 	this._restoreSelectLines()
-	// 	this._restoreHoverLines()
-
-	// 	if (event && (event.index !== undefined || event.data.curr !== undefined)) {
-	// 		const feature = event.index !== undefined ? data.features[event.index] : event.data.curr
-
-	// 		this.hoveredFeature = feature
-
-	// 		// polygon fill
-	// 		if (this.hoverColor) {
-	// 			this._updateFeatureColor(feature, this.hoverColor, 1.0)
-	// 		}
-
-	// 		// line fill
-	// 		this._updateHoverLines(feature)
-
-	// 		// For client callback info
-	// 		event.index = event.index ?? feature.index
-	// 		event.data = event.data ?? {}
-	// 		event.data.curr = event.data.curr ?? feature
-	// 		event.data.all = event.data.all ?? [this.hoveredFeature]
-	// 	} else {
-	// 		this.hoveredFeature = undefined
-	// 	}
-
-	// 	// Fill selected feature color from last picked results
-	// 	this.pickedFeatures.forEach((feature) => {
-	// 		if (this.selectColor) {
-	// 			this._updateFeatureColor(feature, this.selectColor, 1.0)
-	// 		}
-	// 		this._updateSelectLines(feature)
-	// 	})
-	// }
 
 	private _updateSelectLines(feature) {
 		if (this.surfaceLayer) {

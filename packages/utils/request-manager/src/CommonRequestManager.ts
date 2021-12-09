@@ -1,11 +1,13 @@
 import { IRequestManager, ConfigType } from './types'
 
-export class CommonRequestManager implements IRequestManager {
+export class CommonRequestManager<T = { url: string; requestParams: any }>
+	implements IRequestManager<T>
+{
 	readonly config: ConfigType
 
-	private _requestCacheMap: Map<string, Promise<any>> = new Map()
+	protected _requestCacheMap: Map<string, Promise<any>> = new Map()
 
-	private _dataCacheMap: Map<string, any> = new Map()
+	protected _dataCacheMap: Map<string, any> = new Map()
 
 	constructor(config: ConfigType) {
 		if (!config.dataType) {
@@ -14,15 +16,76 @@ export class CommonRequestManager implements IRequestManager {
 		this.config = config
 	}
 
-	/**
-	 * Can be overwritten by user
-	 * @param url
-	 * @param requestParams
-	 * @returns
-	 */
-	fetchData(url: string, requestParams?: any): Promise<any> {
+	request(requestArg: T): Promise<any> {
+		const cacheKey = this.getCacheKey(requestArg)
+		if (typeof cacheKey !== 'string') {
+			throw new Error('CommonRequestManager - CacheKey must be string')
+		}
+
+		const cachedData = this._dataCacheMap.get(cacheKey)
+		if (cachedData !== undefined) {
+			return Promise.resolve(cachedData)
+		}
+
+		const cachedPromise = this._requestCacheMap.get(cacheKey)
+		if (cachedPromise) {
+			return cachedPromise
+		}
+
 		if (this.config.fetcher) {
-			return this.config.fetcher(url, requestParams)
+			return this.config.fetcher(requestArg)
+		}
+
+		const promise = new Promise<any>((resolve, reject) => {
+			this.fetchDataDefault(requestArg)
+				.then((result) => {
+					this._dataCacheMap.set(cacheKey, result)
+					this._requestCacheMap.delete(cacheKey)
+					resolve(result)
+				})
+				.catch((e) => {
+					reject(e)
+				})
+		})
+
+		this._requestCacheMap.set(cacheKey, promise)
+
+		return promise
+	}
+
+	getCacheKey(requestArg: T) {
+		let cacheKey = ''
+		for (const key in requestArg) {
+			if (Object.prototype.hasOwnProperty.call(requestArg, key)) {
+				const value = requestArg[key]
+				if (typeof value === 'string' || typeof value === 'number' || typeof value === 'bigint') {
+					cacheKey += value.toString()
+				} else if (typeof value === 'function') {
+					continue
+				} else if (typeof value === 'object') {
+					cacheKey += JSON.stringify(value)
+				} else {
+					cacheKey += `${value}`
+				}
+			}
+		}
+		return cacheKey
+	}
+
+	dispose() {
+		this._requestCacheMap.clear()
+		this._dataCacheMap.clear()
+	}
+
+	protected fetchDataDefault(requestArg: T): Promise<any> {
+		const args = requestArg as any
+		const url = typeof requestArg === 'string' ? args : args.url
+		const requestParams =
+			typeof requestArg === 'string' ? undefined : args.requestParams || args.params
+
+		if (!url) {
+			console.error('CommonRequestManager - Invalid request url param. ')
+			return Promise.reject()
 		}
 
 		return new Promise((resolve, reject) => {
@@ -33,7 +96,7 @@ export class CommonRequestManager implements IRequestManager {
 				}
 				switch (this.config.dataType) {
 					case 'auto': {
-						const data = this._getDataFromResponse(res)
+						const data = this.getDataFromResponse(res)
 						if (data) {
 							resolve(data)
 						} else {
@@ -51,8 +114,10 @@ export class CommonRequestManager implements IRequestManager {
 					}
 					case 'text': {
 						resolve(res.text())
+						break
 					}
 					default: {
+						resolve(res)
 					}
 				}
 			})
@@ -81,50 +146,7 @@ export class CommonRequestManager implements IRequestManager {
 		// })
 	}
 
-	request(url: string, requestParams?: any): Promise<any> {
-		const cacheKey = this._getCacheKey(url, requestParams)
-
-		const cachedData = this._dataCacheMap.get(cacheKey)
-		if (cachedData !== undefined) {
-			return Promise.resolve(cachedData)
-		}
-
-		const cachedPromise = this._requestCacheMap.get(cacheKey)
-		if (cachedPromise) {
-			return cachedPromise
-		}
-
-		const promise = new Promise<any>((resolve, reject) => {
-			this.fetchData(url, requestParams)
-				.then((result) => {
-					this._dataCacheMap.set(cacheKey, result)
-					this._requestCacheMap.delete(cacheKey)
-					resolve(result)
-				})
-				.catch((e) => {
-					reject(e)
-				})
-		})
-
-		this._requestCacheMap.set(cacheKey, promise)
-
-		return promise
-	}
-
-	getCachedData(url: string, requestParams?: any) {
-		return this._dataCacheMap.get(this._getCacheKey(url, requestParams))
-	}
-
-	dispose() {
-		this._requestCacheMap.clear()
-		this._dataCacheMap.clear()
-	}
-
-	private _getCacheKey(url: string, requestParams?: any) {
-		return `${url}|${JSON.stringify(requestParams)}`
-	}
-
-	private _getDataFromResponse(res: Response) {
+	protected getDataFromResponse(res: Response) {
 		const contentType = res.headers.get('Content-Type')
 		if (!contentType) {
 			console.error(

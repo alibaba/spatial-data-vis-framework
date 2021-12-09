@@ -3,6 +3,6 @@
  * All rights reserved.
  */
 
-import { POILayer } from './index'
+import { AOILayer } from './index'
 export * from './index'
-export default POILayer
+export default AOILayer

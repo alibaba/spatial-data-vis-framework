@@ -22,6 +22,7 @@
 		"@polaris.gl/layer-std-helper": "^0.0.0-beta",
 		"@polaris.gl/layer-std-marker": "^0.0.0-beta",
 		"@polaris.gl/layer-xyz-poi-tile": "^0.0.0-beta",
+		"@polaris.gl/layer-xyz-aoi-tile": "^0.0.0-beta",
 		"@polaris.gl/gsi-gl2": "^0.0.0-beta",
 		"@polaris.gl/lite": "^0.0.0-beta",
 		"@polaris.gl/schema": "^0.0.0-beta",

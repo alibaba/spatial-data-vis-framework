@@ -33,7 +33,7 @@ export type CommonTileManagerConfig = {
 
 	/**
 	 * The max cached number of TileRenderables & tile data
-	 * default is 2048
+	 * default is 512
 	 */
 	cacheSize?: number
 
@@ -47,14 +47,20 @@ export type CommonTileManagerConfig = {
 	 * Whether to print any errors to console, default is false
 	 */
 	printErrors?: boolean
+
+	/**
+	 * Callback which is triggered when tile will be released from this TileManager
+	 */
+	onTileRelease?: (tile: TileRenderables, tileToken: TileToken) => void
 }
 
 const defaultConfig = {
 	minZoom: 3,
 	maxZoom: 20,
-	cacheSize: 1024,
+	cacheSize: 512,
 	stableFramesBeforeUpdate: 3,
 	printErrors: false,
+	onTileRelease: (tile, []) => {},
 }
 
 export class CommonTileManager implements ITileManager {
@@ -65,7 +71,7 @@ export class CommonTileManager implements ITileManager {
 	private _updateTrack: any
 	private _tileMap: Map<string, CachedTileRenderables>
 	private _promiseMap: Map<string, Promise<any>>
-	private _currVisibleTiles: CachedTileRenderables[]
+	private _currVisibleTiles: Set<CachedTileRenderables>
 	private _currVisibleTokens: string[]
 	private _tiles: CachedTileRenderables[]
 	private _lastCamState: string
@@ -75,7 +81,7 @@ export class CommonTileManager implements ITileManager {
 		this.config = { ...defaultConfig, ...config }
 		this._tileMap = new Map()
 		this._promiseMap = new Map()
-		this._currVisibleTiles = []
+		this._currVisibleTiles = new Set()
 		this._currVisibleTokens = []
 		this._tiles = []
 		this._stableFrames = 0
@@ -88,9 +94,13 @@ export class CommonTileManager implements ITileManager {
 	 * @memberof CommonTileManager
 	 */
 	getVisibleTiles(): TileRenderables[] {
-		return this._currVisibleTiles.filter((tile) => {
-			if (tile.layers.length > 0 || tile.meshes.length > 0) return tile
+		const visTiles: TileRenderables[] = []
+		this._currVisibleTiles.forEach((tile) => {
+			if (tile.layers.length > 0 || tile.meshes.length > 0) {
+				visTiles.push(tile)
+			}
 		})
+		return visTiles
 	}
 
 	forEachTile(f: (TileRenderables: TileRenderables, index?: number) => any) {
@@ -100,30 +110,32 @@ export class CommonTileManager implements ITileManager {
 	}
 
 	forEachVisibleTile(f: (TileRenderables: TileRenderables, index?: number) => any) {
-		this._currVisibleTiles.forEach((tile, index) => {
+		this._currVisibleTiles.forEach((tile) => {
 			if (tile.layers.length > 0 || tile.meshes.length > 0) {
-				f(tile, index)
+				f(tile)
 			}
 		})
 	}
 
-	getTileCacheKey(tileToken: TileToken) {
+	tileTokenToKey(tileToken: TileToken) {
 		return tileToken.join('|')
+	}
+
+	keyToTileToken(key: string) {
+		return key.split('|')
 	}
 
 	dispose() {
 		this.stop()
 		this._tileMap.clear()
 		this._promiseMap.clear()
-		this._currVisibleTiles.length = 0
+		this._currVisibleTiles.clear()
 		this._currVisibleTokens.length = 0
 		this._tiles.length = 0
 		this._stableFrames = 0
 	}
 
 	async start() {
-		this.stop()
-
 		const layer = this.config.layer
 
 		if (!this._timeline) {
@@ -135,6 +147,8 @@ export class CommonTileManager implements ITileManager {
 		if (!this._polaris) {
 			this._polaris = await layer.getPolaris()
 		}
+
+		this.stop()
 
 		this._updateTrack = this._timeline.addTrack({
 			startTime: this._timeline.currentTime,
@@ -154,11 +168,15 @@ export class CommonTileManager implements ITileManager {
 		}
 	}
 
-	stop() {
+	async stop() {
 		if (this._updateTrack) {
 			this._updateTrack.alive = false
 			this._updateTrack = undefined
 		}
+	}
+
+	getPendingTilesCount() {
+		return this._promiseMap.size
 	}
 
 	private _updateViewChange(polaris: any) {
@@ -183,7 +201,7 @@ export class CommonTileManager implements ITileManager {
 		this._currVisibleTokens.length = 0
 
 		tokenList.forEach((token) => {
-			const cacheKey = this.getTileCacheKey(token)
+			const cacheKey = this.tileTokenToKey(token)
 			this._currVisibleTokens.push(cacheKey)
 
 			// check visibility if mesh already exists
@@ -209,26 +227,38 @@ export class CommonTileManager implements ITileManager {
 			pendings.push(promise)
 
 			promise
-				.then((rawTile) => {
-					const tile = rawTile as CachedTileRenderables
-					tile.lastVisTime = this._timeline.currentTime
-					tile.key = cacheKey
-
-					this._tileMap.set(cacheKey, tile)
-					this._tiles.push(tile)
-
-					const { meshes, layers } = tile
-					meshes.forEach((mesh) => this.config.layer.group.add(mesh))
-					layers.forEach((layer) => this.config.layer.add(layer))
-
-					this._setTileVisibility(tile, false)
+				.then((tile) => {
+					this._addTile(cacheKey, tile)
 				})
 				.catch((e) => {
 					if (this.config.printErrors) {
 						console.error('Polaris::TileManager - getTileRenderables error', e)
 					}
+					this._addTile(cacheKey, undefined)
 				})
 		})
+	}
+
+	private _addTile(cacheKey: string, rawTile: TileRenderables | undefined) {
+		if (!rawTile) {
+			rawTile = { meshes: [], layers: [] }
+		}
+
+		const tile = rawTile as CachedTileRenderables
+
+		tile.lastVisTime = this._timeline.currentTime
+		tile.key = cacheKey
+
+		this._tileMap.set(cacheKey, tile)
+		this._tiles.push(tile)
+
+		const { meshes, layers } = tile
+		meshes.forEach((mesh) => this.config.layer.group.add(mesh))
+		layers.forEach((layer) => this.config.layer.add(layer))
+
+		this._setTileVisibility(tile, false)
+
+		this._promiseMap.delete(cacheKey)
 	}
 
 	private _setTileVisibility(tile: TileRenderables, visibility: boolean) {
@@ -249,22 +279,22 @@ export class CommonTileManager implements ITileManager {
 	 * check & set tiles which should be visible in current frame
 	 */
 	private _updateCurrTilesVisibility() {
-		const tiles: CachedTileRenderables[] = []
+		const tiles: Set<CachedTileRenderables> = new Set()
 
 		this._currVisibleTokens.forEach((token) => {
 			const tile = this._tileMap.get(token)
 			if (tile) {
-				tiles.push(tile)
+				tiles.add(tile)
 			}
 		})
 
-		if (tiles.length === 0 || this._arrayEquals(tiles, this._currVisibleTiles)) {
+		if (tiles.size === 0 || this._setEquals(tiles, this._currVisibleTiles)) {
 			return
 		}
 
 		this._setCurrTilesVisibility(false)
-		this._currVisibleTiles.length = 0
-		this._currVisibleTiles.push(...tiles)
+		this._currVisibleTiles.clear()
+		tiles.forEach((tile) => this._currVisibleTiles.add(tile))
 		this._setCurrTilesVisibility(true)
 	}
 
@@ -272,11 +302,22 @@ export class CommonTileManager implements ITileManager {
 		return a.length === b.length && a.every((val, index) => val === b[index])
 	}
 
+	private _setEquals(a: Set<any>, b: Set<any>) {
+		if (a.size !== b.size) {
+			return false
+		}
+		for (const item of a) {
+			if (!b.has(item)) return false
+		}
+		return true
+	}
+
 	private _releaseTilesMemory(tiles: CachedTileRenderables[]) {
 		tiles.forEach((tile) => {
 			const key = tile.key
 			this._tileMap.delete(key)
 			this._promiseMap.delete(key)
+			this.config.onTileRelease(tile, this.keyToTileToken(tile.key))
 			const { meshes, layers } = tile
 			meshes.forEach((mesh) => this.config.layer.group.remove(mesh))
 			layers.forEach((layer) => this.config.layer.remove(layer))
@@ -288,15 +329,25 @@ export class CommonTileManager implements ITileManager {
 		if (this._tiles.length > cacheSize) {
 			const numOfReleases = this._tiles.length - cacheSize
 			this._tiles.sort((a, b) => a.lastVisTime - b.lastVisTime)
+
+			// Note: the tiles array is sorted from less vis to more vis,
+			// so, if there is any tile that is currently visible,
+			// it means all tiles after this one is visible, too.
 			let deleteCount = 0
 			for (let i = 0; i < numOfReleases; i++) {
 				const tile = this._tiles[i]
-				if (!this._currVisibleTiles.includes(tile)) {
+				if (!this._currVisibleTiles.has(tile)) {
 					deleteCount++
+				} else {
+					break
 				}
-				break
 			}
+
+			if (deleteCount === 0) return
+
 			const deletedTiles = this._tiles.splice(0, deleteCount)
+			deletedTiles.forEach((tile) => this._currVisibleTiles.delete(tile))
+
 			this._releaseTilesMemory(deletedTiles)
 		}
 	}
