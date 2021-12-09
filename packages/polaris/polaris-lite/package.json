@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/lite",
-    "version": "0.0.0-beta",
+    "version": "0.0.0-alpha.0",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -16,9 +16,9 @@
         "build:umd": "npx webpack"
     },
     "dependencies": {
-        "@polaris.gl/gsi": "^0.0.0-beta",
-        "@polaris.gl/renderer-lite": "^0.0.0-beta",
-        "@polaris.gl/schema": "^0.0.0-beta"
+        "@polaris.gl/gsi": "^0.0.0-alpha.0",
+        "@polaris.gl/renderer-lite": "^0.0.0-alpha.0",
+        "@polaris.gl/schema": "^0.0.0-alpha.0"
     },
     "devDependencies": {
         "@types/offscreencanvas": "latest",

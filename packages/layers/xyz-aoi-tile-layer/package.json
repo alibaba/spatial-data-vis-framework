@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/layer-xyz-aoi-tile",
-    "version": "0.0.0-beta",
+    "version": "0.0.0-alpha.0",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -16,24 +16,24 @@
         "build:umd": "npx webpack"
     },
     "dependencies": {
-        "@polaris.gl/layer-std": "^0.0.0-beta",
-        "@polaris.gl/schema": "^0.0.0-beta",
-        "@polaris.gl/projection": "^0.0.0-beta",
-        "@polaris.gl/gsi": "^0.0.0-beta",
-        "@polaris.gl/utils": "^0.0.0-beta",
-        "@polaris.gl/utils-request-manager": "^0.0.0-beta",
-        "@polaris.gl/utils-tile-manager": "^0.0.0-beta",
-        "@polaris.gl/utils-indicator": "^0.0.0-beta",
-        "@gs.i/utils-math": "^0.0.0-beta",
-        "@gs.i/utils-geometry": "^0.0.0-beta",
         "@gs.i/frontend-sdk": "^0.0.0-beta",
         "@gs.i/schema": "^0.0.0-beta",
-        "geobuf": "^3.0.2",
-        "pbf": "^3.2.1",
+        "@gs.i/utils-geometry": "^0.0.0-beta",
+        "@gs.i/utils-math": "^0.0.0-beta",
+        "@polaris.gl/gsi": "^0.0.0-alpha.0",
+        "@polaris.gl/layer-std": "^0.0.0-alpha.0",
+        "@polaris.gl/projection": "^0.0.0-alpha.0",
+        "@polaris.gl/schema": "^0.0.0-alpha.0",
+        "@polaris.gl/utils": "^0.0.0-alpha.0",
+        "@polaris.gl/utils-indicator": "^0.0.0-alpha.0",
+        "@polaris.gl/utils-request-manager": "^0.0.0-alpha.0",
+        "@polaris.gl/utils-tile-manager": "^0.0.0-alpha.0",
         "@turf/invariant": "^5.1.6",
         "@turf/meta": "^6.0.2",
         "@turf/polygon-to-line": "^6.3.0",
-        "earcut": "^2.2.2"
+        "earcut": "^2.2.2",
+        "geobuf": "^3.0.2",
+        "pbf": "^3.2.1"
     },
     "devDependencies": {
         "typescript": ">4.4.0"
