@@ -2,18 +2,34 @@ import { Polaris } from '@polaris.gl/schema'
 import { CommonTileManager, CommonTileManagerConfig } from './CommonTileManager'
 import { lngLatToGoogle } from 'global-mercator'
 
-export type XYZTileManagerConfig = Omit<CommonTileManagerConfig, 'getViewTiles'>
+export type XYZTileManagerConfig = Omit<CommonTileManagerConfig, 'getViewTiles'> & {
+	viewZoomReduction?: number
+}
+
+export const defaultConfig = {
+	viewZoomReduction: 0,
+}
 
 export class XYZTileManager extends CommonTileManager {
+	readonly config: CommonTileManagerConfig & Required<XYZTileManagerConfig>
+
 	constructor(config: XYZTileManagerConfig) {
 		super({
+			...defaultConfig,
 			...config,
-			getViewTiles,
+			getViewTiles: (polaris, minZoom, maxZoom) => {
+				return getViewTiles(polaris, minZoom, maxZoom, this.config.viewZoomReduction)
+			},
 		})
 	}
 }
 
-const getViewTiles = (polaris: Polaris, minZoom: number, maxZoom: number) => {
+const getViewTiles = (
+	polaris: Polaris,
+	minZoom: number,
+	maxZoom: number,
+	viewZoomReduction: number
+) => {
 	const geoRange = polaris.getGeoRange()
 	const lnglatMin = [Infinity, Infinity]
 	const lnglatMax = [-Infinity, -Infinity]
@@ -27,6 +43,10 @@ const getViewTiles = (polaris: Polaris, minZoom: number, maxZoom: number) => {
 
 	let zoom = Math.floor(polaris.cameraProxy.zoom)
 	zoom = Math.min(Math.max(minZoom, zoom), maxZoom)
+
+	viewZoomReduction = Math.min(Math.max(0, viewZoomReduction), zoom - 1)
+	zoom -= viewZoomReduction
+
 	const xyz0 = lngLatToGoogle(lnglatMin, zoom)
 	const xyz1 = lngLatToGoogle(lnglatMax, zoom)
 

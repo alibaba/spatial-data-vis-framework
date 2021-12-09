@@ -27,12 +27,12 @@ export interface ITileManager {
 	/**
 	 * Get current visible tiles list
 	 */
-	getVisibleTiles(): TileRenderables[]
+	getVisibleTiles(): CachedTileRenderables[]
 
 	/**
 	 * Get current pending (requesting/generating) tiles count
 	 */
-	getPendingTilesCount(): number
+	getPendingsCount(): number
 
 	/**
 	 * forEach call for every cached tiles

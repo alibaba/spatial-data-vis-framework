@@ -1,6 +1,6 @@
 import { IRequestManager, ConfigType } from './types'
 
-export class CommonRequestManager<T = { url: string; requestParams: any }>
+export class CommonRequestManager<T = { url: string; requestParams?: any }>
 	implements IRequestManager<T>
 {
 	readonly config: ConfigType

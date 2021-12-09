@@ -27,11 +27,6 @@ export class XYZTileRequestManager extends CommonRequestManager<XYZTileArgs> {
 		return `${x}|${y}|${z}`
 	}
 
-	dispose() {
-		this._requestCacheMap.clear()
-		this._dataCacheMap.clear()
-	}
-
 	protected fetchDataDefault(requestArg: XYZTileArgs): Promise<any> {
 		const requestInfo = this.config.getUrl(requestArg)
 		const url = typeof requestInfo === 'string' ? requestInfo : requestInfo.url
