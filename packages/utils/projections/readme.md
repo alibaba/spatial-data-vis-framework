@@ -4,7 +4,7 @@
 
 #### js/ts
 
-`tnpm i -S '@polaris.gl/projection`
+`npm i -S '@polaris.gl/projection`
 
 #### C sharp
 
