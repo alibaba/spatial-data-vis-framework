@@ -138,6 +138,12 @@ export interface POILayerProps extends STDLayerProps {
 	 * User customized fetch cache key generator
 	 */
 	customTileKeyGen?: (x: number, y: number, z: number) => string
+
+	/**
+	 * Increasing view zoom reduction will let layer request less but lower level tiles
+	 * This may help with low fetching speed problem
+	 */
+	viewZoomReduction?: number
 }
 
 /**
@@ -163,13 +169,13 @@ export const defaultProps: POILayerProps = {
 	clusterSize: 64,
 	clusterDOMStyle: {},
 	getClusterCount: (feature) => undefined,
-	stableFramesBeforeRequest: 5,
+	stableFramesBeforeRequest: 15,
 	cacheSize: 512,
+	viewZoomReduction: 0,
 }
 
 export class POILayer extends STDLayer {
 	matr: MatrPoint
-	// geoMap: Map<string, any>
 
 	requestManager: XYZTileRequestManager
 
@@ -252,6 +258,7 @@ export class POILayer extends STDLayer {
 				'customFetcher',
 				'customTileKeyGen',
 				'cacheSize',
+				'viewZoomReduction',
 			],
 			() => {
 				this._featureCount = 0
@@ -312,6 +319,7 @@ export class POILayer extends STDLayer {
 					maxZoom: this.getProps('maxZoom'),
 					cacheSize: this.getProps('cacheSize'),
 					stableFramesBeforeUpdate: this.getProps('stableFramesBeforeRequest'),
+					viewZoomReduction: this.getProps('viewZoomReduction'),
 					getTileRenderables: (tileToken) => {
 						return this._createTileRenderables(tileToken, projection, polaris)
 					},
@@ -401,7 +409,12 @@ export class POILayer extends STDLayer {
 		this.tileManager.dispose()
 	}
 
-	getLoadingState() {}
+	getState() {
+		const pendingsCount = this.tileManager ? this.tileManager.getPendingsCount() : undefined
+		return {
+			pendingsCount,
+		}
+	}
 
 	private _createPointImgElement() {
 		this._pointImgElem = new Image()

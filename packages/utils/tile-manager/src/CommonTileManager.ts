@@ -71,7 +71,7 @@ export class CommonTileManager implements ITileManager {
 	private _updateTrack: any
 	private _tileMap: Map<string, CachedTileRenderables>
 	private _promiseMap: Map<string, Promise<any>>
-	private _currVisibleTiles: Set<CachedTileRenderables>
+	private _currVisibleTiles: CachedTileRenderables[]
 	private _currVisibleTokens: string[]
 	private _tiles: CachedTileRenderables[]
 	private _lastCamState: string
@@ -81,7 +81,7 @@ export class CommonTileManager implements ITileManager {
 		this.config = { ...defaultConfig, ...config }
 		this._tileMap = new Map()
 		this._promiseMap = new Map()
-		this._currVisibleTiles = new Set()
+		this._currVisibleTiles = []
 		this._currVisibleTokens = []
 		this._tiles = []
 		this._stableFrames = 0
@@ -90,11 +90,11 @@ export class CommonTileManager implements ITileManager {
 	/**
 	 * Will not include empty TileRenderables
 	 *
-	 * @return {*}  {TileRenderables[]}
+	 * @return {*}  {CachedTileRenderables[]}
 	 * @memberof CommonTileManager
 	 */
-	getVisibleTiles(): TileRenderables[] {
-		const visTiles: TileRenderables[] = []
+	getVisibleTiles(): CachedTileRenderables[] {
+		const visTiles: CachedTileRenderables[] = []
 		this._currVisibleTiles.forEach((tile) => {
 			if (tile.layers.length > 0 || tile.meshes.length > 0) {
 				visTiles.push(tile)
@@ -127,9 +127,10 @@ export class CommonTileManager implements ITileManager {
 
 	dispose() {
 		this.stop()
+		this._releaseTilesMemory(this._tiles)
 		this._tileMap.clear()
 		this._promiseMap.clear()
-		this._currVisibleTiles.clear()
+		this._currVisibleTiles.length = 0
 		this._currVisibleTokens.length = 0
 		this._tiles.length = 0
 		this._stableFrames = 0
@@ -151,6 +152,7 @@ export class CommonTileManager implements ITileManager {
 		this.stop()
 
 		this._updateTrack = this._timeline.addTrack({
+			id: 'TileManager.update',
 			startTime: this._timeline.currentTime,
 			duration: Infinity,
 			onUpdate: () => {
@@ -175,7 +177,7 @@ export class CommonTileManager implements ITileManager {
 		}
 	}
 
-	getPendingTilesCount() {
+	getPendingsCount() {
 		return this._promiseMap.size
 	}
 
@@ -279,22 +281,22 @@ export class CommonTileManager implements ITileManager {
 	 * check & set tiles which should be visible in current frame
 	 */
 	private _updateCurrTilesVisibility() {
-		const tiles: Set<CachedTileRenderables> = new Set()
+		const tiles: CachedTileRenderables[] = []
 
 		this._currVisibleTokens.forEach((token) => {
 			const tile = this._tileMap.get(token)
 			if (tile) {
-				tiles.add(tile)
+				tiles.push(tile)
 			}
 		})
 
-		if (tiles.size === 0 || this._setEquals(tiles, this._currVisibleTiles)) {
+		if (tiles.length === 0 || this._arrayEquals(tiles, this._currVisibleTiles)) {
 			return
 		}
 
 		this._setCurrTilesVisibility(false)
-		this._currVisibleTiles.clear()
-		tiles.forEach((tile) => this._currVisibleTiles.add(tile))
+		this._currVisibleTiles.length = 0
+		this._currVisibleTiles.push(...tiles)
 		this._setCurrTilesVisibility(true)
 	}
 
@@ -321,6 +323,8 @@ export class CommonTileManager implements ITileManager {
 			const { meshes, layers } = tile
 			meshes.forEach((mesh) => this.config.layer.group.remove(mesh))
 			layers.forEach((layer) => this.config.layer.remove(layer))
+
+			// console.log('released', key)
 		})
 	}
 
@@ -332,11 +336,12 @@ export class CommonTileManager implements ITileManager {
 
 			// Note: the tiles array is sorted from less vis to more vis,
 			// so, if there is any tile that is currently visible,
-			// it means all tiles after this one is visible, too.
+			// it means all tiles after this one is also visible,
+			// so, break the loop
 			let deleteCount = 0
 			for (let i = 0; i < numOfReleases; i++) {
 				const tile = this._tiles[i]
-				if (!this._currVisibleTiles.has(tile)) {
+				if (this._currVisibleTiles.indexOf(tile) < 0) {
 					deleteCount++
 				} else {
 					break
@@ -346,7 +351,12 @@ export class CommonTileManager implements ITileManager {
 			if (deleteCount === 0) return
 
 			const deletedTiles = this._tiles.splice(0, deleteCount)
-			deletedTiles.forEach((tile) => this._currVisibleTiles.delete(tile))
+			deletedTiles.forEach((tile) => {
+				const index = this._currVisibleTiles.indexOf(tile)
+				if (index >= 0) {
+					this._currVisibleTiles.splice(index, 1)
+				}
+			})
 
 			this._releaseTilesMemory(deletedTiles)
 		}

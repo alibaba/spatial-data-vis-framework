@@ -140,6 +140,12 @@ export interface AOILayerProps extends STDLayerProps {
 	 * User customized fetch cache key generator
 	 */
 	customTileKeyGen?: (x: number, y: number, z: number) => string
+
+	/**
+	 * Increasing view zoom reduction will let layer request less but lower level tiles
+	 * This may help with low fetching speed problem
+	 */
+	viewZoomReduction?: number
 }
 
 /**
@@ -166,6 +172,7 @@ const defaultProps: AOILayerProps = {
 	selectLineColor: '#00ffff',
 	stableFramesBeforeRequest: 15,
 	cacheSize: 512,
+	viewZoomReduction: 0,
 }
 
 type IndicatorRangeInfo = {
@@ -176,11 +183,15 @@ type IndicatorRangeInfo = {
 
 export class AOILayer extends STDLayer {
 	matr: MatrUnlit
-	// geoMap: Map<string, any>
 
 	requestManager: XYZTileRequestManager
 
 	tileManager: XYZTileManager
+
+	/**
+	 * Performance info
+	 */
+	info: { times: Map<number | string, { reqTime: number; genTime: number }> }
 
 	/**
 	 * For feature.index counter
@@ -217,11 +228,6 @@ export class AOILayer extends STDLayer {
 
 	private _selectedIds: Set<number | string>
 
-	/**
-	 * Performance info
-	 */
-	private _info: any
-
 	constructor(props: Partial<AOILayerProps> = {}) {
 		const _props = {
 			...defaultProps,
@@ -241,10 +247,6 @@ export class AOILayer extends STDLayer {
 
 		if (!projection.isPlaneProjection) {
 			throw new Error('AOILayer - TileLayer can only be used in plane projections')
-		}
-
-		this._info = {
-			tileGenTimes: new Map<number | string, number>(),
 		}
 
 		this.listenProps(
@@ -271,6 +273,7 @@ export class AOILayer extends STDLayer {
 				'customFetcher',
 				'customTileKeyGen',
 				'cacheSize',
+				'viewZoomReduction',
 			],
 			() => {
 				this._featureCount = 0
@@ -286,6 +289,10 @@ export class AOILayer extends STDLayer {
 				this._selectedIds = new Set()
 
 				this._indicators = new Set()
+
+				this.info = {
+					times: new Map(),
+				}
 
 				this.matr = this._createPolygonMatr()
 
@@ -333,6 +340,7 @@ export class AOILayer extends STDLayer {
 					maxZoom: this.getProps('maxZoom'),
 					cacheSize: this.getProps('cacheSize'),
 					stableFramesBeforeUpdate: this.getProps('stableFramesBeforeRequest'),
+					viewZoomReduction: this.getProps('viewZoomReduction'),
 					getTileRenderables: (tileToken) => {
 						return this._createTileRenderables(tileToken, projection, polaris)
 					},
@@ -387,6 +395,7 @@ export class AOILayer extends STDLayer {
 
 	dispose() {
 		this._featureCount = 0
+		this.info.times = new Map()
 		this._renderableFeatureMap = new Map()
 		this._featureIndexRangeMap = new Map()
 		this._idIndicatorRangeMap = new Map()
@@ -397,7 +406,12 @@ export class AOILayer extends STDLayer {
 		this.tileManager.dispose()
 	}
 
-	getLoadingState() {}
+	getState() {
+		const pendingsCount = this.tileManager ? this.tileManager.getPendingsCount() : undefined
+		return {
+			pendingsCount,
+		}
+	}
 
 	private _createTileRenderables(token, projection, polaris) {
 		const dataType = this.getProps('dataType')
@@ -409,9 +423,19 @@ export class AOILayer extends STDLayer {
 		const req = this.requestManager.request({ x, y, z })
 		const cacheKey = this._getCacheKey(x, y, z)
 
+		// perf indicator
+		this.info.times.set(cacheKey, { reqTime: performance.now(), genTime: 0 })
+
 		return new Promise<TileRenderables>((resolve, reject) => {
 			req
 				.then((data) => {
+					// Perf log
+					const time = this.info.times.get(cacheKey)
+					if (time) {
+						time.reqTime = performance.now() - time.reqTime
+						time.genTime = performance.now()
+					}
+
 					let geojson: any
 
 					// parse response to geojson
@@ -450,6 +474,11 @@ export class AOILayer extends STDLayer {
 
 					if (geojson.features.length > 0) {
 						const tile = this._createTileMesh(geojson, projection, polaris, cacheKey)
+
+						if (time) {
+							time.genTime = performance.now() - time.genTime
+						}
+
 						if (tile) {
 							resolve(tile)
 							return
@@ -610,7 +639,7 @@ export class AOILayer extends STDLayer {
 							offset: linePosOffset,
 							count: positions.length / 3,
 						}
-						// this._cacheIndicatorRange(id, range)
+
 						const lineRanges = idLineRangeMap.get(id)
 						if (lineRanges) {
 							lineRanges.push(range)

@@ -19,91 +19,8 @@ const p = new PolarisGSIGL2({
 })
 p.timeline.config.ignoreErrors = false
 
-const getPOIUrl = (x, y, z) => {
-	const params = {
-		PostgreSQL: {
-			dbname: 'test-1',
-			user: 'kou_admin',
-			password: 'kou_admin1234',
-			host: 'pgm-bp1oi8k60xk5861j146270.pg.rds.aliyuncs.com',
-			port: '1921',
-		},
-		fc_param: {
-			x,
-			y,
-			z,
-			id_column: 'id',
-			geometry_column: 'geometry',
-			clip_geometry: null,
-			area_code: null,
-			source: 'hz_house_order',
-			output_format: 'geojson_pbf',
-			layer: {
-				default: {
-					geometry_type: 'point',
-					visible_columns: ['count'],
-					filter_expression: [],
-					visible_zlevel: [3, 20],
-					clickable_zlevel: [15, 20],
-					aggregation: {
-						zlevel: [3, 15],
-						clustering_method: 'bin',
-						clustering_scalar: 500,
-						fields: {
-							count_number: ['id', 'count'],
-							sum_number: ['count', 'sum'],
-						},
-					},
-				},
-			},
-		},
-	}
-	return (
-		'http://223675737204339375.cn-zhangjiakou-test-corp.test.fc.aliyun-inc.com/2016-08-15/proxy/fbi-geo.py-get-mvt__stable/py-get-mvt/api?data=' +
-		JSON.stringify(params)
-	)
-}
-
-const getAOIUrl = (x, y, z) => {
-	const params = {
-		PostgreSQL: {
-			dbname: 'test-1',
-			user: 'kou_admin',
-			password: 'kou_admin1234',
-			host: 'pgm-bp1oi8k60xk5861j146270.pg.rds.aliyuncs.com',
-			port: '1921',
-		},
-		fc_param: {
-			x,
-			y,
-			z,
-			id_column: 'id',
-			geometry_column: 'geometry',
-			clip_geometry: null,
-			area_code: null,
-			source: '浙江省_杭州市_building',
-			output_format: 'geojson_pbf',
-			layer: {
-				default: {
-					geometry_type: 'Polygon',
-					visible_columns: [],
-					simplify_scalar: 7,
-					filter_expression: null,
-					preserve_collapsed: false,
-					with_boundary: true,
-					visible_zlevel: [3, 20],
-					clickable_zlevel: [13, 20],
-				},
-			},
-		},
-	}
-	return (
-		'http://223675737204339375.cn-zhangjiakou-test-corp.test.fc.aliyun-inc.com/2016-08-15/proxy/fbi-geo.py-get-mvt__stable/py-get-mvt/api?data=' +
-		JSON.stringify(params)
-	)
-}
-
 const size = 32
+const stableFramesBeforeRequest = 15
 
 async function getImage(): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -154,6 +71,8 @@ async function getImage(): Promise<string> {
 async function initPOI() {
 	let lastHovered
 	const poi = new POILayer({
+		stableFramesBeforeRequest,
+		viewZoomReduction: 0,
 		// pointImage: await getImage(),
 		dataType: 'pbf',
 		pointSize: size,
@@ -209,6 +128,8 @@ initPOI()
 const picked: Set<number> = new Set()
 let hovered
 const aoi = new AOILayer({
+	stableFramesBeforeRequest,
+	viewZoomReduction: 0,
 	customFetcher: (x, y, z) => {
 		const url = getAOIUrl(x, y, z)
 		return new Promise((resolve) => {
@@ -265,7 +186,137 @@ const amapLayer = new AMapLayer({
 })
 p.add(amapLayer)
 
+// info panel
+const panel = document.createElement('div')
+panel.style.position = 'absolute'
+panel.style.left = '5px'
+panel.style.top = '5px'
+panel.style.border = '2px dashed green'
+panel.style.fontSize = '14px'
+panel.style.padding = '2px'
+panel.innerText = 'pendings'
+document.body.appendChild(panel)
+p.timeline.addTrack({
+	duration: Infinity,
+	startTime: p.timeline.currentTime,
+	onUpdate: () => {
+		let info = ''
+
+		if (window['poi']) {
+			info += 'poi: \n'
+			info += 'vis tiles: ' + window['poi'].tileManager.getVisibleTiles().length + '\n'
+			info += 'pendings: ' + window['poi'].getState().pendingsCount + '\n'
+		}
+
+		if (window['aoi']) {
+			info += 'aoi: \n'
+			info += 'vis tiles: ' + window['aoi'].tileManager.getVisibleTiles().length + '\n'
+			info += 'pendings: ' + window['aoi'].getState().pendingsCount + '\n'
+
+			const reqTimes = aoi.tileManager
+				.getVisibleTiles()
+				.map((tile) => Math.round(aoi.info.times.get(tile.key).reqTime))
+			info += 'max req: ' + Math.max(...reqTimes) + 'ms\n'
+
+			const genTimes = aoi.tileManager
+				.getVisibleTiles()
+				.map((tile) => Math.round(aoi.info.times.get(tile.key).genTime))
+			info += 'max gen: ' + Math.max(...genTimes) + 'ms\n'
+		}
+
+		if (panel.innerText !== info) {
+			panel.innerText = info
+		}
+	},
+})
+
 // p.setStatesCode('1|120.184300|30.265237|0.000000|0.00000|0.00000|8.00000')
 p.setStatesCode('1|120.184301|30.265237|0.000000|0.00000|0.00000|18.70400') // closer hz
 
 window['p'] = p
+
+//
+
+function getPOIUrl(x, y, z) {
+	const params = {
+		PostgreSQL: {
+			dbname: 'test-1',
+			user: 'kou_admin',
+			password: 'kou_admin1234',
+			host: 'pgm-bp1oi8k60xk5861j146270.pg.rds.aliyuncs.com',
+			port: '1921',
+		},
+		fc_param: {
+			x,
+			y,
+			z,
+			id_column: 'id',
+			geometry_column: 'geometry',
+			clip_geometry: null,
+			area_code: null,
+			source: 'hz_house_order',
+			output_format: 'geojson_pbf',
+			layer: {
+				default: {
+					geometry_type: 'point',
+					visible_columns: ['count'],
+					filter_expression: [],
+					visible_zlevel: [3, 20],
+					clickable_zlevel: [15, 20],
+					aggregation: {
+						zlevel: [3, 15],
+						clustering_method: 'bin',
+						clustering_scalar: 500,
+						fields: {
+							count_number: ['id', 'count'],
+							sum_number: ['count', 'sum'],
+						},
+					},
+				},
+			},
+		},
+	}
+	return (
+		'http://223675737204339375.cn-zhangjiakou-test-corp.test.fc.aliyun-inc.com/2016-08-15/proxy/fbi-geo.py-get-mvt__stable/py-get-mvt/api?data=' +
+		JSON.stringify(params)
+	)
+}
+
+function getAOIUrl(x, y, z) {
+	const params = {
+		PostgreSQL: {
+			dbname: 'test-1',
+			user: 'kou_admin',
+			password: 'kou_admin1234',
+			host: 'pgm-bp1oi8k60xk5861j146270.pg.rds.aliyuncs.com',
+			port: '1921',
+		},
+		fc_param: {
+			x,
+			y,
+			z,
+			id_column: 'id',
+			geometry_column: 'geometry',
+			clip_geometry: null,
+			area_code: null,
+			source: '浙江省_杭州市_building',
+			output_format: 'geojson_pbf',
+			layer: {
+				default: {
+					geometry_type: 'Polygon',
+					visible_columns: [],
+					simplify_scalar: 7,
+					filter_expression: null,
+					preserve_collapsed: false,
+					with_boundary: true,
+					visible_zlevel: [3, 20],
+					clickable_zlevel: [13, 20],
+				},
+			},
+		},
+	}
+	return (
+		'http://223675737204339375.cn-zhangjiakou-test-corp.test.fc.aliyun-inc.com/2016-08-15/proxy/fbi-geo.py-get-mvt__stable/py-get-mvt/api?data=' +
+		JSON.stringify(params)
+	)
+}
