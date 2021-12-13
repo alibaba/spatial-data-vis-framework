@@ -54,6 +54,8 @@ export class CommonRequestManager<T = { url: string; requestParams?: any }>
 					resolve(result)
 				})
 				.catch((e) => {
+					this._dataCacheMap.delete(cacheKey)
+					this._requestCacheMap.delete(cacheKey)
 					reject(e)
 				})
 		})
@@ -132,15 +134,31 @@ export class CommonRequestManager<T = { url: string; requestParams?: any }>
 							break
 						}
 						case 'arraybuffer': {
-							resolve(res.arrayBuffer())
+							res
+								.arrayBuffer()
+								.then((arraybuffer) => {
+									resolve(arraybuffer)
+								})
+								.catch((e) => reject(e))
+
 							break
 						}
 						case 'json': {
-							resolve(res.json())
+							res
+								.json()
+								.then((json) => {
+									resolve(json)
+								})
+								.catch((e) => reject(e))
 							break
 						}
 						case 'text': {
-							resolve(res.text())
+							res
+								.text()
+								.then((text) => {
+									resolve(text)
+								})
+								.catch((e) => reject(e))
 							break
 						}
 						default: {

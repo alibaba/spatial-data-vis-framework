@@ -154,14 +154,16 @@ export class LiteRenderer extends Renderer {
 		/**
 		 * @stage_0 MPV
 		 */
+		const canvasWidth = this.props.width * (this.props.ratio ?? 1.0)
+		const canvasHeight = this.props.height * (this.props.ratio ?? 1.0)
 		const canvas = document.createElement('canvas')
+		canvas.width = canvasWidth
+		canvas.height = canvasHeight
 		canvas.style.position = 'absolute'
 		canvas.style.left = '0px'
 		canvas.style.top = '0px'
 		canvas.style.width = this.props.width + 'px'
 		canvas.style.height = this.props.height + 'px'
-		canvas.width = this.props.width
-		canvas.height = this.props.height
 		this.canvas = canvas
 
 		// Converter
@@ -265,7 +267,7 @@ export class LiteRenderer extends Renderer {
 		// this.initReflection()
 
 		// init pp
-		this.frame = new WebGLRenderTarget(this.props.width, this.props.height, {
+		this.frame = new WebGLRenderTarget(canvasWidth, canvasHeight, {
 			minFilter: LinearFilter,
 			magFilter: LinearFilter,
 			format: RGBAFormat,
@@ -431,12 +433,14 @@ export class LiteRenderer extends Renderer {
 			this.scene.background = new Color(this.props.background as string)
 		}
 
+		const canvasWidth = this.props.width * (this.props.ratio ?? 1.0)
+		const canvasHeight = this.props.height * (this.props.ratio ?? 1.0)
 		this.canvas.style.width = this.props.width + 'px'
 		this.canvas.style.height = this.props.height + 'px'
-		this.canvas.width = this.props.width
-		this.canvas.height = this.props.height
-		this.renderer.setSize(this.props.width, this.props.height)
-		this.renderer.setViewport(0, 0, this.props.width, this.props.height)
+		this.canvas.width = canvasWidth
+		this.canvas.height = canvasHeight
+		this.renderer.setSize(canvasWidth, canvasHeight)
+		this.renderer.setViewport(0, 0, canvasWidth, canvasHeight)
 
 		const { cameraNear, cameraFar, fov } = this.props
 		this.camera.near = cameraNear as number

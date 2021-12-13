@@ -10,6 +10,7 @@ const p = new PolarisGSIGL2({
 	container: document.querySelector('#container') as HTMLDivElement,
 	width: 800,
 	height: 800,
+	ratio: 1,
 	lights: {},
 	autoResize: true,
 	asyncRendering: true,
@@ -19,8 +20,8 @@ const p = new PolarisGSIGL2({
 })
 p.timeline.config.ignoreErrors = false
 
-const size = 32
-const framesBeforeRequest = 15
+const size = 24
+const framesBeforeRequest = 10
 
 async function getImage(): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -76,7 +77,7 @@ async function initPOI() {
 		// pointImage: await getImage(),
 		dataType: 'pbf',
 		pointSize: size,
-		pointHoverSize: 48,
+		pointHoverSize: 32,
 		pointOffset: [0.0, 0.5],
 		minZoom: 3,
 		maxZoom: 20,
@@ -113,6 +114,8 @@ async function initPOI() {
 			if (!id) return
 			poi.highlightByIds([id], { type: 'hover' })
 			lastHovered = id
+
+			console.log('id', id)
 		},
 		renderOrder: 100,
 	})
@@ -190,8 +193,8 @@ const aoi = new AOILayer({
 		})
 	},
 })
-p.add(aoi)
-window['aoi'] = aoi
+// p.add(aoi)
+// window['aoi'] = aoi
 
 // amap
 const amapLayer = new AMapLayer({

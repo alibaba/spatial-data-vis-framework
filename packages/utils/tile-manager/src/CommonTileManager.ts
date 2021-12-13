@@ -28,7 +28,7 @@ export type CommonTileManagerConfig = {
 	 * @param token visible tile request param, example: [x, y, z]
 	 * @param tileManager the TileManager instance
 	 * @return the tile renderables generation promise object: promise & abort() function
-	 * @note TilePromise.promise fullfilled state -> the tile is generated successfully and will be cached by TileManager
+	 * @note TilePromise.promise fulfilled state -> the tile is generated successfully and will be cached by TileManager
 	 * @note TilePromise.promise rejected state -> the tile generation was failed, it will not be cached and will be requested next time when it is in visible views
 	 */
 	getTileRenderables: (token: TileToken, tileManager: CommonTileManager) => TilePromise
@@ -76,7 +76,7 @@ const defaultConfig = {
 	minZoom: 3,
 	maxZoom: 20,
 	cacheSize: 512,
-	framesBeforeUpdate: 15,
+	framesBeforeUpdate: 5,
 	framesBeforeAbort: 5,
 	printErrors: false,
 	onTileRelease: (tile, []) => {},
@@ -179,7 +179,7 @@ export class CommonTileManager implements ITileManager {
 				if (this._stableFrames > this.config.framesBeforeUpdate) {
 					this._updateTiles()
 				}
-				this._abortOutOfViewPendings()
+				this._abortOutOfViewPromises()
 				this._updateCurrTilesVisibility()
 				this._updateCache()
 			},
@@ -197,7 +197,7 @@ export class CommonTileManager implements ITileManager {
 		}
 	}
 
-	getPendingsCount() {
+	getPendsCount() {
 		return this._promiseMap.size
 	}
 
@@ -237,7 +237,7 @@ export class CommonTileManager implements ITileManager {
 
 			// query new tile
 			const tilePromise = this.config.getTileRenderables(token, this)
-			if (!tilePromise) {
+			if (!tilePromise || !tilePromise.promise) {
 				if (this.config.printErrors) {
 					console.error('Polaris::TileManager - getTileRenderables() result is invalid. ')
 				}
@@ -256,14 +256,17 @@ export class CommonTileManager implements ITileManager {
 				.then((tile) => {
 					this._addTile(cacheKey, tile)
 				})
-				.catch((e) => {
-					if (e.code === e.ABORT_ERR || e.name === 'AbortError') {
+				.catch((err) => {
+					if (this._tileMap.has(cacheKey)) {
+						return
+					}
+
+					if (err.name === 'AbortError') {
 						// promise manually aborted
-						// this._promiseMap.delete(cacheKey)
 						return
 					}
 					if (this.config.printErrors) {
-						console.error('Polaris::TileManager - getTileRenderables error', e)
+						console.error('Polaris::TileManager - getTileRenderables error', err)
 					}
 					this._addTile(cacheKey, undefined)
 				})
@@ -271,11 +274,6 @@ export class CommonTileManager implements ITileManager {
 	}
 
 	private _addTile(cacheKey: string, rawTile: TileRenderables | undefined) {
-		// robust coding, do not add tile if promise was removed from cache map
-		if (!this._promiseMap.has(cacheKey)) {
-			return
-		}
-
 		if (!rawTile) {
 			rawTile = { meshes: [], layers: [] }
 		}
@@ -394,10 +392,13 @@ export class CommonTileManager implements ITileManager {
 		this._releaseTilesMemory(deletedTiles)
 	}
 
-	private _abortOutOfViewPendings() {
+	private _abortOutOfViewPromises() {
 		const outOfViewPromises: CachedTilePromise[] = []
 
 		this._promiseMap.forEach((tilePromise, key) => {
+			if (this._tileMap.has(key)) {
+				return
+			}
 			if (!this._currVisibleKeys.includes(key)) {
 				tilePromise.outOfViewFrames++
 				outOfViewPromises.push(tilePromise)

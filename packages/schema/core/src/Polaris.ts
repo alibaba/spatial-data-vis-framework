@@ -160,6 +160,10 @@ export abstract class Polaris extends Layer implements RootLayer {
 
 		// this.cameraman = new Cameraman({ camera: cameraProxy })
 
+		this.cameraProxy = cameraProxy
+		this.canvasWidth = canvasWidth
+		this.canvasHeight = canvasHeight
+
 		this.onBeforeRender = () => {
 			const newStatesCode = this.cameraProxy.statesCode
 			this.traverse((obj) => {
@@ -169,10 +173,6 @@ export abstract class Polaris extends Layer implements RootLayer {
 				}
 			})
 		}
-
-		this.cameraProxy = cameraProxy
-		this.canvasWidth = canvasWidth
-		this.canvasHeight = canvasHeight
 
 		// 基本绘制循环
 		this.timeline.addTrack({
