@@ -221,13 +221,13 @@ p.timeline.addTrack({
 		if (window['poi']) {
 			info += 'poi: \n'
 			info += 'vis tiles: ' + window['poi'].tileManager.getVisibleTiles().length + '\n'
-			info += 'pendings: ' + window['poi'].getState().pendingsCount + '\n'
+			info += 'pends: ' + window['poi'].getState().pendsCount + '\n'
 		}
 
 		if (window['aoi']) {
 			info += 'aoi: \n'
 			info += 'vis tiles: ' + window['aoi'].tileManager.getVisibleTiles().length + '\n'
-			info += 'pendings: ' + window['aoi'].getState().pendingsCount + '\n'
+			info += 'pends: ' + window['aoi'].getState().pendsCount + '\n'
 
 			const reqTimes = aoi.tileManager
 				.getVisibleTiles()
