@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/view-gsi",
-    "version": "0.0.0-alpha.0",
+    "version": "0.0.0-alpha.1",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -16,7 +16,7 @@
     },
     "dependencies": {
         "@gs.i/frontend-sdk": "^0.0.0-beta",
-        "@polaris.gl/schema": "^0.0.0-alpha.0"
+        "@polaris.gl/schema": "^0.0.0-alpha.1"
     },
     "devDependencies": {
         "typescript": ">4.4.0"
