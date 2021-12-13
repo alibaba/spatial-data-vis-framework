@@ -170,7 +170,7 @@ const defaultProps: AOILayerProps = {
 	selectLineLevel: 2,
 	selectLineWidth: 2,
 	selectLineColor: '#00ffff',
-	framesBeforeRequest: 15,
+	framesBeforeRequest: 10,
 	cacheSize: 512,
 	viewZoomReduction: 0,
 }
@@ -407,9 +407,9 @@ export class AOILayer extends STDLayer {
 	}
 
 	getState() {
-		const pendingsCount = this.tileManager ? this.tileManager.getPendingsCount() : undefined
+		const pendsCount = this.tileManager ? this.tileManager.getPendsCount() : undefined
 		return {
-			pendingsCount,
+			pendsCount,
 		}
 	}
 
@@ -796,29 +796,29 @@ export class AOILayer extends STDLayer {
 				const features = this._renderableFeatureMap.get(mesh)
 				if (index === undefined || !features) return
 
-				// find the hitted feature by feature indexRange
-				let hittedFeature
+				// find the hit feature by feature indexRange
+				let hitFeature
 				const indexTri = index * 3
 				for (let j = 0; j < features.length; j++) {
 					const feature = features[j]
 					const indexRange = this._featureIndexRangeMap.get(feature)
 					if (indexRange && indexTri >= indexRange[0] && indexTri <= indexRange[1]) {
-						hittedFeature = feature
+						hitFeature = feature
 						break
 					}
 				}
 
-				if (!hittedFeature) return
+				if (!hitFeature) return
 
 				const event: PickEvent = {
 					distance: intersection.distance ?? 0,
-					index: hittedFeature.index,
+					index: hitFeature.index,
 					point: intersection.point as CoordV3,
 					pointLocal: intersection.pointLocal as CoordV3,
 					object: mesh,
 					data: {
-						feature: hittedFeature,
-						curr: hittedFeature, // backward compatibility
+						feature: hitFeature,
+						curr: hitFeature, // backward compatibility
 					},
 				}
 				return event

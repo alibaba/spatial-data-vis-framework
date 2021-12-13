@@ -9,6 +9,7 @@ const p = new Polaris({
 	container: document.querySelector('#container') as HTMLDivElement,
 	width: 800,
 	height: 800,
+	ratio: 1,
 })
 p.timeline.config.ignoreErrors = false
 

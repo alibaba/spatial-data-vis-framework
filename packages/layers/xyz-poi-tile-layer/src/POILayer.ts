@@ -3,7 +3,7 @@ import { XYZTileManager, TileRenderables, TilePromise } from '@polaris.gl/utils-
 import { Marker } from '@polaris.gl/layer-std-marker'
 import { RequestPending, XYZTileRequestManager } from '@polaris.gl/utils-request-manager'
 import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
-import { Mesh, MatrPoint, Geom, Attr } from '@gs.i/frontend-sdk'
+import { Mesh, MatrPoint, Geom, Attr, isThreeMaterial } from '@gs.i/frontend-sdk'
 import { Base, CoordV2, PickEvent, Polaris } from '@polaris.gl/schema'
 import Pbf from 'pbf'
 import { decode } from 'geobuf'
@@ -64,11 +64,15 @@ export interface POILayerProps extends STDLayerProps {
 
 	/**
 	 * point size (px)
+	 * @NOTE Value cannot be larger than WebGL limitation 'Aliased Point Size Range'
+	 * @link https://webglreport.com/
 	 */
 	pointSize: number
 
 	/**
 	 * point hover size (px)
+	 * @NOTE Value cannot be larger than WebGL limitation 'Aliased Point Size Range'
+	 * @link https://webglreport.com/
 	 */
 	pointHoverSize: number
 
@@ -76,6 +80,7 @@ export interface POILayerProps extends STDLayerProps {
 	 * The point image is rendered at center of lnglat location by default,
 	 * setting offsets can let the point image be rendered at position [size * offset],
 	 * usually both numbers are between [-1.0, 1.0], but not necessary.
+	 * @NOTE bottom/left values should be < 0, top/right values should be > 0.
 	 */
 	pointOffset: [number, number]
 
@@ -102,7 +107,7 @@ export interface POILayerProps extends STDLayerProps {
 	/**
 	 * Get cluster feature count
 	 * @return => {number} to set this feature as a cluster, the number will be rendered onto marker
-	 * @return => {undefined} to set this feature as non-clusted point, it will be rendered as normal point
+	 * @return => {undefined} to set this feature as non-clustered point, it will be rendered as normal point
 	 */
 	getClusterCount: (feature: any) => number | undefined
 
@@ -169,7 +174,7 @@ export const defaultProps: POILayerProps = {
 	clusterSize: 64,
 	clusterDOMStyle: {},
 	getClusterCount: (feature) => undefined,
-	framesBeforeRequest: 15,
+	framesBeforeRequest: 10,
 	cacheSize: 512,
 	viewZoomReduction: 0,
 }
@@ -180,6 +185,8 @@ export class POILayer extends STDLayer {
 	requestManager: XYZTileRequestManager
 
 	tileManager: XYZTileManager
+
+	private _ratio: number
 
 	private _featureCount: number
 
@@ -221,6 +228,7 @@ export class POILayer extends STDLayer {
 		}
 		super(_props)
 		this.name = this.group.name = 'POILayer'
+		this._ratio = 1.0
 	}
 
 	/**
@@ -234,6 +242,8 @@ export class POILayer extends STDLayer {
 		if (!projection.isPlaneProjection) {
 			throw new Error('POILayer - TileLayer can only be used in plane projections')
 		}
+
+		this._ratio = polaris.ratio ?? 1.0
 
 		this.listenProps(
 			[
@@ -331,8 +341,9 @@ export class POILayer extends STDLayer {
 
 		this.onViewChange = (cam, p) => {
 			const polaris = p as Polaris
+			this._ratio = polaris.ratio ?? 1.0
 			if (this.matr) {
-				this.matr.uniforms.uResolution.value = { x: polaris.width, y: polaris.height }
+				this.matr.uniforms.uResolution.value = { x: polaris.canvasWidth, y: polaris.canvasHeight }
 			}
 		}
 
@@ -373,8 +384,6 @@ export class POILayer extends STDLayer {
 			if (!style || !style.type) return
 
 			const type = style.type
-			const pointSize = this.getProps('pointSize')
-			const pointHoverSize = this.getProps('pointHoverSize')
 			idsArr.forEach((id) => {
 				const meshInfos = this._idMeshesMap.get(id)
 				if (!meshInfos) return
@@ -386,10 +395,10 @@ export class POILayer extends STDLayer {
 						return
 					} else if (obj instanceof Mesh) {
 						if (type === 'none') {
-							this._updatePointSizeByIndex(obj, objIdx, pointSize)
+							this._updatePointSizeByIndex(obj, objIdx, this._getPointStyledSize(style))
 							this._idStyleMap.delete(id)
 						} else if (type === 'hover') {
-							this._updatePointSizeByIndex(obj, objIdx, pointHoverSize)
+							this._updatePointSizeByIndex(obj, objIdx, this._getPointStyledSize(style))
 							this._idStyleMap.set(id, { ...style })
 						}
 					}
@@ -410,9 +419,9 @@ export class POILayer extends STDLayer {
 	}
 
 	getState() {
-		const pendingsCount = this.tileManager ? this.tileManager.getPendingsCount() : undefined
+		const pendsCount = this.tileManager ? this.tileManager.getPendsCount() : undefined
 		return {
-			pendingsCount,
+			pendsCount,
 		}
 	}
 
@@ -503,7 +512,6 @@ export class POILayer extends STDLayer {
 		const matr = new MatrPoint({
 			alphaMode: 'BLEND',
 			depthTest: this.getProps('depthTest'),
-			size: this.getProps('pointSize'),
 			baseColorFactor: { r: 1, g: 1, b: 1 },
 			baseColorTexture: {
 				image: { uri: this.getProps('pointImage'), flipY: true },
@@ -522,7 +530,7 @@ export class POILayer extends STDLayer {
 				},
 				uResolution: {
 					type: 'vec2',
-					value: { x: polaris.width, y: polaris.height },
+					value: { x: polaris.canvasWidth, y: polaris.canvasHeight },
 				},
 			},
 			attributes: {
@@ -537,9 +545,11 @@ export class POILayer extends STDLayer {
 			`,
 			vertOutput: `
 				vColor = aColor / 255.0;
+				// calc point offsets
+				vec2 sizes = vec2(aSize);
 				glPosition = projectionMatrix * modelViewPosition;
 				glPosition /= glPosition.w;
-				vec2 pxRange = vec2(aSize) / uResolution;
+				vec2 pxRange = sizes / uResolution;
 				vec2 offset = uOffset;
 				glPosition.xy += offset * pxRange;
 			`,
@@ -793,8 +803,8 @@ export class POILayer extends STDLayer {
 	}
 
 	private _getPointStyledSize(style?: { [name: string]: any }): number {
-		const pointSize = this.getProps('pointSize')
-		const pointHoverSize = this.getProps('pointHoverSize')
+		const pointSize = this.getProps('pointSize') * this._ratio
+		const pointHoverSize = this.getProps('pointHoverSize') * this._ratio
 		if (!style || !style.type) {
 			return pointSize
 		}

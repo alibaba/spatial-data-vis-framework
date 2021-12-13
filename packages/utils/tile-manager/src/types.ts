@@ -28,7 +28,7 @@ export type CachedTileRenderables = TileRenderables & {
  * @property the 'promise' object is provided by user to give TileManager a pending with TileRenderables result
  * @property the 'abort' function can be provided to let TileManager to stop the renderables request, if necessary
  * the flag returned by 'abort' function will be used to check if the request was aborted successfully
- * @note the promise should be 'rejected' state after abort opertion
+ * @note the promise should be 'rejected' state after abort operation
  */
 export type TilePromise = {
 	promise: Promise<TileRenderables>
@@ -61,7 +61,7 @@ export interface ITileManager {
 	/**
 	 * Get current pending (requesting/generating) tiles count
 	 */
-	getPendingsCount(): number
+	getPendsCount(): number
 
 	/**
 	 * forEach call for every cached tiles
