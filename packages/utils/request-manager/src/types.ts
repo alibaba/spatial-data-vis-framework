@@ -1,3 +1,8 @@
+export type RequestPending = {
+	promise: Promise<any>
+	abort?: () => { success: boolean }
+}
+
 export type ConfigType = {
 	/**
 	 * The return data type
@@ -14,12 +19,12 @@ export type ConfigType = {
 	/**
 	 * The data fetch method which can be customized by user
 	 */
-	fetcher?: (...args) => Promise<any>
+	fetcher?: (...args) => RequestPending
 }
 
 export interface IRequestManager<RequestArgsType> {
 	readonly config: ConfigType
-	request(args: RequestArgsType): Promise<any>
+	request(args: RequestArgsType): RequestPending
 	getCacheKey(args: RequestArgsType): string
 	dispose(): void
 }

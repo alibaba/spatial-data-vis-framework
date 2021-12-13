@@ -1,12 +1,12 @@
 import { CommonRequestManager } from './CommonRequestManager'
-import { ConfigType } from './types'
+import { ConfigType, RequestPending } from './types'
 
 export type XYZTileArgs = { x: number; y: number; z: number }
 
 export interface XYZTileRequestManagerConfig extends ConfigType {
 	getUrl: (requestArgs: XYZTileArgs) => string | { url: string; requestParams?: any }
 	getCacheKey?: (requestArgs: XYZTileArgs) => string
-	fetcher?: (requestArgs: XYZTileArgs) => Promise<any>
+	fetcher?: (requestArgs: XYZTileArgs) => RequestPending
 }
 
 export class XYZTileRequestManager extends CommonRequestManager<XYZTileArgs> {
@@ -27,44 +27,51 @@ export class XYZTileRequestManager extends CommonRequestManager<XYZTileArgs> {
 		return `${x}|${y}|${z}`
 	}
 
-	protected fetchDataDefault(requestArg: XYZTileArgs): Promise<any> {
+	protected fetchDataDefault(requestArg: XYZTileArgs, abortSignal?: AbortSignal): Promise<any> {
 		const requestInfo = this.config.getUrl(requestArg)
 		const url = typeof requestInfo === 'string' ? requestInfo : requestInfo.url
 		const requestParams = typeof requestInfo === 'string' ? undefined : requestInfo.requestParams
 
 		return new Promise((resolve, reject) => {
-			fetch(url, requestParams).then((res) => {
-				if (!res.ok) {
-					reject(res)
-					return
-				}
-				switch (this.config.dataType) {
-					case 'auto': {
-						const data = this.getDataFromResponse(res)
-						if (data) {
-							resolve(data)
-						} else {
-							reject(new Error('Unknown Response Content-Type'))
-						}
-						break
-					}
-					case 'arraybuffer': {
-						resolve(res.arrayBuffer())
-						break
-					}
-					case 'json': {
-						resolve(res.json())
-						break
-					}
-					case 'text': {
-						resolve(res.text())
-						break
-					}
-					default: {
-						resolve(res)
-					}
-				}
+			fetch(url, {
+				...requestParams,
+				signal: abortSignal,
 			})
+				.then((res) => {
+					if (!res.ok) {
+						reject(res)
+						return
+					}
+					switch (this.config.dataType) {
+						case 'auto': {
+							const data = this.getDataFromResponse(res)
+							if (data) {
+								resolve(data)
+							} else {
+								reject(new Error('Unknown Response Content-Type'))
+							}
+							break
+						}
+						case 'arraybuffer': {
+							resolve(res.arrayBuffer())
+							break
+						}
+						case 'json': {
+							resolve(res.json())
+							break
+						}
+						case 'text': {
+							resolve(res.text())
+							break
+						}
+						default: {
+							resolve(res)
+						}
+					}
+				})
+				.catch((e) => {
+					reject(e)
+				})
 		})
 
 		// requestParams = requestParams || {}

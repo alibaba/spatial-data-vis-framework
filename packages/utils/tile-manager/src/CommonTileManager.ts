@@ -2,7 +2,14 @@ import { Timeline } from 'ani-timeline'
 import { STDLayer } from '@polaris.gl/layer-std'
 import { Polaris } from '@polaris.gl/schema'
 import { Projection } from '@polaris.gl/projection'
-import { ITileManager, TileRenderables, TileToken, CachedTileRenderables } from './types'
+import {
+	ITileManager,
+	TileRenderables,
+	TileToken,
+	CachedTileRenderables,
+	TilePromise,
+	CachedTilePromise,
+} from './types'
 
 export type CommonTileManagerConfig = {
 	/**
@@ -17,9 +24,14 @@ export type CommonTileManagerConfig = {
 	getViewTiles: (polaris: Polaris, minZoom: number, maxZoom: number) => TileToken[]
 
 	/**
-	 * Method to get TileRenderables (meshes & sublayers) from tile token
+	 * Method to get TileRenderables (meshes & sublayers) from TileToken
+	 * @param token visible tile request param, example: [x, y, z]
+	 * @param tileManager the TileManager instance
+	 * @return the tile renderables generation promise object: promise & abort() function
+	 * @note TilePromise.promise fullfilled state -> the tile is generated successfully and will be cached by TileManager
+	 * @note TilePromise.promise rejected state -> the tile generation was failed, it will not be cached and will be requested next time when it is in visible views
 	 */
-	getTileRenderables: (token: TileToken, tileManager: CommonTileManager) => Promise<TileRenderables>
+	getTileRenderables: (token: TileToken, tileManager: CommonTileManager) => TilePromise
 
 	/**
 	 * Min zoom limit, default is 3
@@ -39,9 +51,15 @@ export type CommonTileManagerConfig = {
 
 	/**
 	 * Only when the camera is stable (static) for N frames the manager will start to update tiles
-	 * default is 3 frames
+	 * default is 10 frames
 	 */
-	stableFramesBeforeUpdate?: number
+	framesBeforeUpdate?: number
+
+	/**
+	 * The maximum OutOfView frames that tilePromise can have
+	 * if frames reach this limit, the tilePromise will be aborted by the TileManager
+	 */
+	framesBeforeAbort?: number
 
 	/**
 	 * Whether to print any errors to console, default is false
@@ -58,7 +76,8 @@ const defaultConfig = {
 	minZoom: 3,
 	maxZoom: 20,
 	cacheSize: 512,
-	stableFramesBeforeUpdate: 3,
+	framesBeforeUpdate: 15,
+	framesBeforeAbort: 5,
 	printErrors: false,
 	onTileRelease: (tile, []) => {},
 }
@@ -70,11 +89,11 @@ export class CommonTileManager implements ITileManager {
 	private _projection: Projection
 	private _updateTrack: any
 	private _tileMap: Map<string, CachedTileRenderables>
-	private _promiseMap: Map<string, Promise<any>>
+	private _promiseMap: Map<string, CachedTilePromise>
 	private _currVisibleTiles: CachedTileRenderables[]
-	private _currVisibleTokens: string[]
+	private _currVisibleKeys: string[]
 	private _tiles: CachedTileRenderables[]
-	private _lastCamState: string
+	private _lastStatesCode: string
 	private _stableFrames: number
 
 	constructor(config: CommonTileManagerConfig) {
@@ -82,7 +101,7 @@ export class CommonTileManager implements ITileManager {
 		this._tileMap = new Map()
 		this._promiseMap = new Map()
 		this._currVisibleTiles = []
-		this._currVisibleTokens = []
+		this._currVisibleKeys = []
 		this._tiles = []
 		this._stableFrames = 0
 	}
@@ -131,7 +150,7 @@ export class CommonTileManager implements ITileManager {
 		this._tileMap.clear()
 		this._promiseMap.clear()
 		this._currVisibleTiles.length = 0
-		this._currVisibleTokens.length = 0
+		this._currVisibleKeys.length = 0
 		this._tiles.length = 0
 		this._stableFrames = 0
 	}
@@ -157,11 +176,12 @@ export class CommonTileManager implements ITileManager {
 			duration: Infinity,
 			onUpdate: () => {
 				this._stableFrames++
-				this._updateCurrTilesVisibility()
-				this._updateCache()
-				if (this._stableFrames > this.config.stableFramesBeforeUpdate) {
+				if (this._stableFrames > this.config.framesBeforeUpdate) {
 					this._updateTiles()
 				}
+				this._abortOutOfViewPendings()
+				this._updateCurrTilesVisibility()
+				this._updateCache()
 			},
 		})
 
@@ -185,9 +205,9 @@ export class CommonTileManager implements ITileManager {
 		if (!this._timeline || !this._projection || !this._polaris) return
 
 		const statesCode = polaris.getStatesCode()
-		if (this._lastCamState !== statesCode) {
+		if (this._lastStatesCode !== statesCode) {
 			this._stableFrames = 0
-			this._lastCamState = statesCode
+			this._lastStatesCode = statesCode
 		}
 	}
 
@@ -199,12 +219,11 @@ export class CommonTileManager implements ITileManager {
 			this.config.minZoom,
 			this.config.maxZoom
 		)
-		const pendings: Promise<TileRenderables>[] = []
-		this._currVisibleTokens.length = 0
+		this._currVisibleKeys.length = 0
 
 		tokenList.forEach((token) => {
 			const cacheKey = this.tileTokenToKey(token)
-			this._currVisibleTokens.push(cacheKey)
+			this._currVisibleKeys.push(cacheKey)
 
 			// check visibility if mesh already exists
 			if (this._tileMap.has(cacheKey)) {
@@ -217,22 +236,32 @@ export class CommonTileManager implements ITileManager {
 			}
 
 			// query new tile
-			const promise = this.config.getTileRenderables(token, this)
-			if (!promise) {
+			const tilePromise = this.config.getTileRenderables(token, this)
+			if (!tilePromise) {
 				if (this.config.printErrors) {
 					console.error('Polaris::TileManager - getTileRenderables() result is invalid. ')
 				}
 				return
 			}
 
-			this._promiseMap.set(cacheKey, promise)
-			pendings.push(promise)
+			const cachedPromise: CachedTilePromise = {
+				...tilePromise,
+				key: cacheKey,
+				outOfViewFrames: 0,
+			}
+			this._promiseMap.set(cacheKey, cachedPromise)
 
+			const promise = cachedPromise.promise
 			promise
 				.then((tile) => {
 					this._addTile(cacheKey, tile)
 				})
 				.catch((e) => {
+					if (e.code === e.ABORT_ERR || e.name === 'AbortError') {
+						// promise manually aborted
+						// this._promiseMap.delete(cacheKey)
+						return
+					}
 					if (this.config.printErrors) {
 						console.error('Polaris::TileManager - getTileRenderables error', e)
 					}
@@ -242,6 +271,11 @@ export class CommonTileManager implements ITileManager {
 	}
 
 	private _addTile(cacheKey: string, rawTile: TileRenderables | undefined) {
+		// robust coding, do not add tile if promise was removed from cache map
+		if (!this._promiseMap.has(cacheKey)) {
+			return
+		}
+
 		if (!rawTile) {
 			rawTile = { meshes: [], layers: [] }
 		}
@@ -281,22 +315,22 @@ export class CommonTileManager implements ITileManager {
 	 * check & set tiles which should be visible in current frame
 	 */
 	private _updateCurrTilesVisibility() {
-		const tiles: CachedTileRenderables[] = []
+		const visTiles: CachedTileRenderables[] = []
 
-		this._currVisibleTokens.forEach((token) => {
-			const tile = this._tileMap.get(token)
+		this._currVisibleKeys.forEach((tileKey) => {
+			const tile = this._tileMap.get(tileKey)
 			if (tile) {
-				tiles.push(tile)
+				visTiles.push(tile)
 			}
 		})
 
-		if (tiles.length === 0 || this._arrayEquals(tiles, this._currVisibleTiles)) {
+		if (visTiles.length === 0 || this._arrayEquals(visTiles, this._currVisibleTiles)) {
 			return
 		}
 
 		this._setCurrTilesVisibility(false)
 		this._currVisibleTiles.length = 0
-		this._currVisibleTiles.push(...tiles)
+		this._currVisibleTiles.push(...visTiles)
 		this._setCurrTilesVisibility(true)
 	}
 
@@ -318,47 +352,71 @@ export class CommonTileManager implements ITileManager {
 		tiles.forEach((tile) => {
 			const key = tile.key
 			this._tileMap.delete(key)
-			this._promiseMap.delete(key)
-			this.config.onTileRelease(tile, this.keyToTileToken(tile.key))
 			const { meshes, layers } = tile
+			this.config.onTileRelease(tile, this.keyToTileToken(tile.key))
 			meshes.forEach((mesh) => this.config.layer.group.remove(mesh))
 			layers.forEach((layer) => this.config.layer.remove(layer))
-
 			// console.log('released', key)
 		})
 	}
 
 	private _updateCache() {
 		const cacheSize = this.config.cacheSize
-		if (this._tiles.length > cacheSize) {
-			const numOfReleases = this._tiles.length - cacheSize
-			this._tiles.sort((a, b) => a.lastVisTime - b.lastVisTime)
+		if (this._tiles.length <= cacheSize) return
 
-			// Note: the tiles array is sorted from less vis to more vis,
-			// so, if there is any tile that is currently visible,
-			// it means all tiles after this one is also visible,
-			// so, break the loop
-			let deleteCount = 0
-			for (let i = 0; i < numOfReleases; i++) {
-				const tile = this._tiles[i]
-				if (this._currVisibleTiles.indexOf(tile) < 0) {
-					deleteCount++
-				} else {
-					break
+		const numOfReleases = this._tiles.length - cacheSize
+		this._tiles.sort((a, b) => a.lastVisTime - b.lastVisTime)
+
+		// Note: the tiles array is sorted from less vis to more vis,
+		// so, if there is any tile that is currently visible,
+		// it means all tiles after this one is also visible,
+		// so, break the loop
+		let deleteCount = 0
+		for (let i = 0; i < numOfReleases; i++) {
+			const tile = this._tiles[i]
+			if (this._currVisibleTiles.indexOf(tile) < 0) {
+				deleteCount++
+			} else {
+				break
+			}
+		}
+
+		if (deleteCount === 0) return
+
+		const deletedTiles = this._tiles.splice(0, deleteCount)
+		deletedTiles.forEach((tile) => {
+			const index = this._currVisibleTiles.indexOf(tile)
+			if (index >= 0) {
+				this._currVisibleTiles.splice(index, 1)
+			}
+		})
+
+		this._releaseTilesMemory(deletedTiles)
+	}
+
+	private _abortOutOfViewPendings() {
+		const outOfViewPromises: CachedTilePromise[] = []
+
+		this._promiseMap.forEach((tilePromise, key) => {
+			if (!this._currVisibleKeys.includes(key)) {
+				tilePromise.outOfViewFrames++
+				outOfViewPromises.push(tilePromise)
+			} else {
+				tilePromise.outOfViewFrames = 0
+			}
+		})
+
+		outOfViewPromises.forEach((promise) => {
+			if (promise.outOfViewFrames > this.config.framesBeforeAbort) {
+				// abort the promise
+				if (promise.abort) {
+					const { success } = promise.abort()
+					// the abort operation may be failed
+					if (success) {
+						this._promiseMap.delete(promise.key)
+					}
 				}
 			}
-
-			if (deleteCount === 0) return
-
-			const deletedTiles = this._tiles.splice(0, deleteCount)
-			deletedTiles.forEach((tile) => {
-				const index = this._currVisibleTiles.indexOf(tile)
-				if (index >= 0) {
-					this._currVisibleTiles.splice(index, 1)
-				}
-			})
-
-			this._releaseTilesMemory(deletedTiles)
-		}
+		})
 	}
 }

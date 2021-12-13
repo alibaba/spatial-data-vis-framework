@@ -1,11 +1,11 @@
-import { IRequestManager, ConfigType } from './types'
+import { IRequestManager, ConfigType, RequestPending } from './types'
 
 export class CommonRequestManager<T = { url: string; requestParams?: any }>
 	implements IRequestManager<T>
 {
 	readonly config: ConfigType
 
-	protected _requestCacheMap: Map<string, Promise<any>> = new Map()
+	protected _requestCacheMap: Map<string, RequestPending> = new Map()
 
 	protected _dataCacheMap: Map<string, any> = new Map()
 
@@ -16,7 +16,7 @@ export class CommonRequestManager<T = { url: string; requestParams?: any }>
 		this.config = config
 	}
 
-	request(requestArg: T): Promise<any> {
+	request(requestArg: T): RequestPending {
 		const cacheKey = this.getCacheKey(requestArg)
 		if (typeof cacheKey !== 'string') {
 			throw new Error('CommonRequestManager - CacheKey must be string')
@@ -24,7 +24,7 @@ export class CommonRequestManager<T = { url: string; requestParams?: any }>
 
 		const cachedData = this._dataCacheMap.get(cacheKey)
 		if (cachedData !== undefined) {
-			return Promise.resolve(cachedData)
+			return { promise: Promise.resolve(cachedData) }
 		}
 
 		const cachedPromise = this._requestCacheMap.get(cacheKey)
@@ -33,11 +33,21 @@ export class CommonRequestManager<T = { url: string; requestParams?: any }>
 		}
 
 		if (this.config.fetcher) {
-			return this.config.fetcher(requestArg)
+			const fetcherPending = this.config.fetcher(requestArg)
+			if (!fetcherPending.promise) {
+				throw new Error(
+					`CommonRequestManager - Invalid custom fetcher return type: should be: { promise, abort? }`
+				)
+			}
+			return fetcherPending
 		}
 
+		// abort signal prep
+		const abortController = AbortController ? new AbortController() : undefined
+		const signal = abortController ? abortController.signal : undefined
+
 		const promise = new Promise<any>((resolve, reject) => {
-			this.fetchDataDefault(requestArg)
+			this.fetchDataDefault(requestArg, signal)
 				.then((result) => {
 					this._dataCacheMap.set(cacheKey, result)
 					this._requestCacheMap.delete(cacheKey)
@@ -48,9 +58,22 @@ export class CommonRequestManager<T = { url: string; requestParams?: any }>
 				})
 		})
 
-		this._requestCacheMap.set(cacheKey, promise)
+		const abort = () => {
+			if (abortController) {
+				abortController.abort()
+				return { success: true }
+			}
+			return { success: false }
+		}
 
-		return promise
+		const requestPending = {
+			promise,
+			abort,
+		}
+
+		this._requestCacheMap.set(cacheKey, requestPending)
+
+		return requestPending
 	}
 
 	getCacheKey(requestArg: T) {
@@ -77,7 +100,7 @@ export class CommonRequestManager<T = { url: string; requestParams?: any }>
 		this._dataCacheMap.clear()
 	}
 
-	protected fetchDataDefault(requestArg: T): Promise<any> {
+	protected fetchDataDefault(requestArg: T, abortSignal?: AbortSignal): Promise<any> {
 		const args = requestArg as any
 		const url = typeof requestArg === 'string' ? args : args.url
 		const requestParams =
@@ -89,38 +112,45 @@ export class CommonRequestManager<T = { url: string; requestParams?: any }>
 		}
 
 		return new Promise((resolve, reject) => {
-			fetch(url, requestParams).then((res) => {
-				if (!res.ok) {
-					reject(res)
-					return
-				}
-				switch (this.config.dataType) {
-					case 'auto': {
-						const data = this.getDataFromResponse(res)
-						if (data) {
-							resolve(data)
-						} else {
-							reject(new Error('Unknown Response Content-Type'))
-						}
-						break
-					}
-					case 'arraybuffer': {
-						resolve(res.arrayBuffer())
-						break
-					}
-					case 'json': {
-						resolve(res.json())
-						break
-					}
-					case 'text': {
-						resolve(res.text())
-						break
-					}
-					default: {
-						resolve(res)
-					}
-				}
+			fetch(url, {
+				...requestParams,
+				signal: abortSignal,
 			})
+				.then((res) => {
+					if (!res.ok) {
+						reject(res)
+						return
+					}
+					switch (this.config.dataType) {
+						case 'auto': {
+							const data = this.getDataFromResponse(res)
+							if (data) {
+								resolve(data)
+							} else {
+								reject(new Error('Unknown Response Content-Type'))
+							}
+							break
+						}
+						case 'arraybuffer': {
+							resolve(res.arrayBuffer())
+							break
+						}
+						case 'json': {
+							resolve(res.json())
+							break
+						}
+						case 'text': {
+							resolve(res.text())
+							break
+						}
+						default: {
+							resolve(res)
+						}
+					}
+				})
+				.catch((e) => {
+					reject(e)
+				})
 		})
 
 		// requestParams = requestParams || {}
