@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/view-three",
-    "version": "0.0.0-alpha.0",
+    "version": "0.0.0-alpha.1",
     "private": true,
     "description": "",
     "main": "dist/index.js",
@@ -16,7 +16,7 @@
         "rebuild": "./scripts/rebuild.sh"
     },
     "dependencies": {
-        "@polaris.gl/schema": "^0.0.0-alpha.0",
+        "@polaris.gl/schema": "^0.0.0-alpha.1",
         "three": "0.111.0"
     },
     "devDependencies": {

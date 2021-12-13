@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/utils-indicator",
-    "version": "0.0.0-alpha.0",
+    "version": "0.0.0-alpha.1",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -21,7 +21,7 @@
         "@gs.i/schema": "^0.0.0-beta",
         "@gs.i/utils-gline": "^0.0.0-beta",
         "@gs.i/utils-math": "^0.0.0-beta",
-        "@polaris.gl/layer-std": "^0.0.0-alpha.0"
+        "@polaris.gl/layer-std": "^0.0.0-alpha.1"
     },
     "devDependencies": {
         "@types/is": "^0.0.21",
