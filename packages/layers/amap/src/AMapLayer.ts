@@ -106,7 +106,7 @@ export class AMapLayer extends STDLayer {
 				console.warn(`高德JSAPI未能成功加载，请检查key是否正确!`)
 			}
 		}
-		const url = 'https://webapi.amap.com/maps?v=1.4.17&key=' + key + '&callback=onLoad'
+		const url = 'https://webapi.amap.com/maps?v=1.4.15&key=' + key + '&callback=onLoad'
 		// const url = 'https://webapi.amap.com/maps?v=2.0&key=' + key + '&callback=onLoad'
 		const jsapi = document.createElement('script')
 		jsapi.charset = 'utf-8'

@@ -1,7 +1,7 @@
 import { isDISPOSED } from '@gs.i/schema'
-import { XYZTileManager, TileRenderables } from '@polaris.gl/utils-tile-manager'
+import { XYZTileManager, TileRenderables, TilePromise } from '@polaris.gl/utils-tile-manager'
 import { Marker } from '@polaris.gl/layer-std-marker'
-import { XYZTileRequestManager } from '@polaris.gl/utils-request-manager'
+import { RequestPending, XYZTileRequestManager } from '@polaris.gl/utils-request-manager'
 import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
 import { Mesh, MatrPoint, Geom, Attr } from '@gs.i/frontend-sdk'
 import { Base, CoordV2, PickEvent, Polaris } from '@polaris.gl/schema'
@@ -120,7 +120,7 @@ export interface POILayerProps extends STDLayerProps {
 	/**
 	 * Stable frames before sending tile requests
 	 */
-	stableFramesBeforeRequest?: number
+	framesBeforeRequest?: number
 
 	/**
 	 * The limit of tile cache count
@@ -132,7 +132,7 @@ export interface POILayerProps extends STDLayerProps {
 	 * User customized fetch method to replace the default layer fetcher
 	 * If this prop has been set, the 'getUrl' props will be ignored
 	 */
-	customFetcher?: (x: number, y: number, z: number) => Promise<any>
+	customFetcher?: (x: number, y: number, z: number) => RequestPending
 
 	/**
 	 * User customized fetch cache key generator
@@ -169,7 +169,7 @@ export const defaultProps: POILayerProps = {
 	clusterSize: 64,
 	clusterDOMStyle: {},
 	getClusterCount: (feature) => undefined,
-	stableFramesBeforeRequest: 15,
+	framesBeforeRequest: 15,
 	cacheSize: 512,
 	viewZoomReduction: 0,
 }
@@ -254,7 +254,7 @@ export class POILayer extends STDLayer {
 				'requestManager',
 				'pointOffset',
 				'geojsonFilter',
-				'stableFramesBeforeRequest',
+				'framesBeforeRequest',
 				'customFetcher',
 				'customTileKeyGen',
 				'cacheSize',
@@ -318,7 +318,7 @@ export class POILayer extends STDLayer {
 					minZoom: this.getProps('minZoom'),
 					maxZoom: this.getProps('maxZoom'),
 					cacheSize: this.getProps('cacheSize'),
-					stableFramesBeforeUpdate: this.getProps('stableFramesBeforeRequest'),
+					framesBeforeUpdate: this.getProps('framesBeforeRequest'),
 					viewZoomReduction: this.getProps('viewZoomReduction'),
 					getTileRenderables: (tileToken) => {
 						return this._createTileRenderables(tileToken, projection, polaris)
@@ -422,20 +422,26 @@ export class POILayer extends STDLayer {
 		this._pointImgElem.src = this.getProps('pointImage')
 	}
 
-	private _createTileRenderables(token, projection, polaris) {
+	private _createTileRenderables(token, projection, polaris): TilePromise {
 		const dataType = this.getProps('dataType')
 		const geojsonFilter = this.getProps('geojsonFilter')
 		const x = token[0],
 			y = token[1],
 			z = token[2]
 
-		const req = this.requestManager.request({ x, y, z })
+		const requestPending = this.requestManager.request({ x, y, z })
+		const requestPromise = requestPending.promise
 		const cacheKey = this._getCacheKey(x, y, z)
 
-		return new Promise<TileRenderables>((resolve, reject) => {
-			req
+		const promise = new Promise<TileRenderables>((resolve, reject) => {
+			requestPromise
 				.then((data) => {
 					let geojson: any
+
+					const emptyTile = {
+						meshes: [],
+						layers: [],
+					}
 
 					// parse response to geojson
 					if (dataType === 'pbf') {
@@ -452,7 +458,7 @@ export class POILayer extends STDLayer {
 						}
 					} else {
 						console.error(`Invalid dataType prop value: ${dataType}`)
-						reject()
+						resolve(emptyTile)
 						return
 					}
 
@@ -467,7 +473,7 @@ export class POILayer extends STDLayer {
 						console.warn(
 							`POILayer - Tile source is not a valid GeoJSON, skip. Use 'geojsonFilter' to modify the response data if necessary. `
 						)
-						reject()
+						resolve(emptyTile)
 						return
 					}
 
@@ -479,15 +485,17 @@ export class POILayer extends STDLayer {
 						}
 					}
 
-					resolve({
-						meshes: [],
-						layers: [],
-					})
+					resolve(emptyTile)
 				})
 				.catch((e) => {
 					reject(e)
 				})
 		})
+
+		return {
+			promise,
+			abort: requestPending.abort,
+		}
 	}
 
 	private _createPointMatr(polaris: Polaris) {

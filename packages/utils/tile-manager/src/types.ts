@@ -3,14 +3,43 @@ import { MeshDataType } from '@gs.i/schema'
 
 export type TileToken = (number | string)[]
 
+/**
+ * TileRenderables
+ * @description meshes & sublayers which can be used to render the tile contents
+ * @note TileRenderables is provided by user
+ */
 export type TileRenderables = {
 	meshes: MeshDataType[]
 	layers: STDLayer[]
 }
 
+/**
+ * CachedTileRenderables
+ * @description the internal cache object used by TileManager
+ */
 export type CachedTileRenderables = TileRenderables & {
 	lastVisTime: number
 	key: string
+}
+
+/**
+ * TileRequest
+ * @description the promise that user provide to generate a tile's meshes/sublayers
+ * @property the 'promise' object is provided by user to give TileManager a pending with TileRenderables result
+ * @property the 'abort' function can be provided to let TileManager to stop the renderables request, if necessary
+ * the flag returned by 'abort' function will be used to check if the request was aborted successfully
+ * @note the promise should be 'rejected' state after abort opertion
+ */
+export type TilePromise = {
+	promise: Promise<TileRenderables>
+	abort?: () => { success: boolean }
+}
+
+export type CachedTilePromise = {
+	key: string
+	promise: Promise<TileRenderables>
+	outOfViewFrames: number
+	abort?: () => { success: boolean }
 }
 
 export interface ITileManager {

@@ -20,7 +20,7 @@ const p = new PolarisGSIGL2({
 p.timeline.config.ignoreErrors = false
 
 const size = 32
-const stableFramesBeforeRequest = 15
+const framesBeforeRequest = 15
 
 async function getImage(): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -71,7 +71,7 @@ async function getImage(): Promise<string> {
 async function initPOI() {
 	let lastHovered
 	const poi = new POILayer({
-		stableFramesBeforeRequest,
+		framesBeforeRequest,
 		viewZoomReduction: 0,
 		// pointImage: await getImage(),
 		dataType: 'pbf',
@@ -80,7 +80,6 @@ async function initPOI() {
 		pointOffset: [0.0, 0.5],
 		minZoom: 3,
 		maxZoom: 20,
-		renderOrder: 100,
 		getUrl: getPOIUrl,
 		getClusterCount: (feature) => {
 			if (feature.properties.number_of_point > 1) {
@@ -92,7 +91,6 @@ async function initPOI() {
 			// const g = Math.round(Math.random() * 255)
 			// const b = Math.round(16 + Math.random() * 239)
 			// return `#${r.toString(16)}9f${b.toString(16)}`
-
 			return '#88af99'
 		},
 		clusterDOMStyle: {
@@ -116,6 +114,7 @@ async function initPOI() {
 			poi.highlightByIds([id], { type: 'hover' })
 			lastHovered = id
 		},
+		renderOrder: 100,
 	})
 	p.add(poi)
 
@@ -128,15 +127,29 @@ initPOI()
 const picked: Set<number> = new Set()
 let hovered
 const aoi = new AOILayer({
-	stableFramesBeforeRequest,
+	framesBeforeRequest,
 	viewZoomReduction: 0,
 	customFetcher: (x, y, z) => {
 		const url = getAOIUrl(x, y, z)
-		return new Promise((resolve) => {
-			fetch(url).then((res) => {
-				resolve(res.arrayBuffer())
-			})
+		const controller = new AbortController()
+		const signal = controller.signal
+		const promise = new Promise<any>((resolve, reject) => {
+			fetch(url, { signal })
+				.then((res) => {
+					resolve(res.arrayBuffer())
+				})
+				.catch((e) => {
+					reject(e)
+				})
 		})
+		const abort = () => {
+			controller.abort()
+			return { success: true }
+		}
+		return {
+			promise,
+			abort,
+		}
 	},
 	// getUrl: getAOIUrl,
 	getColor: 0xffaf88,

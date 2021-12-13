@@ -1,7 +1,7 @@
 import { MeshDataType } from '@gs.i/schema'
 import { computeBBox, computeBSphere } from '@gs.i/utils-geometry'
 import { XYZTileManager, TileRenderables, TileToken } from '@polaris.gl/utils-tile-manager'
-import { XYZTileRequestManager } from '@polaris.gl/utils-request-manager'
+import { RequestPending, XYZTileRequestManager } from '@polaris.gl/utils-request-manager'
 import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
 import { Mesh, MatrUnlit, Geom, Attr } from '@gs.i/frontend-sdk'
 import { Base, CoordV2, CoordV3, PickEvent, Polaris } from '@polaris.gl/schema'
@@ -122,7 +122,7 @@ export interface AOILayerProps extends STDLayerProps {
 	/**
 	 * Stable frames before sending tile requests
 	 */
-	stableFramesBeforeRequest?: number
+	framesBeforeRequest?: number
 
 	/**
 	 * The limit of tile cache count
@@ -134,7 +134,7 @@ export interface AOILayerProps extends STDLayerProps {
 	 * User customized fetch method to replace the default layer fetcher
 	 * If this prop has been set, the 'getUrl' props will be ignored
 	 */
-	customFetcher?: (x: number, y: number, z: number) => Promise<any>
+	customFetcher?: (x: number, y: number, z: number) => RequestPending
 
 	/**
 	 * User customized fetch cache key generator
@@ -170,7 +170,7 @@ const defaultProps: AOILayerProps = {
 	selectLineLevel: 2,
 	selectLineWidth: 2,
 	selectLineColor: '#00ffff',
-	stableFramesBeforeRequest: 15,
+	framesBeforeRequest: 15,
 	cacheSize: 512,
 	viewZoomReduction: 0,
 }
@@ -269,7 +269,7 @@ export class AOILayer extends STDLayer {
 				'selectLineColor',
 				'geojsonFilter',
 				'featureFilter',
-				'stableFramesBeforeRequest',
+				'framesBeforeRequest',
 				'customFetcher',
 				'customTileKeyGen',
 				'cacheSize',
@@ -339,7 +339,7 @@ export class AOILayer extends STDLayer {
 					minZoom: this.getProps('minZoom'),
 					maxZoom: this.getProps('maxZoom'),
 					cacheSize: this.getProps('cacheSize'),
-					stableFramesBeforeUpdate: this.getProps('stableFramesBeforeRequest'),
+					framesBeforeUpdate: this.getProps('framesBeforeRequest'),
 					viewZoomReduction: this.getProps('viewZoomReduction'),
 					getTileRenderables: (tileToken) => {
 						return this._createTileRenderables(tileToken, projection, polaris)
@@ -420,14 +420,14 @@ export class AOILayer extends STDLayer {
 			y = token[1],
 			z = token[2]
 
-		const req = this.requestManager.request({ x, y, z })
+		const requestPending = this.requestManager.request({ x, y, z })
 		const cacheKey = this._getCacheKey(x, y, z)
 
 		// perf indicator
 		this.info.times.set(cacheKey, { reqTime: performance.now(), genTime: 0 })
 
-		return new Promise<TileRenderables>((resolve, reject) => {
-			req
+		const promise = new Promise<TileRenderables>((resolve, reject) => {
+			requestPending.promise
 				.then((data) => {
 					// Perf log
 					const time = this.info.times.get(cacheKey)
@@ -437,6 +437,11 @@ export class AOILayer extends STDLayer {
 					}
 
 					let geojson: any
+
+					const emptyTile = {
+						meshes: [],
+						layers: [],
+					}
 
 					// parse response to geojson
 					if (dataType === 'pbf') {
@@ -453,7 +458,7 @@ export class AOILayer extends STDLayer {
 						}
 					} else {
 						console.error(`Invalid dataType prop value: ${dataType}`)
-						reject()
+						resolve(emptyTile)
 						return
 					}
 
@@ -468,7 +473,7 @@ export class AOILayer extends STDLayer {
 						console.warn(
 							`AOILayer - Tile source is not a valid GeoJSON, skip. Use 'geojsonFilter' to modify the response data if necessary. `
 						)
-						reject()
+						resolve(emptyTile)
 						return
 					}
 
@@ -485,15 +490,17 @@ export class AOILayer extends STDLayer {
 						}
 					}
 
-					resolve({
-						meshes: [],
-						layers: [],
-					})
+					resolve(emptyTile)
 				})
 				.catch((e) => {
 					reject(e)
 				})
 		})
+
+		return {
+			promise,
+			abort: requestPending.abort,
+		}
 	}
 
 	private _createPolygonMatr() {
