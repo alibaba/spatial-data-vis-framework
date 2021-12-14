@@ -1,3 +1,7 @@
+/**
+ * About AbortController.abort()
+ * @link https://developer.mozilla.org/en-US/docs/Web/API/AbortController/abort
+ */
 export type RequestPending = {
 	promise: Promise<any>
 	abort?: () => { success: boolean }
