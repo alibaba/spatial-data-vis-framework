@@ -30,6 +30,7 @@ export type CommonTileManagerConfig = {
 	 * @return the tile renderables generation promise object: promise & abort() function
 	 * @note TilePromise.promise fulfilled state -> the tile is generated successfully and will be cached by TileManager
 	 * @note TilePromise.promise rejected state -> the tile generation was failed, it will not be cached and will be requested next time when it is in visible views
+	 * About AbortController.abort() @link https://developer.mozilla.org/en-US/docs/Web/API/AbortController/abort
 	 */
 	getTileRenderables: (token: TileToken, tileManager: CommonTileManager) => TilePromise
 

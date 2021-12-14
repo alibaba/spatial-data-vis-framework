@@ -22,6 +22,7 @@ p.timeline.config.ignoreErrors = false
 
 const size = 24
 const framesBeforeRequest = 10
+const viewZoomReduction = 1
 
 async function getImage(): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -73,7 +74,7 @@ async function initPOI() {
 	let lastHovered
 	const poi = new POILayer({
 		framesBeforeRequest,
-		viewZoomReduction: 0,
+		viewZoomReduction,
 		// pointImage: await getImage(),
 		dataType: 'pbf',
 		pointSize: size,
@@ -95,7 +96,6 @@ async function initPOI() {
 			return '#88af99'
 		},
 		clusterDOMStyle: {
-			color: '#ffffff',
 			fontSize: '14px',
 		},
 		pickable: true,
@@ -130,8 +130,8 @@ initPOI()
 const picked: Set<number> = new Set()
 let hovered
 const aoi = new AOILayer({
+	viewZoomReduction,
 	framesBeforeRequest,
-	viewZoomReduction: 0,
 	customFetcher: (x, y, z) => {
 		const url = getAOIUrl(x, y, z)
 		const controller = new AbortController()
@@ -193,8 +193,8 @@ const aoi = new AOILayer({
 		})
 	},
 })
-// p.add(aoi)
-// window['aoi'] = aoi
+p.add(aoi)
+window['aoi'] = aoi
 
 // amap
 const amapLayer = new AMapLayer({
@@ -246,8 +246,8 @@ p.timeline.addTrack({
 	},
 })
 
-// p.setStatesCode('1|120.184300|30.265237|0.000000|0.00000|0.00000|8.00000')
-p.setStatesCode('1|120.184301|30.265237|0.000000|0.00000|0.00000|18.70400') // closer hz
+p.setStatesCode('1|120.184302|30.265237|0.000000|0.00000|0.00000|11.74200')
+// p.setStatesCode('1|120.184301|30.265237|0.000000|0.00000|0.00000|18.70400') // closer hz
 
 window['p'] = p
 
