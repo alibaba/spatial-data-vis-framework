@@ -348,6 +348,12 @@ export class CommonTileManager implements ITileManager {
 	}
 
 	private _releaseTilesMemory(tiles: CachedTileRenderables[]) {
+		// DEBUG
+		console.log(
+			'release',
+			tiles.map((tile) => tile.key)
+		)
+
 		tiles.forEach((tile) => {
 			const key = tile.key
 			this._tileMap.delete(key)

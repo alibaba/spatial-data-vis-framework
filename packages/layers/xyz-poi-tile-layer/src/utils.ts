@@ -2,6 +2,7 @@ import { flattenEach } from '@turf/meta'
 import { getGeom, getCoords } from '@turf/invariant'
 import polygonToLine from '@turf/polygon-to-line'
 import earcut from 'earcut'
+import { Color } from '@gs.i/utils-math'
 
 export function triangulateGeoJSON(geojson: any): any {
 	let points: Array<number> = []
@@ -109,4 +110,47 @@ export function createRangeArray(start: number, end: number) {
 	} else {
 		return new Uint32Array([start, end])
 	}
+}
+
+export function brushColorToImage(
+	img: string,
+	color: Color,
+	method: 'replace' | 'multiply' | 'add'
+) {
+	return new Promise<string>((resolve, reject) => {
+		const baseImg = document.createElement('img')
+		baseImg.setAttribute('crossOrigin', 'anonymous')
+		baseImg.onload = () => {
+			const width = baseImg.naturalWidth
+			const height = baseImg.naturalHeight
+
+			const canvas = document.createElement('canvas')
+			canvas.width = width
+			canvas.height = height
+
+			const ctx = canvas.getContext('2d')
+			if (!ctx) {
+				reject()
+				return
+			}
+
+			ctx.drawImage(baseImg, 0, 0, width, height)
+
+			const imageData = ctx.getImageData(0, 0, width, height)
+			const pxData = imageData.data
+			const pxSize = pxData.length / (width * height)
+
+			if (pxSize !== 3 && pxSize !== 4) {
+				console.error('Pixel size is invalid')
+				reject()
+			}
+
+			const newImg = new ImageData(width, height)
+			// for (let i = 0; i < pxData.length; i++) {
+			// 	const  = pxData[i]
+
+			// }
+		}
+		baseImg.src = img
+	})
 }

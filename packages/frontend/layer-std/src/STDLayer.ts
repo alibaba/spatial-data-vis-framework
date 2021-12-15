@@ -10,7 +10,6 @@
  */
 import { Layer, LayerProps, PickEventResult, Polaris, View } from '@polaris.gl/schema'
 import { GSIView } from '@polaris.gl/view-gsi'
-import { Mesh } from '@gs.i/frontend-sdk'
 import { HtmlView } from '@polaris.gl/view-html'
 import { isSimiliarProjections } from '@polaris.gl/projection'
 import { Matrix4, Euler, Vector3, Vector2 } from '@gs.i/utils-math'
