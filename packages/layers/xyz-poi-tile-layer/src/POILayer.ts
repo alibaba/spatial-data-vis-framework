@@ -11,6 +11,13 @@ import { Projection } from '@polaris.gl/projection'
 import { colorToUint8Array, PointsMeshPickHelper } from '@polaris.gl/utils'
 import { PolarisGSI } from '@polaris.gl/gsi'
 import { Color } from '@gs.i/utils-math'
+import { brushColorToImage } from './utils'
+
+brushColorToImage(
+	'https://img.alicdn.com/imgextra/i2/O1CN01VcJVlk28INDH4OCXH_!!6000000007909-2-tps-500-500.png',
+	new Color(1.0, 0.0, 1.0),
+	'add'
+)
 
 /**
  * 配置项 interface
@@ -63,6 +70,16 @@ export interface POILayerProps extends STDLayerProps {
 	pointImage: string
 
 	/**
+	 * Get poi color
+	 */
+	getPointColor: number | string | ((feature: any) => number | string)
+
+	/**
+	 *
+	 */
+	pointColorBlend: 'replace' | 'multiply' | 'add'
+
+	/**
 	 * point size (px)
 	 * @NOTE Value cannot be larger than WebGL limitation 'Aliased Point Size Range'
 	 * @link https://webglreport.com/
@@ -90,11 +107,6 @@ export interface POILayerProps extends STDLayerProps {
 	clusterSize: number
 
 	/**
-	 * Get poi color
-	 */
-	getPointColor: number | string | ((feature: any) => number | string)
-
-	/**
 	 * Get clustered poi image
 	 */
 	getClusterImage: string | ((feature: any) => string)
@@ -102,14 +114,14 @@ export interface POILayerProps extends STDLayerProps {
 	/**
 	 * cluster dom style
 	 */
-	clusterDOMStyle: any
+	getClusterDOMStyle: { [key: string]: any } | ((feature: any) => any)
 
 	/**
 	 * Get cluster feature count
-	 * @return => {number} to set this feature as a cluster, the number will be rendered onto marker
+	 * @return => {string} to set this feature as a cluster, the content will be rendered onto marker
 	 * @return => {undefined} to set this feature as non-clustered point, it will be rendered as normal point
 	 */
-	getClusterCount: (feature: any) => number | undefined
+	getClusterContent: (feature: any) => string | undefined
 
 	/**
 	 * Custom geojson filter
@@ -166,14 +178,15 @@ export const defaultProps: POILayerProps = {
 	pointImage:
 		'https://img.alicdn.com/imgextra/i3/O1CN01naDbsE1HeeoOqvic6_!!6000000000783-2-tps-256-256.png',
 	getPointColor: '#ffafff',
+	pointColorBlend: 'replace',
 	pointSize: 16,
 	pointHoverSize: 32,
 	pointOffset: [0.0, 0.0],
 	getClusterImage:
 		'https://img.alicdn.com/imgextra/i1/O1CN01yyOfXC23ffGrhohq7_!!6000000007283-2-tps-53-52.png',
 	clusterSize: 64,
-	clusterDOMStyle: {},
-	getClusterCount: (feature) => undefined,
+	getClusterDOMStyle: {},
+	getClusterContent: (feature) => undefined,
 	framesBeforeRequest: 10,
 	cacheSize: 512,
 	viewZoomReduction: 0,
@@ -255,12 +268,13 @@ export class POILayer extends STDLayer {
 				'baseAlt',
 				'pointImage',
 				'getPointColor',
+				'pointColorBlend',
 				'getClusterImage',
 				'clusterStyle',
 				'pointSize',
 				'clusterSize',
 				'featureFilter',
-				'getClusterCount',
+				'getClusterContent',
 				'requestManager',
 				'pointOffset',
 				'geojsonFilter',
@@ -509,6 +523,22 @@ export class POILayer extends STDLayer {
 
 	private _createPointMatr(polaris: Polaris) {
 		const pointOffset = this.getProps('pointOffset')
+		const pointColorBlend = this.getProps('pointColorBlend')
+		let P_COLOR_MODE = 0
+		switch (pointColorBlend) {
+			case 'replace':
+				P_COLOR_MODE = 0
+				break
+			case 'multiply':
+				P_COLOR_MODE = 1
+				break
+			case 'add':
+				P_COLOR_MODE = 2
+				break
+			default: {
+			}
+		}
+
 		const matr = new MatrPoint({
 			alphaMode: 'BLEND',
 			depthTest: this.getProps('depthTest'),
@@ -520,8 +550,10 @@ export class POILayer extends STDLayer {
 					magFilter: 'LINEAR',
 					wrapS: 'CLAMP_TO_EDGE',
 					wrapT: 'CLAMP_TO_EDGE',
-					anisotropy: 1,
 				},
+			},
+			defines: {
+				P_COLOR_MODE,
 			},
 			uniforms: {
 				uOffset: {
@@ -554,7 +586,16 @@ export class POILayer extends STDLayer {
 				glPosition.xy += offset * pxRange;
 			`,
 			fragColor: `
+			#if P_COLOR_MODE == 0
+				// replace
 				fragColor.rgb = vColor;
+			#elif P_COLOR_MODE == 1
+				// multiply
+				fragColor.rgb *= vColor;
+			#elif P_COLOR_MODE == 2
+				// add
+				fragColor.rgb += vColor;
+			#endif
 			`,
 		})
 		return matr
@@ -573,7 +614,7 @@ export class POILayer extends STDLayer {
 		const featureIdKey = this.getProps('featureIdKey')
 		const baseAlt = this.getProps('baseAlt')
 		const featureFilter = this.getProps('featureFilter')
-		const getClusterCount = this.getProps('getClusterCount')
+		const getClusterContent = this.getProps('getClusterContent')
 		const clusterSize = this.getProps('clusterSize')
 		const getPointColor = this.getProps('getPointColor')
 		const getClusterImage = this.getProps('getClusterImage')
@@ -613,10 +654,10 @@ export class POILayer extends STDLayer {
 			this._featureCount++
 
 			const coords = feature.geometry.coordinates as number[]
-			const clusterNum = getClusterCount(feature)
-			if (clusterNum !== undefined && clusterNum !== null) {
+			const clusterContent = getClusterContent(feature) as string
+			if (clusterContent !== undefined) {
 				// cluster point
-				const div = this._createClusterDiv(clusterNum, getClusterImage(feature))
+				const div = this._createClusterDiv(clusterContent, getClusterImage(feature), feature)
 				const cluster = new Marker({
 					lng: coords[0],
 					lat: coords[1],
@@ -689,18 +730,19 @@ export class POILayer extends STDLayer {
 		return { meshes, layers }
 	}
 
-	private _createClusterDiv(text: string, img: string) {
+	private _createClusterDiv(text: string, img: string, feature: any) {
 		const size = this.getProps('clusterSize')
-		const clusterDOMStyle = this.getProps('clusterDOMStyle')
+		const getClusterDOMStyle = this.getProps('getClusterDOMStyle')
+		const customStyle = getClusterDOMStyle(feature)
 
 		const pxSize = size
 		const div = document.createElement('div')
 		div.innerText = text
 
 		const style = div.style as any
-		for (const key in clusterDOMStyle) {
-			if (Object.prototype.hasOwnProperty.call(clusterDOMStyle, key)) {
-				const value = clusterDOMStyle[key]
+		for (const key in customStyle) {
+			if (Object.prototype.hasOwnProperty.call(customStyle, key)) {
+				const value = customStyle[key]
 				style[key] = value
 			}
 		}
@@ -710,15 +752,8 @@ export class POILayer extends STDLayer {
 		style.width = pxSize + 'px'
 		style.height = pxSize + 'px'
 		style.background = `url(${img})`
-		// style.backgroundColor = '#ff00ff'
-		// style.backgroundBlendMode = 'multiply'
 		style.backgroundPosition = 'center'
 		style.backgroundSize = pxSize + 'px'
-		// style.filter = 'opacity(.5) drop-shadow(0 0 0 yellow)'
-		// style.maskImage = `url(${img})`
-		// style.maskMode = 'alpha'
-		// style.mask = `url(${img})`
-		// style.maskMode = 'alpha'
 
 		return div
 	}

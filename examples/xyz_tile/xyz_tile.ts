@@ -10,7 +10,7 @@ const p = new PolarisGSIGL2({
 	container: document.querySelector('#container') as HTMLDivElement,
 	width: 800,
 	height: 800,
-	ratio: 1,
+	ratio: 2,
 	lights: {},
 	autoResize: true,
 	asyncRendering: true,
@@ -20,9 +20,9 @@ const p = new PolarisGSIGL2({
 })
 p.timeline.config.ignoreErrors = false
 
-const size = 24
+const size = 20
 const framesBeforeRequest = 10
-const viewZoomReduction = 1
+const viewZoomReduction = 0
 
 async function getImage(): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -78,25 +78,37 @@ async function initPOI() {
 		// pointImage: await getImage(),
 		dataType: 'pbf',
 		pointSize: size,
-		pointHoverSize: 32,
+		pointHoverSize: 24,
 		pointOffset: [0.0, 0.5],
+		pointImage:
+			'https://img.alicdn.com/imgextra/i2/O1CN01VcJVlk28INDH4OCXH_!!6000000007909-2-tps-500-500.png',
+		pointColorBlend: 'add',
+		clusterSize: 40,
+		getClusterImage:
+			'https://img.alicdn.com/imgextra/i2/O1CN016yGVRh1Tdzf8SkuLn_!!6000000002406-2-tps-60-60.png',
 		minZoom: 3,
 		maxZoom: 20,
 		getUrl: getPOIUrl,
-		getClusterCount: (feature) => {
+		getClusterContent: (feature) => {
 			if (feature.properties.number_of_point > 1) {
-				return Math.round(feature.properties.number_of_point)
+				const count = Math.round(feature.properties.number_of_point)
+				if (count > 99) {
+					return '99+'
+				}
+				return count.toString()
 			}
+			return
 		},
 		getPointColor: () => {
-			// const r = Math.round(16 + Math.random() * 239)
-			// const g = Math.round(Math.random() * 255)
-			// const b = Math.round(16 + Math.random() * 239)
-			// return `#${r.toString(16)}9f${b.toString(16)}`
 			return '#88af99'
 		},
-		clusterDOMStyle: {
-			fontSize: '14px',
+		getClusterDOMStyle: (feature) => {
+			// const count = Math.round(feature.properties.number_of_point)
+			return {
+				fontSize: '14px',
+				color: '#fff',
+				cursor: 'pointer',
+			}
 		},
 		pickable: true,
 		onPicked: (data) => {
@@ -155,13 +167,13 @@ const aoi = new AOILayer({
 		}
 	},
 	// getUrl: getAOIUrl,
-	getColor: 0xffaf88,
+	getColor: (feature) => feature.properties.id * 13,
 	getOpacity: 0.5,
 	transparent: true,
 	hoverLineWidth: 2,
 	hoverLineColor: '#333333',
 	selectLineWidth: 4,
-	selectLineColor: '#00ffff',
+	selectLineColor: '#00afff',
 	pickable: true,
 	onPicked: (info) => {
 		console.log('info', info)
@@ -193,8 +205,8 @@ const aoi = new AOILayer({
 		})
 	},
 })
-p.add(aoi)
-window['aoi'] = aoi
+// p.add(aoi)
+// window['aoi'] = aoi
 
 // amap
 const amapLayer = new AMapLayer({
@@ -210,7 +222,7 @@ panel.style.top = '5px'
 panel.style.border = '2px dashed green'
 panel.style.fontSize = '14px'
 panel.style.padding = '2px'
-panel.innerText = 'pendings'
+panel.innerText = ''
 document.body.appendChild(panel)
 p.timeline.addTrack({
 	duration: Infinity,

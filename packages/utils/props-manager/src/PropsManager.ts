@@ -198,7 +198,7 @@ export class PropsManager extends EventEmitter {
 	 * @param callback
 	 */
 	listen(propsName: string | Array<string>, callback: EventCallBack) {
-		if (typeof propsName === 'string') {
+		if (!Array.isArray(propsName)) {
 			propsName = [propsName]
 		}
 		const type = propsName.join(',')
