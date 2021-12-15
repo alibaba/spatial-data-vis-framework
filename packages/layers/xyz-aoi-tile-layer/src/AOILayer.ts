@@ -356,7 +356,7 @@ export class AOILayer extends STDLayer {
 		// update indicators' resolution uniform
 		this.onViewChange = () => {
 			this._indicators.forEach((indicator) => {
-				indicator.updateResolution(polaris.canvasWidth, polaris.canvasHeight)
+				indicator.updateResolution(polaris.width, polaris.height)
 			})
 		}
 
@@ -718,8 +718,8 @@ export class AOILayer extends STDLayer {
 			lineWidth: hoverLineWidth,
 			useColors: true,
 			resolution: {
-				x: polaris.canvasWidth ?? polaris.width,
-				y: polaris.canvasHeight ?? polaris.height,
+				x: polaris.width,
+				y: polaris.height,
 			},
 			usePerspective: false,
 			dynamic: true,
@@ -751,8 +751,8 @@ export class AOILayer extends STDLayer {
 			lineWidth: selectLineWidth,
 			useColors: true,
 			resolution: {
-				x: polaris.canvasWidth ?? polaris.width,
-				y: polaris.canvasHeight ?? polaris.height,
+				x: polaris.width,
+				y: polaris.height,
 			},
 			usePerspective: false,
 			dynamic: true,

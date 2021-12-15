@@ -24,119 +24,67 @@ const size = 20
 const framesBeforeRequest = 10
 const viewZoomReduction = 0
 
-async function getImage(): Promise<string> {
-	return new Promise((resolve, reject) => {
-		const drawSize = size * 2
-		const canvas = document.createElement('canvas')
-		canvas.style.width = drawSize + 'px'
-		canvas.style.height = drawSize + 'px'
-		canvas.style.position = 'absolute'
-		canvas.style.left = '0px'
-		canvas.style.top = '0px'
-		canvas.width = drawSize
-		canvas.height = drawSize
-		const ctx = canvas.getContext('2d')
-		const img = document.createElement('img')
-		img.setAttribute('crossOrigin', 'anonymous')
-
-		const baseImg = document.createElement('img')
-		baseImg.setAttribute('crossOrigin', 'anonymous')
-
-		const draw1 = new Promise<void>((resolve) => {
-			baseImg.onload = () => {
-				ctx.drawImage(baseImg, 0, 0, drawSize, drawSize)
-				resolve()
+// POI
+let lastHovered
+const poi = new POILayer({
+	framesBeforeRequest,
+	viewZoomReduction,
+	dataType: 'pbf',
+	pointSize: size,
+	pointHoverSize: 24,
+	pointOffset: [0.0, 0.5],
+	getPointColor: '#ffaf99',
+	pointImage:
+		'https://img.alicdn.com/imgextra/i2/O1CN01VcJVlk28INDH4OCXH_!!6000000007909-2-tps-500-500.png',
+	pointColorBlend: 'add',
+	clusterSize: 40,
+	clusterColor: '#00afff',
+	clusterImage:
+		'https://img.alicdn.com/imgextra/i2/O1CN016yGVRh1Tdzf8SkuLn_!!6000000002406-2-tps-60-60.png',
+	clusterColorBlend: 'add',
+	minZoom: 3,
+	maxZoom: 20,
+	getUrl: getPOIUrl,
+	getClusterContent: (feature) => {
+		if (feature.properties.number_of_point > 1) {
+			const count = Math.round(feature.properties.number_of_point)
+			if (count > 99) {
+				return '99+'
 			}
-		})
+			return count.toString()
+		}
+		return
+	},
+	getClusterDOMStyle: (feature) => {
+		// const count = Math.round(feature.properties.number_of_point)
+		return {
+			fontSize: '14px',
+			color: '#fff',
+		}
+	},
+	pickable: true,
+	onPicked: (data) => {
+		console.log('data', data)
+	},
+	onHovered: (data) => {
+		if (lastHovered !== undefined) {
+			poi.highlightByIds([lastHovered], { type: 'none' })
+		}
 
-		const draw2 = new Promise<void>((resolve) => {
-			img.onload = () => {
-				ctx.drawImage(img, 0, 0, drawSize, drawSize)
-				resolve()
-			}
-		})
+		if (!data || data.data.curr === undefined) return
 
-		img.src =
-			'https://img.alicdn.com/imgextra/i4/O1CN015vsPFD1Vltf7FmcZW_!!6000000002694-2-tps-256-256.png'
-		baseImg.src =
-			'https://img.alicdn.com/imgextra/i3/O1CN01naDbsE1HeeoOqvic6_!!6000000000783-2-tps-256-256.png'
+		const feature = data.data.curr
+		const id = feature.properties.id
+		if (!id) return
+		poi.highlightByIds([id], { type: 'hover' })
+		lastHovered = id
 
-		document.body.appendChild(canvas)
-
-		Promise.all([draw1, draw2]).then(() => {
-			resolve(canvas.toDataURL())
-		})
-	})
-}
-
-//
-async function initPOI() {
-	let lastHovered
-	const poi = new POILayer({
-		framesBeforeRequest,
-		viewZoomReduction,
-		// pointImage: await getImage(),
-		dataType: 'pbf',
-		pointSize: size,
-		pointHoverSize: 24,
-		pointOffset: [0.0, 0.5],
-		pointImage:
-			'https://img.alicdn.com/imgextra/i2/O1CN01VcJVlk28INDH4OCXH_!!6000000007909-2-tps-500-500.png',
-		pointColorBlend: 'add',
-		clusterSize: 40,
-		getClusterImage:
-			'https://img.alicdn.com/imgextra/i2/O1CN016yGVRh1Tdzf8SkuLn_!!6000000002406-2-tps-60-60.png',
-		minZoom: 3,
-		maxZoom: 20,
-		getUrl: getPOIUrl,
-		getClusterContent: (feature) => {
-			if (feature.properties.number_of_point > 1) {
-				const count = Math.round(feature.properties.number_of_point)
-				if (count > 99) {
-					return '99+'
-				}
-				return count.toString()
-			}
-			return
-		},
-		getPointColor: () => {
-			return '#88af99'
-		},
-		getClusterDOMStyle: (feature) => {
-			// const count = Math.round(feature.properties.number_of_point)
-			return {
-				fontSize: '14px',
-				color: '#fff',
-				cursor: 'pointer',
-			}
-		},
-		pickable: true,
-		onPicked: (data) => {
-			console.log('data', data)
-		},
-		onHovered: (data) => {
-			if (lastHovered !== undefined) {
-				poi.highlightByIds([lastHovered], { type: 'none' })
-			}
-
-			if (!data || data.data.curr === undefined) return
-
-			const feature = data.data.curr
-			const id = feature.properties.id
-			if (!id) return
-			poi.highlightByIds([id], { type: 'hover' })
-			lastHovered = id
-
-			console.log('id', id)
-		},
-		renderOrder: 100,
-	})
-	p.add(poi)
-
-	window['poi'] = poi
-}
-
-initPOI()
+		console.log('id', id)
+	},
+	renderOrder: 100,
+})
+p.add(poi)
+window['poi'] = poi
 
 // AOI
 const picked: Set<number> = new Set()
@@ -205,8 +153,8 @@ const aoi = new AOILayer({
 		})
 	},
 })
-// p.add(aoi)
-// window['aoi'] = aoi
+p.add(aoi)
+window['aoi'] = aoi
 
 // amap
 const amapLayer = new AMapLayer({

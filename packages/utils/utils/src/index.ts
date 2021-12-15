@@ -6,7 +6,7 @@
 import { Projection } from '@polaris.gl/projection'
 import { Mesh } from '@gs.i/frontend-sdk'
 import { MeshDataType, AttributeDataType, isDISPOSED } from '@gs.i/schema'
-import { Vector3, Matrix3, Matrix4 } from '@gs.i/utils-math'
+import { Vector3, Matrix3, Matrix4, Color } from '@gs.i/utils-math'
 import { Transform3 } from '@gs.i/utils-transform'
 
 export * from './constants'
@@ -217,4 +217,99 @@ export function colorToUint8Array(color: { r: number; g: number; b: number }, al
 			Math.min(Math.round(color.b * 255.0), 255),
 		])
 	}
+}
+
+export function brushColorToImage(
+	img: string,
+	color: number | string,
+	width: number,
+	height: number,
+	mode: 'replace' | 'multiply' | 'add'
+): Promise<string> {
+	return new Promise<string>((resolve, reject) => {
+		if (mode !== 'add' && mode !== 'multiply' && mode !== 'replace') {
+			console.error(`Invalid argument mode: ${mode}`)
+			reject()
+		}
+
+		const pxCount = width * height
+		const baseImg = document.createElement('img')
+		baseImg.setAttribute('crossOrigin', 'anonymous')
+		baseImg.width = width
+		baseImg.height = height
+		baseImg.addEventListener('load', () => {
+			const canvas = document.createElement('canvas')
+			canvas.id = '__polaris_image_canvas__'
+			canvas.width = width
+			canvas.height = height
+
+			const ctx = canvas.getContext('2d')
+			if (!ctx) {
+				reject()
+				return
+			}
+
+			ctx.drawImage(baseImg, 0, 0, width, height)
+
+			const imageData = ctx.getImageData(0, 0, width, height)
+			const rawData = imageData.data
+			const pxLength = rawData.length / pxCount
+			const colorObj = new Color(color)
+
+			// should be rgb/rgba
+			if (pxLength !== 3 && pxLength !== 4) {
+				console.error(`Pixel length: ${pxLength} is invalid`)
+				reject()
+			}
+
+			const newData = new Uint8ClampedArray(pxCount * pxLength)
+			const newR = colorObj.r * 255
+			const newG = colorObj.g * 255
+			const newB = colorObj.b * 255
+			for (let i = 0; i < rawData.length; i += pxLength) {
+				const r = rawData[i + 0]
+				const g = rawData[i + 1]
+				const b = rawData[i + 2]
+				const a = pxLength === 4 ? rawData[i + 3] : 255
+
+				if (a === 0) {
+					continue
+				}
+
+				switch (mode) {
+					case 'add': {
+						newData[i + 0] = clampToUint8(r + newR)
+						newData[i + 1] = clampToUint8(g + newG)
+						newData[i + 2] = clampToUint8(b + newB)
+						if (pxLength === 4) newData[i + 3] = a
+						break
+					}
+					case 'multiply': {
+						newData[i + 0] = clampToUint8((r / 255) * newR)
+						newData[i + 1] = clampToUint8((g / 255) * newG)
+						newData[i + 2] = clampToUint8((b / 255) * newB)
+						if (pxLength === 4) newData[i + 3] = a
+						break
+					}
+					case 'replace': {
+						newData[i + 0] = newR
+						newData[i + 1] = newG
+						newData[i + 2] = newB
+						if (pxLength === 4) newData[i + 3] = a
+						break
+					}
+					default:
+				}
+			}
+
+			ctx.putImageData(new ImageData(newData, width, height), 0, 0)
+
+			resolve(canvas.toDataURL())
+		})
+		baseImg.src = img
+	})
+}
+
+export function clampToUint8(n: number) {
+	return Math.min(255, Math.max(0, Math.round(n)))
 }
