@@ -1,23 +1,16 @@
 import { isDISPOSED } from '@gs.i/schema'
+import { Mesh, MatrPoint, Geom, Attr } from '@gs.i/frontend-sdk'
+import { Color } from '@gs.i/utils-math'
 import { XYZTileManager, TileRenderables, TilePromise } from '@polaris.gl/utils-tile-manager'
 import { Marker } from '@polaris.gl/layer-std-marker'
 import { RequestPending, XYZTileRequestManager } from '@polaris.gl/utils-request-manager'
 import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
-import { Mesh, MatrPoint, Geom, Attr, isThreeMaterial } from '@gs.i/frontend-sdk'
 import { Base, CoordV2, PickEvent, Polaris } from '@polaris.gl/schema'
+import { Projection } from '@polaris.gl/projection'
+import { colorToUint8Array, PointsMeshPickHelper, brushColorToImage } from '@polaris.gl/utils'
+import { PolarisGSI } from '@polaris.gl/gsi'
 import Pbf from 'pbf'
 import { decode } from 'geobuf'
-import { Projection } from '@polaris.gl/projection'
-import { colorToUint8Array, PointsMeshPickHelper } from '@polaris.gl/utils'
-import { PolarisGSI } from '@polaris.gl/gsi'
-import { Color } from '@gs.i/utils-math'
-import { brushColorToImage } from './utils'
-
-brushColorToImage(
-	'https://img.alicdn.com/imgextra/i2/O1CN01VcJVlk28INDH4OCXH_!!6000000007909-2-tps-500-500.png',
-	new Color(1.0, 0.0, 1.0),
-	'add'
-)
 
 /**
  * 配置项 interface
@@ -75,7 +68,10 @@ export interface POILayerProps extends STDLayerProps {
 	getPointColor: number | string | ((feature: any) => number | string)
 
 	/**
-	 *
+	 * color blend mode
+	 * @option 'replace' -> targetRGB = sourceRGB
+	 * @option 'multiply' -> targetRGB = rawRGB * sourceRGB
+	 * @option 'add' -> targetRGB = rawRGB + sourceRGB
 	 */
 	pointColorBlend: 'replace' | 'multiply' | 'add'
 
@@ -107,14 +103,19 @@ export interface POILayerProps extends STDLayerProps {
 	clusterSize: number
 
 	/**
-	 * Get clustered poi image
+	 * cluster point image
 	 */
-	getClusterImage: string | ((feature: any) => string)
+	clusterImage: string
 
 	/**
-	 * cluster dom style
+	 * same with pointColor
 	 */
-	getClusterDOMStyle: { [key: string]: any } | ((feature: any) => any)
+	clusterColor: number | string
+
+	/**
+	 * same with 'pointColorBlend'
+	 */
+	clusterColorBlend: 'replace' | 'multiply' | 'add'
 
 	/**
 	 * Get cluster feature count
@@ -122,6 +123,11 @@ export interface POILayerProps extends STDLayerProps {
 	 * @return => {undefined} to set this feature as non-clustered point, it will be rendered as normal point
 	 */
 	getClusterContent: (feature: any) => string | undefined
+
+	/**
+	 * cluster dom style
+	 */
+	getClusterDOMStyle?: { [key: string]: any } | ((feature: any) => any)
 
 	/**
 	 * Custom geojson filter
@@ -182,8 +188,10 @@ export const defaultProps: POILayerProps = {
 	pointSize: 16,
 	pointHoverSize: 32,
 	pointOffset: [0.0, 0.0],
-	getClusterImage:
-		'https://img.alicdn.com/imgextra/i1/O1CN01yyOfXC23ffGrhohq7_!!6000000007283-2-tps-53-52.png',
+	clusterImage:
+		'https://img.alicdn.com/imgextra/i2/O1CN016yGVRh1Tdzf8SkuLn_!!6000000002406-2-tps-60-60.png',
+	clusterColor: '#00afff',
+	clusterColorBlend: 'replace',
 	clusterSize: 64,
 	getClusterDOMStyle: {},
 	getClusterContent: (feature) => undefined,
@@ -207,6 +215,11 @@ export class POILayer extends STDLayer {
 	 * Element for point picking test
 	 */
 	private _pointImgElem: HTMLImageElement
+
+	/**
+	 * cache
+	 */
+	private _clusterImgUrl: string
 
 	/**
 	 * Map for storing Mesh/Marker <-> Feature relations
@@ -269,7 +282,9 @@ export class POILayer extends STDLayer {
 				'pointImage',
 				'getPointColor',
 				'pointColorBlend',
-				'getClusterImage',
+				'clusterImage',
+				'clusterColor',
+				'clusterColorBlend',
 				'clusterStyle',
 				'pointSize',
 				'clusterSize',
@@ -458,7 +473,7 @@ export class POILayer extends STDLayer {
 
 		const promise = new Promise<TileRenderables>((resolve, reject) => {
 			requestPromise
-				.then((data) => {
+				.then(async (data) => {
 					let geojson: any
 
 					const emptyTile = {
@@ -501,7 +516,14 @@ export class POILayer extends STDLayer {
 					}
 
 					if (geojson.features.length > 0) {
-						const tile = this._createTileMeshAndMarkers(geojson, projection, polaris, cacheKey)
+						const clusterImage = await this._getClusterImage()
+						const tile = this._createTileMeshAndMarkers(
+							geojson,
+							projection,
+							polaris,
+							cacheKey,
+							clusterImage
+						)
 						if (tile) {
 							resolve(tile)
 							return
@@ -605,7 +627,8 @@ export class POILayer extends STDLayer {
 		geojson: any,
 		projection: Projection,
 		polaris: Polaris,
-		key?: string
+		key: string,
+		clusterImage: string
 	): TileRenderables | undefined {
 		if (!geojson.type || geojson.type !== 'FeatureCollection') {
 			return
@@ -617,7 +640,6 @@ export class POILayer extends STDLayer {
 		const getClusterContent = this.getProps('getClusterContent')
 		const clusterSize = this.getProps('clusterSize')
 		const getPointColor = this.getProps('getPointColor')
-		const getClusterImage = this.getProps('getClusterImage')
 		const pointOffset = this.getProps('pointOffset')
 		const renderOrder = this.getProps('renderOrder')
 
@@ -657,7 +679,7 @@ export class POILayer extends STDLayer {
 			const clusterContent = getClusterContent(feature) as string
 			if (clusterContent !== undefined) {
 				// cluster point
-				const div = this._createClusterDiv(clusterContent, getClusterImage(feature), feature)
+				const div = this._createClusterDiv(clusterContent, clusterImage, feature)
 				const cluster = new Marker({
 					lng: coords[0],
 					lat: coords[1],
@@ -730,16 +752,29 @@ export class POILayer extends STDLayer {
 		return { meshes, layers }
 	}
 
-	private _createClusterDiv(text: string, img: string, feature: any) {
-		const size = this.getProps('clusterSize')
-		const getClusterDOMStyle = this.getProps('getClusterDOMStyle')
-		const customStyle = getClusterDOMStyle(feature)
+	private async _getClusterImage() {
+		if (this._clusterImgUrl) return this._clusterImgUrl
 
-		const pxSize = size
+		this._clusterImgUrl = await brushColorToImage(
+			this.getProps('clusterImage'),
+			this.getProps('clusterColor'),
+			this.getProps('clusterSize'),
+			this.getProps('clusterSize'),
+			this.getProps('clusterColorBlend')
+		)
+
+		return this._clusterImgUrl
+	}
+
+	private _createClusterDiv(text: string, clusterImage: string, feature: any) {
+		const clusterSize = this.getProps('clusterSize')
+		const getClusterDOMStyle = this.getProps('getClusterDOMStyle')
+
 		const div = document.createElement('div')
 		div.innerText = text
 
 		const style = div.style as any
+		const customStyle = getClusterDOMStyle(feature)
 		for (const key in customStyle) {
 			if (Object.prototype.hasOwnProperty.call(customStyle, key)) {
 				const value = customStyle[key]
@@ -748,12 +783,13 @@ export class POILayer extends STDLayer {
 		}
 
 		style.textAlign = 'center'
-		style.lineHeight = pxSize + 'px'
-		style.width = pxSize + 'px'
-		style.height = pxSize + 'px'
-		style.background = `url(${img})`
+		style.lineHeight = clusterSize + 'px'
+		style.width = clusterSize + 'px'
+		style.height = clusterSize + 'px'
 		style.backgroundPosition = 'center'
-		style.backgroundSize = pxSize + 'px'
+		style.backgroundSize = clusterSize + 'px'
+		style.background = `url(${clusterImage})`
+		// style.background = `url(https://img.alicdn.com/imgextra/i2/O1CN016yGVRh1Tdzf8SkuLn_!!6000000002406-2-tps-60-60.png)`
 
 		return div
 	}
