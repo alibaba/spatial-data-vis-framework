@@ -1,8 +1,12 @@
 import { Polaris } from '@polaris.gl/schema'
 import { CommonTileManager, CommonTileManagerConfig } from './CommonTileManager'
 import { lngLatToGoogle } from 'global-mercator'
+import { TileToken } from './types'
 
-export type XYZTileManagerConfig = Omit<CommonTileManagerConfig, 'getViewTiles'> & {
+export type XYZTileManagerConfig = Omit<
+	CommonTileManagerConfig,
+	'getViewTiles' | 'getParentTileToken' | 'getChildTileTokens'
+> & {
 	viewZoomReduction?: number
 }
 
@@ -20,6 +24,8 @@ export class XYZTileManager extends CommonTileManager {
 			getViewTiles: (polaris, minZoom, maxZoom) => {
 				return getViewTiles(polaris, minZoom, maxZoom, this.config.viewZoomReduction)
 			},
+			getParentTileToken,
+			getChildTileTokens,
 		})
 	}
 }
@@ -78,4 +84,60 @@ const getViewTiles = (
 
 const manhattanDistance = (a: number[], b: number[]) => {
 	return Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1])
+}
+
+const getParentTileToken = (token: TileToken) => {
+	const x = typeof token[0] === 'string' ? parseInt(token[0]) : token[0],
+		y = typeof token[1] === 'string' ? parseInt(token[1]) : token[1],
+		z = typeof token[2] === 'string' ? parseInt(token[2]) : token[2]
+	// x => floor(x/2)
+	// y => floor(y/2)
+	// z => z-1
+	const parentX = Math.floor(x * 0.5)
+	const parentY = Math.floor(y * 0.5)
+	const parentZ = z - 1
+	if (parentZ < 0) return undefined
+	return [parentX, parentY, parentZ]
+}
+
+const getChildTileTokens = (token: TileToken, targetZoom: number) => {
+	const inputZ = typeof token[2] === 'string' ? parseInt(token[2]) : token[2]
+	targetZoom = Math.floor(targetZoom)
+
+	if (inputZ >= targetZoom) {
+		throw 'targetZoom should be larger than token[2]'
+	}
+
+	const parents: TileToken[] = [token]
+	const children: TileToken[] = []
+
+	while (parents.length) {
+		const currToken = parents.shift()
+		if (!currToken) {
+			continue
+		}
+
+		const x = typeof currToken[0] === 'string' ? parseInt(currToken[0]) : currToken[0],
+			y = typeof currToken[1] === 'string' ? parseInt(currToken[1]) : currToken[1],
+			z = typeof currToken[2] === 'string' ? parseInt(currToken[2]) : currToken[2]
+
+		const childZ = z + 1
+
+		if (childZ > targetZoom) {
+			continue
+		}
+
+		// x => x * 2 + 0/1
+		// y => y * 2 + 0/1
+		// z => z + 1
+		for (let childX = 0; childX <= 1; childX++) {
+			for (let childY = 0; childY <= 1; childY++) {
+				const child = [2 * x + childX, 2 * y + childY, childZ]
+				children.push(child)
+				parents.push(child)
+			}
+		}
+	}
+
+	return children
 }

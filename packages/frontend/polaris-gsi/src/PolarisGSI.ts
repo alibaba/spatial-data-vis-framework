@@ -444,7 +444,7 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 		this.hammer.off('tap')
 		this.hammer.destroy()
 		const element = this.view.html.element as HTMLElement
-		element.removeEventListener('mousemove', this._mouseMoveHanlder)
+		element.removeEventListener('mousemove', this._mouseMoveHandler)
 
 		// Dispose layers
 		this.traverse((base) => {
@@ -511,7 +511,7 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 			}
 
 			// Event callback throttling
-			this._mouseMoveHanlder = throttle(
+			this._mouseMoveHandler = throttle(
 				this.timeline.frametime,
 				(e) => {
 					// Disable hover when:
@@ -532,11 +532,11 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 				},
 				this
 			)
-			element.addEventListener('mousemove', this._mouseMoveHanlder)
+			element.addEventListener('mousemove', this._mouseMoveHandler)
 		}
 	}
 
-	private _mouseMoveHanlder: (e: any) => void
+	private _mouseMoveHandler: (e: any) => void
 
 	private _handlePointerEvent(eventName: string, pxCoords: any, eventCallback: EVENT_NAME) {
 		const element = this.view.html.element as HTMLElement

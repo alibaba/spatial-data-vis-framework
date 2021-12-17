@@ -18,6 +18,7 @@ const p = new PolarisGSIGL2({
 		center: [104, 35.4],
 	}),
 })
+window['p'] = p
 p.timeline.config.ignoreErrors = false
 
 const size = 20
@@ -83,8 +84,8 @@ const poi = new POILayer({
 	},
 	renderOrder: 100,
 })
-p.add(poi)
-window['poi'] = poi
+// p.add(poi)
+// window['poi'] = poi
 
 // AOI
 const picked: Set<number> = new Set()
@@ -178,16 +179,16 @@ p.timeline.addTrack({
 	onUpdate: () => {
 		let info = ''
 
-		if (window['poi']) {
-			info += 'poi: \n'
-			info += 'vis tiles: ' + window['poi'].tileManager.getVisibleTiles().length + '\n'
-			info += 'pends: ' + window['poi'].getState().pendsCount + '\n'
+		if (poi && p.children.has(poi)) {
+			info += 'poi:' + '\n'
+			info += 'vis tiles: ' + poi.tileManager.getVisibleTiles().length + '\n'
+			info += 'pends: ' + poi.getState().pendsCount + '\n'
 		}
 
-		if (window['aoi']) {
-			info += 'aoi: \n'
-			info += 'vis tiles: ' + window['aoi'].tileManager.getVisibleTiles().length + '\n'
-			info += 'pends: ' + window['aoi'].getState().pendsCount + '\n'
+		if (aoi && p.children.has(aoi)) {
+			info += 'aoi:' + '\n'
+			info += 'vis tiles: ' + aoi.tileManager.getVisibleTiles().length + '\n'
+			info += 'pends: ' + aoi.getState().pendsCount + '\n'
 
 			const reqTimes = aoi.tileManager
 				.getVisibleTiles()
@@ -206,10 +207,10 @@ p.timeline.addTrack({
 	},
 })
 
-p.setStatesCode('1|120.184302|30.265237|0.000000|0.00000|0.00000|11.74200')
-// p.setStatesCode('1|120.184301|30.265237|0.000000|0.00000|0.00000|18.70400') // closer hz
-
-window['p'] = p
+setTimeout(() => {
+	p.setStatesCode('1|120.184302|30.265237|0.000000|0.00000|0.00000|11.74200')
+	// p.setStatesCode('1|120.184301|30.265237|0.000000|0.00000|0.00000|16.70400') // closer hz
+})
 
 //
 
@@ -237,10 +238,10 @@ function getPOIUrl(x, y, z) {
 					geometry_type: 'point',
 					visible_columns: ['count'],
 					filter_expression: [],
-					visible_zlevel: [3, 20],
+					visible_zlevel: [1, 20],
 					clickable_zlevel: [15, 20],
 					aggregation: {
-						zlevel: [3, 15],
+						zlevel: [1, 15],
 						clustering_method: 'bin',
 						clustering_scalar: 500,
 						fields: {

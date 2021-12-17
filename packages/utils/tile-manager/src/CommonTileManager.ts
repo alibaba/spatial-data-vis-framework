@@ -18,13 +18,13 @@ export type CommonTileManagerConfig = {
 	layer: STDLayer
 
 	/**
-	 * Method to get current view's tile tokens,
+	 * Function to get current view's tile tokens,
 	 * normally should be sorted from middle view to edge view.
 	 */
 	getViewTiles: (polaris: Polaris, minZoom: number, maxZoom: number) => TileToken[]
 
 	/**
-	 * Method to get TileRenderables (meshes & sublayers) from TileToken
+	 * Function to get TileRenderables (meshes & sublayers) from TileToken
 	 * @param token visible tile request param, example: [x, y, z]
 	 * @param tileManager the TileManager instance
 	 * @return the tile renderables generation promise object: promise & abort() function
@@ -33,6 +33,16 @@ export type CommonTileManagerConfig = {
 	 * About AbortController.abort() @link https://developer.mozilla.org/en-US/docs/Web/API/AbortController/abort
 	 */
 	getTileRenderables: (token: TileToken, tileManager: CommonTileManager) => TilePromise
+
+	/**
+	 * Function to get zoom -1 level TileToken from the input TileToken
+	 */
+	getParentTileToken: (token: TileToken) => TileToken | undefined
+
+	/**
+	 * Function to get zoom +1 level TileToken from the input TileToken
+	 */
+	getChildTileTokens: (token: TileToken, targetZoom: number) => TileToken[]
 
 	/**
 	 * Min zoom limit, default is 3
@@ -68,6 +78,11 @@ export type CommonTileManagerConfig = {
 	printErrors?: boolean
 
 	/**
+	 * Whether to display the nearest available parent tile when current tiles are not ready
+	 */
+	useParentReplaceUpdate?: boolean
+
+	/**
 	 * Callback which is triggered when tile will be released from this TileManager
 	 */
 	onTileRelease?: (tile: TileRenderables, tileToken: TileToken) => void
@@ -79,6 +94,7 @@ const defaultConfig = {
 	cacheSize: 512,
 	framesBeforeUpdate: 5,
 	framesBeforeAbort: 5,
+	useParentReplaceUpdate: false,
 	printErrors: false,
 	onTileRelease: (tile, []) => {},
 }
@@ -96,6 +112,7 @@ export class CommonTileManager implements ITileManager {
 	private _tiles: CachedTileRenderables[]
 	private _lastStatesCode: string
 	private _stableFrames: number
+	private _currZoomLevel: number
 
 	constructor(config: CommonTileManagerConfig) {
 		this.config = { ...defaultConfig, ...config }
@@ -114,13 +131,15 @@ export class CommonTileManager implements ITileManager {
 	 * @memberof CommonTileManager
 	 */
 	getVisibleTiles(): CachedTileRenderables[] {
-		const visTiles: CachedTileRenderables[] = []
-		this._currVisibleTiles.forEach((tile) => {
-			if (tile.layers.length > 0 || tile.meshes.length > 0) {
-				visTiles.push(tile)
-			}
-		})
-		return visTiles
+		return Array.from(this._currVisibleTiles)
+
+		// const visTiles: CachedTileRenderables[] = []
+		// this._currVisibleTiles.forEach((tile) => {
+		// 	if (tile.layers.length > 0 || tile.meshes.length > 0) {
+		// 		visTiles.push(tile)
+		// 	}
+		// })
+		// return visTiles
 	}
 
 	forEachTile(f: (TileRenderables: TileRenderables, index?: number) => any) {
@@ -142,7 +161,7 @@ export class CommonTileManager implements ITileManager {
 	}
 
 	keyToTileToken(key: string) {
-		return key.split('|')
+		return key.split('|').map((v) => (isNaN(parseFloat(v)) ? v : parseFloat(v)))
 	}
 
 	dispose() {
@@ -177,11 +196,19 @@ export class CommonTileManager implements ITileManager {
 			duration: Infinity,
 			onUpdate: () => {
 				this._stableFrames++
+
 				if (this._stableFrames > this.config.framesBeforeUpdate) {
 					this._updateTiles()
 				}
+
 				this._abortOutOfViewPromises()
-				this._updateCurrTilesVisibility()
+
+				if (this.config.useParentReplaceUpdate) {
+					this._updateCurrTilesVisReplaceVer()
+				} else {
+					this._updateCurrTilesVisibility()
+				}
+
 				this._updateCache()
 			},
 		})
@@ -214,6 +241,8 @@ export class CommonTileManager implements ITileManager {
 
 	private _updateTiles() {
 		if (!this._timeline || !this._projection || !this._polaris) return
+
+		this._currZoomLevel = this._polaris.cameraProxy.zoom
 
 		const tokenList = this.config.getViewTiles(
 			this._polaris,
@@ -333,6 +362,71 @@ export class CommonTileManager implements ITileManager {
 		this._setCurrTilesVisibility(true)
 	}
 
+	/**
+	 * Update tiles - ver.2 - replacement method
+	 *
+	 * steps:
+	 * 1. check state & list unready tiles
+	 * 2. get nearest available parents for unready tiles
+	 * 3. show parent tiles instead of unready tiles, but hide those children covered by them
+	 *
+	 */
+	private _updateCurrTilesVisReplaceVer() {
+		const availableKeys: Set<string> = new Set()
+		const unreadyKeys: Set<string> = new Set()
+
+		// filter: available / unready tiles
+		this._currVisibleKeys.forEach((tileKey) => {
+			if (this._tileMap.has(tileKey)) {
+				availableKeys.add(tileKey)
+			} else {
+				unreadyKeys.add(tileKey)
+			}
+		})
+
+		// unready to parent tiles replacement
+		const coveredChildKeys: Set<string> = new Set()
+		unreadyKeys.forEach((key) => {
+			const parentTileInfo = this._findReadyParentTile(this.keyToTileToken(key))
+			if (!parentTileInfo) return
+
+			const { parentToken, includedChildTokens } = parentTileInfo
+
+			// add available parent tile to vis list
+			availableKeys.add(this.tileTokenToKey(parentToken))
+
+			// list covered children (from vis list)
+			const childrenKeys = includedChildTokens.map((tile) => this.tileTokenToKey(tile))
+			availableKeys.forEach((key) => {
+				if (childrenKeys.includes(key)) {
+					coveredChildKeys.add(key)
+				}
+			})
+		})
+
+		// remove tiles covered by available parent
+		coveredChildKeys.forEach((key) => {
+			availableKeys.delete(key)
+		})
+
+		const visTiles: CachedTileRenderables[] = []
+		availableKeys.forEach((key) => {
+			const tile = this._tileMap.get(key)
+			if (tile) {
+				visTiles.push(tile)
+			}
+		})
+
+		if (visTiles.length === 0 || this._arrayEquals(visTiles, this._currVisibleTiles)) {
+			return
+		}
+
+		this._setCurrTilesVisibility(false)
+		this._currVisibleTiles.length = 0
+		this._currVisibleTiles.push(...visTiles)
+		this._setCurrTilesVisibility(true)
+	}
+
 	private _arrayEquals(a: any[], b: any[]) {
 		return a.length === b.length && a.every((val, index) => val === b[index])
 	}
@@ -426,5 +520,35 @@ export class CommonTileManager implements ITileManager {
 				}
 			}
 		})
+	}
+
+	private _findReadyParentTile(token: TileToken):
+		| {
+				parentToken: TileToken
+				includedChildTokens: TileToken[]
+		  }
+		| undefined {
+		// traverse the entire tile tree till root
+		// get the nearest available parent tile token
+		let parentToken = this.config.getParentTileToken(token)
+
+		while (parentToken) {
+			const parentKey = this.tileTokenToKey(parentToken)
+			if (this._tileMap.has(parentKey)) {
+				break
+			} else {
+				// keep traverse parent, until 'undefined' reaches
+				parentToken = this.config.getParentTileToken(parentToken)
+			}
+		}
+
+		if (!parentToken) return
+
+		const includedChildTokens = this.config.getChildTileTokens(parentToken, this._currZoomLevel)
+
+		return {
+			parentToken,
+			includedChildTokens,
+		}
 	}
 }
