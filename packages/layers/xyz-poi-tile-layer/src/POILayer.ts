@@ -118,7 +118,7 @@ export interface POILayerProps extends STDLayerProps {
 	clusterColorBlend: 'replace' | 'multiply' | 'add'
 
 	/**
-	 * Get cluster feature count
+	 * Get cluster feature text string
 	 * @return => {string} to set this feature as a cluster, the content will be rendered onto marker
 	 * @return => {undefined} to set this feature as non-clustered point, it will be rendered as normal point
 	 */
