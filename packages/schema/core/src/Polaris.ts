@@ -147,6 +147,12 @@ export abstract class Polaris extends Layer implements RootLayer {
 			onUpdate: () => {},
 		})
 
+		// cameraProxy config props listener
+		this.listenProps(['zoomLimit', 'pitchLimit'], () => {
+			cameraProxy['limit'].zoom = this.getProps('zoomLimit')
+			cameraProxy['limit'].pitch = this.getProps('pitchLimit')
+		})
+
 		// 更新相机初始状态
 		const geo = this.projection.project(...(center as [number, number, number]))
 		const states: GeographicStates = {

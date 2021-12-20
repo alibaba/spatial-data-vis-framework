@@ -146,6 +146,13 @@ export interface AOILayerProps extends STDLayerProps {
 	 * This may help with low fetching speed problem
 	 */
 	viewZoomReduction?: number
+
+	/**
+	 * TileManager tile update strategy option
+	 * use replacement method when current vis tiles are in pending states
+	 * default is true
+	 */
+	useParentReplaceUpdate?: boolean
 }
 
 /**
@@ -173,6 +180,7 @@ const defaultProps: AOILayerProps = {
 	framesBeforeRequest: 10,
 	cacheSize: 512,
 	viewZoomReduction: 0,
+	useParentReplaceUpdate: true,
 }
 
 type IndicatorRangeInfo = {
@@ -274,6 +282,7 @@ export class AOILayer extends STDLayer {
 				'customTileKeyGen',
 				'cacheSize',
 				'viewZoomReduction',
+				'useParentReplaceUpdate',
 			],
 			() => {
 				this._featureCount = 0
@@ -341,6 +350,7 @@ export class AOILayer extends STDLayer {
 					cacheSize: this.getProps('cacheSize'),
 					framesBeforeUpdate: this.getProps('framesBeforeRequest'),
 					viewZoomReduction: this.getProps('viewZoomReduction'),
+					useParentReplaceUpdate: this.getProps('useParentReplaceUpdate'),
 					getTileRenderables: (tileToken) => {
 						return this._createTileRenderables(tileToken, projection, polaris)
 					},

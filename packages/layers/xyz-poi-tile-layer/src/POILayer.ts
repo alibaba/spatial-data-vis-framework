@@ -167,6 +167,13 @@ export interface POILayerProps extends STDLayerProps {
 	 * This may help with low fetching speed problem
 	 */
 	viewZoomReduction?: number
+
+	/**
+	 * TileManager tile update strategy option
+	 * use replacement method when current vis tiles are in pending states
+	 * default is true
+	 */
+	useParentReplaceUpdate?: boolean
 }
 
 /**
@@ -198,6 +205,7 @@ export const defaultProps: POILayerProps = {
 	framesBeforeRequest: 10,
 	cacheSize: 512,
 	viewZoomReduction: 0,
+	useParentReplaceUpdate: true,
 }
 
 export class POILayer extends STDLayer {
@@ -298,6 +306,7 @@ export class POILayer extends STDLayer {
 				'customTileKeyGen',
 				'cacheSize',
 				'viewZoomReduction',
+				'useParentReplaceUpdate',
 			],
 			() => {
 				this._featureCount = 0
@@ -359,6 +368,7 @@ export class POILayer extends STDLayer {
 					cacheSize: this.getProps('cacheSize'),
 					framesBeforeUpdate: this.getProps('framesBeforeRequest'),
 					viewZoomReduction: this.getProps('viewZoomReduction'),
+					useParentReplaceUpdate: this.getProps('useParentReplaceUpdate'),
 					getTileRenderables: (tileToken) => {
 						return this._createTileRenderables(tileToken, projection, polaris)
 					},
