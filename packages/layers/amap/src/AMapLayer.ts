@@ -15,12 +15,17 @@ export interface AMapLayerProps extends STDLayerProps {
 	layers: { name: string; show: boolean }[]
 	features: { name: string; show: boolean }[]
 	zIndex: number
+
+	/**
+	 * user defined custom instance of amap
+	 */
+	amapInstance?: any
 }
 
 export const defaultProps: AMapLayerProps = {
 	key: 'f8d835e1abdb0e4355b19aa454f4de65', // 高德API使用key,可以缺省
 	// key: '550dbc967967e5a778337699e04435fa',
-	zIndex: -999,
+	zIndex: -9999,
 	showLogo: true, // 是否显示高德logo
 	showLabel: false, // 是否显示地图标注
 	zooms: [3, 20], // 地图缩放上下限,默认3~20
@@ -72,10 +77,35 @@ export class AMapLayer extends STDLayer {
 
 		// amap属性监听
 		this.listenProps(
-			['key', 'zIndex', 'showLogo', 'showLabel', 'style', 'layers', 'features'],
+			[
+				'key',
+				'showLogo',
+				'showLabel',
+				'zooms',
+				'style',
+				'layers',
+				'features',
+				'zIndex',
+				'amapInstance',
+			],
 			() => {
+				const amapInstance = this.getProps('amapInstance')
 				const key = this.getProps('key')
-				if (!window.AMap || this.key !== key) {
+				const zooms = this.getProps('zooms')
+
+				// set polaris zoomLimit the same as AMap
+				polaris.updateProps({
+					zoomLimit: zooms,
+				})
+
+				if (amapInstance) {
+					// use custom instance
+					this.map = amapInstance
+					this._initAmapCamera(polaris)
+					this.onViewChange = (cam) => {
+						this._synchronizeCameras(cam, polaris, projection)
+					}
+				} else if (!window.AMap || this.key !== key) {
 					this.key = key
 					this._loadJSAPI(key, () => {
 						this._initAMap(window.AMap)
@@ -98,7 +128,7 @@ export class AMapLayer extends STDLayer {
 	 * @param {*} key 高德API秘钥
 	 */
 	_loadJSAPI = (key: string, callback: any) => {
-		window.onLoad = () => {
+		window.onAMapLoaded = () => {
 			console.log('AMap script loaded')
 			if (window.AMap) {
 				callback()
@@ -106,8 +136,8 @@ export class AMapLayer extends STDLayer {
 				console.warn(`高德JSAPI未能成功加载，请检查key是否正确!`)
 			}
 		}
-		const url = 'https://webapi.amap.com/maps?v=1.4.15&key=' + key + '&callback=onLoad'
-		// const url = 'https://webapi.amap.com/maps?v=2.0&key=' + key + '&callback=onLoad'
+		const url = 'https://webapi.amap.com/maps?v=1.4.15&key=' + key + '&callback=onAMapLoaded'
+		// const url = 'https://webapi.amap.com/maps?v=2.0&key=' + key + '&callback=onAMapLoaded'
 		const jsapi = document.createElement('script')
 		jsapi.charset = 'utf-8'
 		jsapi.src = url
@@ -138,10 +168,11 @@ export class AMapLayer extends STDLayer {
 		}
 
 		this.element.style.position = 'absolute'
-		this.element.style.zIndex = '-9999'
+		this.element.style.zIndex = this.getProps('zIndex') ?? -9999
 
 		if (AMap !== undefined) {
-			// 强制开启webgl渲染
+			// 钉钉、手淘、阿里数据webview中amap默认不开启WebGL绘制，强制开启需要设置全局属性:
+			// https://lbs.amap.com/faq/js-api/map-js-api/create-project/1060847223
 			window.forceWebGL = true
 			this.map = new AMap.Map(this.element, {
 				// 默认属性
@@ -232,114 +263,115 @@ export class AMapLayer extends STDLayer {
 	 * 立即同步相机
 	 */
 	_initAmapCamera = (polaris: any) => {
-		if (this.map) {
-			const cam = polaris.cameraProxy
-			// 限制polaris的zoom范围与高德对应
-			const zooms = this.getProps('zooms')
-			const zoomMin = zooms[0]
-			const zoomMax = zooms[1]
-			if (cam.zoom <= zoomMin) {
-				cam.setZoom(zoomMin)
-			}
-			if (cam.zoom >= zoomMax) {
-				cam.setZoom(zoomMax)
-			}
-			// 更新polaris视角
-			const param = zoomToPerspectiveParam(cam.zoom, cam.canvasWidth, cam.canvasHeight)
-			const newFov = (param.fov / Math.PI) * 180.0
+		if (!this.map) return
 
-			polaris.renderer.updateProps({ fov: newFov })
-			cam.fov = newFov
-			cam.update()
-
-			// 稍微改变经纬度触发同步
-			const amapCenter = this.projection.unproject(...cam.center)
-			const { pitch, rotation, zoom } = cam
-			const statesCode =
-				'1|' +
-				(amapCenter[0] + 0.000001).toFixed(6) +
-				'|' +
-				amapCenter[1].toFixed(6) +
-				'|0.000000|' +
-				pitch.toFixed(5) +
-				'|' +
-				rotation.toFixed(5) +
-				'|' +
-				zoom.toFixed(5)
-			polaris.setStatesCode(statesCode)
+		const cam = polaris.cameraProxy
+		// 限制polaris的zoom范围与高德对应
+		const zooms = this.getProps('zooms')
+		const zoomMin = zooms[0]
+		const zoomMax = zooms[1]
+		if (cam.zoom <= zoomMin) {
+			cam.setZoom(zoomMin)
 		}
+		if (cam.zoom >= zoomMax) {
+			cam.setZoom(zoomMax)
+		}
+		// 更新polaris视角
+		const param = zoomToPerspectiveParam(cam.zoom, cam.canvasWidth, cam.canvasHeight)
+		const newFov = (param.fov / Math.PI) * 180.0
+
+		polaris.renderer.updateProps({ fov: newFov })
+		cam.fov = newFov
+		cam.update()
+
+		// 稍微改变经纬度触发同步
+		const amapCenter = this.projection.unproject(...cam.center)
+		const { pitch, rotation, zoom } = cam
+		const statesCode =
+			'1|' +
+			(amapCenter[0] + 0.000001).toFixed(6) +
+			'|' +
+			amapCenter[1].toFixed(6) +
+			'|0.000000|' +
+			pitch.toFixed(5) +
+			'|' +
+			rotation.toFixed(5) +
+			'|' +
+			zoom.toFixed(5)
+		polaris.setStatesCode(statesCode)
+		polaris.tick()
 	}
 
 	/**
 	 * 相机同步（暂时是polaris操作高德,实现基本视角控制）
 	 */
 	_synchronizeCameras = (cameraProxy, polaris, projection) => {
-		if (this.map !== undefined) {
-			const { zoom, pitch, rotation, center } = cameraProxy
-			const { canvasWidth, canvasHeight } = polaris
-			const ZOOM_MIN = this.getProps('zooms')[0]
-			const ZOOM_MAX = this.getProps('zooms')[1]
-			const lnglatCenter = projection.unproject(...center)
+		if (this.map === undefined) return
 
-			// 限制polaris的zooms与高德对应
-			if (zoom <= ZOOM_MIN) {
-				cameraProxy.setZoom(ZOOM_MIN)
+		const { zoom, pitch, rotation, center } = cameraProxy
+		const { canvasWidth, canvasHeight } = polaris
+		const ZOOM_MIN = this.getProps('zooms')[0]
+		const ZOOM_MAX = this.getProps('zooms')[1]
+		const lnglatCenter = projection.unproject(...center)
+
+		// 限制polaris的zooms与高德对应
+		if (zoom <= ZOOM_MIN) {
+			cameraProxy.setZoom(ZOOM_MIN)
+		}
+		if (zoom >= ZOOM_MAX) {
+			cameraProxy.setZoom(ZOOM_MAX)
+		}
+
+		// 同步高德相机
+		if (this.map && canvasWidth && canvasHeight) {
+			const amapPitch = (pitch / Math.PI) * 180.0
+			const amapRotation = (rotation / Math.PI) * 180.0
+
+			this.map.setZoom(zoom)
+			this.map.setCenter([lnglatCenter[0], lnglatCenter[1]])
+
+			this.map.setPitch(amapPitch)
+			this.map.setRotation(amapRotation)
+
+			// 更新polaris视角
+			// const param = this._zoomToPerspectiveParam(zoom, canvasWidth, canvasHeight)
+			// const newFov = (param.fov / Math.PI) * 180.0
+			// p.renderer.updateProps({ fov: newFov })
+			// cameraProxy.fov = newFov
+			// cameraProxy.update()
+
+			// 检测高德地图是否有跟随polaris变化
+			const newZoom = this.map.getZoom()
+			const newCenter = this.map.getCenter()
+			const newPitch = this.map.getPitch()
+			const threshold = 0.001
+
+			// 2021.09.27 @qianxun 根据高德的实时lat limits限制polaris视角center
+			if (Math.abs(lnglatCenter[1] - newCenter.lat) > threshold) {
+				cameraProxy.setCenter(projection.project(lnglatCenter[0], newCenter.lat))
 			}
-			if (zoom >= ZOOM_MAX) {
-				cameraProxy.setZoom(ZOOM_MAX)
-			}
 
-			// 同步高德相机
-			if (this.map && canvasWidth && canvasHeight) {
-				const amapPitch = (pitch / Math.PI) * 180.0
-				const amapRotation = (rotation / Math.PI) * 180.0
+			// auto resize 高德
+			// if (
+			// 	this.map.getContainer().clientWidth !== polaris.width ||
+			// 	this.map.getContainer().clientHeight !== polaris.height
+			// ) {
+			// 	// 屏幕像素
+			// 	this.map.getContainer().style.width = polaris.width + 'px'
+			// 	this.map.getContainer().style.height = polaris.height + 'px'
+			// 	// 逻辑像素
+			// 	this.map.getContainer().width = polaris.width
+			// 	this.map.getContainer().height = polaris.height
+			// 	this.map.resize && this.map.resize()
+			// }
 
-				this.map.setZoom(zoom)
-				this.map.setCenter([lnglatCenter[0], lnglatCenter[1]])
-
-				this.map.setPitch(amapPitch)
-				this.map.setRotation(amapRotation)
-
-				// 更新polaris视角
-				// const param = this._zoomToPerspectiveParam(zoom, canvasWidth, canvasHeight)
-				// const newFov = (param.fov / Math.PI) * 180.0
-				// p.renderer.updateProps({ fov: newFov })
-				// cameraProxy.fov = newFov
-				// cameraProxy.update()
-
-				// 检测高德地图是否有跟随polaris变化
-				const newZoom = this.map.getZoom()
-				const newCenter = this.map.getCenter()
-				const newPitch = this.map.getPitch()
-				const threshold = 0.001
-
-				// 2021.09.27 @qianxun 根据高德的实时lat limits限制polaris视角center
-				if (Math.abs(lnglatCenter[1] - newCenter.lat) > threshold) {
-					cameraProxy.setCenter(projection.project(lnglatCenter[0], newCenter.lat))
-				}
-
-				// auto resize 高德
-				// if (
-				// 	this.map.getContainer().clientWidth !== polaris.width ||
-				// 	this.map.getContainer().clientHeight !== polaris.height
-				// ) {
-				// 	// 屏幕像素
-				// 	this.map.getContainer().style.width = polaris.width + 'px'
-				// 	this.map.getContainer().style.height = polaris.height + 'px'
-				// 	// 逻辑像素
-				// 	this.map.getContainer().width = polaris.width
-				// 	this.map.getContainer().height = polaris.height
-				// 	this.map.resize && this.map.resize()
-				// }
-
-				// 屏幕像素
-				this.map.getContainer().style.width = polaris.width + 'px'
-				this.map.getContainer().style.height = polaris.height + 'px'
-				// 逻辑像素
-				this.map.getContainer().width = polaris.width
-				this.map.getContainer().height = polaris.height
-				this.map.resize && this.map.resize()
-			}
+			// 屏幕像素
+			this.map.getContainer().style.width = polaris.width + 'px'
+			this.map.getContainer().style.height = polaris.height + 'px'
+			// 逻辑像素
+			this.map.getContainer().width = polaris.width
+			this.map.getContainer().height = polaris.height
+			this.map.resize && this.map.resize()
 		}
 	}
 }

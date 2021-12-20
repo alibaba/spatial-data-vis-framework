@@ -363,7 +363,7 @@ export class CommonTileManager implements ITileManager {
 	}
 
 	/**
-	 * Update tiles - ver.2 - replacement method
+	 * Update tiles: ver.2 - replacement method
 	 *
 	 * steps:
 	 * 1. check state & list unready tiles
@@ -383,6 +383,13 @@ export class CommonTileManager implements ITileManager {
 				unreadyKeys.add(tileKey)
 			}
 		})
+
+		// if there is any tiles already generated, it can be displayed
+		// replace the prepared tile with low level ones immediately should let user know it is loading
+		if (availableKeys.size > 0) {
+			this._updateCurrTilesVisibility()
+			return
+		}
 
 		// unready to parent tiles replacement
 		const coveredChildKeys: Set<string> = new Set()
@@ -466,10 +473,9 @@ export class CommonTileManager implements ITileManager {
 		const numOfReleases = this._tiles.length - cacheSize
 		this._tiles.sort((a, b) => a.lastVisTime - b.lastVisTime)
 
-		// Note: the tiles array is sorted from less vis to more vis,
-		// so, if there is any tile that is currently visible,
-		// it means all tiles after this one is also visible,
-		// so, break the loop
+		// Note:
+		// the tiles array is sorted from less to more wrt vis count, if there is any tile that is currently visible,
+		// it means all tiles after this one is also visible. So break the loop is reasonable here.
 		let deleteCount = 0
 		for (let i = 0; i < numOfReleases; i++) {
 			const tile = this._tiles[i]

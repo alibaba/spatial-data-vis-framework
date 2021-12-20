@@ -84,8 +84,8 @@ const poi = new POILayer({
 	},
 	renderOrder: 100,
 })
-// p.add(poi)
-// window['poi'] = poi
+p.add(poi)
+window['poi'] = poi
 
 // AOI
 const picked: Set<number> = new Set()
