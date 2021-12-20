@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/layer-std",
-    "version": "0.0.0-alpha.3",
+    "version": "0.0.0-alpha.4",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -18,9 +18,9 @@
         "@gs.i/frontend-sdk": "^0.0.0-beta",
         "@gs.i/utils-math": "^0.0.0-beta",
         "@polaris.gl/projection": "^0.0.0-alpha.1",
-        "@polaris.gl/schema": "^0.0.0-alpha.3",
-        "@polaris.gl/view-gsi": "^0.0.0-alpha.3",
-        "@polaris.gl/view-html": "^0.0.0-alpha.3"
+        "@polaris.gl/schema": "^0.0.0-alpha.4",
+        "@polaris.gl/view-gsi": "^0.0.0-alpha.4",
+        "@polaris.gl/view-html": "^0.0.0-alpha.4"
     },
     "devDependencies": {
         "typescript": ">4.4.0"
