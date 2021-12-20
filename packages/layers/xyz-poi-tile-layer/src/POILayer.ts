@@ -827,6 +827,7 @@ export class POILayer extends STDLayer {
 				pickResult.index = feature.index
 				pickResult.data = {
 					type: 'cluster',
+					feature,
 					curr: feature,
 				}
 				return pickResult
