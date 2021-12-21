@@ -3,7 +3,7 @@ import { STDLayer } from '@polaris.gl/layer-std'
 import { Polaris } from '@polaris.gl/schema'
 import { Projection } from '@polaris.gl/projection'
 import {
-	ITileManager,
+	TileManager,
 	TileRenderables,
 	TileToken,
 	CachedTileRenderables,
@@ -99,7 +99,7 @@ const defaultConfig = {
 	onTileRelease: (tile, []) => {},
 }
 
-export class CommonTileManager implements ITileManager {
+export class CommonTileManager implements TileManager {
 	readonly config: Required<CommonTileManagerConfig>
 	private _timeline: Timeline
 	private _polaris: Polaris
@@ -385,14 +385,15 @@ export class CommonTileManager implements ITileManager {
 		})
 
 		// if there is any tiles already generated, it can be displayed
-		// replace the prepared tile with low level ones immediately should let user know it is loading
+		// replace the low level tiles with generated high level tile immediately
+		// will let user know map is loading
 		if (availableKeys.size > 0) {
 			this._updateCurrTilesVisibility()
 			return
 		}
 
 		// unready to parent tiles replacement
-		const coveredChildKeys: Set<string> = new Set()
+		const childKeysCoveredByParent: Set<string> = new Set()
 		unreadyKeys.forEach((key) => {
 			const parentTileInfo = this._findReadyParentTile(this.keyToTileToken(key))
 			if (!parentTileInfo) return
@@ -406,13 +407,13 @@ export class CommonTileManager implements ITileManager {
 			const childrenKeys = includedChildTokens.map((tile) => this.tileTokenToKey(tile))
 			availableKeys.forEach((key) => {
 				if (childrenKeys.includes(key)) {
-					coveredChildKeys.add(key)
+					childKeysCoveredByParent.add(key)
 				}
 			})
 		})
 
 		// remove tiles covered by available parent
-		coveredChildKeys.forEach((key) => {
+		childKeysCoveredByParent.forEach((key) => {
 			availableKeys.delete(key)
 		})
 

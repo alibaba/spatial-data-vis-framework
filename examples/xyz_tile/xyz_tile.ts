@@ -28,6 +28,10 @@ const viewZoomReduction = 0
 // POI
 let lastHovered
 const poi = new POILayer({
+	geojsonFilter: (geojson) => {
+		console.log('poi geojson', geojson)
+		return geojson
+	},
 	framesBeforeRequest,
 	viewZoomReduction,
 	dataType: 'pbf',
@@ -72,9 +76,9 @@ const poi = new POILayer({
 			poi.highlightByIds([lastHovered], { type: 'none' })
 		}
 
-		if (!data || data.data.curr === undefined) return
+		if (!data || data.data.feature === undefined) return
 
-		const feature = data.data.curr
+		const feature = data.data.feature
 		const id = feature.properties.id
 		if (!id) return
 		poi.highlightByIds([id], { type: 'hover' })

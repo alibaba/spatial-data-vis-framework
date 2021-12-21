@@ -1,7 +1,7 @@
-import { IRequestManager, ConfigType, RequestPending } from './types'
+import { RequestManager, ConfigType, RequestPending } from './types'
 
 export class CommonRequestManager<T = { url: string; requestParams?: any }>
-	implements IRequestManager<T>
+	implements RequestManager<T>
 {
 	readonly config: ConfigType
 

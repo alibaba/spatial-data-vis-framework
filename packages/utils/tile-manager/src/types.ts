@@ -42,7 +42,7 @@ export type CachedTilePromise = {
 	abort?: () => { success: boolean }
 }
 
-export interface ITileManager {
+export interface TileManager {
 	/**
 	 * Start updating tiles
 	 */
