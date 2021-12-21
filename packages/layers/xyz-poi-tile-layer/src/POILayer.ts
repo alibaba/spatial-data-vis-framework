@@ -271,12 +271,13 @@ export class POILayer extends STDLayer {
 	highlightByIds: (idsArr: number[], style: { [name: string]: any }) => void
 
 	init(projection, timeline, polaris) {
-		const p = polaris as Polaris
+		const p = polaris as PolarisGSI
 
 		if (!projection.isPlaneProjection) {
 			throw new Error('POILayer - TileLayer can only be used in plane projections')
 		}
 
+		// cache polaris render ratio for pointSizes computation
 		this._ratio = polaris.ratio ?? 1.0
 
 		this.listenProps(
@@ -288,13 +289,14 @@ export class POILayer extends STDLayer {
 				'featureIdKey',
 				'baseAlt',
 				'pointImage',
+				'pointSize',
+				'pointHoverSize',
 				'getPointColor',
 				'pointColorBlend',
 				'clusterImage',
 				'clusterColor',
 				'clusterColorBlend',
 				'clusterStyle',
-				'pointSize',
 				'clusterSize',
 				'featureFilter',
 				'getClusterContent',
@@ -309,6 +311,8 @@ export class POILayer extends STDLayer {
 				'useParentReplaceUpdate',
 			],
 			() => {
+				this._checkProps(p)
+
 				this._featureCount = 0
 
 				this._renderableFeatureMap = new Map()
@@ -322,11 +326,6 @@ export class POILayer extends STDLayer {
 				this._createPointImgElement()
 
 				this.matr = this._createPointMatr(polaris)
-
-				if (this.requestManager) {
-					console.error('Cannot change/modify RequestManager in runtime! ')
-					return
-				}
 
 				const dtConfig = this.getProps('dataType')
 				let dataType
@@ -348,6 +347,10 @@ export class POILayer extends STDLayer {
 					}
 				}
 
+				if (this.requestManager) {
+					this.requestManager.dispose()
+				}
+
 				const customFetcher = this.getProps('customFetcher')
 				const customTileKeyGen = this.getProps('customTileKeyGen')
 				this.requestManager =
@@ -360,6 +363,10 @@ export class POILayer extends STDLayer {
 							return this.getProps('getUrl')(requestArgs.x, requestArgs.y, requestArgs.z)
 						},
 					})
+
+				if (this.tileManager) {
+					this.tileManager.dispose()
+				}
 
 				this.tileManager = new XYZTileManager({
 					layer: this,
@@ -391,31 +398,7 @@ export class POILayer extends STDLayer {
 		this.onClick = this._pickPOI
 
 		/** highlight api */
-		this.highlightByIndices = (dataIndexArr: number[], style: { [name: string]: any }) => {
-			console.error(
-				'POILayer - This method is not implemented, please use .highlightByIds() instead. '
-			)
-			// if (!this._indexMeshMap) return
-			// if (!style || !style.type) return
-			// const type = style.type
-			// const pointSize = this.getProps('pointSize')
-			// const pointHoverSize = this.getProps('pointHoverSize')
-			// dataIndexArr.forEach((index) => {
-			// 	const idxInfo = this._indexMeshMap.get(index)
-			// 	if (!idxInfo) return
-			// 	const obj = idxInfo.obj
-			// 	const objIdx = idxInfo.objIdx
-			// 	if (obj instanceof Marker) {
-			// 		return
-			// 	} else if (obj instanceof Mesh) {
-			// 		if (type === 'none') {
-			// 			this._updatePointSizeByIndex(obj, objIdx, pointSize)
-			// 		} else if (type === 'hover') {
-			// 			this._updatePointSizeByIndex(obj, objIdx, pointHoverSize)
-			// 		}
-			// 	}
-			// })
-		}
+		// this.highlightByIndices = undefined
 
 		/** highlight api 2 */
 		this.highlightByIds = (idsArr: (number | string)[], style: { [name: string]: any }) => {
@@ -461,6 +444,20 @@ export class POILayer extends STDLayer {
 		const pendsCount = this.tileManager ? this.tileManager.getPendsCount() : undefined
 		return {
 			pendsCount,
+		}
+	}
+
+	private _checkProps(polaris: PolarisGSI) {
+		const pointSize = this.getProps('pointSize') * this._ratio
+		const pointHoverSize = this.getProps('pointHoverSize') * this._ratio
+		const capabilities = polaris.renderer.getCapabilities()
+		const maxSize = capabilities.pointSizeRange[1]
+		if (pointSize > maxSize || pointHoverSize > maxSize) {
+			console.error(
+				'POILayer - The pointSize/pointHoverSize reaches context limit: ' +
+					maxSize +
+					', points may be rendered up to this limit. '
+			)
 		}
 	}
 

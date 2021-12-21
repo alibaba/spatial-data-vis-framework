@@ -451,10 +451,10 @@ export class CommonTileManager implements TileManager {
 
 	private _releaseTilesMemory(tiles: CachedTileRenderables[]) {
 		// DEBUG
-		console.log(
-			'release',
-			tiles.map((tile) => tile.key)
-		)
+		// console.log(
+		// 	'release',
+		// 	tiles.map((tile) => tile.key)
+		// )
 
 		tiles.forEach((tile) => {
 			const key = tile.key
@@ -463,7 +463,6 @@ export class CommonTileManager implements TileManager {
 			this.config.onTileRelease(tile, this.keyToTileToken(tile.key))
 			meshes.forEach((mesh) => this.config.layer.group.remove(mesh))
 			layers.forEach((layer) => this.config.layer.remove(layer))
-			// console.log('released', key)
 		})
 	}
 

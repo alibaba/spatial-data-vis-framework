@@ -34,7 +34,7 @@ export const partitionArray = (arr, predicate) =>
 		[[], []]
 	)
 
-// code from react-three-fiber
+// code from react-three-fiber
 // @TODO 替换成 is.js
 export const is = {
 	obj: (a: any) => a === Object(a) && !is.arr(a),

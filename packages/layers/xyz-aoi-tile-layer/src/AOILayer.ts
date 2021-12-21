@@ -305,11 +305,6 @@ export class AOILayer extends STDLayer {
 
 				this.matr = this._createPolygonMatr()
 
-				if (this.requestManager) {
-					console.error('Cannot change/modify RequestManager in runtime! ')
-					return
-				}
-
 				const dtConfig = this.getProps('dataType')
 				let dataType
 				switch (dtConfig) {
@@ -330,6 +325,10 @@ export class AOILayer extends STDLayer {
 					}
 				}
 
+				if (this.requestManager) {
+					this.requestManager.dispose()
+				}
+
 				const customFetcher = this.getProps('customFetcher')
 				const customTileKeyGen = this.getProps('customTileKeyGen')
 				this.requestManager =
@@ -342,6 +341,10 @@ export class AOILayer extends STDLayer {
 							return this.getProps('getUrl')(requestArgs.x, requestArgs.y, requestArgs.z)
 						},
 					})
+
+				if (this.tileManager) {
+					this.tileManager.dispose()
+				}
 
 				this.tileManager = new XYZTileManager({
 					layer: this,
@@ -375,11 +378,11 @@ export class AOILayer extends STDLayer {
 		this.onClick = this._pickAOI
 
 		/** highlight api */
-		this.highlightByIndices = (dataIndexArr: number[], style: { [name: string]: any }) => {
-			console.error(
-				'AOILayer - This method is not implemented, please use .highlightByIds() instead. '
-			)
-		}
+		// this.highlightByIndices = (dataIndexArr: number[], style: { [name: string]: any }) => {
+		// 	console.error(
+		// 		'AOILayer - This method is not implemented, please use .highlightByIds() instead. '
+		// 	)
+		// }
 
 		/** highlight api 2 */
 		this.highlightByIds = (idsArr: (number | string)[], style: { [name: string]: any }) => {
