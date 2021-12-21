@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/gsi-gl2",
-    "version": "0.0.0-alpha.4",
+    "version": "0.0.0-alpha.5",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -16,9 +16,9 @@
         "build:umd": "npx webpack"
     },
     "dependencies": {
-        "@polaris.gl/gsi": "^0.0.0-alpha.4",
-        "@polaris.gl/renderer-gsi-gl2": "^0.0.0-alpha.4",
-        "@polaris.gl/schema": "^0.0.0-alpha.4"
+        "@polaris.gl/gsi": "^0.0.0-alpha.5",
+        "@polaris.gl/renderer-gsi-gl2": "^0.0.0-alpha.5",
+        "@polaris.gl/schema": "^0.0.0-alpha.5"
     },
     "devDependencies": {
         "@types/offscreencanvas": "latest",
