@@ -131,9 +131,22 @@ function getDemoEntries() {
 			continue
 		}
 
-		if (fileStat.isDirectory() && !filename.startsWith('_')) {
-			entries.push(pageDir[j])
+		if (fileStat.isDirectory()) {
+			const demos = fs.readdirSync(filePath)
+			demos.forEach((demo) => {
+				const ext = path.parse(demo).ext
+				const name = path.parse(demo).name
+				if (name.startsWith('_')) return
+				if (ext === '.ts' || ext === '.js') {
+					const relativePath = `${filename}/${name}`
+					entries.push(name)
+				}
+			})
 		}
+
+		// if (fileStat.isDirectory() && !filename.startsWith('_')) {
+		// 	entries.push(pageDir[j])
+		// }
 	}
 	return entries
 }

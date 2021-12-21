@@ -42,7 +42,7 @@ const poi = new POILayer({
 		'https://img.alicdn.com/imgextra/i2/O1CN01VcJVlk28INDH4OCXH_!!6000000007909-2-tps-500-500.png',
 	pointColorBlend: 'add',
 	clusterSize: 40,
-	clusterColor: '#00afff',
+	clusterColor: '#ffaf99',
 	clusterImage:
 		'https://img.alicdn.com/imgextra/i2/O1CN016yGVRh1Tdzf8SkuLn_!!6000000002406-2-tps-60-60.png',
 	clusterColorBlend: 'add',
