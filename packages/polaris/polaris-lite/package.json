@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/lite",
-    "version": "0.0.0-alpha.5",
+    "version": "0.0.0-alpha.6",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -17,7 +17,7 @@
     },
     "dependencies": {
         "@polaris.gl/gsi": "^0.0.0-alpha.5",
-        "@polaris.gl/renderer-lite": "^0.0.0-alpha.5",
+        "@polaris.gl/renderer-lite": "^0.0.0-alpha.6",
         "@polaris.gl/schema": "^0.0.0-alpha.5"
     },
     "devDependencies": {

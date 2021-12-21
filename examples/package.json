@@ -1,7 +1,7 @@
 {
 	"name": "@polaris.gl/examples",
 	"_name": "@polaris.gl/examples",
-	"version": "0.0.0-alpha.5",
+	"version": "0.0.0-alpha.6",
 	"private": true,
 	"scripts": {
 		"start": "node --max-old-space-size=8192 server.js"
@@ -20,10 +20,10 @@
 		"@polaris.gl/layer-std-marker": "^0.0.0-alpha.5",
 		"@polaris.gl/layer-xyz-aoi-tile": "^0.0.0-alpha.5",
 		"@polaris.gl/layer-xyz-poi-tile": "^0.0.0-alpha.5",
-		"@polaris.gl/lite": "^0.0.0-alpha.5",
+		"@polaris.gl/lite": "^0.0.0-alpha.6",
 		"@polaris.gl/projection": "^0.0.0-alpha.1",
 		"@polaris.gl/renderer-gsi-gl2": "^0.0.0-alpha.5",
-		"@polaris.gl/renderer-lite": "^0.0.0-alpha.5",
+		"@polaris.gl/renderer-lite": "^0.0.0-alpha.6",
 		"@polaris.gl/schema": "^0.0.0-alpha.5",
 		"@polaris.gl/utils": "^0.0.0-alpha.5",
 		"@polaris.gl/utils-animation": "^0.0.0-alpha.5",
