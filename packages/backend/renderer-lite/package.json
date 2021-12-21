@@ -22,7 +22,7 @@
         "@gs.i/utils-raycast": "^0.0.0-beta",
         "@polaris.gl/schema": "^0.0.0-alpha.5",
         "@polaris.gl/view-gsi": "^0.0.0-alpha.5",
-        "three-lite": "0.0.2"
+        "@gs.i/three-lite-renderer": "0.0.2"
     },
     "devDependencies": {
         "@types/offscreencanvas": "latest",

@@ -34,12 +34,20 @@ process.noDeprecation = true
 // }
 
 const entry = {}
-const foldersTobeSkipped = ['design', 'node_modules', 'typings', 'scripts']
+const foldersToBeSkipped = [
+	'node_modules',
+	'typings',
+	'scripts',
+	'assets',
+	'static',
+	'proxy',
+	'design',
+]
 console.log('>>> examples <<<')
 
 const dirFiles = fs.readdirSync(__dirname)
 dirFiles.forEach((filename) => {
-	if (foldersTobeSkipped.includes(filename)) return
+	if (foldersToBeSkipped.includes(filename)) return
 	const filePath = path.resolve(__dirname, filename)
 	const state = fs.statSync(filePath)
 	if (state.isDirectory()) {
@@ -49,7 +57,7 @@ dirFiles.forEach((filename) => {
 			const name = path.parse(demo).name
 			if (ext === '.ts' || ext === '.js') {
 				const relativePath = `${filename}/${demo}`
-				console.log('\x1b[32m' + relativePath)
+				console.log('\x1b[32m' + `${name}: ${relativePath}`)
 				entry[name] = [path.resolve(__dirname, relativePath)]
 			}
 		})
@@ -58,7 +66,7 @@ dirFiles.forEach((filename) => {
 console.log('\n')
 
 var config = {
-	entry: entry,
+	entry,
 	output: {
 		// path: path.resolve(__dirname, 'build'),
 		filename: '[name].demo.js',

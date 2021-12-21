@@ -21,7 +21,7 @@ import {
 	AmbientLight,
 	DirectionalLight,
 	PointLight,
-} from 'three-lite'
+} from '@gs.i/three-lite-renderer'
 import { Renderer, colorToString, PolarisProps, PickResult } from '@polaris.gl/schema'
 import {
 	DefaultConfig as ConvConfig,
