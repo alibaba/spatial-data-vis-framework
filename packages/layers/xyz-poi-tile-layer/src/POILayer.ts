@@ -507,7 +507,8 @@ export class POILayer extends STDLayer {
 						return
 					}
 
-					geojson = geojsonFilter ? geojsonFilter(geojson) : geojson
+					const filteredGeojson = geojsonFilter ? geojsonFilter(geojson) : undefined
+					geojson = filteredGeojson ?? geojson
 
 					if (
 						!geojson.type ||
@@ -515,9 +516,9 @@ export class POILayer extends STDLayer {
 						!geojson.features ||
 						!Array.isArray(geojson.features)
 					) {
-						console.warn(
-							`POILayer - Tile source is not a valid GeoJSON, skip. Use 'geojsonFilter' to modify the response data if necessary. `
-						)
+						// console.warn(
+						// 	`POILayer - Tile source is not a valid GeoJSON, skip. Use 'geojsonFilter' to modify the response data if necessary. `
+						// )
 						resolve(emptyTile)
 						return
 					}
@@ -615,14 +616,11 @@ export class POILayer extends STDLayer {
 				glPosition.xy += offset * pxRange;
 			`,
 			fragColor: `
-			#if P_COLOR_MODE == 0
-				// replace
+			#if P_COLOR_MODE == 0          // replace
 				fragColor.rgb = vColor;
-			#elif P_COLOR_MODE == 1
-				// multiply
+			#elif P_COLOR_MODE == 1        // multiply
 				fragColor.rgb *= vColor;
-			#elif P_COLOR_MODE == 2
-				// add
+			#elif P_COLOR_MODE == 2        // add
 				fragColor.rgb += vColor;
 			#endif
 			`,
@@ -762,15 +760,19 @@ export class POILayer extends STDLayer {
 	private async _getClusterImage() {
 		if (this._clusterImgUrl) return this._clusterImgUrl
 
-		this._clusterImgUrl = await brushColorToImage(
-			this.getProps('clusterImage'),
-			this.getProps('clusterColor'),
-			this.getProps('clusterSize'),
-			this.getProps('clusterSize'),
-			this.getProps('clusterColorBlend')
-		)
+		try {
+			this._clusterImgUrl = await brushColorToImage(
+				this.getProps('clusterImage'),
+				this.getProps('clusterColor'),
+				this.getProps('clusterSize'),
+				this.getProps('clusterSize'),
+				this.getProps('clusterColorBlend')
+			)
 
-		return this._clusterImgUrl
+			return this._clusterImgUrl
+		} catch (e) {
+			throw e
+		}
 	}
 
 	private _createClusterDiv(text: string, clusterImage: string, feature: any) {

@@ -475,7 +475,8 @@ export class AOILayer extends STDLayer {
 						return
 					}
 
-					geojson = geojsonFilter ? geojsonFilter(geojson) : geojson
+					const filteredGeojson = geojsonFilter ? geojsonFilter(geojson) : undefined
+					geojson = filteredGeojson ?? geojson
 
 					if (
 						!geojson.type ||
@@ -483,9 +484,9 @@ export class AOILayer extends STDLayer {
 						!geojson.features ||
 						!Array.isArray(geojson.features)
 					) {
-						console.warn(
-							`AOILayer - Tile source is not a valid GeoJSON, skip. Use 'geojsonFilter' to modify the response data if necessary. `
-						)
+						// console.warn(
+						// 	`AOILayer - Tile source is not a valid GeoJSON, skip. Use 'geojsonFilter' to modify the response data if necessary. `
+						// )
 						resolve(emptyTile)
 						return
 					}

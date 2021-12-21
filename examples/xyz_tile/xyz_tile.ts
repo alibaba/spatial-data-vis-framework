@@ -21,13 +21,16 @@ const p = new PolarisGSIGL2({
 window['p'] = p
 p.timeline.config.ignoreErrors = false
 
-const size = 20
 const framesBeforeRequest = 10
 const viewZoomReduction = 0
 
 // POI
+const size = 20
 let lastHovered
 const poi = new POILayer({
+	// geojsonFilter: (geojson) => {
+	// 	console.log('poi', geojson)
+	// },
 	framesBeforeRequest,
 	viewZoomReduction,
 	dataType: 'pbf',
@@ -91,6 +94,9 @@ window['poi'] = poi
 const picked: Set<number> = new Set()
 let hovered
 const aoi = new AOILayer({
+	// geojsonFilter: (geojson) => {
+	// 	console.log('aoi', geojson)
+	// },
 	viewZoomReduction,
 	framesBeforeRequest,
 	customFetcher: (x, y, z) => {
@@ -180,13 +186,13 @@ p.timeline.addTrack({
 		let info = ''
 
 		if (poi && p.children.has(poi)) {
-			info += 'poi:' + '\n'
+			info += '--- poi ---' + '\n'
 			info += 'vis tiles: ' + poi.tileManager.getVisibleTiles().length + '\n'
 			info += 'pends: ' + poi.getState().pendsCount + '\n'
 		}
 
 		if (aoi && p.children.has(aoi)) {
-			info += 'aoi:' + '\n'
+			info += '--- aoi ---' + '\n'
 			info += 'vis tiles: ' + aoi.tileManager.getVisibleTiles().length + '\n'
 			info += 'pends: ' + aoi.getState().pendsCount + '\n'
 
