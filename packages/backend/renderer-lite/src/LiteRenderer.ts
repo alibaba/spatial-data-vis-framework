@@ -132,6 +132,17 @@ export class LiteRenderer extends Renderer {
 	private _internalThreeRaycaster: ThreeRaycaster
 
 	/**
+	 * capabilities object
+	 */
+	private _capabilities: {
+		pointSizeRange: [number, number]
+		lineWidthRange: [number, number]
+		maxVertexAttributes: number
+		maxVaryingVectors: number
+		[name: string]: any
+	}
+
+	/**
 	 * 反射相关FBO、Pass
 	 */
 	// private reflectionTexture: WebGLRenderTarget
@@ -193,6 +204,17 @@ export class LiteRenderer extends Renderer {
 		/** @FIXME gamma correction未生效 */
 		// this.renderer.gammaOutput = true
 		// this.renderer.gammaFactor = 2.2
+
+		/**
+		 * init webgl capabilities
+		 */
+		const gl = this.renderer.getContext()
+		this._capabilities = {
+			pointSizeRange: gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE),
+			lineWidthRange: gl.getParameter(gl.ALIASED_LINE_WIDTH_RANGE),
+			maxVertexAttributes: gl.getParameter(gl.MAX_VERTEX_ATTRIBS),
+			maxVaryingVectors: gl.getParameter(gl.MAX_VARYING_VECTORS),
+		}
 
 		/**
 		 * init scene
@@ -546,6 +568,16 @@ export class LiteRenderer extends Renderer {
 			return info
 		}
 		return result
+	}
+
+	getCapabilities(): {
+		pointSizeRange: [number, number]
+		lineWidthRange: [number, number]
+		maxVertexAttributes: number
+		maxVaryingVectors: number
+		[name: string]: any
+	} {
+		return this._capabilities
 	}
 
 	/**

@@ -28,10 +28,6 @@ const viewZoomReduction = 0
 // POI
 let lastHovered
 const poi = new POILayer({
-	geojsonFilter: (geojson) => {
-		console.log('poi geojson', geojson)
-		return geojson
-	},
 	framesBeforeRequest,
 	viewZoomReduction,
 	dataType: 'pbf',

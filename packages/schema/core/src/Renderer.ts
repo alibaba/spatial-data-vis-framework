@@ -71,6 +71,14 @@ export abstract class Renderer {
 		options?: { [key: string]: any }
 	): PickResult
 
+	abstract getCapabilities(): {
+		pointSizeRange: [number, number]
+		lineWidthRange: [number, number]
+		maxVertexAttributes: number
+		maxVaryingVectors: number
+		[name: string]: any
+	}
+
 	/**
 	 * 尽可能地回收所有资源
 	 */
