@@ -26,7 +26,7 @@ export type ConfigType = {
 	fetcher?: (...args) => RequestPending
 }
 
-export interface IRequestManager<RequestArgsType> {
+export interface RequestManager<RequestArgsType> {
 	readonly config: ConfigType
 	request(args: RequestArgsType): RequestPending
 	getCacheKey(args: RequestArgsType): string
