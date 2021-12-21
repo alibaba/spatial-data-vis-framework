@@ -292,12 +292,15 @@ export class CommonTileManager implements TileManager {
 					}
 
 					if (err.name === 'AbortError') {
-						// promise manually aborted
+						// promise manually aborted, will retry next time
 						return
 					}
+
 					if (this.config.printErrors) {
 						console.error('Polaris::TileManager - getTileRenderables error', err)
 					}
+
+					// add empty tile renderables if server response is errorlike
 					this._addTile(cacheKey, undefined)
 				})
 		})
