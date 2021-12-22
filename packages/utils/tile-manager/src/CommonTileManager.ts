@@ -94,7 +94,7 @@ const defaultConfig = {
 	cacheSize: 512,
 	framesBeforeUpdate: 5,
 	framesBeforeAbort: 5,
-	useParentReplaceUpdate: false,
+	useParentReplaceUpdate: true,
 	printErrors: false,
 	onTileRelease: (tile, []) => {},
 }

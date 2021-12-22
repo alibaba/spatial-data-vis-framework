@@ -98,7 +98,7 @@ export class MarkerLayer extends STDLayer {
 		})
 
 		// Handle picking event
-		this.onClick = this.onHover = (polaris, canvasCoord, ndc) => {
+		this.onRaycast = (polaris, canvasCoord, ndc) => {
 			if (!this.getProps('pickable')) return
 			const data = this.getProps('data')
 			const results: PickEvent[] = []

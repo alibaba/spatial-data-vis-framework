@@ -18,6 +18,8 @@ export interface LayerProps {
 }
 
 export class Layer extends Base {
+	readonly isLayer = true
+
 	/**
 	 * parent
 	 */

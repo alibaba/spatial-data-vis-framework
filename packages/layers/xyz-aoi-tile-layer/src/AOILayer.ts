@@ -374,8 +374,7 @@ export class AOILayer extends STDLayer {
 		}
 
 		/** picking */
-		this.onHover = this._pickAOI
-		this.onClick = this._pickAOI
+		this.onRaycast = this._pickAOI
 
 		/** highlight api */
 		// this.highlightByIndices = (dataIndexArr: number[], style: { [name: string]: any }) => {
@@ -803,7 +802,7 @@ export class AOILayer extends STDLayer {
 			const mesh = meshes.find((mesh) => mesh.extras && mesh.extras.isAOI)
 			if (!mesh) return
 
-			const pickResult = polaris.pick(mesh, ndc)
+			const pickResult = polaris.pickObject(mesh, ndc)
 			if (pickResult.hit && pickResult.intersections && pickResult.intersections.length > 0) {
 				const intersection = pickResult.intersections[0]
 				const index = intersection.index

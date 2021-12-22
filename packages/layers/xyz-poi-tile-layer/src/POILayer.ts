@@ -394,8 +394,7 @@ export class POILayer extends STDLayer {
 		}
 
 		/** picking */
-		this.onHover = this._pickPOI
-		this.onClick = this._pickPOI
+		this.onRaycast = this._pickPOI
 
 		/** highlight api */
 		// this.highlightByIndices = undefined

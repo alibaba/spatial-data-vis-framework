@@ -336,10 +336,10 @@ export class Marker extends STDLayer {
 		}
 
 		// 3D object picking
-		if (polaris.pick === undefined) return
+		if (polaris.pickObject === undefined) return
 
 		if (this.object3d && this.object3d.geometry) {
-			const result = polaris.pick(this.object3d, ndc, {
+			const result = polaris.pickObject(this.object3d, ndc, {
 				backfaceCulling: true,
 				allInters: false, // The pick process can return as soon as it hits the first triangle
 				threshold: 10, // In case the object3d is a line mesh
