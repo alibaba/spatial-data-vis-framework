@@ -47,6 +47,8 @@ export interface LayerPickEvent extends PickEventResult {
 }
 
 export class PolarisGSI extends Polaris implements PolarisGSI {
+	readonly isPolarisGSI = true
+
 	props: PolarisGSIProps
 
 	/**
@@ -89,12 +91,10 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 	private _localForage: any
 
 	constructor(props: PolarisGSIProps) {
-		const _props = {
+		super({
 			...DefaultPolarisGSIProps,
 			...props,
-		}
-
-		super(_props)
+		})
 
 		this.name = 'PolarisGSI'
 		this.optimizePasses = []
@@ -388,14 +388,8 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 
 	/**
 	 * 射线命中测试
-	 *
-	 * @param {MeshDataType} object
-	 * @param {{ x: number; y: number }} ndcCoords
-	 * @param {{ allInters?: boolean; threshold?: number; backfaceCulling?: boolean }} options allInters: 是否返回所有碰撞点并排序; threshold: lineMesh碰撞测试阈值; backfaceCulling: triangleMesh是否测试背面
-	 * @return {*}  {PickResult}
-	 * @memberof PolarisGSI
 	 */
-	pick(
+	pickObject(
 		object: MeshDataType,
 		ndcCoords: { x: number; y: number },
 		options?: { allInters?: boolean; threshold?: number; backfaceCulling?: boolean }
@@ -430,6 +424,63 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 			}
 		}
 		return this.renderer.pick(object, ndcCoords, options)
+	}
+
+	/**
+	 * 对pickable并实现picking方法的layers进行pick操作
+	 */
+	pick(
+		canvasCoords: CoordV2,
+		options = { penetrating: false }
+	): LayerPickEvent | LayerPickEvent[] | undefined {
+		const element = this.view.html.element
+		const bbox = element.getBoundingClientRect()
+		const left = bbox.left
+		const top = bbox.top
+		const width = element.clientWidth
+		const height = element.clientHeight
+		const ndc = {
+			x: (canvasCoords.x / width) * 2 - 1,
+			y: -(canvasCoords.y / height) * 2 + 1,
+		}
+
+		if (ndc.x < -1.0 || ndc.x > 1.0 || ndc.y < -1.0 || ndc.y > 1.0) {
+			return
+		}
+
+		// Collect pick results
+		const candidates: LayerPickEvent[] = []
+		this.traverseVisible((obj) => {
+			const layer = obj as Layer
+			if (layer.isLayer && layer.getProps('pickable')) {
+				if (!layer._onRaycast) {
+					throw 'PolarisGSI - Layer does not implement .onRaycast method. '
+				}
+				const layerRes = layer._onRaycast(this, canvasCoords, ndc)
+				if (layerRes) {
+					candidates.push({
+						...layerRes,
+						layer: layer,
+						// pointer coords
+						pointerCoords: {
+							screen: { x: canvasCoords.x + left, y: canvasCoords.y + top },
+							canvas: canvasCoords,
+							ndc,
+						},
+					})
+				}
+			}
+		})
+
+		// Sort and get the closest picked layer
+		if (candidates.length > 0) {
+			candidates.sort(this._pickedLayerSortFn)
+			if (options.penetrating) {
+				return candidates
+			} else {
+				return candidates[0]
+			}
+		}
 	}
 
 	dispose() {
@@ -469,129 +520,133 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 	 * @memberof PolarisGSI
 	 */
 	private _initPointerEvents() {
-		if (this.props.enablePointer) {
-			const element = this.view.html.element as HTMLElement
-			element.addEventListener('contextmenu', (e) => {
-				e.preventDefault()
-			})
+		if (!this.props.enablePointer) return
 
-			// Pointer event registration
-			this.hammer = new Hammer.Manager(element)
-			const tap = new Hammer.Tap({
-				event: 'tap',
-				pointers: 1,
-				taps: 1,
-			})
-			this.hammer.add(tap)
-			this.hammer.on('tap', (e) => {
-				if (this.getProps('enablePicking')) {
-					const center = e.center
-					this._handlePointerEvent('_onClick', center, 'picked')
-				}
-			})
+		const element = this.view.html.element
+		element.addEventListener('contextmenu', (e) => {
+			e.preventDefault()
+		})
 
-			// Use flag & timer to prevent [touchend, mousemove] linked events triggering
-			let isTouched = false
-			let lastTouchedTime = 0
-			element.addEventListener('touchstart', () => (isTouched = true))
-			element.addEventListener('touchend', () => {
-				isTouched = false
-				lastTouchedTime = this.timeline.currentTime
-			})
-
-			//
-			let isMouseDown = false
-			element.addEventListener('mousedown', () => (isMouseDown = true))
-			element.addEventListener('mouseup', () => (isMouseDown = false))
-
-			//
-			let viewChangeTime = this.timeline.currentTime
-			this.onViewChange = () => {
-				viewChangeTime = this.timeline.currentTime
-			}
-
-			// Event callback throttling
-			this._mouseMoveHandler = throttle(
-				this.timeline.frametime,
-				(e) => {
-					// Disable hover when:
-					// 1. device has been touched
-					// 2. mouse has been pressed
-					// 3. camera stable frames < x (2)
-					// 4. lastTouchedTime < y (500ms)
-					if (
-						this.getProps('enablePicking') &&
-						isTouched === false &&
-						isMouseDown === false &&
-						this.timeline.currentTime - viewChangeTime > this.timeline.frametime * 2 &&
-						this.timeline.currentTime - lastTouchedTime > 500 // TODO: remove hardcoding
-					) {
-						const center = { x: e.x, y: e.y }
-						this._handlePointerEvent('_onHover', center, 'hovered')
-					}
-				},
-				this
-			)
-			element.addEventListener('mousemove', this._mouseMoveHandler)
-		}
-	}
-
-	private _mouseMoveHandler: (e: any) => void
-
-	private _handlePointerEvent(eventName: string, pxCoords: any, eventCallback: EVENT_NAME) {
-		const element = this.view.html.element as HTMLElement
-		const bbox = element.getBoundingClientRect()
-		const left = bbox.left
-		const top = bbox.top
-		const width = element.clientWidth
-		const height = element.clientHeight
-		const canvasCoords = { x: pxCoords.x - left, y: pxCoords.y - top }
-		const ndc = {
-			x: ((pxCoords.x - left) / width) * 2 - 1,
-			y: -((pxCoords.y - top) / height) * 2 + 1,
-		}
-		if (ndc.x < -1.0 || ndc.x > 1.0 || ndc.y < -1.0 || ndc.y > 1.0) {
-			return
-		}
-		// Collect pick results
-		const candidates: LayerPickEvent[] = []
-		this.traverseVisible((obj) => {
-			if (obj instanceof Layer && obj.getProps('pickable') && obj[eventName]) {
-				const layerRes = obj[eventName](this, canvasCoords, ndc) as LayerPickEvent
-				if (layerRes) {
-					// Layer was picked, add to candidates list
-					candidates.push({
-						...layerRes,
-						layer: obj,
-						// pointer coords
-						pointerCoords: {
-							screen: pxCoords,
-							canvas: canvasCoords,
-							ndc: ndc,
-						},
-					})
-				} else {
-					// Callback with no params
-					obj.triggerEvent(eventCallback)
-				}
+		// Pointer event registration
+		this.hammer = new Hammer.Manager(element)
+		const tap = new Hammer.Tap({
+			event: 'tap',
+			pointers: 1,
+			taps: 1,
+		})
+		this.hammer.add(tap)
+		this.hammer.on('tap', (e) => {
+			if (this.getProps('enablePicking')) {
+				const bbox = element.getBoundingClientRect()
+				const left = bbox.left
+				const top = bbox.top
+				const canvasCoords = { x: e.center.x - left, y: e.center.y - top }
+				this._handlePointerEvent(canvasCoords, 'picked')
 			}
 		})
-		// Sort and get the closest picked layer
-		if (candidates.length > 0) {
-			candidates.sort(this._pickedLayerSortFn)
-			for (let i = 0; i < candidates.length; i++) {
-				const result = candidates[i]
-				if (i === 0) {
-					result.layer.triggerEvent(eventCallback, result)
-				} else {
-					result.layer.triggerEvent(eventCallback)
+
+		// Use flag & timer to prevent [touchend, mousemove] linked events triggering
+		let isTouched = false
+		let lastTouchedTime = 0
+		element.addEventListener('touchstart', () => (isTouched = true))
+		element.addEventListener('touchend', () => {
+			isTouched = false
+			lastTouchedTime = this.timeline.currentTime
+		})
+
+		//
+		let isMouseDown = false
+		element.addEventListener('mousedown', () => (isMouseDown = true))
+		element.addEventListener('mouseup', () => (isMouseDown = false))
+
+		//
+		let viewChangeTime = this.timeline.currentTime
+		this.onViewChange = () => {
+			viewChangeTime = this.timeline.currentTime
+		}
+
+		// Event callback throttling
+		this._mouseMoveHandler = throttle(
+			this.timeline.frametime,
+			(e) => {
+				// Disable hover when:
+				// 1. device has been touched
+				// 2. mouse has been pressed
+				// 3. camera stable frames < N (default 2)
+				// 4. lastTouchedTime < M (default 500ms)
+				if (
+					this.getProps('enablePicking') &&
+					isTouched === false &&
+					isMouseDown === false &&
+					this.timeline.currentTime - viewChangeTime > this.timeline.frametime * 2 &&
+					this.timeline.currentTime - lastTouchedTime > 500 // TODO: remove hardcode
+				) {
+					const bbox = element.getBoundingClientRect()
+					const left = bbox.left
+					const top = bbox.top
+					const canvasCoords = { x: e.x - left, y: e.y - top }
+					this._handlePointerEvent(canvasCoords, 'hovered')
 				}
-			}
+			},
+			this
+		)
+		element.addEventListener('mousemove', this._mouseMoveHandler)
+	}
+
+	private _mouseMoveHandler: (e: MouseEvent) => any
+
+	private _handlePointerEvent(canvasCoords: CoordV2, triggerEventName: EVENT_NAME) {
+		// Collect pick results
+		const opts = { penetrating: this.props.penetratingPicking ?? false }
+		const result = this.pick(canvasCoords, opts)
+
+		if (!result) {
+			this.traverseVisible((obj) => {
+				const layer = obj as Layer
+				if (layer.isLayer && layer.getProps('pickable')) {
+					// trigger non-picked layer with eventName & no arguments
+					layer.triggerEvent(triggerEventName)
+				}
+			})
+			return
+		}
+
+		if (Array.isArray(result)) {
+			const resultArr = result
+			const pickedLayers = resultArr.map((e) => e.layer)
+			this.traverseVisible((obj) => {
+				const layer = obj as Layer
+				const index = pickedLayers.indexOf(layer)
+				if (layer.isLayer && layer.getProps('pickable')) {
+					if (index >= 0) {
+						// trigger picked layer with eventName & result argument
+						layer.triggerEvent(triggerEventName, resultArr[index])
+					} else {
+						// trigger non-picked layer with eventName & no arguments
+						layer.triggerEvent(triggerEventName)
+					}
+				}
+			})
+		} else {
+			const resultEvent = result
+			const pickedLayer = resultEvent.layer
+			this.traverseVisible((obj) => {
+				const layer = obj as Layer
+				if (layer.isLayer && layer.getProps('pickable')) {
+					if (layer === pickedLayer) {
+						// trigger picked layer with eventName & result argument
+						layer.triggerEvent(triggerEventName, resultEvent)
+					} else {
+						// trigger non-picked layer with eventName & no arguments
+						layer.triggerEvent(triggerEventName)
+					}
+				}
+			})
 		}
 	}
 
 	/**
-	 * 处理picking事件排序
+	 * 处理picking事件结果排序
 	 *
 	 * @protected
 	 * @param {LayerPickEvent} a
@@ -626,7 +681,7 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 				}
 			}
 			// 3. Compare renderOrder
-			// lower renderOrder => earlier to render => covered by larger renderOrder
+			// lower renderOrder => earlier to render => covered by higher renderOrder
 			else if (
 				meshA.renderOrder !== undefined &&
 				meshB.renderOrder !== undefined &&

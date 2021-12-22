@@ -43,6 +43,8 @@ const _vec2 = new Vector2()
  * 标准 Layer，包含 GSIView 作为 3D 容器，HTMLView 作为 2D 容器
  */
 export class STDLayer extends Layer {
+	readonly isSTDLayer = true
+
 	constructor(props: STDLayerProps) {
 		super(props)
 

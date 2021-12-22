@@ -54,13 +54,19 @@ export interface BasicProps {
 	enablePointer?: boolean
 
 	/**
+	 * whether to enable penetrating picking
+	 * default is false
+	 */
+	penetratingPicking?: boolean
+
+	/**
 	 * enable frustumCulling feature
 	 */
 	frustumCulling?: boolean
 
 	/**
 	 * enable async rendering (use setTimeout internally)
-	 * specifically for syncing with AMap render
+	 * specifically for syncing with AMap render process
 	 */
 	asyncRendering?: boolean
 
@@ -77,6 +83,7 @@ export const defaultBasicProps: BasicProps = {
 	renderToFBO: false,
 	frustumCulling: true,
 	enablePointer: true,
+	penetratingPicking: false,
 	asyncRendering: false,
 	debug: false,
 }

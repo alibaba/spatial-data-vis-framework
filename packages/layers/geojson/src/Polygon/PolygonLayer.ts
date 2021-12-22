@@ -364,8 +364,7 @@ export class PolygonLayer extends STDLayer {
 		)
 
 		// Set picking events
-		this.onClick = this._executeClick
-		this.onHover = this._executeHover
+		this.onRaycast = this._executePicking
 
 		/**
 		 * Highilight api
@@ -410,12 +409,12 @@ export class PolygonLayer extends STDLayer {
 
 	init() {}
 
-	private _executeClick(polaris, canvasCoords, ndc): PickEvent | undefined {
+	private _executePicking(polaris, canvasCoords, ndc): PickEvent | undefined {
 		if (!this.getProps('pickable')) return
 		if (!this.surfaceLayer || !this.surfaceLayer.geom || !this.surfaceLayer.geom.attributes.color)
 			return
 
-		const pickResult = (polaris as PolarisGSI).pick(this.surfaceLayer.mesh, ndc, {})
+		const pickResult = (polaris as PolarisGSI).pickObject(this.surfaceLayer.mesh, ndc, {})
 		let event: PickEvent | undefined
 		if (pickResult.hit && pickResult.intersections && pickResult.intersections.length > 0) {
 			const inter0 = pickResult.intersections[0]
@@ -444,43 +443,6 @@ export class PolygonLayer extends STDLayer {
 						event.index = feature.index
 						event.data = data
 					}
-				}
-			})
-		}
-
-		return event
-	}
-
-	private _executeHover(polaris, canvasCoords, ndc): PickEvent | undefined {
-		if (!this.getProps('pickable')) return
-		if (!this.surfaceLayer || !this.surfaceLayer.geom || !this.surfaceLayer.geom.attributes.color)
-			return
-
-		const pickResult = (polaris as PolarisGSI).pick(this.surfaceLayer.mesh, ndc, {})
-		let event
-		if (pickResult.hit && pickResult.intersections && pickResult.intersections.length > 0) {
-			const inter0 = pickResult.intersections[0]
-			event = {
-				distance: inter0.distance as number,
-				point: inter0.point as { x: number; y: number; z: number },
-				index: -1,
-				object: undefined,
-				data: undefined,
-			}
-			// Find corresponding feature data
-			this.surfaceLayer.featIndexRangeMap.forEach((range, feature) => {
-				if (
-					inter0.index !== undefined &&
-					inter0.index >= range[0] / 3 &&
-					inter0.index <= range[1] / 3
-				) {
-					const data: SelectionDataType = {
-						curr: feature,
-						feature,
-					}
-					event.object = this.surfaceLayer.mesh
-					event.index = feature.index
-					event.data = data
 				}
 			})
 		}

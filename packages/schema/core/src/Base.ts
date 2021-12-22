@@ -120,11 +120,18 @@ export abstract class Base {
 
 	/**
 	 * common pointer events
+	 * Polaris触发pointer事件后派发给children，由children实现picking计算结果后返回给Polaris
 	 */
-	// Polaris触发click事件后派发给children，由children实现picking计算结果后返回给Polaris
+	_onRaycast: (polaris: Base, canvasCoords: CoordV2, ndc: CoordV2) => PickEvent | undefined
+
+	/**
+	 * @deprecated
+	 */
 	protected _onClick: (polaris: Base, canvasCoords: CoordV2, ndc: CoordV2) => PickEvent | undefined
 
-	// Polaris触发hover事件后派发给children，由children实现hovering计算结果后返回给Polaris
+	/**
+	 * @deprecated
+	 */
 	protected _onHover: (polaris: Base, canvasCoords: CoordV2, ndc: CoordV2) => PickEvent | undefined
 
 	// 外部监听picked/hovered事件入口
@@ -212,8 +219,19 @@ export abstract class Base {
 	}
 
 	/**
+	 * callback when Polaris requires layer to return result of a picking test.
+	 * descendants should implement their own logic and return the result.
+	 */
+	protected set onRaycast(
+		f: (polaris: Base, canvasCoord: CoordV2, ndc: CoordV2) => PickEvent | undefined
+	) {
+		this._onRaycast = f
+	}
+
+	/**
 	 * callback when this layer is being clicked/tapped by user pointer
 	 * descendants should implement their own logic and return the click result.
+	 * @deprecated
 	 */
 	protected set onClick(
 		f: (polaris: Base, canvasCoord: CoordV2, ndc: CoordV2) => PickEvent | undefined
@@ -224,6 +242,7 @@ export abstract class Base {
 	/**
 	 * callback when this layer is being hovered by user pointer
 	 * descendants should implement their own logic and return the hover result.
+	 * @deprecated
 	 */
 	protected set onHover(
 		f: (polaris: Base, canvasCoord: CoordV2, ndc: CoordV2) => PickEvent | undefined
