@@ -24,17 +24,14 @@ import * as Projections from '@polaris.gl/projection'
 import { STDLayer } from '@polaris.gl/layer-std'
 import Hammer from 'hammerjs'
 import { throttle } from './Utils'
-import localForage from 'localforage'
-
+import * as localForage from 'localforage'
 export interface PolarisGSIProps extends PolarisProps {
 	enablePicking?: boolean
-	hoverThrottle?: number
 }
 
 export const DefaultPolarisGSIProps: PolarisGSIProps = {
 	...defaultPolarisProps,
 	enablePicking: true,
-	hoverThrottle: 150,
 }
 
 export interface PolarisGSI extends Polaris {
@@ -85,10 +82,9 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 	private _resizeListener: any
 
 	/**
-	 * localStorage
-	 * @TODO fix types
+	 * localForage instance map
 	 */
-	private _localForage: any
+	private _storageMap: Map<string, { store: typeof localForage }> = new Map()
 
 	constructor(props: PolarisGSIProps) {
 		super({
@@ -222,18 +218,6 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 				this._resizeListener = undefined
 			}
 		})
-
-		// Init indexedDB
-		this._initLocalStorages()
-	}
-
-	getLocalStorage(type?: string) {
-		switch (type) {
-			case 'localforage':
-				return this._localForage
-			default:
-				return this._localForage
-		}
 	}
 
 	addOptimizePass(pass: OptimizePass) {
@@ -645,62 +629,71 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 		}
 	}
 
+	getStorageInstance(options: { type: 'localForage'; storeName: string }): {
+		store: typeof localForage
+	} {
+		switch (options.type) {
+			case 'localForage': {
+				const storage = this._storageMap.get(options.storeName)
+				if (!storage) {
+					const store = localForage.createInstance({
+						driver: localForage.INDEXEDDB, // IndexedDB
+						name: 'Polaris_DB', // db name
+						storeName: options.storeName, // table name
+					})
+					const storage = {
+						store,
+					}
+					this._storageMap.set(options.storeName, storage)
+					return storage
+				}
+				return storage
+			}
+			default:
+				throw 'PolarisGSI - Invalid storage type: ' + options.type
+		}
+	}
+
 	/**
 	 * 处理picking事件结果排序
-	 *
-	 * @protected
-	 * @param {LayerPickEvent} a
-	 * @param {LayerPickEvent} b
-	 * @return {*}  {number}
-	 * @memberof PolarisGSI
 	 */
 	protected _pickedLayerSortFn(a: LayerPickEvent, b: LayerPickEvent): number {
 		const meshA = a.object
 		const meshB = b.object
-		if (meshA !== undefined && meshB !== undefined) {
-			if (meshA.material !== undefined && meshB.material !== undefined) {
-				// 1. Compare depthTest
-				// if both are true, compare distance
-				if (meshA.material.depthTest !== undefined && meshB.material.depthTest !== undefined) {
-					if (meshA.material.depthTest === true && meshB.material.depthTest === true) {
-						return a.distance - b.distance
-					}
-				}
-				// 2. Compare transparent
-				// transparent object is always rendered after non-transparent object
-				else if (
-					meshA.material['transparent'] === true &&
-					meshB.material['transparent'] === false
-				) {
-					return 1
-				} else if (
-					meshA.material['transparent'] === false &&
-					meshB.material['transparent'] === true
-				) {
-					return -1
+
+		if (meshA === undefined || meshB === undefined) {
+			return a.distance - b.distance
+		}
+
+		if (meshA.material !== undefined && meshB.material !== undefined) {
+			// 1. Compare depthTest
+			// if both are true, compare distance
+			if (meshA.material.depthTest !== undefined && meshB.material.depthTest !== undefined) {
+				if (meshA.material.depthTest === true && meshB.material.depthTest === true) {
+					return a.distance - b.distance
 				}
 			}
-			// 3. Compare renderOrder
-			// lower renderOrder => earlier to render => covered by higher renderOrder
-			else if (
-				meshA.renderOrder !== undefined &&
-				meshB.renderOrder !== undefined &&
-				meshA.renderOrder !== meshB.renderOrder
+			// 2. Compare transparent
+			// transparent object is always rendered after non-transparent object
+			else if (meshA.material['transparent'] === true && meshB.material['transparent'] === false) {
+				return 1
+			} else if (
+				meshA.material['transparent'] === false &&
+				meshB.material['transparent'] === true
 			) {
-				return meshB.renderOrder - meshA.renderOrder
+				return -1
 			}
 		}
-		return a.distance - b.distance
-	}
+		// 3. Compare renderOrder
+		// lower renderOrder => earlier to render => covered by higher renderOrder
+		else if (
+			meshA.renderOrder !== undefined &&
+			meshB.renderOrder !== undefined &&
+			meshA.renderOrder !== meshB.renderOrder
+		) {
+			return meshB.renderOrder - meshA.renderOrder
+		}
 
-	private _initLocalStorages() {
-		localForage.config({
-			driver: localForage.INDEXEDDB,
-			name: 'PolarisGSI_LocalDB',
-			version: 1.0,
-			// storeName: 'keyvaluepairs',
-			description: 'PolarisGSI_LocalDB',
-		})
-		this._localForage = localForage
+		return a.distance - b.distance
 	}
 }

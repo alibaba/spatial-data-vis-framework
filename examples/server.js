@@ -101,10 +101,11 @@ app.get('/:demoName', (req, res) => {
 })
 
 // compit jade & route '/'to index.html
+const demoEntries = getDemoEntries()
 app.get('/', (req, res) => {
 	console.log('visiting index')
 	const html = jade.renderFile(path.join(__dirname, 'index.jade'), {
-		demos: getDemoEntries(),
+		demos: demoEntries,
 	})
 	res.writeHead(200, { 'Content-Type': 'text/html;charset=utf-8' })
 	res.end(html)

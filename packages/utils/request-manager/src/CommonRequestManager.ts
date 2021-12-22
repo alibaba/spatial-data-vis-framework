@@ -84,13 +84,13 @@ export class CommonRequestManager<T = { url: string; requestParams?: any }>
 			if (Object.prototype.hasOwnProperty.call(requestArg, key)) {
 				const value = requestArg[key]
 				if (typeof value === 'string' || typeof value === 'number' || typeof value === 'bigint') {
-					cacheKey += value.toString()
+					cacheKey += value.toString() + '|'
 				} else if (typeof value === 'function') {
 					continue
 				} else if (typeof value === 'object') {
-					cacheKey += JSON.stringify(value)
+					cacheKey += JSON.stringify(value) + '|'
 				} else {
-					cacheKey += `${value}`
+					cacheKey += `${value}` + '|'
 				}
 			}
 		}
@@ -134,31 +134,15 @@ export class CommonRequestManager<T = { url: string; requestParams?: any }>
 							break
 						}
 						case 'arraybuffer': {
-							res
-								.arrayBuffer()
-								.then((arraybuffer) => {
-									resolve(arraybuffer)
-								})
-								.catch((e) => reject(e))
-
+							res.arrayBuffer().then(resolve).catch(reject)
 							break
 						}
 						case 'json': {
-							res
-								.json()
-								.then((json) => {
-									resolve(json)
-								})
-								.catch((e) => reject(e))
+							res.json().then(resolve).catch(reject)
 							break
 						}
 						case 'text': {
-							res
-								.text()
-								.then((text) => {
-									resolve(text)
-								})
-								.catch((e) => reject(e))
+							res.text().then(resolve).catch(reject)
 							break
 						}
 						default: {
@@ -166,9 +150,7 @@ export class CommonRequestManager<T = { url: string; requestParams?: any }>
 						}
 					}
 				})
-				.catch((e) => {
-					reject(e)
-				})
+				.catch(reject)
 		})
 
 		// requestParams = requestParams || {}

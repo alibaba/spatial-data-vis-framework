@@ -1,15 +1,15 @@
 import { CommonRequestManager } from './CommonRequestManager'
 import { ConfigType, RequestPending } from './types'
 
-export type XYZTileArgs = { x: number; y: number; z: number }
+export type XYZTileArg = { x: number; y: number; z: number }
 
 export interface XYZTileRequestManagerConfig extends ConfigType {
-	getUrl: (requestArgs: XYZTileArgs) => string | { url: string; requestParams?: any }
-	getCacheKey?: (requestArgs: XYZTileArgs) => string
-	fetcher?: (requestArgs: XYZTileArgs) => RequestPending
+	getUrl: (requestArgs: XYZTileArg) => string | { url: string; requestParams?: any }
+	getCacheKey?: (requestArgs: XYZTileArg) => string
+	fetcher?: (requestArgs: XYZTileArg) => RequestPending
 }
 
-export class XYZTileRequestManager extends CommonRequestManager<XYZTileArgs> {
+export class XYZTileRequestManager extends CommonRequestManager<XYZTileArg> {
 	readonly config: XYZTileRequestManagerConfig
 
 	constructor(config: XYZTileRequestManagerConfig) {
@@ -19,15 +19,15 @@ export class XYZTileRequestManager extends CommonRequestManager<XYZTileArgs> {
 		}
 	}
 
-	getCacheKey(requestArgs: XYZTileArgs) {
+	getCacheKey(requestArg: XYZTileArg) {
 		if (this.config.getCacheKey) {
-			return this.config.getCacheKey(requestArgs)
+			return this.config.getCacheKey(requestArg)
 		}
-		const { x, y, z } = requestArgs
+		const { x, y, z } = requestArg
 		return `${x}|${y}|${z}`
 	}
 
-	protected fetchDataDefault(requestArg: XYZTileArgs, abortSignal?: AbortSignal): Promise<any> {
+	protected fetchDataDefault(requestArg: XYZTileArg, abortSignal?: AbortSignal): Promise<any> {
 		const requestInfo = this.config.getUrl(requestArg)
 		const url = typeof requestInfo === 'string' ? requestInfo : requestInfo.url
 		const requestParams = typeof requestInfo === 'string' ? undefined : requestInfo.requestParams
@@ -69,9 +69,7 @@ export class XYZTileRequestManager extends CommonRequestManager<XYZTileArgs> {
 						}
 					}
 				})
-				.catch((e) => {
-					reject(e)
-				})
+				.catch(reject)
 		})
 
 		// requestParams = requestParams || {}

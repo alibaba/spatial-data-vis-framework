@@ -69,9 +69,12 @@ export interface POILayerProps extends STDLayerProps {
 
 	/**
 	 * color blend mode
+	 *
 	 * @option 'replace' -> targetRGB = sourceRGB
 	 * @option 'multiply' -> targetRGB = rawRGB * sourceRGB
 	 * @option 'add' -> targetRGB = rawRGB + sourceRGB
+	 *
+	 * all blend methods will keep the raw alpha values of source image.
 	 */
 	pointColorBlend: 'replace' | 'multiply' | 'add'
 
