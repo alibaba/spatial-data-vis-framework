@@ -313,15 +313,19 @@ export abstract class Base {
 	 */
 	triggerEvent(name: EVENT_NAME, ...args) {
 		const eventName = '_on' + name[0].toUpperCase() + name.substring(1)
-		const arr = this[eventName] as any[]
-		if (!arr) {
-			console.error(`Invalid event name: '${name}'`)
-			return false
+		const fnOrArr = this[eventName]
+		if (!fnOrArr) {
+			throw new Error(`Invalid event name: '${name}'`)
 		}
-		arr.forEach((fn) => {
-			fn.apply(this, args)
-		})
-		return true
+		if (Array.isArray(fnOrArr)) {
+			fnOrArr.forEach((fn) => {
+				fn.apply(this, args)
+			})
+		} else if (typeof fnOrArr === 'function') {
+			fnOrArr.apply(this, args)
+		} else {
+			throw new Error('Invalid event')
+		}
 	}
 
 	/**

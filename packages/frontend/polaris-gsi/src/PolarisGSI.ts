@@ -43,6 +43,8 @@ export interface LayerPickEvent extends PickEventResult {
 	layer: Layer
 }
 
+export type LocalForageType = typeof localForage
+
 export class PolarisGSI extends Polaris implements PolarisGSI {
 	readonly isPolarisGSI = true
 
@@ -84,7 +86,7 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 	/**
 	 * localForage instance map
 	 */
-	private _storageMap: Map<string, { store: typeof localForage }> = new Map()
+	private _storageMap: Map<string, { store: LocalForageType }> = new Map()
 
 	constructor(props: PolarisGSIProps) {
 		super({
@@ -415,7 +417,7 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 	 */
 	pick(
 		canvasCoords: CoordV2,
-		options = { penetrating: false }
+		options = { deepPicking: false }
 	): LayerPickEvent | LayerPickEvent[] | undefined {
 		const element = this.view.html.element
 		const bbox = element.getBoundingClientRect()
@@ -438,7 +440,8 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 			const layer = obj as Layer
 			if (layer.isLayer && layer.getProps('pickable')) {
 				if (!layer._onRaycast) {
-					throw 'PolarisGSI - Layer does not implement .onRaycast method. '
+					// console.warn('PolarisGSI - Layer does not implement .onRaycast method. ')
+					return
 				}
 				const layerRes = layer._onRaycast(this, canvasCoords, ndc)
 				if (layerRes) {
@@ -459,7 +462,7 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 		// Sort and get the closest picked layer
 		if (candidates.length > 0) {
 			candidates.sort(this._pickedLayerSortFn)
-			if (options.penetrating) {
+			if (options.deepPicking) {
 				return candidates
 			} else {
 				return candidates[0]
@@ -478,7 +481,7 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 		// Remove event listeners
 		this.hammer.off('tap')
 		this.hammer.destroy()
-		const element = this.view.html.element as HTMLElement
+		const element = this.view.html.element
 		element.removeEventListener('mousemove', this._mouseMoveHandler)
 
 		// Dispose layers
@@ -581,9 +584,8 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 
 	private _handlePointerEvent(canvasCoords: CoordV2, triggerEventName: EVENT_NAME) {
 		// Collect pick results
-		const opts = { penetrating: this.props.penetratingPicking ?? false }
+		const opts = { deepPicking: this.props.deepPicking ?? false }
 		const result = this.pick(canvasCoords, opts)
-
 		if (!result) {
 			this.traverseVisible((obj) => {
 				const layer = obj as Layer
@@ -630,27 +632,28 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 	}
 
 	getStorageInstance(options: { type: 'localForage'; storeName: string }): {
-		store: typeof localForage
+		store: LocalForageType
 	} {
 		switch (options.type) {
 			case 'localForage': {
-				const storage = this._storageMap.get(options.storeName)
+				const storeName = options.storeName ?? 'default'
+				const storage = this._storageMap.get(storeName)
 				if (!storage) {
 					const store = localForage.createInstance({
 						driver: localForage.INDEXEDDB, // IndexedDB
 						name: 'Polaris_DB', // db name
-						storeName: options.storeName, // table name
+						storeName, // table name
 					})
 					const storage = {
 						store,
 					}
-					this._storageMap.set(options.storeName, storage)
+					this._storageMap.set(storeName, storage)
 					return storage
 				}
 				return storage
 			}
 			default:
-				throw 'PolarisGSI - Invalid storage type: ' + options.type
+				throw new Error('PolarisGSI - Invalid storage type: ' + options.type)
 		}
 	}
 
