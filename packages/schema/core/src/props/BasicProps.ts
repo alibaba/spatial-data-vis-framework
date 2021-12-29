@@ -57,7 +57,7 @@ export interface BasicProps {
 	 * whether to enable penetrating picking
 	 * default is false
 	 */
-	penetratingPicking?: boolean
+	deepPicking?: boolean
 
 	/**
 	 * enable frustumCulling feature
@@ -83,7 +83,7 @@ export const defaultBasicProps: BasicProps = {
 	renderToFBO: false,
 	frustumCulling: true,
 	enablePointer: true,
-	penetratingPicking: false,
+	deepPicking: false,
 	asyncRendering: false,
 	debug: false,
 }

@@ -25,7 +25,6 @@ const framesBeforeRequest = 10
 const viewZoomReduction = 0
 
 // POI
-const size = 20
 let lastHovered
 const poi = new POILayer({
 	// geojsonFilter: (geojson) => {
@@ -34,7 +33,7 @@ const poi = new POILayer({
 	framesBeforeRequest,
 	viewZoomReduction,
 	dataType: 'pbf',
-	pointSize: size,
+	pointSize: 20,
 	pointHoverSize: 24,
 	pointOffset: [0.0, 0.5],
 	getPointColor: '#ffaf99',
@@ -87,8 +86,8 @@ const poi = new POILayer({
 	},
 	renderOrder: 100,
 })
-p.add(poi)
-window['poi'] = poi
+// p.add(poi)
+// window['poi'] = poi
 
 // AOI
 const picked: Set<number> = new Set()
@@ -249,7 +248,7 @@ function getPOIUrl(x, y, z) {
 					aggregation: {
 						zlevel: [1, 15],
 						clustering_method: 'bin',
-						clustering_scalar: 500,
+						clustering_scalar: 1000,
 						fields: {
 							count_number: ['id', 'count'],
 							sum_number: ['count', 'sum'],
@@ -288,7 +287,7 @@ function getAOIUrl(x, y, z) {
 				default: {
 					geometry_type: 'Polygon',
 					visible_columns: [],
-					simplify_scalar: 7,
+					simplify_scalar: 10,
 					filter_expression: null,
 					preserve_collapsed: false,
 					with_boundary: true,
