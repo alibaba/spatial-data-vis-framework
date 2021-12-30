@@ -15,7 +15,6 @@
         "rebuild": "./scripts/rebuild.sh"
     },
     "dependencies": {
-        "@gs.i/frontend-sdk": "^0.0.0-beta",
         "@gs.i/utils-math": "^0.0.0-beta",
         "@polaris.gl/projection": "^0.0.0-alpha.1",
         "@polaris.gl/schema": "^0.0.0-alpha.5",

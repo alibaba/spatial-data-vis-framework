@@ -7,7 +7,7 @@
 		"start": "node --max-old-space-size=8192 server.js"
 	},
 	"dependencies": {
-		"@gs.i/all": "^0.0.0-beta",
+		"@gs.i/all": "0.0.0-beta",
 		"@polaris.gl/gsi": "^0.0.0-alpha.5",
 		"@polaris.gl/gsi-gl2": "^0.0.0-alpha.5",
 		"@polaris.gl/layer-amap": "^0.0.0-alpha.5",

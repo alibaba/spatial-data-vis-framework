@@ -47,7 +47,7 @@ try {
 		const pkgJsonPath = path.resolve(location, './package.json')
 
 		const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath).toString())
-		const dependencies = pkgJson.dependencies
+		const dependencies = pkgJson.dependencies || {}
 
 		// delete @gs.i/all
 		if (dependencies['@gs.i/all']) {

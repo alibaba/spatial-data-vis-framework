@@ -1,7 +1,12 @@
 import { isDISPOSED } from '@gs.i/schema'
 import { Mesh, MatrPoint, Geom, Attr } from '@gs.i/frontend-sdk'
 import { Color } from '@gs.i/utils-math'
-import { XYZTileManager, TileRenderables, TilePromise } from '@polaris.gl/utils-tile-manager'
+import {
+	XYZTileManager,
+	TileRenderables,
+	TilePromise,
+	TileToken,
+} from '@polaris.gl/utils-tile-manager'
 import { Marker } from '@polaris.gl/layer-std-marker'
 import { RequestPending, XYZTileRequestManager } from '@polaris.gl/utils-request-manager'
 import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
@@ -381,6 +386,9 @@ export class POILayer extends STDLayer {
 					useParentReplaceUpdate: this.getProps('useParentReplaceUpdate'),
 					getTileRenderables: (tileToken) => {
 						return this._createTileRenderables(tileToken, projection, polaris)
+					},
+					onTileRelease: (tile, token) => {
+						this._releaseTile(tile, token)
 					},
 				})
 
@@ -899,5 +907,42 @@ export class POILayer extends STDLayer {
 			return pointHoverSize
 		}
 		return pointSize
+	}
+
+	private _releaseTile(tile: TileRenderables, token: TileToken) {
+		const featureIdKey = this.getProps('featureIdKey')
+
+		tile.meshes.forEach((mesh) => {
+			// for non-cluster points mesh, features is a list
+			const meshFeatures = this._renderableFeatureMap.get(mesh as Mesh) as any[]
+			if (!meshFeatures) return
+
+			meshFeatures.forEach((feature) => {
+				const id = feature.properties[featureIdKey] as number | string
+				const index = feature.index
+
+				this._indexMeshMap.delete(index)
+				this._idMeshesMap.delete(id)
+				// @NOTE: style caches should not be deleted
+			})
+
+			// delete renderableFeatures map
+			this._renderableFeatureMap.delete(mesh as Mesh)
+		})
+
+		tile.layers.forEach((marker) => {
+			// for marker, feature is an object
+			const feature = this._renderableFeatureMap.get(marker as Marker)
+			if (!feature) return
+
+			const id = feature.properties[featureIdKey] as number | string
+			const index = feature.index
+
+			this._indexMeshMap.delete(index)
+			this._idMeshesMap.delete(id)
+
+			// delete renderableFeatures map
+			this._renderableFeatureMap.delete(marker as Marker)
+		})
 	}
 }
