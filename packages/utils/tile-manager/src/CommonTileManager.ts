@@ -45,6 +45,11 @@ export type CommonTileManagerConfig = {
 	getChildTileTokens: (token: TileToken, targetZoom: number) => TileToken[]
 
 	/**
+	 * Callback which is triggered when tile will be released from this TileManager
+	 */
+	onTileRelease: (tile: TileRenderables, tileToken: TileToken) => void
+
+	/**
 	 * Min zoom limit, default is 3
 	 */
 	minZoom?: number
@@ -83,9 +88,11 @@ export type CommonTileManagerConfig = {
 	useParentReplaceUpdate?: boolean
 
 	/**
-	 * Callback which is triggered when tile will be released from this TileManager
+	 * Whether to resend errored requests, the default is false,
+	 * which means if the request failed TileManager will use an empty tile.
+	 * @default false
 	 */
-	onTileRelease?: (tile: TileRenderables, tileToken: TileToken) => void
+	RetryErroredRequests?: boolean
 }
 
 const defaultConfig = {
@@ -96,7 +103,7 @@ const defaultConfig = {
 	framesBeforeAbort: 5,
 	useParentReplaceUpdate: true,
 	printErrors: false,
-	onTileRelease: (tile, []) => {},
+	RetryErroredRequests: false,
 }
 
 export class CommonTileManager implements TileManager {
@@ -274,6 +281,7 @@ export class CommonTileManager implements TileManager {
 				return
 			}
 
+			// cache
 			const cachedPromise: CachedTilePromise = {
 				...tilePromise,
 				key: cacheKey,
@@ -281,6 +289,7 @@ export class CommonTileManager implements TileManager {
 			}
 			this._promiseMap.set(cacheKey, cachedPromise)
 
+			// handle renderables
 			const promise = cachedPromise.promise
 			promise
 				.then((tile) => {
@@ -291,8 +300,13 @@ export class CommonTileManager implements TileManager {
 						return
 					}
 
-					if (err.name === 'AbortError') {
-						// promise manually aborted, will retry next time
+					if (!this._promiseMap.has(cacheKey)) {
+						// promise was either aborted by us or never requested (which is abnormal)
+						// @NOTE: We do not identify the 'AbortError string from this error obj,
+						// as in many apps the errors are intercepted in the way of rejection.
+						// So, we should never assume the error.name/.message to be some specific string.
+						// We should only identify it from the user's abort() function return value.
+						// When abort() returns { success: true }, the promiseCache will be removed from map
 						return
 					}
 
@@ -300,8 +314,13 @@ export class CommonTileManager implements TileManager {
 						console.error('Polaris::TileManager - getTileRenderables error', err)
 					}
 
-					// add empty tile renderables if server response is errorlike
-					this._addTile(cacheKey, undefined)
+					if (this.config.RetryErroredRequests) {
+						// delete errored requests, retry next time
+						this._promiseMap.delete(cacheKey)
+					} else {
+						// add empty tile renderables if server response is errorlike
+						this._addTile(cacheKey, undefined)
+					}
 				})
 		})
 	}
@@ -463,9 +482,9 @@ export class CommonTileManager implements TileManager {
 			const key = tile.key
 			this._tileMap.delete(key)
 			const { meshes, layers } = tile
-			this.config.onTileRelease(tile, this.keyToTileToken(tile.key))
 			meshes.forEach((mesh) => this.config.layer.group.remove(mesh))
 			layers.forEach((layer) => this.config.layer.remove(layer))
+			this.config.onTileRelease(tile, this.keyToTileToken(tile.key))
 		})
 	}
 
@@ -503,7 +522,7 @@ export class CommonTileManager implements TileManager {
 	}
 
 	private _abortOutOfViewPromises() {
-		const outOfViewPromises: CachedTilePromise[] = []
+		const outOfViewCaches: CachedTilePromise[] = []
 
 		this._promiseMap.forEach((tilePromise, key) => {
 			if (this._tileMap.has(key)) {
@@ -511,20 +530,20 @@ export class CommonTileManager implements TileManager {
 			}
 			if (!this._currVisibleKeys.includes(key)) {
 				tilePromise.outOfViewFrames++
-				outOfViewPromises.push(tilePromise)
+				outOfViewCaches.push(tilePromise)
 			} else {
 				tilePromise.outOfViewFrames = 0
 			}
 		})
 
-		outOfViewPromises.forEach((promise) => {
-			if (promise.outOfViewFrames > this.config.framesBeforeAbort) {
+		outOfViewCaches.forEach((cache) => {
+			if (cache.outOfViewFrames > this.config.framesBeforeAbort) {
 				// abort the promise
-				if (promise.abort) {
-					const { success } = promise.abort()
+				if (cache.abort) {
+					const { success } = cache.abort()
 					// the abort operation may be failed
 					if (success) {
-						this._promiseMap.delete(promise.key)
+						this._promiseMap.delete(cache.key)
 					}
 				}
 			}
