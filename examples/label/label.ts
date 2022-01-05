@@ -41,38 +41,43 @@ const amapLayer = new AMapLayer({
 p.add(amapLayer)
 window['amap'] = amapLayer
 
-const labelLayer = new LabelLayer({
-	text_color: 'rgba(255,255,255,1)',
-	text_size: 12,
-	text_family: 'PingFangSC-Semibold',
-	text_weight: 'normal',
-	text_shadow_px: 1,
-	text_shadow_color: '#000',
-	text_translate_x: 0,
-	text_translate_y: 0,
-	markerCompareEnlargePx: 5, // Label之间比较时的放大数值，单位px
-	inverseByBgColor: true, // 开启根据背景色反色
-	// 背景色的callback
-	getBgColor: (feature) => {
-		const r = Math.floor(155 + Math.random() * 100).toString(16)
-		const color = `#${r}aa${r}`
-		return color
-	},
-	debug: false,
-	// 自定义text style
-	// customTextStyle: (dataItem) => {
-	//     const r = Math.round(Math.random() * 255).toString(16)
-	//     const g = Math.round(Math.random() * 255).toString(16)
-	//     const b = Math.round(Math.random() * 255).toString(16)
-	//     return {
-	//         text_color: `#${r}${g}${b}`,
-	//         text_shadow_px: Math.random() > 0.5 ? 0 : 0.5,
-	//         text_size: 12 + Math.random() * 4,
-	//     }
-	// },
+getLabelData().then((data) => {
+	const labelLayer = new LabelLayer({
+		text_color: 'rgba(255,255,255,1)',
+		text_size: 12,
+		text_family: 'PingFangSC-Semibold',
+		text_weight: 'normal',
+		text_shadow_px: 1,
+		text_shadow_color: '#000',
+		text_translate_x: -0.5,
+		text_translate_y: -0.5,
+		markerCompareEnlargePx: 5, // Label之间比较时的放大数值，单位px
+		inverseByBgColor: true, // 开启根据背景色反色
+		// 背景色的callback
+		getBgColor: (feature) => {
+			const r = Math.floor(155 + Math.random() * 100).toString(16)
+			const color = `#${r}aa${r}`
+			return color
+		},
+		debug: false,
+		// 自定义text style
+		// customTextStyle: (dataItem) => {
+		//     const r = Math.round(Math.random() * 255).toString(16)
+		//     const g = Math.round(Math.random() * 255).toString(16)
+		//     const b = Math.round(Math.random() * 255).toString(16)
+		//     return {
+		//         text_color: `#${r}${g}${b}`,
+		//         text_shadow_px: Math.random() > 0.5 ? 0 : 0.5,
+		//         text_size: 12 + Math.random() * 4,
+		//     }
+		// },
+		data,
+	})
+	p.add(labelLayer)
+	window['layer'] = labelLayer
+
+	p.setStatesCode('1|103.506587|36.167078|0.000000|0.78540|0.00000|4.25200')
 })
-p.add(labelLayer)
-window['layer'] = labelLayer
 
 async function getLabelData() {
 	const urls = await fetch('https://fbi-geography.oss-cn-hangzhou.aliyuncs.com/urls.json')
@@ -105,7 +110,7 @@ async function getLabelData() {
 		}
 	})
 
-	const labels = []
+	const labels: any[] = []
 	for (let i = 0; i < provinceRegion.features.length; i++) {
 		const feature = provinceRegion.features[i]
 		const properties = feature.properties
