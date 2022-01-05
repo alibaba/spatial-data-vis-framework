@@ -265,6 +265,8 @@ function getPOIUrl(x, y, z) {
 }
 
 function getAOIUrl(x, y, z) {
+	console.log(x, y, z)
+
 	const params = {
 		PostgreSQL: {
 			dbname: 'EXAMPLE',

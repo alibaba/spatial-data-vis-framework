@@ -1,7 +1,7 @@
 import { RequestManager, ConfigType, RequestPending } from './types'
 
-export class CommonRequestManager<T = { url: string; requestParams?: any }>
-	implements RequestManager<T>
+export class CommonRequestManager<RequestArgsType = { url: string; requestParams?: any }>
+	implements RequestManager<RequestArgsType>
 {
 	readonly config: ConfigType
 
@@ -16,7 +16,7 @@ export class CommonRequestManager<T = { url: string; requestParams?: any }>
 		this.config = config
 	}
 
-	request(requestArg: T): RequestPending {
+	request(requestArg: RequestArgsType): RequestPending {
 		const cacheKey = this.getCacheKey(requestArg)
 		if (typeof cacheKey !== 'string') {
 			throw new Error('CommonRequestManager - CacheKey must be string')
@@ -78,7 +78,7 @@ export class CommonRequestManager<T = { url: string; requestParams?: any }>
 		return requestPending
 	}
 
-	getCacheKey(requestArg: T) {
+	getCacheKey(requestArg: RequestArgsType) {
 		let cacheKey = ''
 		for (const key in requestArg) {
 			if (Object.prototype.hasOwnProperty.call(requestArg, key)) {
@@ -102,7 +102,7 @@ export class CommonRequestManager<T = { url: string; requestParams?: any }>
 		this._dataCacheMap.clear()
 	}
 
-	protected fetchDataDefault(requestArg: T, abortSignal?: AbortSignal): Promise<any> {
+	protected fetchDataDefault(requestArg: RequestArgsType, abortSignal?: AbortSignal): Promise<any> {
 		const args = requestArg as any
 		const url = typeof requestArg === 'string' ? args : args.url
 		const requestParams =
