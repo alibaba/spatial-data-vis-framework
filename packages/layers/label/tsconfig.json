@@ -10,7 +10,13 @@
 	"exclude": ["dist"],
 	"references": [
 		{
+			"path": "../../frontend/polaris-gsi"
+		},
+		{
 			"path": "../../frontend/layer-std"
+		},
+		{
+			"path": "../marker"
 		}
 	]
 }

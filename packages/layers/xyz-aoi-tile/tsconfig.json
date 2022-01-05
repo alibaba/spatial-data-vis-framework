@@ -10,28 +10,28 @@
 	"exclude": ["dist"],
 	"references": [
 		{
-			"path": "../../frontend/layer-std"
+			"path": "../../frontend/polaris-gsi"
 		},
 		{
-			"path": "../../schema/core"
+			"path": "../../frontend/layer-std"
 		},
 		{
 			"path": "../../utils/projections"
 		},
 		{
-			"path": "../../frontend/polaris-gsi"
+			"path": "../../schema/core"
 		},
 		{
 			"path": "../../utils/utils"
+		},
+		{
+			"path": "../../utils/indicator"
 		},
 		{
 			"path": "../../utils/request-manager"
 		},
 		{
 			"path": "../../utils/tile-manager"
-		},
-		{
-			"path": "../../utils/indicator"
 		}
 	]
 }

@@ -367,10 +367,13 @@ export class AOILayer extends STDLayer {
 		)
 
 		// update indicators' resolution uniform
-		this.onViewChange = () => {
+		this.onViewChange = (cam) => {
 			this._indicators.forEach((indicator) => {
 				indicator.updateResolution(polaris.width, polaris.height)
 			})
+			if (Math.abs(cam.pitch) > 0.0001) {
+				console.warn('AOILayer - AOILayer under 3D view mode is currently not supported')
+			}
 		}
 
 		/** picking */

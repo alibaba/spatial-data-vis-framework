@@ -10,22 +10,10 @@
 	"exclude": ["dist"],
 	"references": [
 		{
-			"path": "../packages/backend/renderer-gsi-gl2"
-		},
-		{
-			"path": "../packages/backend/renderer-lite"
-		},
-		{
-			"path": "../packages/frontend/layer-std"
-		},
-		{
 			"path": "../packages/frontend/polaris-gsi"
 		},
 		{
-			"path": "../packages/frontend/view-gsi"
-		},
-		{
-			"path": "../packages/frontend/view-html"
+			"path": "../packages/polaris/polaris-gsi-gl2"
 		},
 		{
 			"path": "../packages/layers/amap"
@@ -40,28 +28,40 @@
 			"path": "../packages/layers/scatter"
 		},
 		{
-			"path": "../packages/layers/std-gltf2"
+			"path": "../packages/frontend/layer-std"
 		},
 		{
-			"path": "../packages/layers/std-helper"
+			"path": "../packages/layers/gltf2"
 		},
 		{
-			"path": "../packages/layers/std-marker"
+			"path": "../packages/layers/helper"
 		},
 		{
-			"path": "../packages/layers/xyz-poi-tile-layer"
+			"path": "../packages/layers/marker"
 		},
 		{
-			"path": "../packages/layers/xyz-aoi-tile-layer"
+			"path": "../packages/layers/xyz-aoi-tile"
 		},
 		{
-			"path": "../packages/polaris/polaris-gsi-gl2"
+			"path": "../packages/layers/xyz-poi-tile"
 		},
 		{
 			"path": "../packages/polaris/polaris-lite"
 		},
 		{
+			"path": "../packages/utils/projections"
+		},
+		{
+			"path": "../packages/backend/renderer-gsi-gl2"
+		},
+		{
+			"path": "../packages/backend/renderer-lite"
+		},
+		{
 			"path": "../packages/schema/core"
+		},
+		{
+			"path": "../packages/utils/utils"
 		},
 		{
 			"path": "../packages/utils/animation"
@@ -73,16 +73,19 @@
 			"path": "../packages/utils/indicator"
 		},
 		{
-			"path": "../packages/utils/projections"
-		},
-		{
 			"path": "../packages/utils/props-manager"
 		},
 		{
-			"path": "../packages/utils/utils"
+			"path": "../packages/utils/worker-manager"
 		},
 		{
-			"path": "../packages/utils/worker-manager"
+			"path": "../packages/frontend/view-gsi"
+		},
+		{
+			"path": "../packages/frontend/view-html"
+		},
+		{
+			"path": "../packages/layers/label"
 		}
 	]
 }
