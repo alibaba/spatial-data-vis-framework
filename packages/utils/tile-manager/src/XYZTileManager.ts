@@ -105,7 +105,7 @@ const getChildTileTokens = (token: TileToken, targetZoom: number) => {
 	targetZoom = Math.floor(targetZoom)
 
 	if (inputZ >= targetZoom) {
-		throw 'targetZoom should be larger than token[2]'
+		throw new Error('targetZoom should be larger than token[2]')
 	}
 
 	const parents: TileToken[] = [token]
