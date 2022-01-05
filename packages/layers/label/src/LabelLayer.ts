@@ -61,6 +61,8 @@ export interface LabelLayerProps extends STDLayerProps {
 	 * debug: draw boxes
 	 */
 	debug: boolean
+
+	data?: any
 }
 
 export const defaultProps: LabelLayerProps = {
@@ -158,12 +160,16 @@ export class LabelLayer extends STDLayer {
 		]
 	}
 
-	init(projection, timeline, p) {
-		const polaris = p as PolarisGSI
+	init(projection, timeline, polaris) {
+		const p = polaris as PolarisGSI
+
+		let viewChangedFrames = 0
+		let visNeedsCheck = true
+		let lastZoom = -1
 
 		// Canvas init
 		this.listenProps(['zIndex'], () => {
-			this._createCanvas(polaris)
+			this._createCanvas(p)
 		})
 
 		this.listenProps(
@@ -206,9 +212,6 @@ export class LabelLayer extends STDLayer {
 			this._currVisibles = []
 		})
 
-		let viewChangedFrames = 0
-		let visNeedsCheck = true
-		let lastZoom = -1
 		this.onViewChange = (cam, p) => {
 			const polaris = p as PolarisGSI
 
@@ -236,7 +239,7 @@ export class LabelLayer extends STDLayer {
 
 		const framesBeforeStable = 3
 		this.onBeforeRender = () => {
-			const cam = polaris.cameraProxy
+			const cam = p.cameraProxy
 			if (viewChangedFrames < framesBeforeStable) {
 				this._calcMarkersBBox()
 			}
