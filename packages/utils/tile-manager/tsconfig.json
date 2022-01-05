@@ -10,13 +10,13 @@
 	"exclude": ["dist"],
 	"references": [
 		{
-			"path": "../../schema/core"
-		},
-		{
 			"path": "../../frontend/layer-std"
 		},
 		{
 			"path": "../projections"
+		},
+		{
+			"path": "../../schema/core"
 		}
 	]
 }

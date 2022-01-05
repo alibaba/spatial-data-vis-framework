@@ -13,19 +13,19 @@
 			"path": "../layer-std"
 		},
 		{
+			"path": "../../utils/projections"
+		},
+		{
 			"path": "../../schema/core"
 		},
 		{
 			"path": "../../utils/utils"
 		},
 		{
-			"path": "../view-html"
-		},
-		{
 			"path": "../view-gsi"
 		},
 		{
-			"path": "../../utils/projections"
+			"path": "../view-html"
 		}
 	]
 }

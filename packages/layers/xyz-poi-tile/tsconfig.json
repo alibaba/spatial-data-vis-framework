@@ -10,16 +10,19 @@
 	"exclude": ["dist"],
 	"references": [
 		{
+			"path": "../../frontend/polaris-gsi"
+		},
+		{
 			"path": "../../frontend/layer-std"
 		},
 		{
-			"path": "../../schema/core"
+			"path": "../marker"
 		},
 		{
 			"path": "../../utils/projections"
 		},
 		{
-			"path": "../../frontend/polaris-gsi"
+			"path": "../../schema/core"
 		},
 		{
 			"path": "../../utils/utils"
@@ -29,9 +32,6 @@
 		},
 		{
 			"path": "../../utils/tile-manager"
-		},
-		{
-			"path": "../std-marker"
 		}
 	]
 }

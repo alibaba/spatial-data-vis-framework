@@ -402,6 +402,9 @@ export class POILayer extends STDLayer {
 			if (this.matr) {
 				this.matr.uniforms.uResolution.value = { x: polaris.canvasWidth, y: polaris.canvasHeight }
 			}
+			if (Math.abs(cam.pitch) > 0.0001) {
+				console.warn('POILayer - POILayer under 3D view mode is currently not supported')
+			}
 		}
 
 		/** picking */

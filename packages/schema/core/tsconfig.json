@@ -10,10 +10,10 @@
 	"exclude": ["dist"],
 	"references": [
 		{
-			"path": "../../utils/props-manager"
+			"path": "../../utils/projections"
 		},
 		{
-			"path": "../../utils/projections"
+			"path": "../../utils/props-manager"
 		}
 	]
 }

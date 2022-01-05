@@ -10,10 +10,10 @@
 	"exclude": ["dist"],
 	"references": [
 		{
-			"path": "../../schema/core"
+			"path": "../../utils/projections"
 		},
 		{
-			"path": "../../utils/projections"
+			"path": "../../schema/core"
 		},
 		{
 			"path": "../view-gsi"
