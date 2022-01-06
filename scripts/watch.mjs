@@ -1,3 +1,4 @@
+/*eslint-env node*/
 import chokidar from 'chokidar'
 
 import path from 'path'
@@ -84,7 +85,7 @@ const impactGraph = {}
 }
 
 // console.log('impactGraph', impactGraph)
-{
+if (!FAST_MODE) {
 	for (const name of Object.keys(impactGraph)) {
 		console.log(
 			colors.cyan(
@@ -105,6 +106,7 @@ function findAllDirtPkgs(pkg) {
 		dirtList.add(pkg.name)
 		return dirtList
 	} else {
+		// eslint-disable-next-line no-inner-declarations
 		function dirtWalker(pkg) {
 			// 不要重复添加
 			// if (!dirtList.includes(pkg.name)) {
@@ -175,7 +177,7 @@ function fireDirtList(dirtList) {
 
 const watcher = chokidar.watch([path.resolve(process.env.PWD, './packages')], {
 	followSymlinks: false,
-	ignored: ['**/node_modules/**', '**/dist/**', '**/*.tsbuildinfo'],
+	ignored: ['**/node_modules/**', '**/dist/**', '**/*.tsbuildinfo', '**/.cached-built-head'],
 	ignoreInitial: true,
 	atomic: 500,
 })
@@ -188,7 +190,7 @@ watcher.on('all', (eventName, _path, stats) => {
 
 	if (!pkg) {
 		// '不是monorepo本地package，或者在ignore名单中，将忽略'
-		info('detected change but ignoring...', depName)
+		console.warn('detected change but ignoring...', pkg)
 		return
 	}
 	yellow('change detected. type:', eventName, pkg.name, _path)
