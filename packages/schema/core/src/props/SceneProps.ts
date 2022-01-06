@@ -33,4 +33,4 @@ export const defaultSceneProps: SceneProps = {
 	antialias: 'msaa',
 }
 
-export { SceneProps }
+export type { SceneProps }

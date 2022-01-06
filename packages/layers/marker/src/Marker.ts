@@ -357,6 +357,8 @@ export class Marker extends STDLayer {
 				}
 			}
 		}
+
+		return
 	}
 
 	dispose(): void {

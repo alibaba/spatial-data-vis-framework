@@ -840,6 +840,8 @@ export class AOILayer extends STDLayer {
 				return event
 			}
 		}
+
+		return
 	}
 
 	private _cacheIndicatorRanges(
