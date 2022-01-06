@@ -19,9 +19,10 @@ import {
 	GeographicStates,
 	CameraProxy,
 } from 'camera-proxy'
-import { PolarisProps, defaultProps } from './props'
+import { PolarisProps, defaultProps } from './props/index'
 
-export { PolarisProps, colorToString } from './props'
+export { colorToString } from './props/index'
+export type { PolarisProps } from './props/index'
 
 /**
  * 根节点

@@ -290,6 +290,8 @@ export function featureToLinePositions(feature, projection, alt = 0) {
 		}
 		return linePositions
 	}
+
+	return
 }
 
 export function geomToLinePositions(geom, projection, alt = 0): number[][] | undefined {
@@ -317,4 +319,6 @@ export function geomToLinePositions(geom, projection, alt = 0): number[][] | und
 	} else {
 		console.error('PolygonLayer - Geojson geom type is not valid', geom.type, geom)
 	}
+
+	return
 }

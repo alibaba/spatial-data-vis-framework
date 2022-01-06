@@ -864,6 +864,8 @@ export class POILayer extends STDLayer {
 				return pickResult
 			}
 		}
+
+		return
 	}
 
 	private _updatePointSizeByIndex(mesh: Mesh, index: number, size: number) {

@@ -168,6 +168,8 @@ export class PointsMeshPickHelper {
 				return event
 			}
 		}
+
+		return
 	}
 
 	_createMapAlphaData(image: string | HTMLImageElement) {

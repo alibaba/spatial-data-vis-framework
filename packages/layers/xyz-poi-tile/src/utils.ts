@@ -69,6 +69,8 @@ export function featureToLinePositions(feature, projection, alt = 0) {
 		}
 		return linePositions
 	}
+
+	return
 }
 
 export function geomToLinePositions(geom, projection, alt = 0): number[][] | undefined {

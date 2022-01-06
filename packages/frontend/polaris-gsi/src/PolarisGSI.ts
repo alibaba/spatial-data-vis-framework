@@ -468,6 +468,8 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 				return candidates[0]
 			}
 		}
+
+		return
 	}
 
 	dispose() {

@@ -33,8 +33,6 @@ import * as SDK from '@gs.i/frontend-sdk'
 import { GSIView } from '@polaris.gl/view-gsi'
 // import * as postprocessing from 'postprocessing'
 // const { EffectComposer, ShaderPass } = postprocessing
-// import { BokehPass } from './passes/BokehPass'
-// import { ReadPass } from './passes/ReadPass'
 import { calcCamNearFar } from './Utils'
 import { Raycaster, RaycastInfo } from '@gs.i/utils-raycast'
 
