@@ -2,7 +2,7 @@
  * 原则上，package depends 中的本地 package 和 tsconfig 中的 references 应该是一一对应的。
  * 如果两者不同，则应该检查并修复
  */
-
+/*eslint-env node*/
 import { argv } from 'process'
 import { constants, fstat } from 'fs'
 import { readFile, writeFile, copyFile, access } from 'fs/promises'
@@ -12,8 +12,10 @@ import jsonc from 'jsonc-parser'
 
 import { execSync } from 'child_process'
 
-console.log(argv)
-console.log(process.env.PWD)
+import colors from 'colors/safe.js'
+
+// console.log(argv)
+// console.log(process.env.PWD)
 
 // 不处理的package
 import packageBlacklist from './ignore.mjs'
@@ -30,7 +32,7 @@ const packages = packageALL.filter((pac) => {
 
 	return !inBL
 })
-console.log(packages)
+// console.log(packages)
 
 // 所有可link的本地 pkg
 const localPkgNames = packages.map((p) => p.name)
@@ -92,8 +94,6 @@ for (const pkg of packages) {
 			}
 		})
 
-		console.log(pkg.name, localDepPkgs, references)
-
 		// 修改 jsonc
 		const editList = jsonc.modify(
 			tsconfigJson,
@@ -113,7 +113,16 @@ for (const pkg of packages) {
 		const newJson = jsonc.applyEdits(tsconfigJson, editList)
 		// console.log(newJson)
 
-		console.log('自动修改 tsconfig.json 的 reference')
+		let refText = localDepPkgs.join(', ')
+		if (refText.length > 60) {
+			refText = refText.slice(0, 60) + '...'
+		}
+		console.log(
+			colors.rainbow('auto_ts_reference'),
+			colors.green(pkg.name),
+			'->',
+			colors.blue(refText)
+		)
 		await writeFile(tsconfigPath, newJson)
 	} catch (error) {
 		console.log(error)

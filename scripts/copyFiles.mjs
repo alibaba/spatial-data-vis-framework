@@ -1,16 +1,25 @@
+/*eslint-env node*/
 import { argv } from 'process'
-import { constants } from 'fs'
-import { readFile, writeFile, copyFile } from 'fs/promises'
 import path from 'path'
 
 import { execSync } from 'child_process'
 
-console.log(argv)
-console.log(process.env.PWD)
+// console.log(argv)
+// console.log(process.env.PWD)
+console.log(
+	'\x1b[36m%s\x1b[0m',
+	`
+*********************
+*                   *
+* copy shared files *
+*                   *
+*********************
+`
+)
 
 import blacklist from './ignore.mjs'
 
-const packages = execSync('npx lerna ls -p --all')
+const packages = execSync('npx lerna ls -p')
 	.toString()
 	.split('\n')
 	.filter((line) => {
@@ -23,25 +32,20 @@ const packages = execSync('npx lerna ls -p --all')
 		// return !line.startsWith('lerna ') && line.trim() !== '' && !inBL
 		return line.trim() !== '' && !inBL
 	})
-console.log(packages)
+// console.log(packages)
 
 const COPY_TS_CONFIG = true
 
 if (COPY_TS_CONFIG) {
-	const _sharedBaseConfig = path.resolve(process.cwd(), 'shared', './tsconfig.json')
 	const sharedBaseConfig = path.resolve(process.cwd(), 'shared', './tsconfig.base.json')
 	const sharedBuildConfig = path.resolve(process.cwd(), 'shared', './tsconfig.build.json')
 	for (const pkg of packages) {
 		// console.log(pkg)
-		const _target = path.resolve(pkg, 'tsconfig.json')
 		const target = path.resolve(pkg, 'tsconfig.base.json')
 		const targetBuild = path.resolve(pkg, 'tsconfig.build.json')
 
 		// const targetBuildOld = path.resolve(pkg, 'tsconfig.base.package.json')
 		// console.log(execSync(`rm -f ${targetBuildOld}`).toString())
-
-		exe(`rm -f ${_target}`)
-		exe(`cp ${_sharedBaseConfig} ${_target}`)
 
 		exe(`rm -f ${target}`)
 		exe(`cp ${sharedBaseConfig} ${target}`)

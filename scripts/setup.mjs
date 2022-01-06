@@ -21,29 +21,30 @@ const gsiPath = useLocalGSI ? localGSIArgv.split('=')[1] : null
 
 console.log(useLocalGSI, gsiPath)
 
-if (useLocalGSI) {
-	console.log('设置了本地的 GSI repo 目录，将不会从 npm 安装 @gsi/* 的依赖而从 gsi repo 中 link')
-	console.log('检查 GSI 路径...')
+{
+	if (useLocalGSI) {
+		console.log('设置了本地的 GSI repo 目录，将不会从 npm 安装 @gsi/* 的依赖而从 gsi repo 中 link')
+		console.log('检查 GSI 路径...')
 
-	try {
-		await access(path.resolve(process.env.PWD, gsiPath, './packages/utils/umbrella/package.json'))
-	} catch (error) {
-		console.error(error)
-		throw 'GSI 路径无法解析'
+		try {
+			await access(path.resolve(process.env.PWD, gsiPath, './packages/utils/umbrella/package.json'))
+		} catch (error) {
+			console.error(error)
+			throw 'GSI 路径无法解析'
+		}
+
+		try {
+			await access(path.resolve(process.env.PWD, './gsi-packages'))
+			await unlink(path.resolve(process.env.PWD, './gsi-packages'))
+		} catch (error) {}
+
+		await symlink(
+			path.resolve(process.env.PWD, gsiPath, './packages'),
+			path.resolve(process.env.PWD, './gsi-packages'),
+			'dir'
+		)
 	}
-
-	try {
-		await access(path.resolve(process.env.PWD, './gsi-packages'))
-		await unlink(path.resolve(process.env.PWD, './gsi-packages'))
-	} catch (error) {}
-
-	await symlink(
-		path.resolve(process.env.PWD, gsiPath, './packages'),
-		path.resolve(process.env.PWD, './gsi-packages'),
-		'dir'
-	)
 }
-
 const id = Math.floor(Math.random() * 9999) + ''
 console.log(id)
 
@@ -97,12 +98,12 @@ await Promise.all(
 		try {
 			await writeFile(pjsonPath, JSON.stringify(originalJson))
 		} catch (error) {
-			console.error(pkg.name, tsconfigPath, error)
+			console.error(pkg.name, pjsonPath, error)
 		}
 	})
 )
 
-// remove optinal dependents from package.json
+// remove optional dependents from package.json
 await Promise.all(
 	packageALL.map(async (pkg) => {
 		const pjsonPath = path.resolve(pkg.location, 'package.json')
@@ -111,7 +112,7 @@ await Promise.all(
 		const originalJson = JSON.parse(pjson)
 
 		if (originalJson.optionalDependencies) {
-			console.log('fix package optinal dep: ', pkg.name)
+			console.log('fix package optional dep: ', pkg.name)
 
 			// NOTE can not be {} or yarn will throw
 			delete originalJson.optionalDependencies
@@ -119,12 +120,11 @@ await Promise.all(
 			try {
 				await writeFile(pjsonPath, JSON.stringify(originalJson))
 			} catch (error) {
-				console.error(pkg.name, tsconfigPath, error)
+				console.error(pkg.name, pjsonPath, error)
 			}
 		}
 	})
 )
-
 try {
 	execSync(`lerna bootstrap --force-local`, { stdio: 'inherit' })
 
