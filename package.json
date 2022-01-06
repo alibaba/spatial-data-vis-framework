@@ -21,7 +21,7 @@
     "watch": "node scripts/watch.mjs --fast"
   },
   "devDependencies": {
-    "typescript": "^4.5.2",
+    "typescript": "^4.5.4",
     "eslint": "7.32.0",
     "eslint-config-prettier": "^8.3.0",
     "shelljs": "^0.8.4",
