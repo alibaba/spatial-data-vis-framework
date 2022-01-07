@@ -55,10 +55,10 @@
 			"path": "../packages/utils/projections"
 		},
 		{
-			"path": "../packages/backend/renderer-gsi-gl2"
+			"path": "../packages/renderers/renderer-gsi-gl2"
 		},
 		{
-			"path": "../packages/backend/renderer-lite"
+			"path": "../packages/renderers/renderer-lite"
 		},
 		{
 			"path": "../packages/schema/core"
