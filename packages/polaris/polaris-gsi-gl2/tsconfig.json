@@ -10,7 +10,7 @@
 	"exclude": ["dist"],
 	"references": [
 		{
-			"path": "../../frontend/polaris-gsi"
+			"path": "../polaris-gsi"
 		},
 		{
 			"path": "../../renderers/renderer-gsi-gl2"
