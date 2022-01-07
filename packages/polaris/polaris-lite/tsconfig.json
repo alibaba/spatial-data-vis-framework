@@ -13,7 +13,7 @@
 			"path": "../../frontend/polaris-gsi"
 		},
 		{
-			"path": "../../backend/renderer-lite"
+			"path": "../../renderers/renderer-lite"
 		},
 		{
 			"path": "../../schema/core"

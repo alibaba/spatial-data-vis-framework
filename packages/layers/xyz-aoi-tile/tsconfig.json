@@ -32,6 +32,9 @@
 		},
 		{
 			"path": "../../utils/tile-manager"
+		},
+		{
+			"path": "../../utils/worker-manager"
 		}
 	]
 }
