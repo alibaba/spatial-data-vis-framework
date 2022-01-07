@@ -59,28 +59,30 @@ for (const pkg of packages) {
 
 	try {
 		const tsconfigJson = (await readFile(tsconfigPath)).toString()
-		const errors = []
-		const tsconfig = jsonc.parse(tsconfigJson, errors, {
-			disallowComments: false,
-			allowEmptyContent: true,
-			allowTrailingComma: true,
-		})
-		const references = tsconfig.references || []
+		// const errors = []
+		// const tsconfig = jsonc.parse(tsconfigJson, errors, {
+		// 	disallowComments: false,
+		// 	allowEmptyContent: true,
+		// 	allowTrailingComma: true,
+		// })
+		// const references = tsconfig.references || []
 
 		// 过滤 dependents 中的本地包
-		const localDepPkgs = Object.keys(dependents).filter((pkgName) => {
-			return localPkgNames.includes(pkgName)
-		})
+		const localDepPkgs = Object.keys(dependents)
+			.filter((pkgName) => {
+				return localPkgNames.includes(pkgName)
+			})
+			.sort()
 
 		// 生成相对路径
 
-		const pathesShouldBe = []
+		const pathsShouldBe = []
 		localDepPkgs.map((pkgName) => {
 			// 被依赖的包
 			const depPkg = pkgDict[pkgName]
 			// 相对路径
 			const depReference = path.relative(pkg.location, depPkg.location)
-			pathesShouldBe.push(depReference)
+			pathsShouldBe.push(depReference)
 			// tsconfig中是否存在这个reference
 			// if (references.map((i) => i.path).includes(depReference)) {
 			// } else {
@@ -88,7 +90,7 @@ for (const pkg of packages) {
 			// }
 		})
 
-		const referencesShouldBe = pathesShouldBe.map((ref) => {
+		const referencesShouldBe = pathsShouldBe.map((ref) => {
 			return {
 				path: ref,
 			}
