@@ -11,8 +11,10 @@ import { Projection } from '@polaris.gl/projection'
 import { colorToUint8Array } from '@polaris.gl/utils'
 import { PolarisGSI } from '@polaris.gl/gsi'
 import { Color } from '@gs.i/utils-math'
-import { triangulateGeoJSON, featureToLinePositions, createRangeArray } from './utils'
+import { featureToLinePositions, createRangeArray, getFeatureTriangles } from './utils'
 import { LineIndicator } from '@polaris.gl/utils-indicator'
+import { WorkerManager } from '@polaris.gl/utils-worker-manager'
+import GeomWorker from 'worker-loader!./workers/GeomWorker'
 
 /**
  * 配置项 interface
@@ -153,6 +155,11 @@ export interface AOILayerProps extends STDLayerProps {
 	 * default is true
 	 */
 	useParentReplaceUpdate?: boolean
+
+	/**
+	 * Number of worker used, can be set to 0.
+	 */
+	workersNum?: number
 }
 
 /**
@@ -181,6 +188,7 @@ const defaultProps: AOILayerProps = {
 	cacheSize: 512,
 	viewZoomReduction: 0,
 	useParentReplaceUpdate: true,
+	workersNum: 0,
 }
 
 type IndicatorRangeInfo = {
@@ -200,6 +208,11 @@ export class AOILayer extends STDLayer {
 	 * Performance info
 	 */
 	info: { times: Map<number | string, { reqTime: number; genTime: number }> }
+
+	/**
+	 * WorkerManager
+	 */
+	private _workerManager: WorkerManager
 
 	/**
 	 * For feature.index counter
@@ -254,8 +267,19 @@ export class AOILayer extends STDLayer {
 		const p = polaris as Polaris
 
 		if (!projection.isPlaneProjection) {
-			throw new Error('AOILayer - TileLayer can only be used in plane projections')
+			throw new Error('AOILayer - TileLayer can only be used under plane projections')
 		}
+
+		this.listenProps(['workersNum'], () => {
+			const workersNum = this.getProps('workersNum')
+			if (workersNum > 0) {
+				const workers: GeomWorker[] = []
+				for (let i = 0; i < workersNum; i++) {
+					workers.push(new GeomWorker())
+				}
+				this._workerManager = new WorkerManager(workers)
+			}
+		})
 
 		this.listenProps(
 			[
@@ -371,9 +395,9 @@ export class AOILayer extends STDLayer {
 			this._indicators.forEach((indicator) => {
 				indicator.updateResolution(polaris.width, polaris.height)
 			})
-			if (Math.abs(cam.pitch) > 0.0001) {
-				console.warn('AOILayer - AOILayer under 3D view mode is currently not supported')
-			}
+			// if (Math.abs(cam.pitch) > 0.0001) {
+			// 	console.warn('AOILayer - AOILayer under 3D view mode is currently not supported')
+			// }
 		}
 
 		/** picking */
@@ -494,16 +518,19 @@ export class AOILayer extends STDLayer {
 					}
 
 					if (geojson.features.length > 0) {
-						const tile = this._createTileMesh(geojson, projection, polaris, cacheKey)
-
-						if (time) {
-							time.genTime = performance.now() - time.genTime
-						}
-
-						if (tile) {
-							resolve(tile)
-							return
-						}
+						this._createTileMesh(geojson, projection, polaris, cacheKey)
+							.then((tile) => {
+								if (time) {
+									time.genTime = performance.now() - time.genTime
+								}
+								if (tile) {
+									resolve(tile)
+								}
+							})
+							.catch((e) => {
+								reject(e)
+							})
+						return
 					}
 
 					resolve(emptyTile)
@@ -542,12 +569,12 @@ export class AOILayer extends STDLayer {
 		return matr
 	}
 
-	private _createTileMesh(
+	private async _createTileMesh(
 		geojson: any,
 		projection: Projection,
 		polaris: Polaris,
 		key?: string
-	): TileRenderables | undefined {
+	): Promise<TileRenderables | undefined> {
 		if (!geojson.type || geojson.type !== 'FeatureCollection') {
 			return
 		}
@@ -580,7 +607,8 @@ export class AOILayer extends STDLayer {
 		let linePosOffset = 0
 		let offset = 0
 
-		geojson.features.forEach((feature) => {
+		const features = geojson.features as any[]
+		const loadPromises = features.map(async (feature) => {
 			if (!feature.geometry) {
 				return
 			}
@@ -606,25 +634,39 @@ export class AOILayer extends STDLayer {
 			}
 
 			if (geometry.type === 'Polygon' || geometry.type === 'MultiPolygon') {
-				/**
-				 * Polygon
-				 */
-				const result = triangulateGeoJSON(feature)
-				const { points, triangles } = result
+				// polygon triangles generation
+				// use workers if available
+				let result: any
+				try {
+					result = this._workerManager
+						? await this._workerManager.execute({
+								data: {
+									task: 'getFeatureTriangles',
+									feature,
+									projectionDesc: projection.toDesc(),
+									baseAlt,
+								},
+								transferables: [],
+						  })
+						: getFeatureTriangles(feature, projection, baseAlt)
+				} catch (e) {
+					throw e
+				}
+
+				const { positions: featPositions, indices: featIndices } = result
 
 				const indexStart = indices.length
 				// const indexRange = new Uint32Array([indices.length, 0])
 				// const colorRange = new Uint32Array([offset * 4, 0])
 
-				for (let i = 0; i < points.length; i += 2) {
-					const xyz = projection.project(points[i], points[i + 1], baseAlt)
-					positions.push(...xyz)
+				for (let i = 0; i < featPositions.length; i += 3) {
+					positions.push(featPositions[i + 0], featPositions[i + 1], featPositions[i + 2])
 				}
-				for (let i = 0; i < triangles.length; i++) {
-					indices.push(triangles[i] + offset)
+				for (let i = 0; i < featIndices.length; i++) {
+					indices.push(featIndices[i] + offset)
 				}
 
-				const count = points.length / 2
+				const count = featPositions.length / 3
 				const offset4 = offset * 4
 				const color = new Color(getColor(feature))
 				const alpha = getOpacity(feature) ?? 1.0
@@ -651,33 +693,60 @@ export class AOILayer extends STDLayer {
 				pickable &&
 				(geometry.type === 'LineString' || geometry.type === 'MultiLineString')
 			) {
-				/**
-				 * Outline
-				 */
-				const linePos = featureToLinePositions(feature, projection, baseAlt + lineHeight)
-				if (linePos) {
-					linePos.forEach((positions) => {
-						linePosArr.push(positions)
-						const range = {
-							offset: linePosOffset,
-							count: positions.length / 3,
-						}
+				// use workers if available
+				// const linePositions: Float32Array[] = this._workerManager
+				// 	? (
+				// 			await this._workerManager.execute({
+				// 				data: {
+				// 					task: 'featureToLinePositions',
+				// 					feature,
+				// 					projectionDesc: projection.toDesc(),
+				// 					baseAlt: baseAlt + lineHeight,
+				// 				},
+				// 				transferables: [],
+				// 			})
+				// 	  ).linePositions
+				// 	: featureToLinePositions(feature, projection, baseAlt + lineHeight)
 
-						const lineRanges = idLineRangeMap.get(id)
-						if (lineRanges) {
-							lineRanges.push(range)
-						} else {
-							idLineRangeMap.set(id, [range])
-						}
+				// outline positions generation
+				const linePositions = featureToLinePositions(feature, projection, baseAlt + lineHeight)
 
-						// update offset
-						linePosOffset += positions.length / 3
-					})
+				if (!linePositions) return
+
+				for (let i = 0; i < linePositions.length; i++) {
+					const linePos = linePositions[i]
+					const count = linePos.length / 3
+					const arr: number[] = []
+					for (let j = 0, jl = linePos.length; j < jl; j += 3) {
+						arr.push(linePos[j + 0], linePos[j + 1], linePos[j + 2])
+					}
+					linePosArr.push(arr)
+
+					const range = {
+						offset: linePosOffset,
+						count,
+					}
+
+					const lineRanges = idLineRangeMap.get(id)
+					if (lineRanges) {
+						lineRanges.push(range)
+					} else {
+						idLineRangeMap.set(id, [range])
+					}
+
+					// update offset
+					linePosOffset += count
 				}
 			}
 
 			meshFeatures.push(feature)
 		})
+
+		try {
+			const results = await Promise.all(loadPromises)
+		} catch (e) {
+			throw e
+		}
 
 		const posAttr = new Attr(new Float32Array(positions), 3)
 		const colorAttr = new Attr(new Uint8Array(colors), 4)

@@ -3,6 +3,26 @@ import { getGeom, getCoords } from '@turf/invariant'
 import polygonToLine from '@turf/polygon-to-line'
 import earcut from 'earcut'
 
+export function getFeatureTriangles(feature: any, projection: any, baseAlt: number) {
+	const { points, triangles } = triangulateGeoJSON(feature)
+	const count = points.length / 2
+	const positions = new Float32Array(count * 3)
+	const indices = new Uint32Array(triangles)
+	let offset = 0
+	for (let i = 0; i < points.length; i += 2) {
+		const xyz = projection.project(points[i], points[i + 1], baseAlt)
+		positions[offset + 0] = xyz[0]
+		positions[offset + 1] = xyz[1]
+		positions[offset + 2] = xyz[2]
+		offset += 3
+	}
+
+	return {
+		positions,
+		indices,
+	}
+}
+
 export function triangulateGeoJSON(geojson: any): any {
 	let points: Array<number> = []
 	let triangles: Array<number> = []
@@ -40,7 +60,7 @@ export function triangulateGeoJSON(geojson: any): any {
 export function featureToLinePositions(feature, projection, alt = 0) {
 	let geom: any = getGeom(feature)
 	if (geom) {
-		const linePositions: number[][] = []
+		const linePositions: Float32Array[] = []
 		// 如果Geojson数据是Polygon类型，需要先转换为LineString
 		if (geom.type === 'Polygon') {
 			const line: any = polygonToLine(feature)
@@ -72,8 +92,8 @@ export function featureToLinePositions(feature, projection, alt = 0) {
 	return
 }
 
-export function geomToLinePositions(geom, projection, alt = 0): number[][] | undefined {
-	const results: number[][] = []
+export function geomToLinePositions(geom, projection, alt = 0) {
+	const results: Float32Array[] = []
 	if (geom.type === 'LineString') {
 		const positions: number[] = []
 		const coords = getCoords(geom)
@@ -81,7 +101,7 @@ export function geomToLinePositions(geom, projection, alt = 0): number[][] | und
 			const xyz = projection.project(coord[0], coord[1], alt)
 			positions.push(...xyz)
 		})
-		results.push(positions)
+		results.push(new Float32Array(positions))
 		return results
 	} else if (geom.type === 'MultiLineString') {
 		const multiCoords: any[] = getCoords(geom)
@@ -91,7 +111,7 @@ export function geomToLinePositions(geom, projection, alt = 0): number[][] | und
 				const xyz = projection.project(coord[0], coord[1], alt)
 				positions.push(...xyz)
 			})
-			results.push(positions)
+			results.push(new Float32Array(positions))
 		})
 		return results
 	} else {
