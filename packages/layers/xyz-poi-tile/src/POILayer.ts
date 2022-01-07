@@ -282,7 +282,7 @@ export class POILayer extends STDLayer {
 		const p = polaris as PolarisGSI
 
 		if (!projection.isPlaneProjection) {
-			throw new Error('POILayer - TileLayer can only be used in plane projections')
+			throw new Error('POILayer - TileLayer can only be used under plane projections')
 		}
 
 		// cache polaris render ratio for pointSizes computation
@@ -402,9 +402,9 @@ export class POILayer extends STDLayer {
 			if (this.matr) {
 				this.matr.uniforms.uResolution.value = { x: polaris.canvasWidth, y: polaris.canvasHeight }
 			}
-			if (Math.abs(cam.pitch) > 0.0001) {
-				console.warn('POILayer - POILayer under 3D view mode is currently not supported')
-			}
+			// if (Math.abs(cam.pitch) > 0.0001) {
+			// 	console.warn('POILayer - POILayer under 3D view mode is currently not supported')
+			// }
 		}
 
 		/** picking */
