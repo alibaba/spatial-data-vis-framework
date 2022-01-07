@@ -13,7 +13,7 @@
 			"path": "../../polaris/polaris-gsi"
 		},
 		{
-			"path": "../../frontend/layer-std"
+			"path": "../standard"
 		},
 		{
 			"path": "../../schema/core"

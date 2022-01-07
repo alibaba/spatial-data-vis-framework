@@ -16,10 +16,10 @@
 			"path": "../../schema/core"
 		},
 		{
-			"path": "../view-gsi"
+			"path": "../../frontend/view-gsi"
 		},
 		{
-			"path": "../view-html"
+			"path": "../../frontend/view-html"
 		}
 	]
 }

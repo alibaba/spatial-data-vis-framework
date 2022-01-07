@@ -10,7 +10,7 @@
 	"exclude": ["dist"],
 	"references": [
 		{
-			"path": "../../frontend/layer-std"
+			"path": "../standard"
 		},
 		{
 			"path": "../../utils/projections"
