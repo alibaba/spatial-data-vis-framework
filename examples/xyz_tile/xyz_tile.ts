@@ -86,8 +86,8 @@ const poi = new POILayer({
 	},
 	renderOrder: 100,
 })
-// p.add(poi)
-// window['poi'] = poi
+p.add(poi)
+window['poi'] = poi
 
 // AOI
 const picked: Set<number> = new Set()
@@ -96,6 +96,7 @@ const aoi = new AOILayer({
 	// geojsonFilter: (geojson) => {
 	// 	console.log('aoi', geojson)
 	// },
+	workersNum: Math.max(navigator.hardwareConcurrency - 4, 0),
 	viewZoomReduction,
 	framesBeforeRequest,
 	customFetcher: (x, y, z) => {
@@ -215,7 +216,7 @@ p.timeline.addTrack({
 setTimeout(() => {
 	p.setStatesCode('1|120.184302|30.265237|0.000000|0.00000|0.00000|11.74200')
 	// p.setStatesCode('1|120.184301|30.265237|0.000000|0.00000|0.00000|16.70400') // closer hz
-})
+}, 500)
 
 //
 
@@ -265,8 +266,6 @@ function getPOIUrl(x, y, z) {
 }
 
 function getAOIUrl(x, y, z) {
-	console.log(x, y, z)
-
 	const params = {
 		PostgreSQL: {
 			dbname: 'EXAMPLE',
