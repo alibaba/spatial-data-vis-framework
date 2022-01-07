@@ -25,6 +25,9 @@
 			"path": "../packages/layers/geojson"
 		},
 		{
+			"path": "../packages/layers/label"
+		},
+		{
 			"path": "../packages/layers/scatter"
 		},
 		{
@@ -83,9 +86,6 @@
 		},
 		{
 			"path": "../packages/frontend/view-html"
-		},
-		{
-			"path": "../packages/layers/label"
 		}
 	]
 }
