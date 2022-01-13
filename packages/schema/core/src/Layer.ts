@@ -2,28 +2,57 @@
  * Copyright (C) 2021 Alibaba Group Holding Limited
  * All rights reserved.
  */
+/* eslint-disable @typescript-eslint/ban-types */
 
-import { Base } from './Base'
+import { AbstractLayer, CoordV2, PickEvent, PickEventResult } from './AbstractLayer'
 import { Projection } from '@polaris.gl/projection'
 import { Timeline } from 'ani-timeline'
 import { EventCallBack, PropsManager } from '@polaris.gl/utils-props-manager'
-import { Polaris } from './Polaris'
+import { AbstractPolaris } from './Polaris'
 import { View } from './View'
+import type { CameraProxy } from 'camera-proxy'
 
 export interface LayerProps {
+	name?: string
+
 	parent?: Layer
 	timeline?: Timeline
 	projection?: Projection
 	views?: { [key: string]: new () => View }
 }
 
-export class Layer extends Base {
-	readonly isLayer = true
+interface EventTypes {
+	add: { parent: Layer }
+	remove: { parent: Layer }
+	rootChange: { root: Layer }
+	visibilityChange: {}
+	viewChange: {
+		cameraProxy: CameraProxy
+		polaris: AbstractPolaris /* typeof Polaris */
+	}
+	beforeRender: { polaris: AbstractPolaris /* typeof Polaris */ }
+	afterRender: { polaris: AbstractPolaris /* typeof Polaris */ }
+	pick: { result?: PickEventResult }
+	hover: { result?: PickEventResult }
+	init: { projection: Projection; timeline: Timeline; polaris: AbstractPolaris }
+	afterInit: { projection: Projection; timeline: Timeline; polaris: AbstractPolaris }
+}
 
-	/**
-	 * parent
-	 */
-	parent: Layer
+// override some inherited properties and methods interface
+export interface Layer {
+	get parent(): Layer
+	get children(): Set<Layer>
+	get root(): Layer
+	add(child: Layer): void
+	remove(child: Layer): void
+	traverse(handler: (node: Layer) => void): void
+}
+
+/**
+ * empty layer
+ */
+export class Layer extends AbstractLayer<EventTypes> {
+	readonly isLayer = true
 
 	/**
 	 * view, the actual rendered contents
@@ -31,7 +60,7 @@ export class Layer extends Base {
 	 */
 	view: { [key: string]: View }
 
-	polaris: Polaris
+	polaris: AbstractPolaris | null
 
 	// 本地传入
 	private _timelineLocal?: Timeline
@@ -43,11 +72,14 @@ export class Layer extends Base {
 
 	/**
 	 * Initialization entry
+	 *
 	 * you can use this.timeline, this.projection and polaris safely
+	 *
+	 * exactly same effect as this.addEventListener('init')
+	 *
+	 * @alias this.addEventListener('init')
 	 */
-	protected init?(projection: Projection, timeline: Timeline, polaris: Polaris): void
-	private _afterInit: { (projection: Projection, timeline: Timeline, polaris: Polaris): void }[] =
-		[]
+	protected init?(projection: Projection, timeline: Timeline, polaris: AbstractPolaris): void
 
 	/**
 	 * Init propsManager
@@ -58,7 +90,7 @@ export class Layer extends Base {
 	 * @constructor
 	 * @param props
 	 */
-	constructor(props: LayerProps) {
+	constructor(props: LayerProps = {}) {
 		super(props)
 
 		// 本地投影和时间线
@@ -83,17 +115,34 @@ export class Layer extends Base {
 		Promise.all([this.getProjection(), this.getTimeline(), this.getPolaris()]).then(
 			([projection, timeline, polaris]) => {
 				this.init && this.init(projection, timeline, polaris)
-				this._afterInit.forEach((f) => f(projection, timeline, polaris))
+
+				this.dispatchEvent({
+					type: 'init',
+					projection,
+					timeline,
+					polaris,
+				})
+				this.dispatchEvent({
+					type: 'afterInit',
+					projection,
+					timeline,
+					polaris,
+				})
 			}
 		)
 
 		this.setProps(props)
 	}
 
+	/**
+	 * @deprecated use {@link .addEventListener} instead
+	 */
 	protected set afterInit(
-		f: (projection: Projection, timeline: Timeline, polaris: Polaris) => void
+		f: (projection: Projection, timeline: Timeline, polaris: AbstractPolaris) => void
 	) {
-		this._afterInit.push(f)
+		this.addEventListener('afterInit', (event) => {
+			f(event.projection, event.timeline, event.polaris)
+		})
 	}
 
 	/**
@@ -196,7 +245,7 @@ export class Layer extends Base {
 	/**
 	 * 获取该Layer的Polaris实例
 	 */
-	getPolaris(): Promise<Polaris> {
+	getPolaris(): Promise<AbstractPolaris> {
 		return new Promise((resolve) => {
 			// 	请求本地
 			if (this.polaris) {
@@ -258,5 +307,14 @@ export class Layer extends Base {
 		this._propsManager.listen(propsName, callback)
 	}
 
+	raycast(polaris: AbstractPolaris, canvasCoord: CoordV2, ndc: CoordV2): PickEvent | undefined {
+		console.warn('Layer::raycast not implemented. implement this method in subclass if pick-ale.')
+		return
+	}
+
 	dispose() {}
 }
+
+// test code
+// const a = new Layer()
+// a.parent

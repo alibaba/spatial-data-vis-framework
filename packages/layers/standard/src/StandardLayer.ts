@@ -8,16 +8,16 @@
  * 但是 typescript 中 mixin 和 decoration 都会造成一定程度的 interface 混乱
  * 因此在这里把constructor里增加的逻辑拆成函数，
  */
-import { Layer, LayerProps, PickEventResult, Polaris, View } from '@polaris.gl/schema'
+import { AbstractPolaris, Layer, LayerProps, PickEventResult, View } from '@polaris.gl/schema'
 import { GSIView } from '@polaris.gl/view-gsi'
 import { HtmlView } from '@polaris.gl/view-html'
-import { isSimiliarProjections } from '@polaris.gl/projection'
+import { isSimilarProjections } from '@polaris.gl/projection'
 import { Matrix4, Euler, Vector3, Vector2 } from '@gs.i/utils-math'
 
 /**
  * 配置项 interface
  */
-export interface STDLayerProps extends LayerProps {
+export interface StandardLayerProps extends LayerProps {
 	depthTest?: boolean
 	renderOrder?: number
 	pickable?: boolean
@@ -25,7 +25,7 @@ export interface STDLayerProps extends LayerProps {
 	onHovered?: (event: PickEventResult | undefined) => void
 }
 
-export const STDLayerProps: STDLayerProps = {
+export const StandardLayerProps: StandardLayerProps = {
 	depthTest: true,
 	renderOrder: 0,
 	pickable: false,
@@ -42,10 +42,10 @@ const _vec2 = new Vector2()
  * Standard Layer
  * 标准 Layer，包含 GSIView 作为 3D 容器，HTMLView 作为 2D 容器
  */
-export class STDLayer extends Layer {
-	readonly isSTDLayer = true
+export class StandardLayer extends Layer {
+	readonly isStandardLayer = true
 
-	constructor(props: STDLayerProps) {
+	constructor(props: StandardLayerProps) {
 		super(props)
 
 		if (!this.view) {
@@ -61,7 +61,7 @@ export class STDLayer extends Layer {
 			}
 		}
 
-		this.afterInit = (projection, timeline, polaris) => {
+		this.addEventListener('afterInit', ({ projection, timeline, polaris }) => {
 			/**
 			 * 每个Layer应当都有depthTest和renderOrder的prop listener
 			 * @NOTE 这里设定了两个默认的方法，若Layer有自己的设定逻辑可以重写这两个方法
@@ -91,7 +91,7 @@ export class STDLayer extends Layer {
 			this.parent.getProjection().then((parentProjection) => {
 				this._initProjectionAlignment(projection, parentProjection, polaris)
 			})
-		}
+		})
 	}
 
 	/**
@@ -100,7 +100,7 @@ export class STDLayer extends Layer {
 	view: { gsi: GSIView; html: HtmlView; [name: string]: View }
 
 	/**
-	 * syntactic suger
+	 * syntactic sugar
 	 * 获取 view.gsi.group
 	 */
 	get group() {
@@ -108,7 +108,7 @@ export class STDLayer extends Layer {
 	}
 
 	/**
-	 * syntactic suger
+	 * syntactic sugar
 	 * 获取 view.html.element
 	 */
 	get element() {
@@ -120,10 +120,10 @@ export class STDLayer extends Layer {
 	 * correct all the method/callback interfaces
 	 * inherited from Base
 	 */
-	add: (child: STDLayer) => void
-	remove: (child: STDLayer) => void
-	traverse: (f: (obj: STDLayer) => void) => void
-	traverseVisible: (f: (obj: STDLayer) => void) => void
+	add: (child: StandardLayer) => void
+	remove: (child: StandardLayer) => void
+	traverse: (f: (obj: StandardLayer) => void) => void
+	traverseVisible: (f: (obj: StandardLayer) => void) => void
 
 	/**
 	 * 获取世界坐标在当前layer的经纬度
@@ -132,7 +132,7 @@ export class STDLayer extends Layer {
 	 * @param {number} y
 	 * @param {number} z
 	 * @return {*}  {(number[] | undefined)}
-	 * @memberof STDLayer
+	 * @memberof StandardLayer
 	 */
 	toLngLatAlt(x: number, y: number, z: number): number[] | undefined {
 		const transform = this.view.gsi.groupWrapper.transform
@@ -154,14 +154,14 @@ export class STDLayer extends Layer {
 	 * @param {number} [alt=0]
 	 * @return {*}  {(Vector3 | undefined)}
 	 * If the layer has no projection, or a worldMatrix yet, an {undefined} result will be returned.
-	 * @memberof STDLayer
+	 * @memberof StandardLayer
 	 */
 	toWorldPosition(lng: number, lat: number, alt = 0): Vector3 | undefined {
 		const transform = this.view.gsi.groupWrapper.transform
 		const worldMatrix = transform.worldMatrix ?? transform.matrix
 		const projection = this.localProjection ?? this.resolvedProjection
 		if (!projection) {
-			// console.warn('Polaris::STDLayer - Layer has no projection info, define a projection or add it to a parent layer first. ')
+			// console.warn('Polaris::StandardLayer - Layer has no projection info, define a projection or add it to a parent layer first. ')
 			return
 		}
 		const matrix4 = _mat4.fromArray(worldMatrix)
@@ -180,11 +180,11 @@ export class STDLayer extends Layer {
 	 * If the layer has no projection,
 	 * or a worldMatrix, or not added to any Polaris yet,
 	 * an {undefined} result will be returned.
-	 * @memberof STDLayer
+	 * @memberof StandardLayer
 	 */
 	toScreenXY(lng: number, lat: number, alt = 0): Vector2 | undefined {
 		if (!this.polaris) {
-			// console.warn('Polaris::STDLayer - Layer has no polaris info, add it to a polaris first. ')
+			// console.warn('Polaris::StandardLayer - Layer has no polaris info, add it to a polaris first. ')
 			return
 		}
 		const worldPos = this.toWorldPosition(lng, lat, alt)
@@ -204,7 +204,7 @@ export class STDLayer extends Layer {
 	/**
 	 * Highlight API
 	 *
-	 * @memberof STDLayer
+	 * @memberof StandardLayer
 	 */
 	highlightByIndices: (dataIndexArr: number[], style: { [name: string]: any }) => void
 
@@ -240,14 +240,14 @@ export class STDLayer extends Layer {
 			// 如果自己和父级的projection之间是可以简单变换对其的
 			// 如果不可以，就只能每帧去对齐center的经纬度
 
-			if (isSimiliarProjections(selfProjection, parentProjection)) {
+			if (isSimilarProjections(selfProjection, parentProjection)) {
 				if (selfProjection.isPlaneProjection) {
 					// SETTINGS.debug && console.log('平面 简单投影分中心', parent.name, '->', this.name, parent, '->', this)
 					const projOffset = parentProjection.project(...selfProjection.center)
 					groupWrapper.transform.position.x = projOffset[0]
 					groupWrapper.transform.position.y = projOffset[1]
 					groupWrapper.transform.position.z = projOffset[2]
-				} else if (selfProjection.isShpereProjection) {
+				} else if (selfProjection.isSphereProjection) {
 					// SETTINGS.debug && console.log('球面 简单投影分中心', parent.name, '->', this.name, parent, '->', this)
 					groupWrapper.transform.position.x = selfProjection._xyz0[0] - parentProjection._xyz0[0]
 					groupWrapper.transform.position.y = selfProjection._xyz0[1] - parentProjection._xyz0[1]
@@ -257,7 +257,7 @@ export class STDLayer extends Layer {
 				}
 			} else {
 				// 父级为平面，子级为球面
-				if (selfProjection.isShpereProjection) {
+				if (selfProjection.isSphereProjection) {
 					// SETTINGS.debug &&
 					// 	console.log( '平面-球面 投影系统分中心', parent.name, '->', this.name, parent, '->', this )
 
@@ -269,7 +269,7 @@ export class STDLayer extends Layer {
 
 					this.onViewChange = (cam, p) => {
 						// TODO 每帧重复计算多次
-						const lnglat = (p as Polaris).getGeoCenter()
+						const lnglat = (p as AbstractPolaris).getGeoCenter()
 
 						/**
 						 * @Qianxun
@@ -314,7 +314,7 @@ export class STDLayer extends Layer {
 					this.onViewChange = (cam, p) => {
 						// 世界中心经纬度
 						// TODO 每帧重复计算多次
-						const lnglat = (p as Polaris).projection.unproject(
+						const lnglat = (p as AbstractPolaris).projection.unproject(
 							cam.center[0],
 							cam.center[1],
 							cam.center[2] ?? 0
@@ -330,7 +330,12 @@ export class STDLayer extends Layer {
 				}
 
 				// Trigger onViewChanges
-				this._onViewChange.forEach((f) => f(polaris.cameraProxy, polaris))
+				// this._onViewChange.forEach((f) => f(polaris.cameraProxy, polaris))
+				this.dispatchEvent({
+					type: 'viewChange',
+					cameraProxy: polaris.cameraProxy,
+					polaris: polaris,
+				})
 			}
 		}
 	}

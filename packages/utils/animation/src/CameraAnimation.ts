@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import { Polaris, defaultProps } from '@polaris.gl/schema'
+import { AbstractPolaris as Polaris, defaultProps } from '@polaris.gl/schema'
 import { Track } from 'ani-timeline'
 import { easeSin0110 } from '@polaris.gl/utils-easing'
 

@@ -66,7 +66,7 @@ export abstract class Renderer {
 	 * 	Picking
 	 */
 	abstract pick(
-		object: any,
+		target: any,
 		ndc: { x: number; y: number },
 		options?: { [key: string]: any }
 	): PickResult
