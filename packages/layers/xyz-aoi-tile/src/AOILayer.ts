@@ -4,7 +4,7 @@ import { XYZTileManager, TileRenderables, TileToken } from '@polaris.gl/utils-ti
 import { RequestPending, XYZTileRequestManager } from '@polaris.gl/utils-request-manager'
 import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
 import { Mesh, MatrUnlit, Geom, Attr } from '@gs.i/frontend-sdk'
-import { Base, CoordV2, CoordV3, PickEvent, Polaris } from '@polaris.gl/schema'
+import { AbstractPolaris, CoordV2, CoordV3, PickEvent } from '@polaris.gl/schema'
 import Pbf from 'pbf'
 import { decode } from 'geobuf'
 import { Projection } from '@polaris.gl/projection'
@@ -264,7 +264,7 @@ export class AOILayer extends STDLayer {
 	highlightByIds: (idsArr: number[], style: { [name: string]: any }) => void
 
 	init(projection, timeline, polaris) {
-		const p = polaris as Polaris
+		const p = polaris as AbstractPolaris
 
 		if (!projection.isPlaneProjection) {
 			throw new Error('AOILayer - TileLayer can only be used under plane projections')
@@ -399,9 +399,6 @@ export class AOILayer extends STDLayer {
 			// 	console.warn('AOILayer - AOILayer under 3D view mode is currently not supported')
 			// }
 		}
-
-		/** picking */
-		this.onRaycast = this._pickAOI
 
 		/** highlight api */
 		// this.highlightByIndices = (dataIndexArr: number[], style: { [name: string]: any }) => {
@@ -572,7 +569,7 @@ export class AOILayer extends STDLayer {
 	private async _createTileMesh(
 		geojson: any,
 		projection: Projection,
-		polaris: Polaris,
+		polaris: AbstractPolaris,
 		key?: string
 	): Promise<TileRenderables | undefined> {
 		if (!geojson.type || geojson.type !== 'FeatureCollection') {
@@ -865,7 +862,7 @@ export class AOILayer extends STDLayer {
 		return `${x}|${y}|${z}`
 	}
 
-	private _pickAOI(polaris: Base, canvasCoords: CoordV2, ndc: CoordV2): PickEvent | undefined {
+	raycast(polaris: AbstractPolaris, canvasCoords: CoordV2, ndc: CoordV2): PickEvent | undefined {
 		if (!this.tileManager || !(polaris instanceof PolarisGSI)) return
 		const tiles = this.tileManager.getVisibleTiles()
 		for (let i = 0; i < tiles.length; i++) {

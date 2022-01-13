@@ -211,7 +211,11 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 						const height = container.clientHeight
 						if (width !== this.width || height !== this.height) {
 							this.resize(width, height, this.ratio, undefined)
-							this.triggerEvent('viewChange', this.cameraProxy, this)
+							this.dispatchEvent({
+								type: 'viewChange',
+								cameraProxy: this.cameraProxy,
+								polaris: this,
+							})
 						}
 					}, 200)
 				}
@@ -285,7 +289,12 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 		}
 
 		this.traverse((obj) => {
-			obj._onViewChange.forEach((f) => f(this.cameraProxy, this))
+			// obj._onViewChange.forEach((f) => f(this.cameraProxy, this))
+			this.dispatchEvent({
+				type: 'viewChange',
+				cameraProxy: this.cameraProxy,
+				polaris: this,
+			})
 		})
 	}
 
@@ -439,11 +448,11 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 		this.traverseVisible((obj) => {
 			const layer = obj as Layer
 			if (layer.isLayer && layer.getProps('pickable')) {
-				if (!layer._onRaycast) {
-					// console.warn('PolarisGSI - Layer does not implement .onRaycast method. ')
+				if (!layer.raycast) {
+					// console.warn('PolarisGSI - Layer does not implement raycast method. ')
 					return
 				}
-				const layerRes = layer._onRaycast(this, canvasCoords, ndc)
+				const layerRes = layer.raycast(this, canvasCoords, ndc)
 				if (layerRes) {
 					candidates.push({
 						...layerRes,
@@ -530,7 +539,7 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 				const left = bbox.left
 				const top = bbox.top
 				const canvasCoords = { x: e.center.x - left, y: e.center.y - top }
-				this._handlePointerEvent(canvasCoords, 'picked')
+				this._handlePointerEvent(canvasCoords, 'pick')
 			}
 		})
 
@@ -574,7 +583,7 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 					const left = bbox.left
 					const top = bbox.top
 					const canvasCoords = { x: e.x - left, y: e.y - top }
-					this._handlePointerEvent(canvasCoords, 'hovered')
+					this._handlePointerEvent(canvasCoords, 'hover')
 				}
 			},
 			this
@@ -584,7 +593,7 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 
 	private _mouseMoveHandler: (e: MouseEvent) => any
 
-	private _handlePointerEvent(canvasCoords: CoordV2, triggerEventName: EVENT_NAME) {
+	private _handlePointerEvent(canvasCoords: CoordV2, triggerEventName: 'pick' | 'hover') {
 		// Collect pick results
 		const opts = { deepPicking: this.props.deepPicking ?? false }
 		const result = this.pick(canvasCoords, opts)
@@ -593,7 +602,7 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 				const layer = obj as Layer
 				if (layer.isLayer && layer.getProps('pickable')) {
 					// trigger non-picked layer with eventName & no arguments
-					layer.triggerEvent(triggerEventName)
+					layer.dispatchEvent({ type: triggerEventName })
 				}
 			})
 			return
@@ -608,10 +617,10 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 				if (layer.isLayer && layer.getProps('pickable')) {
 					if (index >= 0) {
 						// trigger picked layer with eventName & result argument
-						layer.triggerEvent(triggerEventName, resultArr[index])
+						layer.dispatchEvent({ type: triggerEventName, result: resultArr[index] })
 					} else {
 						// trigger non-picked layer with eventName & no arguments
-						layer.triggerEvent(triggerEventName)
+						layer.dispatchEvent({ type: triggerEventName })
 					}
 				}
 			})
@@ -623,10 +632,10 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 				if (layer.isLayer && layer.getProps('pickable')) {
 					if (layer === pickedLayer) {
 						// trigger picked layer with eventName & result argument
-						layer.triggerEvent(triggerEventName, resultEvent)
+						layer.dispatchEvent({ type: triggerEventName, result: resultEvent })
 					} else {
 						// trigger non-picked layer with eventName & no arguments
-						layer.triggerEvent(triggerEventName)
+						layer.dispatchEvent({ type: triggerEventName })
 					}
 				}
 			})

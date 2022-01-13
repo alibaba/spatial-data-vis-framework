@@ -9,8 +9,7 @@ import {
 } from '@polaris.gl/utils-tile-manager'
 import { Marker } from '@polaris.gl/layer-std-marker'
 import { RequestPending, XYZTileRequestManager } from '@polaris.gl/utils-request-manager'
-import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
-import { Base, CoordV2, PickEvent, Polaris } from '@polaris.gl/schema'
+import { AbstractPolaris, Base, CoordV2, PickEvent, Polaris } from '@polaris.gl/schema'
 import { Projection } from '@polaris.gl/projection'
 import { colorToUint8Array, PointsMeshPickHelper, brushColorToImage } from '@polaris.gl/utils'
 import { PolarisGSI } from '@polaris.gl/gsi'
@@ -397,7 +396,7 @@ export class POILayer extends STDLayer {
 		)
 
 		this.onViewChange = (cam, p) => {
-			const polaris = p as Polaris
+			const polaris = p as AbstractPolaris
 			this._ratio = polaris.ratio ?? 1.0
 			if (this.matr) {
 				this.matr.uniforms.uResolution.value = { x: polaris.canvasWidth, y: polaris.canvasHeight }
@@ -406,9 +405,6 @@ export class POILayer extends STDLayer {
 			// 	console.warn('POILayer - POILayer under 3D view mode is currently not supported')
 			// }
 		}
-
-		/** picking */
-		this.onRaycast = this._pickPOI
 
 		/** highlight api */
 		// this.highlightByIndices = undefined
@@ -644,7 +640,7 @@ export class POILayer extends STDLayer {
 	private _createTileMeshAndMarkers(
 		geojson: any,
 		projection: Projection,
-		polaris: Polaris,
+		polaris: AbstractPolaris,
 		key: string,
 		clusterImage: string
 	): TileRenderables | undefined {
@@ -820,7 +816,7 @@ export class POILayer extends STDLayer {
 		return `${x}|${y}|${z}`
 	}
 
-	private _pickPOI(polaris: Base, canvasCoords: CoordV2, ndc: CoordV2): PickEvent | undefined {
+	raycast(polaris: AbstractPolaris, canvasCoords: CoordV2, ndc: CoordV2): PickEvent | undefined {
 		if (!this.tileManager || !(polaris instanceof PolarisGSI)) return
 
 		const markers: Marker[] = []

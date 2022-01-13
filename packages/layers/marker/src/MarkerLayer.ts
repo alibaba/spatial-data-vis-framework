@@ -96,9 +96,9 @@ export class MarkerLayer extends STDLayer {
 			if (!data) return
 			this.updateMarkers(data)
 		})
+	}
 
-		// Handle picking event
-		this.onRaycast = (polaris, canvasCoord, ndc) => {
+	raycast(polaris, canvasCoord, ndc) {
 			if (!this.getProps('pickable')) return
 			const data = this.getProps('data')
 			const results: PickEvent[] = []
@@ -116,7 +116,6 @@ export class MarkerLayer extends STDLayer {
 			}
 			results.sort((a, b) => a.distance - b.distance)
 			return results[0]
-		}
 	}
 
 	updateMarkers(data: any[]) {

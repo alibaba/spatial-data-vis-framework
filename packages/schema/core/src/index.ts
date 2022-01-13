@@ -3,7 +3,9 @@
  * All rights reserved.
  */
 
-export * from './Base'
+export * from './EventDispatcher'
+export * from './AbstractNode'
+export * from './AbstractLayer'
 export * from './Layer'
 export * from './Polaris'
 export * from './Renderer'

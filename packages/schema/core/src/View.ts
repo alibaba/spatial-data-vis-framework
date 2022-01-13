@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import { Base } from './Base'
+import type { Layer } from './Layer'
 
 export abstract class View {
 	readonly isView = true
@@ -15,6 +15,6 @@ export abstract class View {
 	 * 将被 Layer 的 constructor 调用,
 	 * 可以设置 layer.onAdd onVisibilityChange onRemove 等 event.
 	 */
-	abstract init(layer: Base): void
+	abstract init(layer: Layer): void
 	// init: (layer: Layer) => void
 }

@@ -17,7 +17,6 @@ import {
 	TouchControl,
 	Cameraman,
 	GeographicStates,
-	CameraProxy,
 } from 'camera-proxy'
 import { PolarisProps, defaultProps } from './props/index'
 
@@ -32,7 +31,7 @@ export type RootLayer = Omit<Layer, 'parent' | 'level' | 'init' | 'afterInit' | 
 /**
  * Polaris 根节点 基类
  */
-export abstract class Polaris extends Layer implements RootLayer {
+export abstract class AbstractPolaris extends Layer implements RootLayer {
 	readonly isPolaris: boolean
 
 	// canvas: HTMLCanvasElement
@@ -176,7 +175,8 @@ export abstract class Polaris extends Layer implements RootLayer {
 			this.traverse((obj) => {
 				if (obj.statesCode !== newStatesCode) {
 					obj.statesCode = newStatesCode
-					obj._onViewChange.forEach((f) => f(this.cameraProxy, this))
+					// obj._onViewChange.forEach((f) => f(this.cameraProxy, this))
+					obj.dispatchEvent({ type: 'viewChange', cameraProxy: this.cameraProxy, polaris: this })
 				}
 			})
 		}
@@ -199,7 +199,7 @@ export abstract class Polaris extends Layer implements RootLayer {
 	}
 
 	// Implement Layer: 将polaris实例传递给children
-	getPolaris(): Promise<Polaris> {
+	getPolaris(): Promise<AbstractPolaris> {
 		return new Promise((resolve) => {
 			resolve(this)
 		})
@@ -346,7 +346,8 @@ export abstract class Polaris extends Layer implements RootLayer {
 		// onBeforeRender
 		this.traverse((obj) => {
 			if (obj.visible) {
-				obj._onBeforeRender.forEach((cbk) => cbk(this, this.cameraProxy))
+				// obj._onBeforeRender.forEach((cbk) => cbk(this, this.cameraProxy))
+				obj.dispatchEvent({ type: 'beforeRender', polaris: this })
 			}
 		})
 
@@ -355,7 +356,8 @@ export abstract class Polaris extends Layer implements RootLayer {
 		// onAfterRender
 		this.traverse((obj) => {
 			if (obj.visible) {
-				obj._onAfterRender.forEach((cbk) => cbk(this, this.cameraProxy))
+				// obj._onAfterRender.forEach((cbk) => cbk(this, this.cameraProxy))
+				obj.dispatchEvent({ type: 'afterRender', polaris: this })
 			}
 		})
 	}
@@ -398,3 +400,12 @@ export abstract class Polaris extends Layer implements RootLayer {
 	 */
 	abstract getScreenXY(x: number, y: number, z: number): number[] | undefined
 }
+
+/**
+ * @deprecated renamed as {@link AbstractPolaris} for clarity
+ */
+export type Polaris = AbstractPolaris
+/**
+ * @deprecated renamed as {@link AbstractPolaris} for clarity
+ */
+export const Polaris = AbstractPolaris
