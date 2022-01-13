@@ -7,7 +7,7 @@ import {
 } from '@polaris.gl/projection'
 import { PolygonLayer, LineStringLayer } from '@polaris.gl/layer-geojson'
 import { PolarisGSIGL2 } from '@polaris.gl/gsi-gl2'
-import { STDLayer } from '@polaris.gl/layer-std'
+import { StandardLayer } from '@polaris.gl/layer-std'
 import { Matrix4 } from '@gs.i/utils-math'
 import { applyMatrixToAttr } from '@polaris.gl/utils'
 
@@ -61,7 +61,7 @@ fetch(
 	})
 
 // Earth
-const earth = new STDLayer({})
+const earth = new StandardLayer({})
 const mesh = new Mesh({
 	name: 'Earth',
 	geometry: buildSphere({

@@ -7,7 +7,7 @@ import { computeBBox, computeBSphere } from '@gs.i/utils-geometry'
 import { ScatterMatr } from './ScatterMatr'
 import { Mesh, Geom, MatrPoint, Attr } from '@gs.i/frontend-sdk'
 import { Color } from '@gs.i/utils-math'
-import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
 
 type DataType = {
 	lng?: number | string
@@ -17,7 +17,7 @@ type DataType = {
 	value: number
 }
 
-export interface ScatterLayerProps extends STDLayerProps {
+export interface ScatterLayerProps extends StandardLayerProps {
 	size: number
 	opacity: number
 	color: string
@@ -66,7 +66,7 @@ export const defaultProps: ScatterLayerProps = {
 	data: [],
 }
 
-export class ScatterLayer extends STDLayer {
+export class ScatterLayer extends StandardLayer {
 	props: any
 
 	mesh: Mesh

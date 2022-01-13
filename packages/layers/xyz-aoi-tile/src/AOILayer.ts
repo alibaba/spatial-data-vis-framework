@@ -2,7 +2,7 @@ import { MeshDataType } from '@gs.i/schema'
 import { computeBBox, computeBSphere } from '@gs.i/utils-geometry'
 import { XYZTileManager, TileRenderables, TileToken } from '@polaris.gl/utils-tile-manager'
 import { RequestPending, XYZTileRequestManager } from '@polaris.gl/utils-request-manager'
-import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
 import { Mesh, MatrUnlit, Geom, Attr } from '@gs.i/frontend-sdk'
 import { AbstractPolaris, CoordV2, CoordV3, PickEvent } from '@polaris.gl/schema'
 import Pbf from 'pbf'
@@ -19,7 +19,7 @@ import GeomWorker from 'worker-loader!./workers/GeomWorker'
 /**
  * 配置项 interface
  */
-export interface AOILayerProps extends STDLayerProps {
+export interface AOILayerProps extends StandardLayerProps {
 	/**
 	 * Tile response data type
 	 */
@@ -197,7 +197,7 @@ type IndicatorRangeInfo = {
 	ranges: { offset: number; count: number }[]
 }
 
-export class AOILayer extends STDLayer {
+export class AOILayer extends StandardLayer {
 	matr: MatrUnlit
 
 	requestManager: XYZTileRequestManager
@@ -635,16 +635,16 @@ export class AOILayer extends STDLayer {
 				// use workers if available
 
 				const result = this._workerManager
-						? await this._workerManager.execute({
-								data: {
-									task: 'getFeatureTriangles',
-									feature,
-									projectionDesc: projection.toDesc(),
-									baseAlt,
-								},
-								transferables: [],
-						  })
-						: getFeatureTriangles(feature, projection, baseAlt)
+					? await this._workerManager.execute({
+							data: {
+								task: 'getFeatureTriangles',
+								feature,
+								projectionDesc: projection.toDesc(),
+								baseAlt,
+							},
+							transferables: [],
+					  })
+					: getFeatureTriangles(feature, projection, baseAlt)
 
 				const { positions: featPositions, indices: featIndices } = result
 
@@ -735,7 +735,7 @@ export class AOILayer extends STDLayer {
 			meshFeatures.push(feature)
 		})
 
-			const results = await Promise.all(loadPromises)
+		const results = await Promise.all(loadPromises)
 
 		const posAttr = new Attr(new Float32Array(positions), 3)
 		const colorAttr = new Attr(new Uint8Array(colors), 4)

@@ -7,9 +7,9 @@ import { computeBBox, computeBSphere } from '@gs.i/utils-geometry'
 /**
  * 基类。
  * 可以使用 Layer，自己添加需要的 view；
- * 也可以使用 STDLayer，添加好 threeView 和 htmlView 的 Layer，懒人福音。
+ * 也可以使用 StandardLayer，添加好 threeView 和 htmlView 的 Layer，懒人福音。
  */
-import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
 import { Mesh, Geom, Attr, MatrPbr } from '@gs.i/frontend-sdk'
 import { Color } from '@gs.i/utils-math'
 import { PolygonMatr } from './PolygonMatr'
@@ -26,7 +26,7 @@ import { getColorUint } from '../utils'
  * 配置项 interface
  */
 // import { THREE } from '@ali/GL2'
-export interface PolygonSideLayerProps extends STDLayerProps {
+export interface PolygonSideLayerProps extends StandardLayerProps {
 	getColor?: any
 	getThickness?: any
 	baseAlt?: number
@@ -56,7 +56,7 @@ const defaultProps = {
 /**
  * 类
  */
-export class PolygonSideLayer extends STDLayer {
+export class PolygonSideLayer extends StandardLayer {
 	props: any
 	geom: Geom
 	matr: MatrPbr

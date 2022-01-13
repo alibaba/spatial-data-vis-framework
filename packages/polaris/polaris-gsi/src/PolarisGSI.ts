@@ -15,13 +15,12 @@ import {
 	Layer,
 	PickEventResult,
 	PickResult,
-	EVENT_NAME,
 	CoordV2,
 } from '@polaris.gl/schema'
 import { PointerControl, TouchControl } from 'camera-proxy'
 import { isTouchDevice } from '@polaris.gl/utils'
 import * as Projections from '@polaris.gl/projection'
-import { STDLayer } from '@polaris.gl/layer-std'
+import { StandardLayer } from '@polaris.gl/layer-std'
 import Hammer from 'hammerjs'
 import { throttle } from './Utils'
 import * as localForage from 'localforage'
@@ -369,7 +368,7 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 		const wrapperName = projName + '|' + center.toString()
 
 		if (this._projLayerWrappers[wrapperName] === undefined) {
-			this._projLayerWrappers[wrapperName] = new STDLayer({
+			this._projLayerWrappers[wrapperName] = new StandardLayer({
 				parent: this,
 				projection: new Projections[projName]({
 					center,

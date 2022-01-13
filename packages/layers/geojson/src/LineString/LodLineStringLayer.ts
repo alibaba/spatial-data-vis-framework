@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
 import { GLine } from '@gs.i/utils-gline'
 import { Color } from '@gs.i/utils-math'
 import { Polaris } from '@polaris.gl/schema'
@@ -35,7 +35,7 @@ export type LodInfo = {
 	percentage: number
 }
 
-export interface LodLineStringProps extends STDLayerProps {
+export interface LodLineStringProps extends StandardLayerProps {
 	data?: FeatureCollection
 	level?: number
 	color?: any
@@ -86,9 +86,9 @@ const textDecoder = new TextDecoder('utf-8')
  *
  * @export
  * @class LodLineStringLayer
- * @extends {STDLayer}
+ * @extends {StandardLayer}
  */
-export class LodLineStringLayer extends STDLayer {
+export class LodLineStringLayer extends StandardLayer {
 	glineGroup: LineLodGroup
 
 	private _workerManager: WorkerManager

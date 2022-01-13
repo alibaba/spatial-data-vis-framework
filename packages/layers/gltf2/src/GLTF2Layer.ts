@@ -8,9 +8,9 @@ import { Mesh, Geom, Attr, MatrUnlit } from '@gs.i/frontend-sdk'
 /**
  * 基类。
  * 可以使用 Layer，自己添加需要的 view；
- * 也可以使用 STDLayer，添加好的 gsiView 和 HtmlView 的 Layer，懒人福音。
+ * 也可以使用 StandardLayer，添加好的 gsiView 和 HtmlView 的 Layer，懒人福音。
  */
-import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
 
 /**
  * 内部逻辑依赖.
@@ -37,9 +37,9 @@ const defaultProps = {
 /**
  * 配置项 interface
  */
-export interface GLTF2LayerProps extends STDLayerProps, Partial<typeof defaultProps> {}
+export interface GLTF2LayerProps extends StandardLayerProps, Partial<typeof defaultProps> {}
 
-export class GLTF2Layer extends STDLayer {
+export class GLTF2Layer extends StandardLayer {
 	props: GLTF2LayerProps
 	projection: any
 

@@ -7,10 +7,10 @@ import { Vector3 } from '@gs.i/utils-math'
 import { Timeline } from 'ani-timeline'
 import { Projection, GeocentricProjection } from '@polaris.gl/projection'
 import { FlyLineProps, FlyLine, DefaultFlyLineProps } from './FlyLine'
-import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
 import { Grid } from './Grid'
 
-export interface FlyLineLayerProps extends Partial<FlyLineProps>, Partial<STDLayerProps> {
+export interface FlyLineLayerProps extends Partial<FlyLineProps>, Partial<StandardLayerProps> {
 	duration?: number
 	delay?: number
 	repeat?: boolean
@@ -45,14 +45,14 @@ export const DefaultLayerProps: FlyLineLayerProps = {
  *      repeat
  *  }... ]
  */
-export class FlyLineLayer extends STDLayer {
+export class FlyLineLayer extends StandardLayer {
 	props: FlyLineLayerProps
 
 	flyline: FlyLine
 	projection: Projection
 	geoWrapProjection: Projection
 	timeline: Timeline
-	geocentricLayer: STDLayer
+	geocentricLayer: StandardLayer
 	sid: number
 	grids: FlyInfo[]
 	data: any[]

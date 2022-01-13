@@ -9,9 +9,9 @@ import { Color, Box2 } from '@gs.i/utils-math'
 /**
  * 基类。
  * 可以使用 Layer，自己添加需要的 view；
- * 也可以使用 STDLayer，添加好 gsiView 和 htmlView 的 Layer，懒人福音。
+ * 也可以使用 StandardLayer，添加好 gsiView 和 htmlView 的 Layer，懒人福音。
  */
-import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
 
 /**
  * 内部逻辑依赖
@@ -20,7 +20,7 @@ import { FeatureCollection } from '@turf/helpers'
 import { PolygonSideLayer } from './PolygonSideLayer'
 import { PolygonSurfaceLayer } from './PolygonSurfaceLayer'
 
-export interface PolygonLayerProps extends STDLayerProps {
+export interface PolygonLayerProps extends StandardLayerProps {
 	data?: FeatureCollection | string
 	/**
 	 * Base options
@@ -93,7 +93,7 @@ export interface SelectionDataType {
 	feature: any
 }
 
-export class PolygonLayer extends STDLayer {
+export class PolygonLayer extends StandardLayer {
 	props: any
 	surfaceLayer: PolygonSurfaceLayer
 	sideLayer: PolygonSideLayer
@@ -496,7 +496,7 @@ export class PolygonLayer extends STDLayer {
 	}
 
 	/**
-	 * 重写 STDLayer.onDepthTestChange
+	 * 重写 StandardLayer.onDepthTestChange
 	 */
 	onDepthTestChange(depthTest: boolean) {
 		if (this.surfaceLayer) {
@@ -512,7 +512,7 @@ export class PolygonLayer extends STDLayer {
 	}
 
 	/**
-	 * 重写 STDLayer.onRenderOrderChange
+	 * 重写 StandardLayer.onRenderOrderChange
 	 */
 	onRenderOrderChange(renderOrder: number) {
 		if (this.surfaceLayer) {

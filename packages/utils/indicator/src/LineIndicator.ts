@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import { STDLayer } from '@polaris.gl/layer-std'
+import { StandardLayer } from '@polaris.gl/layer-std'
 import { Color } from '@gs.i/utils-math'
 import { GLine, DefaultGLineConfig } from '@gs.i/utils-gline'
 import { isDISPOSED } from '@gs.i/schema'
@@ -35,7 +35,7 @@ export interface Config {
  * @class LineIndicator
  */
 export class LineIndicator {
-	layer?: STDLayer
+	layer?: StandardLayer
 	gline: GLine
 	config: Config
 	private _rawPositions: number[][]
@@ -184,7 +184,7 @@ export class LineIndicator {
 		attr.version++
 	}
 
-	addToLayer(layer: STDLayer) {
+	addToLayer(layer: StandardLayer) {
 		if (!layer.group.children.has(this.gline)) {
 			layer.group.add(this.gline)
 		} else {

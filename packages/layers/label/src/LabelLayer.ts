@@ -5,10 +5,10 @@ import { Color, Vector2 } from '@gs.i/utils-math'
  * All rights reserved.
  */
 
-import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
 import { SimplifiedMarker } from './SimplifiedMarker'
 
-export interface LabelLayerProps extends STDLayerProps {
+export interface LabelLayerProps extends StandardLayerProps {
 	baseAlt: number
 	zIndex: number
 	/**
@@ -98,7 +98,7 @@ export type TextColor = {
 
 const ChineseCharPattern = new RegExp('[\u4E00-\u9FA5]+')
 
-export class LabelLayer extends STDLayer {
+export class LabelLayer extends StandardLayer {
 	greyToTextColor: [TextColor, TextColor]
 
 	/**

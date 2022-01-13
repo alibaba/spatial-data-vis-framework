@@ -6,9 +6,9 @@
 /**
  * 基类。
  * 可以使用 Layer，自己添加需要的 view；
- * 也可以使用 STDLayer，添加好的 gsiView 和 HtmlView 的 Layer，懒人福音。
+ * 也可以使用 StandardLayer，添加好的 gsiView 和 HtmlView 的 Layer，懒人福音。
  */
-import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
 
 /**
  * 内部逻辑依赖.
@@ -29,12 +29,12 @@ const defaultProps = {
 /**
  * 配置项 interface
  */
-export interface HelperLayerProps extends STDLayerProps, Partial<typeof defaultProps> {}
+export interface HelperLayerProps extends StandardLayerProps, Partial<typeof defaultProps> {}
 
 /**
  * 辅助Layer，显示坐标轴等
  */
-export class HelperLayer extends STDLayer {
+export class HelperLayer extends StandardLayer {
 	axises: Mesh
 	box?: Mesh
 	props: any

@@ -3,7 +3,7 @@ import { Mesh, MatrUnlit, Geom } from '@gs.i/frontend-sdk'
 import { SphereProjection, MercatorProjection } from '@polaris.gl/projection'
 import { PolygonLayer, LineStringLayer } from '@polaris.gl/layer-geojson'
 import { PolarisGSIGL2 } from '@polaris.gl/gsi-gl2'
-import { STDLayer } from '@polaris.gl/layer-std'
+import { StandardLayer } from '@polaris.gl/layer-std'
 import { Matrix4 } from '@gs.i/utils-math'
 import { applyMatrixToAttr } from '@polaris.gl/utils'
 
@@ -28,7 +28,7 @@ setInterval(() => {
 }, 2000)
 
 // Earth
-const earth = new STDLayer({
+const earth = new StandardLayer({
 	projection: new SphereProjection({}),
 })
 const mesh = new Mesh({

@@ -9,6 +9,7 @@ import {
 } from '@polaris.gl/utils-tile-manager'
 import { Marker } from '@polaris.gl/layer-std-marker'
 import { RequestPending, XYZTileRequestManager } from '@polaris.gl/utils-request-manager'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
 import { AbstractPolaris, Base, CoordV2, PickEvent, Polaris } from '@polaris.gl/schema'
 import { Projection } from '@polaris.gl/projection'
 import { colorToUint8Array, PointsMeshPickHelper, brushColorToImage } from '@polaris.gl/utils'
@@ -19,7 +20,7 @@ import { decode } from 'geobuf'
 /**
  * 配置项 interface
  */
-export interface POILayerProps extends STDLayerProps {
+export interface POILayerProps extends StandardLayerProps {
 	/**
 	 * Tile response data type,
 	 * not essential if the 'requestManager' prop has been set
@@ -215,7 +216,7 @@ export const defaultProps: POILayerProps = {
 	useParentReplaceUpdate: true,
 }
 
-export class POILayer extends STDLayer {
+export class POILayer extends StandardLayer {
 	matr: MatrPoint
 
 	requestManager: XYZTileRequestManager
@@ -767,15 +768,15 @@ export class POILayer extends STDLayer {
 	private async _getClusterImage() {
 		if (this._clusterImgUrl) return this._clusterImgUrl
 
-			this._clusterImgUrl = await brushColorToImage(
-				this.getProps('clusterImage'),
-				this.getProps('clusterColor'),
-				this.getProps('clusterSize'),
-				this.getProps('clusterSize'),
-				this.getProps('clusterColorBlend')
-			)
+		this._clusterImgUrl = await brushColorToImage(
+			this.getProps('clusterImage'),
+			this.getProps('clusterColor'),
+			this.getProps('clusterSize'),
+			this.getProps('clusterSize'),
+			this.getProps('clusterColorBlend')
+		)
 
-			return this._clusterImgUrl
+		return this._clusterImgUrl
 	}
 
 	private _createClusterDiv(text: string, clusterImage: string, feature: any) {
