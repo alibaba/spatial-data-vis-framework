@@ -4,7 +4,7 @@ import { PolarisGSIGL2 } from '@polaris.gl/gsi-gl2'
 import { LineStringLayer, PolygonLayer } from '@polaris.gl/layer-geojson'
 import { buildSphere, buildPlane } from '@gs.i/utils-geom-builders'
 import { GeocentricProjection, SphereProjection } from '@polaris.gl/projection'
-import { STDLayer } from '@polaris.gl/layer-std'
+import { StandardLayer } from '@polaris.gl/layer-std'
 import { Matrix4 } from '@gs.i/utils-math'
 import { applyMatrixToAttr } from '@polaris.gl/utils'
 
@@ -20,7 +20,7 @@ const p = (window['p'] = new PolarisGSIGL2({
 }))
 
 // Earth
-const earth = new STDLayer({
+const earth = new StandardLayer({
 	projection: new SphereProjection({}),
 })
 const mesh = new Mesh({

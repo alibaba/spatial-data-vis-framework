@@ -1,5 +1,5 @@
 import { Timeline } from 'ani-timeline'
-import { STDLayer } from '@polaris.gl/layer-std'
+import { StandardLayer } from '@polaris.gl/layer-std'
 import { Polaris } from '@polaris.gl/schema'
 import { Projection } from '@polaris.gl/projection'
 import {
@@ -15,7 +15,7 @@ export type CommonTileManagerConfig = {
 	/**
 	 * Layer
 	 */
-	layer: STDLayer
+	layer: StandardLayer
 
 	/**
 	 * Function to get current view's tile tokens,

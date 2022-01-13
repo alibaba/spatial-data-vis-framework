@@ -3,10 +3,10 @@
  * All rights reserved.
  */
 
-import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
 declare let window: any
 
-export interface AMapLayerProps extends STDLayerProps {
+export interface AMapLayerProps extends StandardLayerProps {
 	key: string
 	showLogo: boolean
 	showLabel: boolean
@@ -46,7 +46,7 @@ export const defaultProps: AMapLayerProps = {
 	],
 }
 
-export class AMapLayer extends STDLayer {
+export class AMapLayer extends StandardLayer {
 	projection
 	cam
 	map
@@ -70,7 +70,7 @@ export class AMapLayer extends STDLayer {
 	init = (projection, timeline, polaris) => {
 		// polaris图层背景透明
 		this.polaris = polaris
-		this.polaris['renderer'].renderer.setClearAlpha(0.0)
+		polaris['renderer'].renderer.setClearAlpha(0.0)
 		// 获取相机和投影
 		this.cam = polaris.cameraProxy
 		this.projection = projection

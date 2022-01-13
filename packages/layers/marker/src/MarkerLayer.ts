@@ -4,7 +4,7 @@
  */
 
 import { Mesh } from '@gs.i/frontend-sdk'
-import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
 import { deepCloneMesh } from '@polaris.gl/utils'
 import { Marker } from './Marker'
 import { PolarisGSI } from '@polaris.gl/gsi'
@@ -13,7 +13,7 @@ import { CoordV2, PickEvent } from '@polaris.gl/schema'
 /**
  * 配置项 interface
  */
-export interface MarkerLayerProps extends STDLayerProps {
+export interface MarkerLayerProps extends StandardLayerProps {
 	data?: any[]
 	lng?: number
 	lat?: number
@@ -52,7 +52,7 @@ export const defaultProps: MarkerLayerProps = {
  *     ...OtherLayerProps都可单独设置
  * }]
  */
-export class MarkerLayer extends STDLayer {
+export class MarkerLayer extends StandardLayer {
 	props: any
 
 	private markers: Marker[]
@@ -99,23 +99,23 @@ export class MarkerLayer extends STDLayer {
 	}
 
 	raycast(polaris, canvasCoord, ndc) {
-			if (!this.getProps('pickable')) return
-			const data = this.getProps('data')
-			const results: PickEvent[] = []
-			for (let i = 0; i < this.markers.length; i++) {
-				const marker = this.markers[i]
-				const result = this._pickMarker(polaris as PolarisGSI, canvasCoord, ndc, marker, i)
-				if (result) {
-					const pickEvent = {
-						...result,
-						index: i,
-						data: data ? data[i] : undefined,
-					}
-					results.push(pickEvent)
+		if (!this.getProps('pickable')) return
+		const data = this.getProps('data')
+		const results: PickEvent[] = []
+		for (let i = 0; i < this.markers.length; i++) {
+			const marker = this.markers[i]
+			const result = this._pickMarker(polaris as PolarisGSI, canvasCoord, ndc, marker, i)
+			if (result) {
+				const pickEvent = {
+					...result,
+					index: i,
+					data: data ? data[i] : undefined,
 				}
+				results.push(pickEvent)
 			}
-			results.sort((a, b) => a.distance - b.distance)
-			return results[0]
+		}
+		results.sort((a, b) => a.distance - b.distance)
+		return results[0]
 	}
 
 	updateMarkers(data: any[]) {

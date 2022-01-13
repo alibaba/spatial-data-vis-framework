@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
 import { GLine } from '@gs.i/utils-gline'
 import { Color } from '@gs.i/utils-math'
 
@@ -19,7 +19,7 @@ import { featureToLinePositions } from '../utils'
 /**
  * 配置项 interface
  */
-export interface LineStringProps extends STDLayerProps {
+export interface LineStringProps extends StandardLayerProps {
 	level?: number
 	color?: any
 	opacity?: number
@@ -46,7 +46,7 @@ const defaultProps: LineStringProps = {
 	baseAlt: 0,
 }
 
-export class LineStringLayer extends STDLayer {
+export class LineStringLayer extends StandardLayer {
 	gline: GLine
 	mesh: GLine
 

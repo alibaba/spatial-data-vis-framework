@@ -5,7 +5,7 @@
 
 import { Projection } from '@polaris.gl/projection'
 import { CameraProxy } from 'camera-proxy'
-import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
 import { Vector2, Vector3, Matrix4, Euler } from '@gs.i/utils-math'
 import { Mesh } from '@gs.i/frontend-sdk'
 import { MatrBaseDataType, MeshDataType } from '@gs.i/schema'
@@ -20,7 +20,7 @@ const R = 6378137 // 常量 - 地球半径
 /**
  * 默认配置项
  */
-export interface MarkerProps extends STDLayerProps {
+export interface MarkerProps extends StandardLayerProps {
 	lng?: number
 	lat?: number
 	alt?: number
@@ -55,7 +55,7 @@ export const defaultMarkerProps: MarkerProps = {
 /**
  * 单一的Marker，实现在地图上放置三维和二维Marker，可单独使用，一般推荐使用MarkerLayer组件批量生成
  */
-export class Marker extends STDLayer {
+export class Marker extends StandardLayer {
 	lnglatalt: [number, number, number]
 	html?: HTMLElement
 	object3d?: MeshDataType

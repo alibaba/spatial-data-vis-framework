@@ -3,7 +3,7 @@ import { PolarisGSIGL2 } from '@polaris.gl/gsi-gl2'
 import { HelperLayer } from '@polaris.gl/layer-std-helper'
 import { buildSphere } from '@gs.i/utils-geom-builders'
 import { GeocentricProjection } from '@polaris.gl/projection'
-import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
 
 const defaultProps = {
 	a: 1,
@@ -23,7 +23,7 @@ const defaultProps = {
 		{ lng: 118, lat: 38, orderCnt: 20, extra: { count: 11 } },
 	],
 }
-class TestLayer extends STDLayer {
+class TestLayer extends StandardLayer {
 	constructor(props: any) {
 		props = {
 			...defaultProps,

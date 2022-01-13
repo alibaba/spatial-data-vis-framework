@@ -1,7 +1,7 @@
 import { buildSphere } from '@gs.i/utils-geom-builders'
 import { Mesh, MatrUnlit, Geom } from '@gs.i/frontend-sdk'
 import { PolarisGSIGL2 } from '@polaris.gl/gsi-gl2'
-import { STDLayer } from '@polaris.gl/layer-std'
+import { StandardLayer } from '@polaris.gl/layer-std'
 import { Matrix4 } from '@gs.i/utils-math'
 import { applyMatrixToAttr } from '@polaris.gl/utils'
 import { CameraAnimation, PathAnimation } from '@polaris.gl/utils-animation'
@@ -25,7 +25,7 @@ const p = new PolarisGSIGL2({
 p.timeline.config.ignoreErrors = false
 
 // Earth
-const earth = new STDLayer({})
+const earth = new StandardLayer({})
 const mesh = new Mesh({
 	name: 'Earth',
 	geometry: buildSphere({
