@@ -12,6 +12,47 @@ or Polaris.gl in short.
 
 ## Inro
 
+Polaris.gl is a meta-framework for spatial data visualization on general 3D engines.
+
+With a layered structure and supercharged toolkit to:
+
+- Make 3d engines and map libraries cooperate in your application
+- Build full-featured spatial visualization or map apps based on any 3D engines
+- Compose your own visualization framework easily with all the tools you love
+
+Out-of-box Polaris.gl implements are provided for common scenarios:
+
+- Polaris-lite
+  - three-lite as renderer.
+  - For modern browsers on desktop and mobile
+- Polaris-HD
+  - Based on our HDPipeline renderer
+  - AAA-game-level render pipeline. With full-on deferred shading and screen-space technics
+  - For browsers on powerful devices.
+- Polaris-react
+  - React wrapping of Polaris-lite and layers
+  - Use layers like common react components
+- Polaris-Map
+  - A minimal LBS framework for a light-weight Web environment
+  - Friendly API for map users.
+  - Useful layers included.
+- Polaris-glTF
+  - Generate glTF 2.0 data for the scene.
+  - Served as pre-process of game engine or 3D software workflow.
+
+The core concept of Polaris.gl is Layer.
+
+A layer is a pluggable, extendable collection of a series of logic and visual elements. All features of a Polaris app come from the layers added to the layer tree.
+Each layer has its independent geo-projection and timeline that automatically align it to the scene graph.
+Layers are designed to be loaded on-demand and mounted/unmounted at any time.
+A layer extended from the standard layer can work on different renderers and environments.
+
+Officially maintained layers:
+
+- TODO
+
+---
+
 Polaris.gl 是基于通用 3D 渲染引擎的空间数据可视化框架，在 通用 3D 渲染能力的基础上增加 地理信息标准、组件封装与组合标准、与地图库的联动机制，并在这些标准上积累了一大批开箱即用的 可视化组件、视觉组件、定制框架等。
 
 Polaris.gl 并不是一个地图库，没有内置或绑定的地图服务，但是提供和众多公开地图库、地理可视化工具（包括 Mapbox、高德地图、百度地图、cesium、L7 等）的协同工作方案。
@@ -36,7 +77,7 @@ npx lerna -v # v4.x recommended
 
 `npm run setup`
 
-Should not see any error. If something goes wrong (probably caused by a registry). Run `npm run clean` and try it again.
+Should not see any error. If something goes wrong (probably caused by a registry or internet error). Run `npm run clean` and try it again.
 
 ### Build packages
 
@@ -49,6 +90,8 @@ If something goes wrong. You should try `npm run rebuild` which will clean up al
 Good old fashioned `npm start`
 
 ### Co-develop with GSI (the upstream monorepo project)
+
+> Unstable!
 
 协同开发多个相互依赖的 monorepo 项目。
 
@@ -67,12 +110,12 @@ Good old fashioned `npm start`
 The logic of `co-dev multi monorepos` is pretty simple.
 
 - Link outer packages like local packages. But ignore their dependents, scripts and toolchain.
-- The benifits of a monorepo stay in _that_ monorepo.
+- The benefits of a monorepo stay in _that_ monorepo.
   - Dev upstream packages in their original repo. Use the result (live-updated) in downstream repo.
   - Do not edit another repo's codes. Do not build another repo's package from your repo.
-  - Keep the boundary. Or you will end up merging everything into one gaint repo.
+  - Keep the boundary. Or you will end up merging everything into one giant repo.
 
-It is common in Javascript/Typescript ecosystem that <u>**\*Only** build result of a package is **robust and compatible with different toolchains**. NOT THE SOURCE CODES.\*</u> It is not the best approach but it's what we got.
+It is common in Javascript/Typescript ecosystem that <u>**\*Only** build result of a package is **robust and compatible with different toolchain**. NOT THE SOURCE CODES.\*</u> It is not the best approach but it's what we got.
 
 _<u>Every package only has one set of toolchain that guarantee to work.</u>_ You should expect errors if you bypass it.
 
