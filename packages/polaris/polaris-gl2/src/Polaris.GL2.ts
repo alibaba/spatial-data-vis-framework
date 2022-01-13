@@ -9,7 +9,7 @@ import * as capacity from '@polaris.gl/utils/dist/capacity'
 import { GL2Renderer } from '@polaris.gl/renderer-gl2'
 import { PointerControl, AnimatedCameraProxy, TouchControl, Cameraman } from 'camera-proxy'
 import { THREE } from 'gl2'
-import { Polaris, PolarisProps } from '@polaris.gl/schema'
+import { Polaris, PolarisProps } from '@polaris.gl/base'
 
 export type PolarisGL2Props = PolarisProps
 

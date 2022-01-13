@@ -16,7 +16,7 @@ import {
 	PickEventResult,
 	PickResult,
 	CoordV2,
-} from '@polaris.gl/schema'
+} from '@polaris.gl/base'
 import { PointerControl, TouchControl } from 'camera-proxy'
 import { isTouchDevice } from '@polaris.gl/utils'
 import * as Projections from '@polaris.gl/projection'

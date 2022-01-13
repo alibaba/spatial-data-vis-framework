@@ -10,13 +10,13 @@
 	"exclude": ["dist"],
 	"references": [
 		{
+			"path": "../../core/base"
+		},
+		{
 			"path": "../../layers/standard"
 		},
 		{
 			"path": "../projections"
-		},
-		{
-			"path": "../../schema/core"
 		}
 	]
 }

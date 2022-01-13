@@ -8,7 +8,7 @@
  * 但是 typescript 中 mixin 和 decoration 都会造成一定程度的 interface 混乱
  * 因此在这里把constructor里增加的逻辑拆成函数，
  */
-import { View, Layer } from '@polaris.gl/schema'
+import { View, Layer } from '@polaris.gl/base'
 
 // 只做为 typescript 的类型判断使用，并没有引用代码，会在编译阶段被shake掉
 import { Group } from 'three'

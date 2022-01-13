@@ -10,10 +10,10 @@
 	"exclude": ["dist"],
 	"references": [
 		{
-			"path": "../../renderers/renderer-gl2"
+			"path": "../../core/base"
 		},
 		{
-			"path": "../../schema/core"
+			"path": "../../renderers/renderer-gl2"
 		},
 		{
 			"path": "../../utils/utils"

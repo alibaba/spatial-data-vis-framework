@@ -8,7 +8,7 @@ import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
 import { deepCloneMesh } from '@polaris.gl/utils'
 import { Marker } from './Marker'
 import { PolarisGSI } from '@polaris.gl/gsi'
-import { CoordV2, PickEvent } from '@polaris.gl/schema'
+import { CoordV2, PickEvent } from '@polaris.gl/base'
 
 /**
  * 配置项 interface

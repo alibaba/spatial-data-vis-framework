@@ -23,7 +23,7 @@
         "@gs.i/utils-math": "^0.0.0-beta",
         "@gs.i/utils-transform": "^0.0.0-beta",
         "@polaris.gl/projection": "^0.0.0-alpha.8",
-        "@polaris.gl/schema": "^0.0.0-alpha.8",
+        "@polaris.gl/base": "^0.1.0-alpha.0",
         "is-touch-device": "^1.0.1"
     },
     "devDependencies": {

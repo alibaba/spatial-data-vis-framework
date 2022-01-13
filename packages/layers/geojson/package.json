@@ -29,7 +29,7 @@
         "@gs.i/utils-math": "^0.0.0-beta",
         "@polaris.gl/gsi": "^0.0.0-alpha.8",
         "@polaris.gl/layer-std": "^0.0.0-alpha.8",
-        "@polaris.gl/schema": "^0.0.0-alpha.8",
+        "@polaris.gl/base": "^0.1.0-alpha.0",
         "@polaris.gl/utils-indicator": "^0.0.0-alpha.8",
         "@polaris.gl/utils-worker-manager": "^0.0.0-alpha.8",
         "@turf/bbox": "^6.3.0",

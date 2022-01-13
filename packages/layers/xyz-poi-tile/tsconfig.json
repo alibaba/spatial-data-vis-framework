@@ -10,6 +10,9 @@
 	"exclude": ["dist"],
 	"references": [
 		{
+			"path": "../../core/base"
+		},
+		{
 			"path": "../../polaris/polaris-gsi"
 		},
 		{
@@ -20,9 +23,6 @@
 		},
 		{
 			"path": "../../utils/projections"
-		},
-		{
-			"path": "../../schema/core"
 		},
 		{
 			"path": "../../utils/utils"

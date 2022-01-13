@@ -6,7 +6,7 @@
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
 import { GLine } from '@gs.i/utils-gline'
 import { Color } from '@gs.i/utils-math'
-import { Polaris } from '@polaris.gl/schema'
+import { Polaris } from '@polaris.gl/base'
 
 /**
  * 内部逻辑依赖

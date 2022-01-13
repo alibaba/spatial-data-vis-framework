@@ -1,6 +1,6 @@
 import { Timeline } from 'ani-timeline'
 import { StandardLayer } from '@polaris.gl/layer-std'
-import { Polaris } from '@polaris.gl/schema'
+import { Polaris } from '@polaris.gl/base'
 import { Projection } from '@polaris.gl/projection'
 import {
 	TileManager,

@@ -10,13 +10,13 @@
 	"exclude": ["dist"],
 	"references": [
 		{
+			"path": "../../core/base"
+		},
+		{
 			"path": "../../polaris/polaris-gsi"
 		},
 		{
 			"path": "../standard"
-		},
-		{
-			"path": "../../schema/core"
 		},
 		{
 			"path": "../../utils/indicator"

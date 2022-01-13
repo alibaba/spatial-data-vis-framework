@@ -16,7 +16,7 @@
         "rebuild": "npm run clean && npm run build"
     },
     "dependencies": {
-        "@polaris.gl/schema": "^0.0.0-alpha.8",
+        "@polaris.gl/base": "^0.1.0-alpha.0",
         "three": "0.111.0"
     },
     "devDependencies": {
