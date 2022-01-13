@@ -633,9 +633,8 @@ export class AOILayer extends STDLayer {
 			if (geometry.type === 'Polygon' || geometry.type === 'MultiPolygon') {
 				// polygon triangles generation
 				// use workers if available
-				let result: any
-				try {
-					result = this._workerManager
+
+				const result = this._workerManager
 						? await this._workerManager.execute({
 								data: {
 									task: 'getFeatureTriangles',
@@ -646,9 +645,6 @@ export class AOILayer extends STDLayer {
 								transferables: [],
 						  })
 						: getFeatureTriangles(feature, projection, baseAlt)
-				} catch (e) {
-					throw e
-				}
 
 				const { positions: featPositions, indices: featIndices } = result
 
@@ -739,11 +735,7 @@ export class AOILayer extends STDLayer {
 			meshFeatures.push(feature)
 		})
 
-		try {
 			const results = await Promise.all(loadPromises)
-		} catch (e) {
-			throw e
-		}
 
 		const posAttr = new Attr(new Float32Array(positions), 3)
 		const colorAttr = new Attr(new Uint8Array(colors), 4)

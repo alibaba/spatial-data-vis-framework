@@ -18,12 +18,15 @@
     "setup": "node scripts/setup.mjs",
     "clean": "rm -rf ./yarn.lock && rm -rf gsi-packages && rm -rf ./node_modules && lerna clean -y && lerna run --no-private --stream --parallel clean",
     "build": "lerna run build --ignore @gs.i/* --stream --no-private",
+    "rebuild": "lerna run --no-private --stream rebuild",
     "watch": "node scripts/watch.mjs --fast"
   },
   "devDependencies": {
     "typescript": "^4.5.4",
-    "eslint": "7.32.0",
-    "eslint-config-prettier": "^8.3.0",
+    "@typescript-eslint/eslint-plugin": "5.8.0",
+    "@typescript-eslint/parser": "5.8.0",
+    "eslint": "8.5.0",
+    "eslint-config-prettier": "8.3.0",
     "shelljs": "^0.8.4",
     "jsonc-parser": "^3.0.0",
     "colors": "=1.4.0",

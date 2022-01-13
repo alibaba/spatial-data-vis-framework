@@ -560,7 +560,7 @@ export class POILayer extends STDLayer {
 		}
 	}
 
-	private _createPointMatr(polaris: Polaris) {
+	private _createPointMatr(polaris: AbstractPolaris) {
 		const pointOffset = this.getProps('pointOffset')
 		const pointColorBlend = this.getProps('pointColorBlend')
 		let P_COLOR_MODE = 0
@@ -574,8 +574,6 @@ export class POILayer extends STDLayer {
 			case 'add':
 				P_COLOR_MODE = 2
 				break
-			default: {
-			}
 		}
 
 		const matr = new MatrPoint({
@@ -769,7 +767,6 @@ export class POILayer extends STDLayer {
 	private async _getClusterImage() {
 		if (this._clusterImgUrl) return this._clusterImgUrl
 
-		try {
 			this._clusterImgUrl = await brushColorToImage(
 				this.getProps('clusterImage'),
 				this.getProps('clusterColor'),
@@ -779,9 +776,6 @@ export class POILayer extends STDLayer {
 			)
 
 			return this._clusterImgUrl
-		} catch (e) {
-			throw e
-		}
 	}
 
 	private _createClusterDiv(text: string, clusterImage: string, feature: any) {

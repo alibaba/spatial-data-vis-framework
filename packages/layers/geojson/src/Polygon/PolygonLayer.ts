@@ -363,9 +363,6 @@ export class PolygonLayer extends STDLayer {
 			}
 		)
 
-		// Set picking events
-		this.onRaycast = this._executePicking
-
 		/**
 		 * Highilight api
 		 * @param {number[]} dataIndexArr
@@ -409,7 +406,7 @@ export class PolygonLayer extends STDLayer {
 
 	init() {}
 
-	private _executePicking(polaris, canvasCoords, ndc): PickEvent | undefined {
+	raycast(polaris, canvasCoords, ndc): PickEvent | undefined {
 		if (!this.getProps('pickable')) return
 		if (!this.surfaceLayer || !this.surfaceLayer.geom || !this.surfaceLayer.geom.attributes.color)
 			return
