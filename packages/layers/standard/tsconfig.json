@@ -16,10 +16,10 @@
 			"path": "../../utils/projections"
 		},
 		{
-			"path": "../../core/views/view-gsi"
+			"path": "../../core/view-gsi"
 		},
 		{
-			"path": "../../core/views/view-html"
+			"path": "../../core/view-html"
 		}
 	]
 }

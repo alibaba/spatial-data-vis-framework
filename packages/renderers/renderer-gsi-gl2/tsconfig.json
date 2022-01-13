@@ -13,7 +13,7 @@
 			"path": "../../core/base"
 		},
 		{
-			"path": "../../core/views/view-gsi"
+			"path": "../../core/view-gsi"
 		}
 	]
 }

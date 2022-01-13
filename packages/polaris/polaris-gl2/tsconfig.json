@@ -19,10 +19,10 @@
 			"path": "../../utils/utils"
 		},
 		{
-			"path": "../../core/views/view-html"
+			"path": "../../core/view-html"
 		},
 		{
-			"path": "../../core/views/view-three"
+			"path": "../../core/view-three"
 		}
 	]
 }
