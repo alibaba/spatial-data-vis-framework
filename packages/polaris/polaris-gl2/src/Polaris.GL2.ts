@@ -25,7 +25,7 @@ export class PolarisGL2 extends Polaris {
 	 * top view layer
 	 */
 	view = {
-		html: new HtmlView(this),
+		html: new HtmlView().init(this),
 		three: new ThreeView<THREE.Group>(this, THREE.Group),
 	}
 
