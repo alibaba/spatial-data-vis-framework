@@ -22,10 +22,10 @@
 			"path": "../../utils/utils"
 		},
 		{
-			"path": "../../core/views/view-gsi"
+			"path": "../../core/view-gsi"
 		},
 		{
-			"path": "../../core/views/view-html"
+			"path": "../../core/view-html"
 		}
 	]
 }

@@ -25,7 +25,7 @@
 			"path": "../../utils/utils"
 		},
 		{
-			"path": "../../core/views/view-gsi"
+			"path": "../../core/view-gsi"
 		}
 	]
 }

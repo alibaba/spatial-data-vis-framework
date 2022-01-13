@@ -1,4 +1,0 @@
-所有新增的 Layer，如非必须，都应继承自 layer-gsi 来实现复用。
-如果有特殊需求，可以建立针对特定引擎的 view 和 layer。
-
-2D的部分，暂时没有计划设计schema，因此需要为 html 和 miniapp 等提供独立的 view。
