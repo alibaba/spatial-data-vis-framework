@@ -530,7 +530,7 @@ export class Marker extends StandardLayer {
 
 	private updateVisibility(cam: CameraProxy, projection: Projection) {
 		if (this.getProps('autoHide')) {
-			if (projection.isShpereProjection) {
+			if (projection.isSphereProjection) {
 				// 球面投影下使用球面切点判断可见性
 				const camStates = cam.getCartesianStates()
 				this.camPosition.set(

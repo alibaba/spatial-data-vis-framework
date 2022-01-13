@@ -21,7 +21,7 @@ namespace Ali.Polaris.Projections
 
         public SphereProjection(ProjectionProps props) : base(props)
         {
-            IsShpereProjection = true;
+            IsSphereProjection = true;
             Type = "SphereProjection";
         }
 

@@ -58,7 +58,7 @@ namespace Ali.Polaris.Projections
         public string Units { get; protected set; }
 
         public virtual bool IsPlaneProjection { get; protected set; } = false;
-        public virtual bool IsShpereProjection { get; protected set; } = false;
+        public virtual bool IsSphereProjection { get; protected set; } = false;
         public virtual bool IsGeocentricProjection { get; protected set; } = false;
 
         protected bool _useRightHand = false;
