@@ -1,14 +1,10 @@
 # 分层空间数据可视化框架
 
-**This Project Is Still In Uploading Process.**
+**>>This Project Is Still In Uploading Process.<<**
 
-Layered Spatial Data Vis Framework
-
-or Polaris.gl in short.
+**Layered Spatial Data Vis Framework**, or Polaris.gl in short.
 
 分层空间数据可视化框架，或简称 Polaris.gl
-
-<!-- labels -->
 
 ## Inro
 
@@ -40,7 +36,7 @@ Out-of-box Polaris.gl implements are provided for common scenarios:
   - Generate glTF 2.0 data for the scene.
   - Served as pre-process of game engine or 3D software workflow.
 
-The core concept of Polaris.gl is Layer.
+The core concept of Polaris.gl is **Layer**.
 
 A layer is a pluggable, extendable collection of a series of logic and visual elements. All features of a Polaris app come from the layers added to the layer tree.
 Each layer has its independent geo-projection and timeline that automatically align it to the scene graph.
@@ -135,7 +131,7 @@ OpenGL® and the oval logo are trademarks or registered trademarks of Hewlett Pa
 
 OpenGL is a registered trademark and the OpenGL ES logo is a trademark of Hewlett Packard Enterprise used by permission by Khronos.
 
-## 准则
+## Code of Conduct
 
 Alibaba has adopted a Code of Conduct that we expect project participants to adhere to.
 
