@@ -15,7 +15,7 @@
         "rollup": "npx rollup -c ./rollup.config.js",
         "build": "./scripts/build.sh",
         "clean": "./scripts/clean.sh",
-        "rebuild": "./scripts/rebuild.sh"
+        "rebuild": "npm run clean && npm run build"
     },
     "dependencies": {
         "@polaris.gl/renderer-gl2": "^0.0.0-alpha.8",
