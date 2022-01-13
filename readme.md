@@ -6,6 +6,8 @@
 
 分层空间数据可视化框架，或简称 Polaris.gl
 
+
+
 ## Inro
 
 Polaris.gl is a meta-framework for spatial data visualization on general 3D engines.
@@ -54,6 +56,8 @@ Polaris.gl 是基于通用 3D 渲染引擎的空间数据可视化框架，在 �
 Polaris.gl 并不是一个地图库，没有内置或绑定的地图服务，但是提供和众多公开地图库、地理可视化工具（包括 Mapbox、高德地图、百度地图、cesium、L7 等）的协同工作方案。
 
 Polaris.gl 致力于提供一个 空间数据视觉组件的 开放标准，所有符合该标准的组件都可以在一个框架下协同工作。基于这套标准，你可以利用通用 3D 渲染引擎的能力，实现天马行空的视觉效果，同时进行严谨的地理可视化展示与分析。你可以使用 Polaris.gl 在地理数据可视化工具的基础上增加视觉效果，也可以把任意 3D 渲染引擎封装成一个地图库。
+
+
 
 ## Development
 
@@ -117,6 +121,8 @@ _<u>Every package only has one set of toolchain that guarantee to work.</u>_ You
 
 Unless you can make sure all the repos use exactly same language \* version and toolchain. It's easier to only assume you get all the (live-updated) **build result** of dependents instead of **source code** and everything.
 
+
+
 ## License and disclaimer
 
 本项目使用 MIT 开源协议，详见 [LICENSE](./LICENSE)
@@ -130,6 +136,8 @@ glTF and the glTF logo are trademarks of the Khronos Group Inc.
 OpenGL® and the oval logo are trademarks or registered trademarks of Hewlett Packard Enterprise in the United States and/or other countries worldwide.
 
 OpenGL is a registered trademark and the OpenGL ES logo is a trademark of Hewlett Packard Enterprise used by permission by Khronos.
+
+
 
 ## Code of Conduct
 
