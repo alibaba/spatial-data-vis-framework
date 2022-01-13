@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import { Polaris } from '@polaris.gl/schema'
+import { Polaris } from '@polaris.gl/base'
 import { smoothstep } from '@polaris.gl/utils-easing'
 import { Track } from 'ani-timeline'
 

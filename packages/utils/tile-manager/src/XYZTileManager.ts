@@ -1,4 +1,4 @@
-import { Polaris } from '@polaris.gl/schema'
+import { Polaris } from '@polaris.gl/base'
 import { CommonTileManager, CommonTileManagerConfig } from './CommonTileManager'
 import { lngLatToGoogle } from 'global-mercator'
 import { TileToken } from './types'

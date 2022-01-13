@@ -8,7 +8,7 @@
 import GL2, { THREE, Renderer as GL2THREERenderer } from 'gl2'
 import { MeshDataType } from '@gs.i/schema'
 
-import { Renderer, colorToString, PolarisProps, PickResult } from '@polaris.gl/schema'
+import { Renderer, colorToString, PolarisProps, PickResult } from '@polaris.gl/base'
 
 import { CameraProxy } from 'camera-proxy'
 

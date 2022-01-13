@@ -18,7 +18,7 @@
         "rebuild": "npm run clean && npm run build"
     },
     "dependencies": {
-        "@polaris.gl/schema": "^0.0.0-alpha.8",
+        "@polaris.gl/base": "^0.1.0-alpha.0",
         "@polaris.gl/utils-easing": "^0.0.0-alpha.8",
         "ani-timeline": "1.2.19-m"
     },

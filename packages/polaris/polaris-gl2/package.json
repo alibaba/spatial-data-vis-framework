@@ -19,7 +19,7 @@
     },
     "dependencies": {
         "@polaris.gl/renderer-gl2": "^0.0.0-alpha.8",
-        "@polaris.gl/schema": "^0.0.0-alpha.8",
+        "@polaris.gl/base": "^0.1.0-alpha.0",
         "@polaris.gl/utils": "^0.0.0-alpha.8",
         "@polaris.gl/view-html": "^0.0.0-alpha.8",
         "@polaris.gl/view-three": "^0.0.0-alpha.8"

@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import { PickEvent } from '@polaris.gl/schema'
+import { PickEvent } from '@polaris.gl/base'
 import { PolarisGSI } from '@polaris.gl/gsi'
 import { Color, Box2 } from '@gs.i/utils-math'
 /**

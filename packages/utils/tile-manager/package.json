@@ -18,7 +18,7 @@
         "@gs.i/schema": "^0.0.0-beta",
         "@polaris.gl/layer-std": "^0.0.0-alpha.8",
         "@polaris.gl/projection": "^0.0.0-alpha.8",
-        "@polaris.gl/schema": "^0.0.0-alpha.8",
+        "@polaris.gl/base": "^0.1.0-alpha.0",
         "ani-timeline": "1.2.19-m",
         "global-mercator": "3.1.0"
     },

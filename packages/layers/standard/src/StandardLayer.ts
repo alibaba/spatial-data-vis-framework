@@ -8,7 +8,7 @@
  * 但是 typescript 中 mixin 和 decoration 都会造成一定程度的 interface 混乱
  * 因此在这里把constructor里增加的逻辑拆成函数，
  */
-import { AbstractPolaris, Layer, LayerProps, PickEventResult, View } from '@polaris.gl/schema'
+import { AbstractPolaris, Layer, LayerProps, PickEventResult, View } from '@polaris.gl/base'
 import { GSIView } from '@polaris.gl/view-gsi'
 import { HtmlView } from '@polaris.gl/view-html'
 import { isSimilarProjections } from '@polaris.gl/projection'

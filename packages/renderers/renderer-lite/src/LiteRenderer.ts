@@ -22,7 +22,7 @@ import {
 	DirectionalLight,
 	PointLight,
 } from '@gs.i/three-lite-renderer'
-import { Renderer, colorToString, PolarisProps, PickResult } from '@polaris.gl/schema'
+import { Renderer, colorToString, PolarisProps, PickResult } from '@polaris.gl/base'
 import {
 	DefaultConfig as ConvConfig,
 	ThreeLiteConverter,

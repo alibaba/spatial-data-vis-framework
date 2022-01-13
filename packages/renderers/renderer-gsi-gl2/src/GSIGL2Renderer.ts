@@ -6,7 +6,7 @@
 import { MeshDataType } from '@gs.i/schema'
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import GL2, { THREE, Renderer as GL2THREERenderer, Pass, BlurPass, FXAAPass } from 'gl2'
-import { Renderer, colorToString, PolarisProps, PickResult } from '@polaris.gl/schema'
+import { Renderer, colorToString, PolarisProps, PickResult } from '@polaris.gl/base'
 import { DefaultConfig as GL2ConvConfig, GL2Converter, RenderableObject3D } from '@gs.i/backend-gl2'
 import { CameraProxy } from 'camera-proxy'
 import * as SDK from '@gs.i/frontend-sdk'

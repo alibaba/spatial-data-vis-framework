@@ -7,7 +7,7 @@
 import { PolarisGSI } from '@polaris.gl/gsi'
 // 后端 GSI-GL2
 import { GSIGL2Renderer } from '@polaris.gl/renderer-gsi-gl2'
-import { PolarisProps } from '@polaris.gl/schema'
+import { PolarisProps } from '@polaris.gl/base'
 // export * as Animation from '@polaris.gl/utils-animation'
 
 export interface PolarisGSIGL2Props extends PolarisProps {}

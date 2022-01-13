@@ -26,7 +26,7 @@ import {
 	featureToLinePositions,
 } from '../utils'
 import { PolygonMatr } from './PolygonMatr'
-import { Polaris } from '@polaris.gl/schema'
+import { Polaris } from '@polaris.gl/base'
 import { isDISPOSED } from '@gs.i/schema'
 import { WorkerManager } from '@polaris.gl/utils-worker-manager'
 import GeomWorker from 'worker-loader!../workers/PolygonGeom'

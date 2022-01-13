@@ -13,7 +13,7 @@ import { Color } from '@gs.i/utils-math'
 import { FeatureCollection } from '@turf/helpers'
 import flatten from '@turf/flatten'
 import { getGeom, getCoords } from '@turf/invariant'
-import { Polaris } from '@polaris.gl/schema'
+import { Polaris } from '@polaris.gl/base'
 import { featureToLinePositions } from '../utils'
 
 /**

@@ -7,7 +7,7 @@
 import { PolarisGSI } from '@polaris.gl/gsi'
 // 后端 GSI-GL2
 import { LiteRenderer } from '@polaris.gl/renderer-lite'
-import { PolarisProps } from '@polaris.gl/schema'
+import { PolarisProps } from '@polaris.gl/base'
 
 export interface PolarisLiteProps extends PolarisProps {}
 

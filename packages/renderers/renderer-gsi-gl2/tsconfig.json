@@ -10,7 +10,7 @@
 	"exclude": ["dist"],
 	"references": [
 		{
-			"path": "../../schema/core"
+			"path": "../../core/base"
 		},
 		{
 			"path": "../../frontend/view-gsi"
