@@ -27,9 +27,9 @@ export function createFromDesc(str: string): Projection {
 		const centerStr = desc[4]
 		const centerLLA = centerStr.split(',')
 		const center = [
-			((centerLLA[0] as unknown) as number) - 0,
-			((centerLLA[1] as unknown) as number) - 0,
-			((centerLLA[2] as unknown) as number) - 0,
+			(centerLLA[0] as unknown as number) - 0,
+			(centerLLA[1] as unknown as number) - 0,
+			(centerLLA[2] as unknown as number) - 0,
 		]
 
 		return createProjection(type, center, units, orientation)
@@ -68,10 +68,10 @@ export function createProjection(
 }
 
 // 判断两个投影之间是否是可以通过简单变换得到的
-export function isSimiliarProjections(p0, p1) {
+export function isSimilarProjections(p0, p1) {
 	return (
 		(p0.type === 'MercatorProjection' && p1.type === p0.type) ||
-		(p0.isShpereProjection && p1.isShpereProjection) ||
+		(p0.isSphereProjection && p1.isSphereProjection) ||
 		(p0.type === 'EquirectangularProjection' && p1.type === p0.type)
 	)
 }

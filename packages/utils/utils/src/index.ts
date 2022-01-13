@@ -17,10 +17,10 @@ export * from './geometry'
 export * from './helpers'
 
 // 判断两个投影之间是否是可以通过简单变换得到的
-export function isSimiliarProjections(p0: Projection, p1: Projection) {
+export function isSimilarProjections(p0: Projection, p1: Projection) {
 	return (
 		(p0.type === 'MercatorProjection' && p1.type === p0.type) ||
-		(p0.isShpereProjection && p1.isShpereProjection) ||
+		(p0.isSphereProjection && p1.isSphereProjection) ||
 		(p0.type === 'EquirectangularProjection' && p1.type === p0.type)
 	)
 }

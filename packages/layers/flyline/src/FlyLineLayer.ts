@@ -164,9 +164,9 @@ export class FlyLineLayer extends StandardLayer {
 
 		//  Trick!!! 飞线在球面上插值必须是以坐标中心为球心的，所以如果当前投影不是 GeocentricProjection 的球面投影，
 		//  飞线的轨迹差值会错乱，这种情况下，将飞线挂到一个临时的 layer 上，这个 layer 是 GeocentricProjection 投影
-		if (this.projection.isShpereProjection && !this.projection.isGeocentricProjection) {
+		if (this.projection.isSphereProjection && !this.projection.isGeocentricProjection) {
 			this.geoWrapProjection = new GeocentricProjection({ center: [0, 0, 0] })
-			this.geocentricLayer = new STDLayer({
+			this.geocentricLayer = new StandardLayer({
 				parent: this,
 				projection: this.geoWrapProjection,
 			})

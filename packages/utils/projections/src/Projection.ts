@@ -26,7 +26,7 @@ export default class Projection {
 	units: string
 
 	isPlaneProjection: boolean
-	isShpereProjection: boolean
+	isSphereProjection: boolean
 	isGeocentricProjection: boolean
 
 	protected _useRightHand: boolean
@@ -91,6 +91,6 @@ if (_Number.EPSILON === undefined) {
 
 Math.sinh =
 	Math.sinh ||
-	function(x) {
+	function (x) {
 		return (Math.exp(x) - Math.exp(-x)) / 2
 	}

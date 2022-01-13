@@ -21,7 +21,7 @@ module.exports = class SphereProjection extends Projection {
 
 		this.type = 'SphereProjection'
 
-		this.isShpereProjection = true
+		this.isSphereProjection = true
 	}
 
 	get center() {
