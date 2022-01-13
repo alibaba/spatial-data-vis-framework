@@ -82,10 +82,10 @@
 			"path": "../packages/utils/worker-manager"
 		},
 		{
-			"path": "../packages/frontend/view-gsi"
+			"path": "../packages/core/views/view-gsi"
 		},
 		{
-			"path": "../packages/frontend/view-html"
+			"path": "../packages/core/views/view-html"
 		}
 	]
 }
