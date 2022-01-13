@@ -1,6 +1,7 @@
 {
 	"typescript.validate.enable": true,
 	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"editor.rulers": [80 /* js and doc */, 100 /* ts */],
 	"[json]": {
 		"editor.defaultFormatter": "vscode.json-language-features"
 	},
@@ -27,6 +28,7 @@
 		"statusBar.foreground": "#fafafaa8",
 		"statusBar.noFolderBackground": "#000000",
 		"statusBar.debuggingBackground": "#002c49"
+		// "editor.background": "#292421"
 	},
 	"workbench.tree.indent": 24,
 	"workbench.tree.renderIndentGuides": "always",

@@ -25,7 +25,7 @@
     },
     "scripts": {
         "build": "./scripts/build.sh",
-        "rebuild": "./scripts/rebuild.sh",
+        "rebuild": "npm run build",
         "dist": "npm run rebuild && webpack --config webpack.config.prod.js && npm run test",
         "start": "node --max-old-space-size=8192 server.js",
         "test": "jest",
