@@ -10,7 +10,7 @@
 	"exclude": ["dist"],
 	"references": [
 		{
-			"path": "../../core/base"
+			"path": "../../base"
 		}
 	]
 }
