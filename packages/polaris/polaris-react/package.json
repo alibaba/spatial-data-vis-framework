@@ -18,11 +18,13 @@
         "rebuild": "npm run clean && npm run build"
     },
     "dependencies": {
-        "react": "^16.13.0",
         "@types/react": "^17.0.38",
         "@polaris.gl/base": "0.1.0-alpha.0",
         "@polaris.gl/gsi": "0.0.0-alpha.8",
         "@polaris.gl/layer-std": "0.0.0-alpha.8"
+    },
+    "peerDependencies": {
+        "react": ">16.13.0"
     },
     "devDependencies": {
         "typescript": ">4.4.0"
