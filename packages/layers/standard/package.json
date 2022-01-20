@@ -16,6 +16,7 @@
     },
     "dependencies": {
         "@gs.i/utils-math": "^0.0.0-beta",
+        "@polaris.gl/utils-props-manager": "^0.0.0-alpha.8",
         "@polaris.gl/projection": "^0.0.0-alpha.8",
         "@polaris.gl/base": "^0.1.0-alpha.0",
         "@polaris.gl/view-gsi": "^0.0.0-alpha.8",
