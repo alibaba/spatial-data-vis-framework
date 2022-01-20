@@ -1,0 +1,19 @@
+{
+	"name": "@polaris.gl/examples-vite",
+	"_name": "@polaris.gl/examples-vite",
+	"version": "0.0.0-alpha.0",
+	"private": true,
+	"scripts": {
+		"start": "vite"
+	},
+	"dependencies": {
+		"react-dom": "^16.13.0",
+		"@polaris.gl/react": "0.1.0-alpha.0",
+		"@polaris.gl/lite": "0.0.0-alpha.8",
+		"@polaris.gl/layer-std-helper": "0.0.0-alpha.8"
+	},
+	"devDependencies": {
+		"vite": "2.7.4",
+		"typescript": ">4.4.0"
+	}
+}

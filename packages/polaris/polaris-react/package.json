@@ -1,0 +1,30 @@
+{
+    "name": "@polaris.gl/react",
+    "version": "0.1.0-alpha.0",
+    "description": "",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "license": "MIT",
+    "publishConfig": {
+        "access": "public"
+    },
+    "files": [
+        "README.md",
+        "dist/*"
+    ],
+    "scripts": {
+        "build": "./scripts/build.sh",
+        "clean": "./scripts/clean.sh",
+        "rebuild": "npm run clean && npm run build"
+    },
+    "dependencies": {
+        "react": "^16.13.0",
+        "@types/react": "^17.0.38",
+        "@polaris.gl/base": "0.1.0-alpha.0",
+        "@polaris.gl/gsi": "0.0.0-alpha.8",
+        "@polaris.gl/layer-std": "0.0.0-alpha.8"
+    },
+    "devDependencies": {
+        "typescript": ">4.4.0"
+    }
+}
