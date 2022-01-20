@@ -23,7 +23,7 @@ import * as Projections from '@polaris.gl/projection'
 import { StandardLayer } from '@polaris.gl/layer-std'
 import Hammer from 'hammerjs'
 import { throttle } from './Utils'
-import * as localForage from 'localforage'
+
 export interface PolarisGSIProps extends PolarisProps {
 	enablePicking?: boolean
 }
@@ -81,11 +81,6 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 	 * Container resize listener
 	 */
 	private _resizeListener: any
-
-	/**
-	 * localForage instance map
-	 */
-	private _storageMap: Map<string, { store: LocalForageType }> = new Map()
 
 	constructor(props: PolarisGSIProps) {
 		super({
@@ -638,32 +633,6 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 					}
 				}
 			})
-		}
-	}
-
-	getStorageInstance(options: { type: 'localForage'; storeName: string }): {
-		store: LocalForageType
-	} {
-		switch (options.type) {
-			case 'localForage': {
-				const storeName = options.storeName ?? 'default'
-				const storage = this._storageMap.get(storeName)
-				if (!storage) {
-					const store = localForage.createInstance({
-						driver: localForage.INDEXEDDB, // IndexedDB
-						name: 'Polaris_DB', // db name
-						storeName, // table name
-					})
-					const storage = {
-						store,
-					}
-					this._storageMap.set(storeName, storage)
-					return storage
-				}
-				return storage
-			}
-			default:
-				throw new Error('PolarisGSI - Invalid storage type: ' + options.type)
 		}
 	}
 
