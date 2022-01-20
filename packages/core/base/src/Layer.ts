@@ -14,7 +14,6 @@ import type { CameraProxy } from 'camera-proxy'
 
 export interface LayerProps {
 	name?: string
-
 	parent?: Layer
 	timeline?: Timeline
 	projection?: Projection
@@ -55,11 +54,20 @@ export class Layer extends AbstractLayer<EventTypes> {
 	readonly isLayer = true
 
 	/**
-	 * view, the actual rendered contents
-	 * can have multi views in one layer, e.g. gsiView + htmlView
+	 * #### The actual renderable contents.
+	 * A layer can have multi views, e.g. gsiView + htmlView
+	 *
+	 * 🚧 @note
+	 * - kind of over-design. name and interface may change into future.
+	 * - this is for framework developers to add third-party renderers.
+	 * - should not be exposed to client developers.
+	 * - **only use this if you know what you are doing.**
 	 */
 	view: { [key: string]: View }
 
+	/**
+	 * if this layer has been added to a polaris instance, this will be set.
+	 */
 	polaris: AbstractPolaris | null
 
 	// 本地传入
@@ -215,22 +223,30 @@ export class Layer extends AbstractLayer<EventTypes> {
 
 	/**
 	 * sync interface. legacy only. not recommended.
+	 * @deprecated
 	 */
 	get localProjection(): Projection | undefined {
 		return this._projectionLocal
 	}
-
+	/**
+	 * sync interface. legacy only. not recommended.
+	 * @deprecated
+	 */
 	get resolvedProjection(): Projection | undefined {
 		return this._projectionResolved
 	}
 
 	/**
 	 * sync interface. legacy only. not recommended.
+	 * @deprecated
 	 */
 	get localTimeline(): Timeline | undefined {
 		return this._timelineLocal
 	}
-
+	/**
+	 * sync interface. legacy only. not recommended.
+	 * @deprecated
+	 */
 	get resolvedTimeline(): Timeline | undefined {
 		return this._timelineResolved
 	}

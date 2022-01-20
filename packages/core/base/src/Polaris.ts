@@ -44,11 +44,49 @@ export abstract class AbstractPolaris extends Layer implements RootLayer {
 	timeline: Timeline
 	projection: Projection
 
+	/**
+	 * with of content @pixel
+	 * @note change this by calling resize
+	 * @default 1
+	 * @readonly
+	 */
 	width: number
+	/**
+	 * height of content @pixel
+	 * @note change this by calling resize
+	 * @default 1
+	 * @readonly
+	 */
 	height: number
-	canvasWidth: number
-	canvasHeight: number
+	/**
+	 * actual width of the canvas @pixel
+	 * - canvasWidth = width * ratio
+	 */
+	get canvasWidth() {
+		return this.width * this.ratio
+	}
+	/**
+	 * actual height of the canvas @pixel
+	 * - canvasHeight = heigh * ratio
+	 */
+	get canvasHeight() {
+		return this.height * this.ratio
+	}
+
+	/**
+	 * pixel ratio, this affect the actual rendering resolution.
+	 * @note change this by calling resize or setRatio
+	 * @default 1
+	 * @readonly
+	 */
 	ratio: number
+
+	/**
+	 * scale of this canvas, scale the canvas with css.
+	 * @note change this by calling resize or setExternalScale
+	 * @default 1
+	 * @readonly
+	 */
 	scale: number
 
 	protected props: PolarisProps
@@ -128,8 +166,8 @@ export abstract class AbstractPolaris extends Layer implements RootLayer {
 		this.scale = 1.0
 
 		// 物理像素
-		const canvasWidth = this.width * this.ratio
-		const canvasHeight = this.height * this.ratio
+		const canvasWidth = this.canvasWidth
+		const canvasHeight = this.canvasWidth
 
 		/**
 		 * init CameraProxy
@@ -172,8 +210,6 @@ export abstract class AbstractPolaris extends Layer implements RootLayer {
 		// this.cameraman = new Cameraman({ camera: cameraProxy })
 
 		this.cameraProxy = cameraProxy
-		this.canvasWidth = canvasWidth
-		this.canvasHeight = canvasHeight
 
 		this.onBeforeRender = () => {
 			const newStatesCode = this.cameraProxy.statesCode
@@ -218,6 +254,9 @@ export abstract class AbstractPolaris extends Layer implements RootLayer {
 		this.timeline.resume()
 	}
 
+	/**
+	 * camera states code. represent view and camera states.
+	 */
 	getStatesCode() {
 		const states = this.cameraProxy.getGeographicStates()
 		states.center = this.projection.unproject(states.center[0], states.center[1], states.center[2])
@@ -310,10 +349,6 @@ export abstract class AbstractPolaris extends Layer implements RootLayer {
 		this.height = height
 		this.ratio = ratio || this.ratio
 
-		// 逻辑像素
-		this.canvasWidth = this.width * this.ratio
-		this.canvasHeight = this.height * this.ratio
-
 		this.cameraProxy.canvasWidth = this.canvasWidth
 		this.cameraProxy.canvasHeight = this.canvasHeight
 		this.cameraProxy.config.canvasWidth = this.canvasWidth
@@ -368,6 +403,8 @@ export abstract class AbstractPolaris extends Layer implements RootLayer {
 	}
 
 	/**
+	 * destroy this and release resources as much as possible.
+	 *
 	 * 销毁，尽可能多的释放资源
 	 */
 	dispose() {

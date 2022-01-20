@@ -39,6 +39,30 @@ const _mat4 = new Matrix4()
 const _vec3 = new Vector3()
 const _vec2 = new Vector2()
 
+// override some inherited properties and methods interface
+export interface StandardLayer extends Layer {
+	get parent(): StandardLayer
+	get children(): Set<StandardLayer>
+	get root(): StandardLayer
+
+	add: (child: StandardLayer) => void
+	remove: (child: StandardLayer) => void
+	traverse: (f: (obj: StandardLayer) => void) => void
+	traverseVisible: (f: (obj: StandardLayer) => void) => void
+
+	/**
+	 * #### The actual renderable contents.
+	 * A layer can have multi views, e.g. gsiView + htmlView
+	 *
+	 * 🚧 @note
+	 * - kind of over-design. name and interface may change into future.
+	 * - this is for framework developers to add third-party renderers.
+	 * - should not be exposed to client developers.
+	 * - **only use this if you know what you are doing.**
+	 */
+	view: { gsi: GSIView; html: HtmlView; [name: string]: View }
+}
+
 /**
  * Standard Layer
  * 标准 Layer，包含 GSIView 作为 3D 容器，HTMLView 作为 2D 容器
@@ -98,35 +122,20 @@ export class StandardLayer extends Layer {
 	}
 
 	/**
-	 * 视图 interface
-	 */
-	view: { gsi: GSIView; html: HtmlView; [name: string]: View }
-
-	/**
-	 * syntactic sugar
-	 * 获取 view.gsi.group
+	 * root group of GSI objects
+	 * @note all renderable contents shall be put here
 	 */
 	get group() {
 		return this.view.gsi.group
 	}
 
 	/**
-	 * syntactic sugar
-	 * 获取 view.html.element
+	 * root of html elements
+	 * @note all renderable contents shall be put here
 	 */
 	get element() {
 		return this.view.html.element
 	}
-
-	/**
-	 * @TODO use generic type to
-	 * correct all the method/callback interfaces
-	 * inherited from Base
-	 */
-	add: (child: StandardLayer) => void
-	remove: (child: StandardLayer) => void
-	traverse: (f: (obj: StandardLayer) => void) => void
-	traverseVisible: (f: (obj: StandardLayer) => void) => void
 
 	/**
 	 * 获取世界坐标在当前layer的经纬度

@@ -5,6 +5,11 @@
 
 import type { Layer } from './Layer'
 
+/**
+ * @note kind of over-design. class name and interface may change into future.
+ * @note this is for framework developers to add third-party renderers.
+ * 		 should not be exposed to client developers.
+ */
 export abstract class View {
 	readonly isView = true
 
