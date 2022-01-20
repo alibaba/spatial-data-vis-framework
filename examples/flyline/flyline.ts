@@ -12,7 +12,7 @@ const p = new PolarisGSIGL2({
 	debug: true,
 	// projection: new GeocentricProjection({ center: [0, 0, 0] }),
 })
-p.timeline.config.ignoreErrors = false
+// p.timeline._config.onError = (e) => throw e
 
 // p.add(new HelperLayer({ length: 10000, box: false }))
 

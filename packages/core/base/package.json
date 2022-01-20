@@ -21,8 +21,8 @@
         "@gs.i/schema-ext-scene": "^0.0.0-beta",
         "@polaris.gl/projection": "^0.0.0-alpha.8",
         "@polaris.gl/utils-props-manager": "^0.0.0-alpha.8",
-        "ani-timeline": "1.2.19-m",
-        "camera-proxy": "^0.1.22"
+        "ani-timeline": "alpha",
+        "camera-proxy": "alpha"
     },
     "devDependencies": {
         "typescript": ">4.4.0"

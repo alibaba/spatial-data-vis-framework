@@ -18,7 +18,7 @@ const p = new PolarisGSIGL2({
 	}),
 })
 window['p'] = p
-p.timeline.config.ignoreErrors = false
+// p.timeline._config.onError = (e) => throw e
 
 const amapLayer = new AMapLayer({
 	showLogo: false, // 是否显示高德logo

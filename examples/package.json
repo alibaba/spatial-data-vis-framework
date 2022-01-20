@@ -36,8 +36,8 @@
 		"@polaris.gl/view-html": "^0.0.0-alpha.8"
 	},
 	"devDependencies": {
-		"ani-timeline": "1.2.19-m",
-		"camera-proxy": "0.1.24",
+		"ani-timeline": "alpha",
+		"camera-proxy": "alpha",
 		"compression": "^1.7.4",
 		"express": "^4.17.1",
 		"pug": "^3.0.2",

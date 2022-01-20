@@ -22,7 +22,7 @@ const p = new PolarisGSIGL2({
 		},
 	},
 })
-p.timeline.config.ignoreErrors = false
+// p.timeline._config.onError = (e) => throw e
 
 // Earth
 const earth = new StandardLayer({})

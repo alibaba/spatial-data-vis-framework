@@ -59,7 +59,7 @@ containers.forEach((container, index) => {
 		},
 		debug: true,
 	})
-	p.timeline.config.ignoreErrors = false
+	// p.timeline._config.onError = (e) => throw e
 	instances.push(p)
 
 	const layer = new HelperLayer({ box: true })

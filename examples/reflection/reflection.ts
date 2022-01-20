@@ -29,7 +29,7 @@ const p = new PolarisGSIGL2({
 	},
 	cameraControl: true,
 })
-p.timeline.config.ignoreErrors = false
+// p.timeline._config.onError = (e) => throw e
 
 // 加载GLTF
 const gltfLayer = new GLTF2Layer({ rotateX: false })
