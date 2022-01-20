@@ -143,8 +143,6 @@ export class PolygonSurfaceLayer extends StandardLayer {
 	 */
 	private _storeName: string
 
-	// private _dbInstance: LocalForage
-
 	private _tessellation: number
 
 	constructor(props: PolygonSurfaceLayerProps = {}) {
@@ -215,20 +213,6 @@ export class PolygonSurfaceLayer extends StandardLayer {
 		// 3D 内容
 		this.mesh = new Mesh({ name: 'PolygonSurface', material: this.matr })
 		this.group.add(this.mesh)
-
-		// Local indexeddb
-		// this.listenProps(['clearStorage'], () => {
-		// 	if (this.getProps('clearStorage')) {
-		// 		const localForage = p.getLocalStorage()
-		// 		localForage.clear().catch((err) => {
-		// 			if (err) console.error(`Polaris::PolygonSurfaceLayer - Clear local DB failed, ${err}`)
-		// 		})
-		// 		// Reset flag
-		// 		this.updateProps({
-		// 			clearStorage: false,
-		// 		})
-		// 	}
-		// })
 
 		// 数据与配置的应用（包括reaction）
 		this.listenProps(

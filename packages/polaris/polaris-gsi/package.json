@@ -23,8 +23,7 @@
         "@polaris.gl/utils": "^0.0.0-alpha.8",
         "@polaris.gl/view-gsi": "^0.0.0-alpha.8",
         "@polaris.gl/view-html": "^0.0.0-alpha.8",
-        "hammerjs": "^2.0.8",
-        "localforage": "1.10.0"
+        "hammerjs": "^2.0.8"
     },
     "devDependencies": {
         "typescript": ">4.4.0"
