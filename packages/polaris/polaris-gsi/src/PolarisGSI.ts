@@ -8,7 +8,7 @@ import { OptimizePass, GSIRefiner } from '@gs.i/utils-optimize'
 import { HtmlView } from '@polaris.gl/view-html'
 import { GSIView } from '@polaris.gl/view-gsi'
 import {
-	Polaris,
+	AbstractPolaris,
 	PolarisProps,
 	defaultProps as defaultPolarisProps,
 	Renderer,
@@ -33,7 +33,7 @@ export const DefaultPolarisGSIProps: PolarisGSIProps = {
 	enablePicking: true,
 }
 
-export interface PolarisGSI extends Polaris {
+export interface PolarisGSI extends AbstractPolaris {
 	addOptimizePass(pass: OptimizePass): void
 	addByProjection(layer: Layer, projectionType?: number, center?: number[]): void
 }
@@ -42,11 +42,12 @@ export interface LayerPickEvent extends PickEventResult {
 	layer: Layer
 }
 
-export type LocalForageType = typeof localForage
-
-export class PolarisGSI extends Polaris implements PolarisGSI {
+export class PolarisGSI extends AbstractPolaris implements PolarisGSI {
 	readonly isPolarisGSI = true
 
+	/**
+	 * @todo should be accessible for polaris user. change this may have no effects.
+	 */
 	props: PolarisGSIProps
 
 	/**

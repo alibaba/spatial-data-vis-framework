@@ -28,7 +28,10 @@ export interface BasicProps {
 	autoResize?: boolean
 
 	/**
-	 * pixel ratio, 2 for hdpi, defualt 1
+	 * pixel ratio, this affect the actual rendering resolution.
+	 *
+	 * @note use 2 for HDPI,
+	 * @default 1
 	 */
 	ratio?: number
 
@@ -42,10 +45,6 @@ export interface BasicProps {
 	 */
 	projection?: Projection
 
-	// /**
-	//  * Renderer props
-	//  */
-	// renderer?: RendererProps
 	renderToFBO?: boolean
 
 	/**
