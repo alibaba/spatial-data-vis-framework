@@ -440,8 +440,10 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 		// Collect pick results
 		const candidates: LayerPickEvent[] = []
 		this.traverseVisible((obj) => {
-			const layer = obj as Layer
-			if (layer.isLayer && layer.getProps('pickable')) {
+			// @note pickable only exits on StandardLayer
+			// @note do not bypass type check using props manager
+			const layer = obj as StandardLayer
+			if (layer.isStandardLayer && layer.getProps('pickable')) {
 				if (!layer.raycast) {
 					// console.warn('PolarisGSI - Layer does not implement raycast method. ')
 					return
@@ -593,8 +595,10 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 		const result = this.pick(canvasCoords, opts)
 		if (!result) {
 			this.traverseVisible((obj) => {
-				const layer = obj as Layer
-				if (layer.isLayer && layer.getProps('pickable')) {
+				// @note pickable only exits on StandardLayer
+				// @note do not bypass type check using props manager
+				const layer = obj as StandardLayer
+				if (layer.isStandardLayer && layer.getProps('pickable')) {
 					// trigger non-picked layer with eventName & no arguments
 					layer.dispatchEvent({ type: triggerEventName })
 				}
@@ -606,9 +610,11 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 			const resultArr = result
 			const pickedLayers = resultArr.map((e) => e.layer)
 			this.traverseVisible((obj) => {
-				const layer = obj as Layer
+				// @note pickable only exits on StandardLayer
+				// @note do not bypass type check using props manager
+				const layer = obj as StandardLayer
 				const index = pickedLayers.indexOf(layer)
-				if (layer.isLayer && layer.getProps('pickable')) {
+				if (layer.isStandardLayer && layer.getProps('pickable')) {
 					if (index >= 0) {
 						// trigger picked layer with eventName & result argument
 						layer.dispatchEvent({ type: triggerEventName, result: resultArr[index] })
@@ -622,8 +628,10 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 			const resultEvent = result
 			const pickedLayer = resultEvent.layer
 			this.traverseVisible((obj) => {
-				const layer = obj as Layer
-				if (layer.isLayer && layer.getProps('pickable')) {
+				// @note pickable only exits on StandardLayer
+				// @note do not bypass type check using props manager
+				const layer = obj as StandardLayer
+				if (layer.isStandardLayer && layer.getProps('pickable')) {
 					if (layer === pickedLayer) {
 						// trigger picked layer with eventName & result argument
 						layer.dispatchEvent({ type: triggerEventName, result: resultEvent })

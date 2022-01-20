@@ -7,7 +7,7 @@
 import { AbstractLayer, CoordV2, PickEvent, PickEventResult } from './AbstractLayer'
 import { Projection } from '@polaris.gl/projection'
 import { Timeline } from 'ani-timeline'
-import { EventCallBack, PropsManager } from '@polaris.gl/utils-props-manager'
+
 import { AbstractPolaris } from './Polaris'
 import { View } from './View'
 import type { CameraProxy } from 'camera-proxy'
@@ -82,11 +82,6 @@ export class Layer extends AbstractLayer<EventTypes> {
 	protected init?(projection: Projection, timeline: Timeline, polaris: AbstractPolaris): void
 
 	/**
-	 * Init propsManager
-	 */
-	protected _propsManager: PropsManager = new PropsManager()
-
-	/**
 	 * @constructor
 	 * @param props
 	 */
@@ -130,8 +125,6 @@ export class Layer extends AbstractLayer<EventTypes> {
 				})
 			}
 		)
-
-		this.setProps(props)
 	}
 
 	/**
@@ -269,42 +262,6 @@ export class Layer extends AbstractLayer<EventTypes> {
 				})
 			}
 		})
-	}
-
-	/**
-	 * 该方法用来被外部使用者调用
-	 *
-	 * @param {*} data
-	 * @return {*}  {Promise<void>}
-	 * @memberof Layer
-	 */
-	updateData(data: any): Promise<void> {
-		return this.setProps({
-			data: data,
-		})
-	}
-
-	/**
-	 * 该方法用来被外部使用者调用
-	 *
-	 * @param {*} props
-	 * @return {*}  {Promise<void>}
-	 * @memberof Layer
-	 */
-	updateProps(props: any): Promise<void> {
-		return this.setProps(props)
-	}
-
-	getProps(key: string) {
-		return this._propsManager.get(key)
-	}
-
-	protected setProps(newProps: any): Promise<void> {
-		return this._propsManager.set(newProps)
-	}
-
-	protected listenProps(propsName: string | Array<string>, callback: EventCallBack) {
-		this._propsManager.listen(propsName, callback)
 	}
 
 	raycast(polaris: AbstractPolaris, canvasCoord: CoordV2, ndc: CoordV2): PickEvent | undefined {

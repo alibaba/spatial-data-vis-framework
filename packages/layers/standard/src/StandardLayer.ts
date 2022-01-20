@@ -13,6 +13,7 @@ import { GSIView } from '@polaris.gl/view-gsi'
 import { HtmlView } from '@polaris.gl/view-html'
 import { isSimilarProjections } from '@polaris.gl/projection'
 import { Matrix4, Euler, Vector3, Vector2 } from '@gs.i/utils-math'
+import { EventCallBack, PropsManager } from '@polaris.gl/utils-props-manager'
 
 /**
  * 配置项 interface
@@ -92,6 +93,8 @@ export class StandardLayer extends Layer {
 				this._initProjectionAlignment(projection, parentProjection, polaris)
 			})
 		})
+
+		this.setProps(props)
 	}
 
 	/**
@@ -339,4 +342,49 @@ export class StandardLayer extends Layer {
 			}
 		}
 	}
+
+	// #region reactive props update
+
+	/**
+	 * Init propsManager
+	 */
+	protected _propsManager: PropsManager = new PropsManager()
+
+	/**
+	 * 该方法用来被外部使用者调用
+	 *
+	 * @param {*} data
+	 * @return {*}  {Promise<void>}
+	 * @memberof Layer
+	 */
+	updateData(data: any): Promise<void> {
+		return this.setProps({
+			data: data,
+		})
+	}
+
+	/**
+	 * 该方法用来被外部使用者调用
+	 *
+	 * @param {*} props
+	 * @return {*}  {Promise<void>}
+	 * @memberof Layer
+	 */
+	updateProps(props: any): Promise<void> {
+		return this.setProps(props)
+	}
+
+	getProps(key: string) {
+		return this._propsManager.get(key)
+	}
+
+	protected setProps(newProps: any): Promise<void> {
+		return this._propsManager.set(newProps)
+	}
+
+	protected listenProps(propsName: string | Array<string>, callback: EventCallBack) {
+		this._propsManager.listen(propsName, callback)
+	}
+
+	// #endregion
 }

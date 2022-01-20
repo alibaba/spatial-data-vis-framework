@@ -16,6 +16,9 @@
 			"path": "../../utils/projections"
 		},
 		{
+			"path": "../../utils/props-manager"
+		},
+		{
 			"path": "../../core/view-gsi"
 		},
 		{

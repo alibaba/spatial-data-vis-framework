@@ -18,6 +18,7 @@ import {
 	Cameraman,
 	GeographicStates,
 } from 'camera-proxy'
+import { EventCallBack, PropsManager } from '@polaris.gl/utils-props-manager'
 import { PolarisProps, defaultProps } from './props/index'
 
 export { colorToString } from './props/index'
@@ -102,6 +103,9 @@ export abstract class AbstractPolaris extends Layer implements RootLayer {
 		this.timeline = timeline
 		this.projection = projection
 
+		this._propsManager = new PropsManager()
+		this.setProps(props)
+
 		// qianxun: 封装props的values到propsManager接口
 		this.props = {} as any
 		for (const key in _props) {
@@ -147,6 +151,7 @@ export abstract class AbstractPolaris extends Layer implements RootLayer {
 			onUpdate: () => {},
 		})
 
+		// @todo not a good practice, order dependent
 		// cameraProxy config props listener
 		this.listenProps(['zoomLimit', 'pitchLimit'], () => {
 			cameraProxy['limit'].zoom = this.getProps('zoomLimit')
@@ -399,6 +404,38 @@ export abstract class AbstractPolaris extends Layer implements RootLayer {
 	 * @memberof PolarisGSI
 	 */
 	abstract getScreenXY(x: number, y: number, z: number): number[] | undefined
+
+	// #region reactive props update
+
+	/**
+	 * Init propsManager
+	 */
+	protected _propsManager: PropsManager
+
+	/**
+	 * 该方法用来被外部使用者调用
+	 *
+	 * @param {*} props
+	 * @return {*}  {Promise<void>}
+	 * @memberof Layer
+	 */
+	updateProps(props: any): Promise<void> {
+		return this.setProps(props)
+	}
+
+	getProps(key: string) {
+		return this._propsManager.get(key)
+	}
+
+	protected setProps(newProps: any): Promise<void> {
+		return this._propsManager.set(newProps)
+	}
+
+	protected listenProps(propsName: string | Array<string>, callback: EventCallBack) {
+		this._propsManager.listen(propsName, callback)
+	}
+
+	// #endregion
 }
 
 /**
