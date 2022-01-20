@@ -1,0 +1,66 @@
+// 只引入type，做类型检查，并不依赖
+import { RenderableMesh } from '@polaris.gl/core-renderable'
+import { Group } from 'three'
+
+import { Base } from './Base'
+
+/**
+ * Base is ancestors for all renderable object in Polaris
+ */
+export abstract class BaseExt extends Base {
+	// @TODO 一层wrapper不够
+	get groupWrapper(): Group {
+		return this.group
+	}
+
+	/**
+	 * 渲染内容
+	 */
+	group: Group
+	element: HTMLElement
+	renderable: RenderableMesh
+
+	constructor(props) {
+		super(props)
+
+		/**
+		 * 根据自身可视状态决定具体视觉元素的显示隐藏
+		 */
+		const BaseVisibilitiReaction = () => {
+			this.element && (this.element.style.visibility = this.visible ? 'visible' : 'hidden')
+			this.group && (this.group.visible = true)
+			this.renderable && (this.renderable.visible = true)
+		}
+		BaseVisibilitiReaction.name = 'BaseVisibilitiReaction'
+
+		this.onVisibilityChange = BaseVisibilitiReaction // setter 加入回调数组
+
+		/**
+		 * 将具体的视觉元素加入到树中
+		 */
+		const BaseAddReaction = (parent: BaseExt) => {
+			if (parent.group && this.groupWrapper) {
+				parent.group.add(this.groupWrapper)
+			}
+			if (parent.element && this.element) {
+				parent.element.appendChild(this.element)
+			}
+		}
+		BaseAddReaction.name = 'BaseAddReaction'
+		this.onAdd = BaseAddReaction
+
+		/**
+		 * 将具体的视觉元素从树中删除
+		 */
+		const BaseRemoveReaction = (parent: BaseExt) => {
+			if (parent.group && this.groupWrapper) {
+				parent.group.remove(this.groupWrapper)
+			}
+			if (parent.element && this.element && parent.element.contains(this.element)) {
+				parent.element.removeChild(this.element)
+			}
+		}
+		BaseRemoveReaction.name = 'BaseRemoveReaction'
+		this.onRemove = BaseRemoveReaction
+	}
+}

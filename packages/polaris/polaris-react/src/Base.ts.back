@@ -1,0 +1,217 @@
+// 只引入type，做类型检查，并不依赖
+import { CameraProxy } from 'camera-proxy'
+import { Group } from 'three'
+
+/**
+ * Layer 生命周期
+ * - onAdd
+ * - onBeforeRender
+ * - onAfterRender
+ * - onVisibilityChange
+ * - onViewChange
+ * - onRemove
+ */
+
+/**
+ * 内容分级，
+ * 数值越高复杂度越高，可以使用特定的底层依赖的渲染资源，
+ * 数值越低兼容性越好，可以不同程度支持 IE 或者 移动端
+ */
+export enum C_LEVEL {
+	L0, // html / svg 内容
+	L1, // canvas 内容
+	L2, // 基础 webgl1 threejs 内容
+	L3, // 基础 webgl2 内容
+	L4, // 复杂 webgl2 内容
+	L5, // hdpipeline 内容
+	L6, // 特定硬件/webgpu/实验性特性 内容
+}
+/**
+ * Base is ancestors for all renderable object in Polaris
+ */
+export abstract class Base {
+	children = new Set<Base>()
+	group: Group
+	element: HTMLElement
+	name: string
+	parent?: Base
+	level: C_LEVEL
+
+	/**
+	 * 相机状态，用于对比视角是否发生变化
+	 */
+	statesCode?: string
+
+	private _visible = true
+	private _removed = false
+
+	protected _onAdd: { (parent: Base): void }[] = []
+	protected _onRemove: { (parent: Base): void }[] = []
+	protected _onVisibilityChange: { (parent?: Base): void }[] = []
+	_onViewChange: { (cam: CameraProxy, polaris: Base): void }[] = []
+	_onBeforeRender: { (polaris: Base, cam: CameraProxy): void }[] = []
+	_onAfterRender: { (polaris: Base, cam: CameraProxy): void }[] = []
+
+	constructor(props: any = {}) {
+		this.name = props.name || 'base'
+		this.level = props.level || C_LEVEL.L0
+	}
+
+	// @TODO 一层wrapper不够
+	get groupWrapper(): Group {
+		return this.group
+	}
+
+	set visible(v: boolean) {
+		if (v) {
+			if (!this._visible) {
+				this.element && (this.element.style.visibility = 'visible')
+				this.group && (this.group.visible = true)
+				this._visible = true
+			}
+		} else {
+			if (this._visible) {
+				this.element && (this.element.style.visibility = 'hidden')
+				this.group && (this.group.visible = false)
+				this._visible = false
+			}
+		}
+		this._onVisibilityChange.forEach((f) => f(this.parent))
+	}
+
+	get visible(): boolean {
+		return this._visible
+	}
+
+	/**
+	 * callback when object/Layer is added to a parent
+	 */
+	set onAdd(f: (parent) => void) {
+		if (this.parent) {
+			// 已经被add过，立即执行回调
+			console.warn('onAdd::该Layer已经被add过，立即执行回调')
+			f(this.parent)
+		}
+
+		this._onAdd.push(f)
+	}
+
+	/**
+	 * callback when object/Layer is removed from parent
+	 */
+	set onRemove(f: (parent: Base) => void) {
+		this._onRemove.push(f)
+		this._removed = true
+	}
+
+	/**
+	 * callback when camera state is changed
+	 */
+	set onViewChange(f: (cam: CameraProxy, polaris: Base) => void) {
+		this._onViewChange.push(f)
+	}
+
+	/**
+	 * callback before object/Layer to be rendered in every frame
+	 */
+	set onBeforeRender(f: (polaris: Base) => void) {
+		this._onBeforeRender.push(f)
+	}
+
+	/**
+	 * callback after object/Layer rendered in every frame
+	 */
+	set onAfterRender(f: (polaris: Base) => void) {
+		this._onAfterRender.push(f)
+	}
+
+	/**
+	 * callback when object/Layer visible is changed
+	 */
+	set onVisibilityChange(f: (parent?: Base) => void) {
+		this._onVisibilityChange.push(f)
+	}
+
+	/**
+	 *
+	 * @param {Base} child
+	 * @param {Boolean} skipElement 是否不添加HTML元素
+	 */
+	add(child: Base, skipElement = false) {
+		if (this.children.has(child)) {
+			console.warn('重复添加子元素，忽略')
+			return
+		}
+		if (child._removed) {
+			console.warn('子元素已经被remove过，暂不支持重复使用')
+			return
+		}
+
+		this.children.add(child)
+
+		if (this.group && child.groupWrapper) {
+			this.group.add(child.groupWrapper)
+		}
+		if (this.element && child.element && !skipElement) {
+			this.element.appendChild(child.element)
+		}
+
+		if (child.parent) {
+			console.warn('you try to add this object to multi parent objects!')
+			child.parent.remove(child)
+		}
+		child.parent = this
+
+		child._onAdd.forEach((f) => f(this))
+
+		return 0
+	}
+
+	remove(child: Base) {
+		if (!this.children.has(child)) return 1
+
+		this.children.delete(child)
+
+		if (this.group && child.groupWrapper) {
+			this.group.remove(child.groupWrapper)
+		}
+		if (this.element && child.element && this.element.contains(child.element)) {
+			this.element.removeChild(child.element)
+		}
+
+		child._onRemove.forEach((f) => f(this))
+	}
+
+	removeAll() {
+		for (const child of this.children) {
+			this.remove(child)
+		}
+	}
+
+	show() {
+		this.visible = true
+	}
+
+	hide() {
+		this.visible = false
+	}
+
+	traverse(f: (obj: Base) => void) {
+		f(this)
+		this.children.forEach((child) => child.traverse(f))
+	}
+
+	traverseVisible(f: (obj: Base) => void) {
+		if (!this.visible) return
+
+		f(this)
+		this.children.forEach((child) => child.traverseVisible(f))
+	}
+
+	// @TODO
+	// traverseParent(f: (obj: Base) => void) {
+	// 	f(this)
+	// }
+
+	abstract dispose(): void
+}
