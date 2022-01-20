@@ -14,7 +14,7 @@ const p = new PolarisGSIGL2({
 	pitch: 0,
 	// debug: true,
 })
-p.timeline.config.ignoreErrors = false
+// p.timeline._config.onError = (e) => throw e
 
 //
 

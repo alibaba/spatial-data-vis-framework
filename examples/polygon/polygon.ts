@@ -10,7 +10,7 @@ const p = new PolarisGSIGL2({
 	lights: {},
 	autoResize: true,
 })
-p.timeline.config.ignoreErrors = false
+// p.timeline._config.onError = (e) => throw e
 
 p.add(new HelperLayer({ length: 10000, box: false }))
 

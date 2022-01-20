@@ -19,7 +19,7 @@ const p = new PolarisGSIGL2({
 	}),
 })
 window['p'] = p
-p.timeline.config.ignoreErrors = false
+// p.timeline._config.onError = (e) => throw e
 
 const framesBeforeRequest = 10
 const viewZoomReduction = 0

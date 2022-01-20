@@ -30,7 +30,7 @@ const p = new PolarisGSIGL2({
 	},
 	cameraControl: true,
 })
-p.timeline.config.ignoreErrors = false
+// p.timeline._config.onError = (e) => throw e
 
 // // 设置投影中心
 // p.projection = new MercatorProjection({ center: center3D })

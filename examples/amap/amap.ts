@@ -14,7 +14,7 @@ const p = new Polaris({
 	background: 'transparent',
 	asyncRendering: true, // 为了和AMap渲染同步加的参数，在AMap加载的时候一定要打开
 })
-p.timeline.config.ignoreErrors = false
+// p.timeline._config.onError = (e) => throw e
 
 // ---------------------
 // 添加由Polaris初始化和管理的amapLayer

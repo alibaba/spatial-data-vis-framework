@@ -64,7 +64,7 @@ const p = new PolarisGSIGL2({
 		// },
 	],
 })
-p.timeline.config.ignoreErrors = false
+// p.timeline._config.onError = (e) => throw e
 
 p.renderer.effectComposer.passes.forEach((item, i) => {
 	const el = document.createElement('li')

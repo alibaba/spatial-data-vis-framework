@@ -67,12 +67,12 @@ export abstract class AbstractPolaris extends Layer implements RootLayer {
 			_props.timeline ||
 			new Timeline({
 				duration: Infinity,
-				pauseWhenInvisible: false, // 检测标签页是否隐藏，已知在一些环境中不可用，建议关闭
+				// pauseWhenInvisible: false, // 检测标签页是否隐藏，已知在一些环境中不可用，建议关闭
 				openStats: false,
-				autoRecevery: true, // 自动回收过期的track
+				autoRelease: true, // 自动回收过期的track
 				maxStep: 100, // 最大帧长
 				maxFPS: 30, // 最大帧率
-				ignoreErrors: true, // 出错后是否停止
+				// ignoreErrors: true, // 出错后是否停止
 			})
 
 		/**

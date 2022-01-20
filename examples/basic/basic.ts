@@ -35,7 +35,7 @@ const p = new PolarisGSIGL2({
 	},
 	debug: true,
 })
-p.timeline.config.ignoreErrors = false
+// p.timeline._config.onError = (e) => throw e
 
 const layer = new HelperLayer({ box: false })
 p.add(layer)

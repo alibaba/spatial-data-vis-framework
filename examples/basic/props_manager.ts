@@ -7,7 +7,7 @@ const p = new PolarisGSIGL2({
 	width: 500,
 	height: 500,
 })
-p.timeline.config.ignoreErrors = false
+// p.timeline._config.onError = (e) => throw e
 p.setStatesCode('1|118.479716|36.286937|0.000000|0.70540|-0.03000|2.61800')
 
 const polygonLayer = new PolygonLayer({
