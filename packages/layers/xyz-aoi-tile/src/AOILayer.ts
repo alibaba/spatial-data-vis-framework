@@ -1,5 +1,5 @@
 import { MeshDataType } from '@gs.i/schema'
-import { computeBBox, computeBSphere } from '@gs.i/utils-geometry'
+import { computeBBox, computeBSphere, genBSphereWireframe } from '@gs.i/utils-geometry'
 import { XYZTileManager, TileRenderables, TileToken } from '@polaris.gl/utils-tile-manager'
 import { RequestPending, XYZTileRequestManager } from '@polaris.gl/utils-request-manager'
 import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
@@ -160,6 +160,11 @@ export interface AOILayerProps extends STDLayerProps {
 	 * Number of worker used, can be set to 0.
 	 */
 	workersNum?: number
+
+	/**
+	 * Enable debug mode: print errors, create boundingSphere wireframe
+	 */
+	debug?: boolean
 }
 
 /**
@@ -189,6 +194,7 @@ const defaultProps: AOILayerProps = {
 	viewZoomReduction: 0,
 	useParentReplaceUpdate: true,
 	workersNum: 0,
+	debug: false,
 }
 
 type IndicatorRangeInfo = {
@@ -283,6 +289,7 @@ export class AOILayer extends STDLayer {
 
 		this.listenProps(
 			[
+				'debug',
 				'dataType',
 				'getUrl',
 				'minZoom',
@@ -384,6 +391,7 @@ export class AOILayer extends STDLayer {
 					onTileRelease: (tile, token) => {
 						this._releaseTile(tile, token)
 					},
+					printErrors: this.getProps('debug'),
 				})
 
 				this.tileManager.start()
@@ -768,6 +776,15 @@ export class AOILayer extends STDLayer {
 		mesh.geometry = geom
 		mesh.material = this.matr
 
+		if (this.getProps('debug') && geom.boundingSphere) {
+			const wireframe = new Mesh({
+				name: 'bsphere-wireframe',
+				geometry: genBSphereWireframe(geom.boundingSphere),
+				material: new MatrUnlit({ baseColorFactor: { r: 1, g: 0, b: 1 } }),
+			})
+			mesh.add(wireframe)
+		}
+
 		this._renderableFeatureMap.set(mesh, meshFeatures)
 
 		// LineIndicators
@@ -872,7 +889,7 @@ export class AOILayer extends STDLayer {
 			const tile = tiles[i]
 			const meshes = tile.meshes
 			const mesh = meshes.find((mesh) => mesh.extras && mesh.extras.isAOI)
-			if (!mesh) return
+			if (!mesh) continue
 
 			const pickResult = polaris.pickObject(mesh, ndc)
 			if (pickResult.hit && pickResult.intersections && pickResult.intersections.length > 0) {
