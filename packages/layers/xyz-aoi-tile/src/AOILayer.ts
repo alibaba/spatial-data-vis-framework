@@ -1,5 +1,10 @@
 import { MeshDataType } from '@gs.i/schema'
-import { computeBBox, computeBSphere } from '@gs.i/utils-geometry'
+import {
+	computeBBox,
+	computeBSphere,
+	genBBoxWireframe,
+	genBSphereWireframe,
+} from '@gs.i/utils-geometry'
 import { XYZTileManager, TileRenderables, TileToken } from '@polaris.gl/utils-tile-manager'
 import { RequestPending, XYZTileRequestManager } from '@polaris.gl/utils-request-manager'
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
@@ -10,7 +15,7 @@ import { decode } from 'geobuf'
 import { Projection } from '@polaris.gl/projection'
 import { colorToUint8Array } from '@polaris.gl/utils'
 import { PolarisGSI } from '@polaris.gl/gsi'
-import { Color } from '@gs.i/utils-math'
+import { Box3, Color, Sphere, Vector3 } from '@gs.i/utils-math'
 import { featureToLinePositions, createRangeArray, getFeatureTriangles } from './utils'
 import { LineIndicator } from '@polaris.gl/utils-indicator'
 import { WorkerManager } from '@polaris.gl/utils-worker-manager'
@@ -160,6 +165,11 @@ export interface AOILayerProps extends StandardLayerProps {
 	 * Number of worker used, can be set to 0.
 	 */
 	workersNum?: number
+
+	/**
+	 * Enable debug mode: print errors, render boundingSphere
+	 */
+	debug?: boolean
 }
 
 /**
@@ -189,6 +199,7 @@ const defaultProps: AOILayerProps = {
 	viewZoomReduction: 0,
 	useParentReplaceUpdate: true,
 	workersNum: 0,
+	debug: false,
 }
 
 type IndicatorRangeInfo = {
@@ -283,6 +294,7 @@ export class AOILayer extends StandardLayer {
 
 		this.listenProps(
 			[
+				'debug',
 				'dataType',
 				'getUrl',
 				'minZoom',
@@ -384,6 +396,7 @@ export class AOILayer extends StandardLayer {
 					onTileRelease: (tile, token) => {
 						this._releaseTile(tile, token)
 					},
+					printErrors: this.getProps('debug'),
 				})
 
 				this.tileManager.start()
@@ -401,13 +414,6 @@ export class AOILayer extends StandardLayer {
 		}
 
 		/** highlight api */
-		// this.highlightByIndices = (dataIndexArr: number[], style: { [name: string]: any }) => {
-		// 	console.error(
-		// 		'AOILayer - This method is not implemented, please use .highlightByIds() instead. '
-		// 	)
-		// }
-
-		/** highlight api 2 */
 		this.highlightByIds = (idsArr: (number | string)[], style: { [name: string]: any }) => {
 			const type = style.type
 			if (type !== 'hover' && type !== 'select' && type !== 'none') {
@@ -757,6 +763,22 @@ export class AOILayer extends StandardLayer {
 		mesh.geometry = geom
 		mesh.material = this.matr
 
+		// geom.boundingSphere = new Sphere(new Vector3(), Infinity)
+		// geom.boundingBox = new Box3(
+		// 	new Vector3(-Infinity, -Infinity, -Infinity),
+		// 	new Vector3(Infinity, Infinity, Infinity)
+		// )
+
+		if (this.getProps('debug') && geom.boundingSphere) {
+			const wireframe = new Mesh({
+				name: 'bsphere-wireframe',
+				geometry: genBSphereWireframe(geom.boundingSphere),
+				// geometry: genBBoxWireframe(geom.boundingBox),
+				material: new MatrUnlit({ baseColorFactor: { r: 1, g: 0, b: 1 } }),
+			})
+			mesh.add(wireframe)
+		}
+
 		this._renderableFeatureMap.set(mesh, meshFeatures)
 
 		// LineIndicators
@@ -860,8 +882,9 @@ export class AOILayer extends StandardLayer {
 		for (let i = 0; i < tiles.length; i++) {
 			const tile = tiles[i]
 			const meshes = tile.meshes
+
 			const mesh = meshes.find((mesh) => mesh.extras && mesh.extras.isAOI)
-			if (!mesh) return
+			if (!mesh) continue
 
 			const pickResult = polaris.pickObject(mesh, ndc)
 			if (pickResult.hit && pickResult.intersections && pickResult.intersections.length > 0) {
