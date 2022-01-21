@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/polaris-gl2",
-    "version": "0.0.0-alpha.9",
+    "version": "0.0.0-alpha.10",
     "description": "",
     "private": true,
     "main": "dist/Polaris.GL2.js",
@@ -18,11 +18,11 @@
         "rebuild": "./scripts/rebuild.sh"
     },
     "dependencies": {
-        "@polaris.gl/renderer-gl2": "^0.0.0-alpha.9",
-        "@polaris.gl/schema": "^0.0.0-alpha.9",
-        "@polaris.gl/utils": "^0.0.0-alpha.9",
-        "@polaris.gl/view-html": "^0.0.0-alpha.9",
-        "@polaris.gl/view-three": "^0.0.0-alpha.9"
+        "@polaris.gl/renderer-gl2": "^0.0.0-alpha.10",
+        "@polaris.gl/schema": "^0.0.0-alpha.10",
+        "@polaris.gl/utils": "^0.0.0-alpha.10",
+        "@polaris.gl/view-html": "^0.0.0-alpha.10",
+        "@polaris.gl/view-three": "^0.0.0-alpha.10"
     },
     "devDependencies": {
         "@types/offscreencanvas": "latest",
