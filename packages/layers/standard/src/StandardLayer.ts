@@ -397,3 +397,8 @@ export class StandardLayer extends Layer {
 
 	// #endregion
 }
+
+/**
+ * @deprecated renamed as {@link StandardLayer}
+ */
+export const STDLayer = StandardLayer
