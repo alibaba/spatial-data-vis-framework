@@ -195,17 +195,5 @@ export class PropsManager extends EventEmitter {
 	 * @param propsName
 	 * @param callback
 	 */
-	listen(propsName: string | Array<string>, callback: EventCallBack) {
-		if (!Array.isArray(propsName)) {
-			propsName = [propsName]
-		}
-		const type = propsName.join(',')
-		this.on(type, callback)
-
-		// 注册完后，主动触发一次回调，方便 Layer 做初始化
-		this.emit({
-			type,
-			trigger: 'initialize',
-		})
-	}
+	listen(propsName: string | Array<string>, callback: EventCallBack) {}
 }
