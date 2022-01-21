@@ -1,20 +1,20 @@
 {
 	"name": "@polaris.gl/examples-vite",
 	"_name": "@polaris.gl/examples-vite",
-	"version": "0.0.0-alpha.0",
+	"version": "0.0.0-alpha.9",
 	"private": true,
 	"scripts": {
 		"start": "vite"
 	},
 	"dependencies": {
+		"@polaris.gl/layer-std-helper": "^0.0.0-alpha.9",
+		"@polaris.gl/lite": "^0.0.0-alpha.9",
+		"@polaris.gl/react": "^0.0.0-alpha.9",
 		"react": "^16.13.0",
-		"react-dom": "^16.13.0",
-		"@polaris.gl/react": "0.1.0-alpha.0",
-		"@polaris.gl/lite": "0.0.0-alpha.8",
-		"@polaris.gl/layer-std-helper": "0.0.0-alpha.8"
+		"react-dom": "^16.13.0"
 	},
 	"devDependencies": {
-		"vite": "2.7.4",
-		"typescript": ">4.4.0"
+		"typescript": ">4.4.0",
+		"vite": "2.7.4"
 	}
 }
