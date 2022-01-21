@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/view-html",
-    "version": "0.0.0-alpha.8",
+    "version": "0.0.0-alpha.9",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -15,7 +15,7 @@
         "rebuild": "npm run clean && npm run build"
     },
     "dependencies": {
-        "@polaris.gl/base": "^0.1.0-alpha.0"
+        "@polaris.gl/base": "^0.0.0-alpha.9"
     },
     "devDependencies": {
         "typescript": ">4.4.0"
