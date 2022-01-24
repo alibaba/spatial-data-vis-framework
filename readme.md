@@ -121,7 +121,7 @@ Unless you can make sure all the repos use exactly same language \* version and 
 
 It is a common dilemma for 2/3rd party libraries to handle web-worker. Not like user-end-app developing where you can just use the syntax of your bundlers like `webpack` or `rollup`. If you are writing a 2/3rd party library. You can’t assume what bundler your users will be using.
 
-It is not an option to write `webpack4` `worker-loader!` syntax and just leave them there without bundling. (It will break if users do not use `webpack4` or install their plugins in a wired location.) It is not a good practice to bundle codes in workers into an inline string. (It will leave users no option to handle these codes with their bundlers or transpilers).
+It is not an option to write `webpack4` `worker-loader!` syntax and just leave them there without bundling. (It will break if users do not use `webpack4` or install their plugins in a wired location.) It is not a good practice to bundle web-worker codes into an inline string. (It will leave users no option to handle these codes with their bundlers or transpilers).
 
 In the end, we decide to bundle the codes running in the web-worker using `rollup`, without further transpiling. The result can be safely bundled again. As for the importing of web-worker. We kept the native worker constructor as follows:
 
