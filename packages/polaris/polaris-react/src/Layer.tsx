@@ -1,7 +1,9 @@
 import { PureComponent } from 'react'
-import { LayerProps, LayerState } from './types'
+import { TLayerProps, LayerProps, LayerState } from './types'
 
-export class LayerReact extends PureComponent<LayerProps, LayerState> {
+export class LayerReact extends PureComponent<TLayerProps, LayerState> {
+	static defaultProps = new LayerProps()
+
 	constructor(props) {
 		super(props)
 
@@ -15,8 +17,12 @@ export class LayerReact extends PureComponent<LayerProps, LayerState> {
 	init = () => {
 		const { polarisInstance, LayerClass, children, ...otherLayerProps } = this.props
 
+		if (!LayerClass) {
+			throw new Error('LayerReact - LayerClass must be provided')
+		}
+
 		if (!polarisInstance) {
-			throw new Error('No Polaris component was found')
+			throw new Error('LayerReact - Polaris component must be provided')
 		}
 
 		const layerInstance = new LayerClass(otherLayerProps)

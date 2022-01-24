@@ -7,11 +7,13 @@
 		"start": "vite"
 	},
 	"dependencies": {
-		"@polaris.gl/layer-std-helper": "^0.0.0-alpha.9",
+		"react": "^16.13.0",
+		"react-dom": "^16.13.0",
 		"@polaris.gl/lite": "^0.0.0-alpha.9",
 		"@polaris.gl/react": "^0.0.0-alpha.9",
-		"react": "^16.13.0",
-		"react-dom": "^16.13.0"
+		"@polaris.gl/layer-std-helper": "^0.0.0-alpha.9",
+		"@polaris.gl/layer-geojson": "0.0.0-alpha.9",
+		"@polaris.gl/layer-std-marker": "0.0.0-alpha.9"
 	},
 	"devDependencies": {
 		"typescript": ">4.4.0",
