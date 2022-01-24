@@ -451,6 +451,9 @@ export class AOILayer extends STDLayer {
 		this._indicators = new Set()
 		this.requestManager.dispose()
 		this.tileManager.dispose()
+		if (this._workerManager) {
+			this._workerManager.dispose()
+		}
 	}
 
 	getState() {
