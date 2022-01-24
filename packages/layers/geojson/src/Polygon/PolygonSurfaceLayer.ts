@@ -29,7 +29,7 @@ import { PolygonMatr } from './PolygonMatr'
 import { Polaris } from '@polaris.gl/base'
 import { isDISPOSED } from '@gs.i/schema'
 import { WorkerManager } from '@polaris.gl/utils-worker-manager'
-import GeomWorker from 'worker-loader!../workers/PolygonGeom'
+import { createWorkers } from '../workers/PolygonGeomWorker'
 
 /**
  * 配置项 interface
@@ -53,7 +53,7 @@ export interface PolygonSurfaceLayerProps extends StandardLayerProps {
 	metallic?: number
 	roughness?: number
 	/**
-	 * Selection relatec
+	 * Selection related
 	 */
 	genSelectLines?: boolean
 	selectLinesHeight?: number
@@ -198,17 +198,30 @@ export class PolygonSurfaceLayer extends StandardLayer {
 
 	init(projection, timeline, polaris) {
 		// Init WorkerManager
-		this.listenProps(['workersCount'], (e, done) => {
-			const count = this.getProps('workersCount')
-			if (count > 0) {
-				const workers: Worker[] = []
-				for (let i = 0; i < count; i++) {
-					workers.push(new GeomWorker())
+
+		this.listenProps(['workers'], (e, done) => {
+			if (this._workerManager) {
+				throw new Error('can not change props.workersCount')
+			} else {
+				const count = this.getProps('workersCount')
+				if (count > 0) {
+					const workers: Worker[] = createWorkers(count)
+					this._workerManager = new WorkerManager(workers)
 				}
-				this._workerManager = new WorkerManager(workers)
 			}
-			done()
 		})
+		// this.listenProps(['workersCount'], (e, done) => {
+
+		// 	const count = this.getProps('workersCount')
+		// 	if (count > 0) {
+		// 		const workers: Worker[] = []
+		// 		for (let i = 0; i < count; i++) {
+		// 			workers.push(new GeomWorker())
+		// 		}
+		// 		this._workerManager = new WorkerManager(workers)
+		// 	}
+		// 	done()
+		// })
 
 		// 3D 内容
 		this.mesh = new Mesh({ name: 'PolygonSurface', material: this.matr })
