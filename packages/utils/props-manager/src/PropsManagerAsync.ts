@@ -3,13 +3,11 @@
  * All rights reserved.
  */
 
+// ** this is not stable
+// todo 异步回调是潜在bug，如果 调用 set，然后立即又调用，async listener 中 多次 get 的结果会不一致
+
 import { deepDiffProps } from './utils'
 
-/**
- * Props Manager.
- *
- * @note this is sync version. do not use async functions as listeners.
- */
 // eslint-disable-next-line @typescript-eslint/ban-types
 export class PropsManager<TProps extends Record<string, any>> {
 	/**
@@ -17,24 +15,12 @@ export class PropsManager<TProps extends Record<string, any>> {
 	 */
 	private _callbackTemplate: (event: {
 		changedKeys: Array<keyof TProps>
-		/**
-		 * @deprecated rename as changedKeys
-		 */
-		trigger: Array<keyof TProps>
-	}) => void
+		trigger: Array<keyof TProps> // @deprecated rename as changedKeys
+		currentProps: Partial<TProps>
+	}) => Promise<void> | void
 
-	/**
-	 * current props
-	 */
 	private _props: TProps = {} as TProps // init, safe here
-	/**
-	 * prop keys and their listeners
-	 */
 	private _listeners = new Map<keyof TProps, Set<typeof this._callbackTemplate>>()
-
-	constructor(initialProps?: TProps) {
-		if (initialProps) this._props = initialProps
-	}
 
 	/**
 	 * Partially update props. Only pass changed or added properties.
@@ -46,16 +32,24 @@ export class PropsManager<TProps extends Record<string, any>> {
 	 * @changed 移除 callback 的 done 参数，和 promise.then 实质上重复
 	 * @changed callback 接受的参数中，changedKeys 只会包含自己 listen 的，而不是全部变化的key
 	 * @changed callback 调用顺序会变化
+	 *
+	 * @return A Promise indicating if all the listeners has been trigged
 	 */
-	set(props: Partial<TProps>): void {
+	set(props: Partial<TProps>): Promise<void> {
 		const changedKeys = deepDiffProps(props, this._props)
 
-		if (changedKeys.length === 0) return
+		if (changedKeys.length === 0) {
+			return new Promise((resolve, reject) => {
+				resolve()
+			})
+		}
 
 		this._props = {
 			...this._props,
 			...props,
 		}
+
+		Object.freeze(this._props)
 
 		// @note key 与 callback 是多对多的，这里需要整理出 那些 key 触发了 哪些 callback
 
@@ -76,14 +70,28 @@ export class PropsManager<TProps extends Record<string, any>> {
 			})
 		}
 
+		const promises = [] as Array<Promise<void> | void>
 		callbackKeys.forEach((listenedChangedKeys, callback) => {
-			callback({
+			const res = callback({
 				changedKeys: listenedChangedKeys,
 				trigger: listenedChangedKeys,
+				currentProps: this._props,
 			})
+			promises.push(res)
 		})
 
-		return
+		// it's allowed to pass a array of non-promises element
+		// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all#return_value
+		// @note do not use async/await so that above code can be executed synchronously
+		return new Promise<void>((resolve, reject) => {
+			Promise.all(promises)
+				.then(() => {
+					resolve()
+				})
+				.catch((e) => {
+					reject(e)
+				})
+		})
 	}
 
 	/**
@@ -115,8 +123,13 @@ export class PropsManager<TProps extends Record<string, any>> {
 			 * @deprecated renamed as changedKeys
 			 */
 			trigger: TKeys
-		}) => void
-	): void {
+			/**
+			 * frozen object
+			 */
+			currentProps: Partial<TProps>
+		}) => Promise<void> | void,
+		immediately?: boolean
+	): Promise<void> {
 		for (let i = 0; i < keys.length; i++) {
 			const key = keys[i]
 			let listeners = this._listeners.get(key)
@@ -127,6 +140,20 @@ export class PropsManager<TProps extends Record<string, any>> {
 
 			listeners.add(callback as any)
 		}
+
+		const currentProps = this._props
+
+		return (async () => {
+			if (immediately) {
+				return await callback({
+					changedKeys: [] as any,
+					trigger: [] as any,
+					currentProps,
+				})
+			} else {
+				return
+			}
+		})()
 	}
 
 	/**
