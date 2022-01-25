@@ -459,6 +459,11 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 			}
 		})
 
+		// DEBUG
+		// candidates.forEach((item) => {
+		// 	console.log(item.layer, item.distance)
+		// })
+
 		// Sort and get the closest picked layer
 		if (candidates.length > 0) {
 			candidates.sort(this._pickedLayerSortFn)
@@ -685,26 +690,50 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 			// compare depthTest
 			// if both are true, compare distance
 			if (meshA.material.depthTest !== undefined && meshB.material.depthTest !== undefined) {
-				if (meshA.material.depthTest === true && meshB.material.depthTest === true) {
-					return a.distance - b.distance
+				// if (meshA.material.depthTest === true && meshB.material.depthTest === true) {
+				// 	return a.distance - b.distance
+				// }
+				const aDepth = meshA.material.depthTest
+				const bDepth = meshB.material.depthTest
+				if (aDepth === bDepth) {
+					// both true
+					if (aDepth === true) {
+						return a.distance - b.distance
+					}
+					// both false, compare transparency, then compare renderOrders
+					else {
+						if (aTransparent === true && bTransparent === false) {
+							return -1
+						} else if (aTransparent === false && bTransparent === true) {
+							return 1
+						} else {
+							return meshB.renderOrder - meshA.renderOrder
+						}
+					}
+				}
+				// different depthTest, compare transparency, then compare renderOrders
+				else {
+					if (aTransparent === true && bTransparent === false) {
+						return -1
+					} else if (aTransparent === false && bTransparent === true) {
+						return 1
+					} else {
+						return meshB.renderOrder - meshA.renderOrder
+					}
 				}
 			}
 			// compare transparent
-			// transparent object is always rendered after non-transparent object
+			// transparent object is always rendered after opaque object
 			else if (aTransparent === true && bTransparent === false) {
 				return -1
 			} else if (aTransparent === false && bTransparent === true) {
 				return 1
 			}
-		}
-		// compare renderOrder
-		// lower renderOrder => earlier to render => covered by higher renderOrder
-		else if (
-			meshA.renderOrder !== undefined &&
-			meshB.renderOrder !== undefined &&
-			meshA.renderOrder !== meshB.renderOrder
-		) {
-			return meshB.renderOrder - meshA.renderOrder
+			// compare renderOrder
+			// lower renderOrder => earlier to render => covered by higher renderOrder
+			else if (meshA.renderOrder !== meshB.renderOrder) {
+				return meshB.renderOrder - meshA.renderOrder
+			}
 		}
 
 		return a.distance - b.distance

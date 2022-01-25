@@ -2,7 +2,7 @@ import { MercatorProjection } from '@polaris.gl/projection'
 import { POILayer } from '@polaris.gl/layer-xyz-poi-tile'
 import { AOILayer } from '@polaris.gl/layer-xyz-aoi-tile'
 import { PolarisGSIGL2 } from '@polaris.gl/gsi-gl2'
-// import { AMapLayer } from '@polaris.gl/layer-amap'
+import { AMapLayer } from '@polaris.gl/layer-amap'
 import { PolygonLayer } from '@polaris.gl/layer-geojson'
 
 document.body.style.backgroundColor = '#333'
@@ -34,7 +34,7 @@ const poi = new POILayer({
 	framesBeforeRequest,
 	viewZoomReduction,
 	dataType: 'pbf',
-	pointSize: 40,
+	pointSize: 20,
 	pointHoverSize: 24,
 	pointOffset: [0.0, 0.5],
 	getPointColor: '#ffaf99',
@@ -85,11 +85,12 @@ const poi = new POILayer({
 		// poi.highlightByIds([id], { type: 'hover' })
 		lastHovered = id
 
-		console.log('id', id)
+		// console.log('id', id)
 	},
 
-	baseAlt: 1,
+	baseAlt: 10,
 	useParentReplaceUpdate: true,
+	// depthTest: false,
 })
 p.add(poi)
 window['poi'] = poi
@@ -281,7 +282,8 @@ p.timeline.addTrack({
 })
 
 setTimeout(() => {
-	p.setStatesCode('1|120.184302|30.265237|0.000000|0.00000|0.00000|11.74200')
+	p.setStatesCode('1|120.184302|30.265237|0.000000|0.00000|0.00000|16.55800')
+	// p.setStatesCode('1|120.184302|30.265237|0.000000|0.00000|0.00000|11.74200')
 	// p.setStatesCode('1|120.184301|30.265237|0.000000|0.00000|0.00000|16.70400') // closer hz
 }, 500)
 

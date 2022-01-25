@@ -1,4 +1,4 @@
-import { Vector3, Matrix4, Box2, Vector2 } from '@gs.i/utils-math'
+import { Vector3, Matrix4, Box2, Vector2, Plane, Ray } from '@gs.i/utils-math'
 import { MeshDataType, isDISPOSED } from '@gs.i/schema'
 import { CoordV2, PickEvent } from '@polaris.gl/schema'
 
@@ -16,8 +16,7 @@ export class PointsMeshPickHelper {
 	private _imgWidth: number
 	private _imgHeight: number
 	private _worldMatrix = new Matrix4()
-	private _position = new Vector3()
-	private _vec3 = new Vector3()
+	private _camPos = new Vector3()
 	private _pointBox = new Box2()
 	private _uv = new Vector2()
 
@@ -67,21 +66,22 @@ export class PointsMeshPickHelper {
 
 		for (let i = count - 1; i >= 0; i--) {
 			const localPos = new Vector3().fromArray(positions, i * 3)
+			const worldPos = new Vector3().copy(localPos)
 
 			/**
 			 * @NOTE
 			 * Polaris resolution ratio will effect on image rendering
 			 * Since the raw size already been multiplied by ratio in geom creation
 			 * eg. 32px size in ratio of 2.0 would result in 64px in actual size attribute
-			 * Therefore we need to devide ratio here to get correct image render size
+			 * Therefore we need to divide ratio here to get correct image render size
 			 */
 
 			const size = sizes[i] / polaris.ratio
 			const halfSize = size / 2
 
-			this._position.copy(localPos)
-			this._position.applyMatrix4(this._worldMatrix)
-			const screenXY = polaris.getScreenXY(this._position.x, this._position.y, this._position.z)
+			worldPos.copy(localPos)
+			worldPos.applyMatrix4(this._worldMatrix)
+			const screenXY = polaris.getScreenXY(worldPos.x, worldPos.y, worldPos.z)
 
 			const offsetX = halfSize * this.offset[0]
 			const offsetY = halfSize * this.offset[1]
@@ -114,7 +114,7 @@ export class PointsMeshPickHelper {
 				continue
 			}
 
-			// Point hitted
+			// Point hit
 			// Check px alpha
 			this._uv.set(
 				(pointerCoords.x - this._pointBox.min.x) / size,
@@ -127,17 +127,32 @@ export class PointsMeshPickHelper {
 				// Intersection is valid
 				const dataIndex = i
 				const cam = polaris.cameraProxy
-				this._vec3.set(
+				this._camPos.set(
 					cam.position[0] - cam.center[0],
 					cam.position[1] - cam.center[1],
 					cam.position[2] - cam.center[2]
 				)
 
+				// deprecated: intersection distance
+				// const camToPoint = new Vector3().subVectors(this._camPos, worldPos).normalize()
+				// const pointToCam = new Vector3().subVectors(worldPos, this._camPos).normalize()
+				// const ray = new Ray(this._camPos, camToPoint)
+				// const pointPlane = new Plane().setFromNormalAndCoplanarPoint(pointToCam, worldPos)
+				// const hitPoint = new Vector3()
+				// const hitResult = ray.intersectPlane(pointPlane, hitPoint)
+				// console.log('hitResult', hitResult)
+				// console.log('hitPoint', hitPoint)
+				// if (!hitResult) {
+				// 	continue
+				// }
+				// const distance = worldPos.distanceTo(hitPoint)
+				// console.log('distance', distance)
+
 				const event: PickEvent = {
 					/**
 					 * 碰撞点与视点距离
 					 */
-					distance: this._position.distanceTo(this._vec3),
+					distance: worldPos.distanceTo(this._camPos),
 
 					/**
 					 * data item 索引
@@ -147,7 +162,7 @@ export class PointsMeshPickHelper {
 					/**
 					 * 碰撞点世界坐标
 					 */
-					point: this._position.clone(),
+					point: worldPos,
 
 					/**
 					 * 碰撞点本地坐标
