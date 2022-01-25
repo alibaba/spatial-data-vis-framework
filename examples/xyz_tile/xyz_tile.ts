@@ -2,7 +2,8 @@ import { MercatorProjection } from '@polaris.gl/projection'
 import { POILayer } from '@polaris.gl/layer-xyz-poi-tile'
 import { AOILayer } from '@polaris.gl/layer-xyz-aoi-tile'
 import { PolarisGSIGL2 } from '@polaris.gl/gsi-gl2'
-import { AMapLayer } from '@polaris.gl/layer-amap'
+// import { AMapLayer } from '@polaris.gl/layer-amap'
+import { PolygonLayer } from '@polaris.gl/layer-geojson'
 
 document.body.style.backgroundColor = '#333'
 
@@ -33,7 +34,7 @@ const poi = new POILayer({
 	framesBeforeRequest,
 	viewZoomReduction,
 	dataType: 'pbf',
-	pointSize: 20,
+	pointSize: 40,
 	pointHoverSize: 24,
 	pointOffset: [0.0, 0.5],
 	getPointColor: '#ffaf99',
@@ -71,20 +72,24 @@ const poi = new POILayer({
 	},
 	onHovered: (data) => {
 		if (lastHovered !== undefined) {
-			poi.highlightByIds([lastHovered], { type: 'none' })
+			// poi.highlightByIds([lastHovered], { type: 'none' })
 		}
 
 		if (!data || data.data.feature === undefined) return
 
+		console.log('poi')
+
 		const feature = data.data.feature
 		const id = feature.properties.id
 		if (!id) return
-		poi.highlightByIds([id], { type: 'hover' })
+		// poi.highlightByIds([id], { type: 'hover' })
 		lastHovered = id
 
 		console.log('id', id)
 	},
-	renderOrder: 100,
+
+	baseAlt: 1,
+	useParentReplaceUpdate: true,
 })
 p.add(poi)
 window['poi'] = poi
@@ -160,14 +165,76 @@ const aoi = new AOILayer({
 		})
 	},
 })
-p.add(aoi)
-window['aoi'] = aoi
+// p.add(aoi)
+// window['aoi'] = aoi
 
 // amap
-const amapLayer = new AMapLayer({
-	showLogo: false,
+// const amapLayer = new AMapLayer({
+// 	showLogo: false,
+// })
+// p.add(amapLayer)
+
+async function fetchData() {
+	const data: any[] = []
+
+	const response = await fetch(
+		'https://gw.alipayobjects.com/os/bmw-prod/69f76d0b-8758-49cc-86e7-6fc5728cb3ea.json' // geojson china all
+	)
+	const json = await response.json()
+	data.push(json)
+
+	return data
+}
+
+fetchData().then((data) => {
+	const geojson = data[0]
+	const newGeo = { ...geojson, features: [] }
+
+	console.log('newGeo', newGeo)
+
+	geojson.features.forEach((feature) => {
+		const level = feature.properties.level
+		const adcode = feature.properties.adcode
+		if (adcode === '100000') {
+			return
+		}
+		if (level === 'province') {
+			newGeo.features.push(Object.assign({}, feature))
+			return
+		}
+	})
+
+	// Polygons
+	const polygonLayer1 = (window['layer1'] = new PolygonLayer({
+		// projection: new SphereProjection({}),
+		getFillColor: (feature) => {
+			const r = Math.floor(100 + Math.random() * 155).toString(16)
+			const color = `#${r}aa${r}`
+			return color
+		},
+		getSideColor: '#999999',
+		getFillOpacity: 1.0,
+		transparent: false,
+		getThickness: 0,
+		enableExtrude: false,
+		baseAlt: 0,
+		depthTest: true,
+		pickable: true,
+		hoverColor: false,
+		selectColor: false,
+		hoverLineWidth: 1,
+		selectLineWidth: 4,
+		selectLinesHeight: 0,
+		workersCount: 4,
+	}))
+	p.add(polygonLayer1)
+	polygonLayer1.updateData(newGeo)
+	polygonLayer1.onHovered = (info) => {
+		if (!info) return
+
+		console.log('polygon')
+	}
 })
-p.add(amapLayer)
 
 // info panel
 const panel = document.createElement('div')
@@ -249,7 +316,7 @@ function getPOIUrl(x, y, z) {
 					aggregation: {
 						zlevel: [1, 15],
 						clustering_method: 'bin',
-						clustering_scalar: 1000,
+						clustering_scalar: 2000,
 						fields: {
 							count_number: ['id', 'count'],
 							sum_number: ['count', 'sum'],

@@ -588,6 +588,7 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 		// Collect pick results
 		const opts = { deepPicking: this.props.deepPicking ?? false }
 		const result = this.pick(canvasCoords, opts)
+
 		if (!result) {
 			this.traverseVisible((obj) => {
 				const layer = obj as Layer
@@ -661,35 +662,42 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 
 	/**
 	 * 处理picking事件结果排序
+	 * @qianxun fix: should compare transparency before distance comparison
 	 */
 	protected _pickedLayerSortFn(a: LayerPickEvent, b: LayerPickEvent): number {
-		const meshA = a.object
-		const meshB = b.object
+		const meshA = a.object as MeshDataType
+		const meshB = b.object as MeshDataType
 
 		if (meshA === undefined || meshB === undefined) {
 			return a.distance - b.distance
 		}
 
 		if (meshA.material !== undefined && meshB.material !== undefined) {
-			// 1. Compare depthTest
+			const aTransparent =
+				meshA.material.alphaMode === 'BLEND' ||
+				meshA.material.alphaMode === 'BLEND_ADD' ||
+				meshA.material.alphaMode === 'MASK'
+			const bTransparent =
+				meshB.material.alphaMode === 'BLEND' ||
+				meshB.material.alphaMode === 'BLEND_ADD' ||
+				meshB.material.alphaMode === 'MASK'
+
+			// compare depthTest
 			// if both are true, compare distance
 			if (meshA.material.depthTest !== undefined && meshB.material.depthTest !== undefined) {
 				if (meshA.material.depthTest === true && meshB.material.depthTest === true) {
 					return a.distance - b.distance
 				}
 			}
-			// 2. Compare transparent
+			// compare transparent
 			// transparent object is always rendered after non-transparent object
-			else if (meshA.material['transparent'] === true && meshB.material['transparent'] === false) {
-				return 1
-			} else if (
-				meshA.material['transparent'] === false &&
-				meshB.material['transparent'] === true
-			) {
+			else if (aTransparent === true && bTransparent === false) {
 				return -1
+			} else if (aTransparent === false && bTransparent === true) {
+				return 1
 			}
 		}
-		// 3. Compare renderOrder
+		// compare renderOrder
 		// lower renderOrder => earlier to render => covered by higher renderOrder
 		else if (
 			meshA.renderOrder !== undefined &&
