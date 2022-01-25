@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/polaris-gl2",
-    "version": "0.0.0-alpha.10",
+    "version": "0.0.0-alpha.12",
     "description": "",
     "private": true,
     "main": "dist/Polaris.GL2.js",
@@ -20,7 +20,7 @@
     "dependencies": {
         "@polaris.gl/renderer-gl2": "^0.0.0-alpha.10",
         "@polaris.gl/schema": "^0.0.0-alpha.10",
-        "@polaris.gl/utils": "^0.0.0-alpha.10",
+        "@polaris.gl/utils": "^0.0.0-alpha.12",
         "@polaris.gl/view-html": "^0.0.0-alpha.10",
         "@polaris.gl/view-three": "^0.0.0-alpha.10"
     },

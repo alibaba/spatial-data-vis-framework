@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/gsi-gl2",
-    "version": "0.0.0-alpha.10",
+    "version": "0.0.0-alpha.12",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -16,7 +16,7 @@
         "build:umd": "npx webpack"
     },
     "dependencies": {
-        "@polaris.gl/gsi": "^0.0.0-alpha.10",
+        "@polaris.gl/gsi": "^0.0.0-alpha.12",
         "@polaris.gl/renderer-gsi-gl2": "^0.0.0-alpha.10",
         "@polaris.gl/schema": "^0.0.0-alpha.10"
     },
