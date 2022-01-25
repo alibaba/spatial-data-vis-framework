@@ -96,11 +96,11 @@ var config = {
 	 * 除非把 webpack 和 loader 都放在 root里，不然 就会导致 loader 查找不到
 	 * 可以通过这种方式解决
 	 */
-	resolveLoader: {
-		alias: {
-			'worker-loader': [path.resolve(__dirname, 'node_modules/worker-loader')],
-		},
-	},
+	// resolveLoader: {
+	// 	alias: {
+	// 		'worker-loader': [path.resolve(__dirname, 'node_modules/worker-loader')],
+	// 	},
+	// },
 	module: {
 		rules: [
 			{

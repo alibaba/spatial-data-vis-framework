@@ -19,7 +19,7 @@ import { Box3, Color, Sphere, Vector3 } from '@gs.i/utils-math'
 import { featureToLinePositions, createRangeArray, getFeatureTriangles } from './utils'
 import { LineIndicator } from '@polaris.gl/utils-indicator'
 import { WorkerManager } from '@polaris.gl/utils-worker-manager'
-import GeomWorker from 'worker-loader!./workers/GeomWorker'
+import { createWorkers } from './workers/createWorkers'
 
 /**
  * 配置项 interface
@@ -282,13 +282,14 @@ export class AOILayer extends StandardLayer {
 		}
 
 		this.listenProps(['workersNum'], () => {
-			const workersNum = this.getProps('workersNum')
-			if (workersNum > 0) {
-				const workers: GeomWorker[] = []
-				for (let i = 0; i < workersNum; i++) {
-					workers.push(new GeomWorker())
+			if (this._workerManager) {
+				throw new Error('can not change props.workersNum')
+			} else {
+				const workersNum = this.getProps('workersNum')
+				if (workersNum > 0) {
+					const workers: Worker[] = createWorkers(workersNum)
+					this._workerManager = new WorkerManager(workers)
 				}
-				this._workerManager = new WorkerManager(workers)
 			}
 		})
 

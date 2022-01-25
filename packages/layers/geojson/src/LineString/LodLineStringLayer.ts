@@ -16,7 +16,7 @@ import flatten from '@turf/flatten'
 import { getGeom, getCoords } from '@turf/invariant'
 import polygonToLine from '@turf/polygon-to-line'
 import { WorkerManager } from '@polaris.gl/utils-worker-manager'
-import GeomWorker from 'worker-loader!../workers/LineGeom'
+import { createWorkers } from '../workers/LineGeomWorker'
 import { LineLodGroup } from './LineLodGroup'
 
 /**
@@ -128,7 +128,7 @@ export class LodLineStringLayer extends StandardLayer {
 	}
 
 	init(projection, timeline, polaris) {
-		this._workerManager = new WorkerManager([new GeomWorker()])
+		this._workerManager = new WorkerManager(createWorkers(1))
 
 		this.listenProps(
 			[

@@ -117,6 +117,20 @@ _<u>Every package only has one set of toolchain that guarantee to work.</u>_ You
 
 Unless you can make sure all the repos use exactly same language \* version and toolchain. It's easier to only assume you get all the (live-updated) **build result** of dependents instead of **source code** and everything.
 
+### Web Worker
+
+It is a common dilemma for 2/3rd party libraries to handle web-worker. Not like user-end-app developing where you can just use the syntax of your bundlers like `webpack` or `rollup`. If you are writing a 2/3rd party library. You can’t assume what bundler your users will be using.
+
+It is not an option to write `webpack4` `worker-loader!` syntax and just leave them there without bundling. (It will break if users do not use `webpack4` or install their plugins in a wired location.) It is not a good practice to bundle web-worker codes into an inline string. (It will leave users no option to handle these codes with their bundlers or transpilers).
+
+In the end, we decide to bundle the codes running in the web-worker using `rollup`, without further transpiling. The result can be safely bundled again. As for the importing of web-worker. We kept the native worker constructor as follows:
+
+```javascript
+const worker = new Worker(new URL('./PolygonGeom.js', import.meta.url))
+```
+
+We tested it on `Webpack5` and `vite`. If you are using `webpack4`, we recommend using this plugin [worker-plugin](https://www.npmjs.com/package/worker-plugin) to add support for this standard syntax. And [rollup-plugin-off-main-thread](https://www.npmjs.com/package/@surma/rollup-plugin-off-main-thread) for `rollup`.
+
 ## License and disclaimer
 
 本项目使用 MIT 开源协议，详见 [LICENSE](./LICENSE)

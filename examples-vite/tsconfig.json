@@ -10,6 +10,12 @@
 	"exclude": ["dist"],
 	"references": [
 		{
+			"path": "../packages/polaris/polaris-gsi-gl2"
+		},
+		{
+			"path": "../packages/layers/geojson"
+		},
+		{
 			"path": "../packages/layers/helper"
 		},
 		{
