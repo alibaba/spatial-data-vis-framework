@@ -4,7 +4,7 @@
  */
 /* eslint-disable @typescript-eslint/ban-types */
 
-import { AbstractLayer, CoordV2, PickEvent, PickEventResult } from './AbstractLayer'
+import { AbstractLayer } from './AbstractLayer'
 import { Projection } from '@polaris.gl/projection'
 import { Timeline } from 'ani-timeline'
 
@@ -37,21 +37,14 @@ interface EventTypes {
 	afterInit: { projection: Projection; timeline: Timeline; polaris: AbstractPolaris }
 }
 
-// override some inherited properties and methods interface
-export interface Layer {
-	get parent(): Layer
-	get children(): Set<Layer>
-	get root(): Layer
-	add(child: Layer): void
-	remove(child: Layer): void
-	traverse(handler: (node: Layer) => void): void
-}
-
 /**
  * empty layer
  */
 export class Layer extends AbstractLayer<EventTypes> {
-	readonly isLayer = true
+	/**
+	 * readable name of this layer
+	 */
+	name: string
 
 	/**
 	 * #### The actual renderable contents.
@@ -70,14 +63,6 @@ export class Layer extends AbstractLayer<EventTypes> {
 	 */
 	polaris: AbstractPolaris | null
 
-	// 本地传入
-	private _timelineLocal?: Timeline
-	private _projectionLocal?: Projection
-
-	// 从 parent tree 上回溯到的，本地缓存（避免每次都回溯）
-	private _timelineResolved?: Timeline
-	private _projectionResolved?: Projection
-
 	/**
 	 * Initialization entry
 	 *
@@ -94,7 +79,9 @@ export class Layer extends AbstractLayer<EventTypes> {
 	 * @param props
 	 */
 	constructor(props: LayerProps = {}) {
-		super(props)
+		super()
+
+		this.name = props.name || 'abstract-layer'
 
 		// 本地投影和时间线
 		this._projectionLocal = props.projection
@@ -133,17 +120,6 @@ export class Layer extends AbstractLayer<EventTypes> {
 				})
 			}
 		)
-	}
-
-	/**
-	 * @deprecated use {@link .addEventListener} instead
-	 */
-	protected set afterInit(
-		f: (projection: Projection, timeline: Timeline, polaris: AbstractPolaris) => void
-	) {
-		this.addEventListener('afterInit', (event) => {
-			f(event.projection, event.timeline, event.polaris)
-		})
 	}
 
 	/**
@@ -214,6 +190,69 @@ export class Layer extends AbstractLayer<EventTypes> {
 		})
 	}
 
+	/**
+	 * 获取该Layer的Polaris实例
+	 */
+	getPolaris(): Promise<AbstractPolaris> {
+		return new Promise((resolve) => {
+			// 	请求本地
+			if (this.polaris) {
+				resolve(this.polaris)
+				return
+			}
+			// 请求 parent tree
+			if (this.parent) {
+				// 把任务迭代地交给上级，而非自己去一层层遍历上级
+				this.parent.getPolaris().then((polaris) => {
+					this.polaris = polaris
+					resolve(polaris)
+				})
+				return
+			}
+			// 等待获得 parent 之后再请求 parent tree
+			this.onAdd = (parent: Layer) => {
+				parent.getPolaris().then((polaris) => {
+					this.polaris = polaris
+					resolve(polaris)
+				})
+			}
+		})
+	}
+
+	raycast(polaris: AbstractPolaris, canvasCoord: CoordV2, ndc: CoordV2): PickEvent | undefined {
+		warnUnimplementedRaycast()
+		return
+	}
+
+	/**
+	 * update props
+	 */
+	updateProps(props: never): void {}
+
+	dispose() {}
+
+	// #region legacy apis
+
+	// 本地传入
+	/**
+	 * @deprecated
+	 */
+	private _timelineLocal?: Timeline
+	/**
+	 * @deprecated
+	 */
+	private _projectionLocal?: Projection
+
+	// 从 parent tree 上回溯到的，本地缓存（避免每次都回溯）
+	/**
+	 * @deprecated
+	 */
+	private _timelineResolved?: Timeline
+	/**
+	 * @deprecated
+	 */
+	private _projectionResolved?: Projection
+
 	// get projection(): Promise<Projection> {
 	// 	return this.getProjection()
 	// }
@@ -252,40 +291,107 @@ export class Layer extends AbstractLayer<EventTypes> {
 	}
 
 	/**
-	 * 获取该Layer的Polaris实例
+	 * @deprecated use {@link .addEventListener} instead
 	 */
-	getPolaris(): Promise<AbstractPolaris> {
-		return new Promise((resolve) => {
-			// 	请求本地
-			if (this.polaris) {
-				resolve(this.polaris)
-				return
-			}
-			// 请求 parent tree
-			if (this.parent) {
-				// 把任务迭代地交给上级，而非自己去一层层遍历上级
-				this.parent.getPolaris().then((polaris) => {
-					this.polaris = polaris
-					resolve(polaris)
-				})
-				return
-			}
-			// 等待获得 parent 之后再请求 parent tree
-			this.onAdd = (parent: Layer) => {
-				parent.getPolaris().then((polaris) => {
-					this.polaris = polaris
-					resolve(polaris)
-				})
-			}
+	protected set afterInit(
+		f: (projection: Projection, timeline: Timeline, polaris: AbstractPolaris) => void
+	) {
+		this.addEventListener('afterInit', (event) => {
+			f(event.projection, event.timeline, event.polaris)
 		})
 	}
 
-	raycast(polaris: AbstractPolaris, canvasCoord: CoordV2, ndc: CoordV2): PickEvent | undefined {
-		console.warn('Layer::raycast not implemented. implement this method in subclass if pick-ale.')
-		return
+	/**
+	 * @deprecated use {@link .addEventListener} instead
+	 * callbacks when any object/layer has been picked by user pointer
+	 */
+	set onPicked(f: (event: PickEventResult | undefined) => void) {
+		this.addEventListener('pick', (event) => {
+			f(event.result)
+		})
 	}
 
-	dispose() {}
+	/**
+	 * @deprecated use {@link .addEventListener} instead
+	 * callbacks when any object/layer has been hovered on by user pointer
+	 */
+	set onHovered(f: (event: PickEventResult | undefined) => void) {
+		this.addEventListener('hover', (event) => {
+			f(event.result)
+		})
+	}
+
+	/**
+	 * @deprecated use {@link https://www.typescriptlang.org/docs/handbook/2/classes.html#this-based-type-guards}
+	 */
+	readonly isLayer = true
+
+	// #endregion
+}
+
+//
+
+export interface CoordV2 {
+	x: number
+	y: number
+}
+
+export interface CoordV3 {
+	x: number
+	y: number
+	z: number
+}
+
+export interface PickEvent {
+	/**
+	 * 碰撞点与视点距离
+	 */
+	distance: number
+
+	/**
+	 * data item 索引
+	 */
+	index: number
+
+	/**
+	 * 碰撞点世界坐标
+	 */
+	point: CoordV3
+
+	/**
+	 * 碰撞点本地坐标
+	 */
+	pointLocal: CoordV3
+
+	/**
+	 * Layer specific mesh object
+	 */
+	object: any
+
+	/**
+	 * Layer specific
+	 */
+	data?: any
+}
+
+export interface PickEventResult extends PickEvent {
+	pointerCoords: {
+		canvas: CoordV2
+		ndc: CoordV2
+		screen: CoordV2
+	}
+}
+
+// helpers
+let warnUnimplementedRaycastCount = 0
+function warnUnimplementedRaycast() {
+	if (warnUnimplementedRaycastCount < 10) {
+		console.warn('Layer::raycast not implemented. implement this method in subclass if pick-ale.')
+	}
+	if (warnUnimplementedRaycastCount === 10) {
+		console.warn('Layer::warnUnimplementedRaycast too many warnings. no more will be reported.')
+	}
+	warnUnimplementedRaycastCount++
 }
 
 // test code

@@ -8,7 +8,8 @@
  */
 
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import { Layer } from './Layer'
+import { AbstractLayer } from './AbstractLayer'
+import { AbstractNode } from './AbstractNode'
 import { Projection, MercatorProjection } from '@polaris.gl/projection'
 import { Timeline } from 'ani-timeline'
 import {
@@ -17,23 +18,75 @@ import {
 	TouchControl,
 	Cameraman,
 	GeographicStates,
+	CameraProxy,
 } from 'camera-proxy'
-import { EventCallBack, PropsManager } from '@polaris.gl/utils-props-manager'
+import { PropsManager } from '@polaris.gl/utils-props-manager'
 import { PolarisProps, defaultProps } from './props/index'
+
+// : Array<keyof PolarisProps>
+const changeableKeys = [
+	// camera
+	'cameraFar' as const,
+	'cameraNear' as const,
+	'fov' as const,
+	'pitch' as const,
+	'pitchLimit' as const,
+	'zoom' as const,
+	'zoomLimit' as const,
+	'rotation' as const,
+	'center' as const,
+	// size
+	'width' as const,
+	'height' as const,
+	'ratio' as const,
+]
+
+type ChangeableKey = typeof changeableKeys[0]
 
 export { colorToString } from './props/index'
 export type { PolarisProps } from './props/index'
 
-/**
- * 根节点
- */
-export type RootLayer = Omit<Layer, 'parent' | 'level' | 'init' | 'afterInit' | 'updateData'>
+// function propsFilter<TProps extends Record<string, any>, TKey extends keyof Partial<TProps>>(
+// 	props: TProps,
+// 	keys: TKey[]
+// ): [Pick<TProps, TKey>, Array<keyof Omit<TProps, TKey>>] {
+// 	const result = {} as Pick<TProps, TKey>
+// 	for (let i = 0; i < keys.length; i++) {
+// 		const key = keys[i]
+// 		if (Reflect.has(props, key)) {
+// 			Reflect.set(props, key, props[key])
+// 		}
+// 	}
+
+// 	const otherKeys = Object.keys(props).filter((key) => !keys.includes(key as any))
+
+// 	return [result, otherKeys as Array<keyof Omit<TProps, TKey>>]
+// }
+
+interface Events {
+	add: never
+	remove: never
+	rootChange: never
+	visibilityChange: {}
+	viewChange: {
+		cameraProxy: CameraProxy
+		polaris: AbstractPolaris /* typeof Polaris */
+	}
+	beforeRender: { polaris: AbstractPolaris /* typeof Polaris */ }
+	afterRender: { polaris: AbstractPolaris /* typeof Polaris */ }
+}
 
 /**
- * Polaris 根节点 基类
+ * AbstractPolaris
  */
-export abstract class AbstractPolaris extends Layer implements RootLayer {
-	readonly isPolaris: boolean
+export abstract class AbstractPolaris extends AbstractLayer<Events> {
+	// polaris is always the root
+	override get parent(): null {
+		return null
+	}
+	override get root(): this {
+		return this
+	}
 
 	// canvas: HTMLCanvasElement
 
@@ -89,11 +142,40 @@ export abstract class AbstractPolaris extends Layer implements RootLayer {
 	 */
 	scale: number
 
-	protected props: PolarisProps
+	protected readonly _props: PolarisProps
 
-	protected _disposed: boolean
+	protected _disposed = false
+
+	// #region reactive props update
+
+	/**
+	 * Init propsManager
+	 */
+	private _propsManager = new PropsManager<Pick<PolarisProps, ChangeableKey>>()
+
+	updateProps(props: Partial<Pick<PolarisProps, ChangeableKey>>): void {
+		const [changeableProps, staticKeys] = propsFilter(props, changeableKeys)
+
+		if (staticKeys.length > 0) {
+			console.warn(`AbstractPolaris: these props are not changeable: ${staticKeys.join(',')}`)
+		}
+
+		this._propsManager.set(changeableProps)
+	}
+
+	getProp<TKey extends keyof PolarisProps>(key: TKey): PolarisProps[TKey] | undefined {
+		if (changeableKeys.includes(key as any)) {
+			return this._propsManager.get(key as ChangeableKey)
+		} else {
+			return this._props[key]
+		}
+	}
+
+	// #endregion
 
 	constructor(props: PolarisProps) {
+		super()
+
 		const _props = {
 			...defaultProps,
 			...props,
@@ -131,29 +213,13 @@ export abstract class AbstractPolaris extends Layer implements RootLayer {
 				center: [0, 0],
 			})
 
-		/**
-		 * Polaris self is also an Layer, do Layer initialization
-		 */
-		super({ ..._props, timeline, projection })
-		this.isPolaris = true
-		this._disposed = false
-		this.name = 'Polaris'
 		this.timeline = timeline
 		this.projection = projection
 
-		this._propsManager = new PropsManager()
-		this.setProps(props)
+		this._props = props
 
-		// qianxun: 封装props的values到propsManager接口
-		this.props = {} as any
-		for (const key in _props) {
-			Object.defineProperty(this.props, key, {
-				enumerable: true,
-				configurable: false,
-				get: () => this.getProps(key),
-				set: (val) => this.updateProps({ [key]: val }),
-			})
-		}
+		const [changeableProps, staticKeys] = propsFilter(_props, changeableKeys)
+		this.updateProps(changeableProps)
 
 		/**
 		 * init html / canvas
@@ -236,13 +302,6 @@ export abstract class AbstractPolaris extends Layer implements RootLayer {
 					this.tick()
 				}
 			},
-		})
-	}
-
-	// Implement Layer: 将polaris实例传递给children
-	getPolaris(): Promise<AbstractPolaris> {
-		return new Promise((resolve) => {
-			resolve(this)
 		})
 	}
 
@@ -408,7 +467,6 @@ export abstract class AbstractPolaris extends Layer implements RootLayer {
 	 * 销毁，尽可能多的释放资源
 	 */
 	dispose() {
-		super.dispose()
 		this.timeline.dispose()
 		this.cameraProxy.dispose()
 		this.cameraControl && this.cameraControl.dispose()
@@ -442,34 +500,17 @@ export abstract class AbstractPolaris extends Layer implements RootLayer {
 	 */
 	abstract getScreenXY(x: number, y: number, z: number): number[] | undefined
 
-	// #region reactive props update
+	// #region legacy apis
 
 	/**
-	 * Init propsManager
+	 * @deprecated
 	 */
-	protected _propsManager: PropsManager
-
+	readonly isPolaris = true
 	/**
-	 * 该方法用来被外部使用者调用
-	 *
-	 * @param {*} props
-	 * @return {*}  {Promise<void>}
-	 * @memberof Layer
+	 * @deprecated renamed as {@link getProp} for clarity
 	 */
-	updateProps(props: any): Promise<void> {
-		return this.setProps(props)
-	}
-
-	getProps(key: string) {
-		return this._propsManager.get(key)
-	}
-
-	protected setProps(newProps: any): Promise<void> {
-		return this._propsManager.set(newProps)
-	}
-
-	protected listenProps(propsName: string | Array<string>, callback: EventCallBack) {
-		this._propsManager.listen(propsName, callback)
+	getProps(key: keyof PolarisProps) {
+		return this.getProp(key)
 	}
 
 	// #endregion

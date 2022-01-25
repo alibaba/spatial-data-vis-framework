@@ -9,7 +9,7 @@ import { SceneProps, defaultSceneProps, colorToString } from './SceneProps'
 
 export interface PolarisProps extends BasicProps, CameraProps, SceneProps {}
 
-export const defaultProps: PolarisProps = {
+export const defaultProps = {
 	...defaultBasicProps,
 	...defaultCameraProps,
 	...defaultSceneProps,

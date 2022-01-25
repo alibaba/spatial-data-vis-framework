@@ -9,30 +9,25 @@
 
 import { EventDispatcher, EventOptions } from './EventDispatcher'
 
+type Events = {
+	add: { parent: AbstractNode<Events> }
+	remove: { parent: AbstractNode<Events> }
+	rootChange: { root: AbstractNode<Events> | null }
+}
+
 /**
  * Tree structure
  * @note handles tree context
  */
-export class AbstractNode<
-	TEventTypes extends {
-		/**
-		 * event after this node is added to another node
-		 */
-		add: { parent: AbstractNode<TEventTypes> }
-		remove: { parent: AbstractNode<TEventTypes> }
-		rootChange: { root: AbstractNode<TEventTypes> | null }
-	}
-> extends EventDispatcher<TEventTypes> {
-	readonly isAbstractNode = true
-
+export class AbstractNode<TEvents extends Events> extends EventDispatcher<TEvents> {
 	/**
 	 * has this node been added and removed before
 	 * @note currently not support re-add an used node
 	 */
 	private _removed = false
-	private _root: null | AbstractNode<TEventTypes> = null
-	private _parent: null | AbstractNode<TEventTypes> = null
-	private _children = new Set<AbstractNode<TEventTypes>>()
+	private _root: null | this /* AbstractNode<TEvents> */ = null
+	private _parent: null | this /* AbstractNode<TEvents> */ = null
+	private _children = new Set<this /* AbstractNode<TEvents> */>()
 
 	/**
 	 * parent node
@@ -58,15 +53,13 @@ export class AbstractNode<
 		return this._root
 	}
 
-	add(child: AbstractNode<TEventTypes>): void {
+	add(child: this /* AbstractNode<TEvents> */): void {
 		if (this.children.has(child)) {
 			console.warn('This node has already been added.')
 			return
 		}
 		if (child._removed) {
-			console.warn(
-				`This node has already been removed before. It not supported to re-use node currently.`
-			)
+			console.warn(`This node has already been removed before. Do not re-use.`)
 			return
 		}
 
@@ -96,7 +89,7 @@ export class AbstractNode<
 		})
 	}
 
-	remove(child: AbstractNode<TEventTypes>): void {
+	remove(child: this /* AbstractNode<TEvents> */): void {
 		this.children.delete(child)
 
 		// emit `remove` on child
@@ -127,7 +120,7 @@ export class AbstractNode<
 		}
 	}
 
-	traverse(handler: (node: AbstractNode<TEventTypes>) => void): void {
+	traverse(handler: (node: this /* AbstractNode<TEvents> */) => void): void {
 		handler(this)
 		this.children.forEach((child) => child.traverse(handler))
 	}
@@ -136,7 +129,7 @@ export class AbstractNode<
 	 * override {@link EventDispatcher.addEventListener} to handle `add` event
 	 * @note `add` event will be emitted immediately if parent already exists.
 	 */
-	addEventListener<TEventTypeName extends keyof TEventTypes>(
+	addEventListener<TEventTypeName extends keyof TEvents>(
 		/**
 		 * type of the event
 		 */
@@ -148,7 +141,7 @@ export class AbstractNode<
 			/**
 			 * emitted event.
 			 */
-			event: TEventTypes[TEventTypeName] & {
+			event: TEvents[TEventTypeName] & {
 				target: any // self
 				type: TEventTypeName
 			}
@@ -169,6 +162,12 @@ export class AbstractNode<
 			)
 		}
 	}
+
+	/**
+	 * @deprecated use {@link https://www.typescriptlang.org/docs/handbook/2/classes.html#this-based-type-guards}
+	 */
+
+	readonly isAbstractNode = true
 }
 
 // test code
