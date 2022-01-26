@@ -3,26 +3,44 @@ import { CommonTileManager, CommonTileManagerConfig } from './CommonTileManager'
 import { lngLatToGoogle } from 'global-mercator'
 import { TileToken } from './types'
 
+export const defaultConfig = {
+	viewZoomReduction: 0,
+	tileZoomStep: 1,
+}
+
 export type XYZTileManagerConfig = Omit<
 	CommonTileManagerConfig,
 	'getViewTiles' | 'getParentTileToken' | 'getChildTileTokens'
-> & {
-	viewZoomReduction?: number
-}
-
-export const defaultConfig = {
-	viewZoomReduction: 0,
-}
+> &
+	Partial<typeof defaultConfig>
 
 export class XYZTileManager extends CommonTileManager {
 	readonly config: CommonTileManagerConfig & Required<XYZTileManagerConfig>
 
 	constructor(config: XYZTileManagerConfig) {
-		super({
+		const _config = {
 			...defaultConfig,
 			...config,
+		}
+		if (_config.viewZoomReduction !== Math.floor(_config.viewZoomReduction)) {
+			console.warn('XYZTileManager - viewZoomReduction should be int number. ')
+			_config.viewZoomReduction = Math.floor(_config.viewZoomReduction)
+		}
+		if (_config.tileZoomStep !== Math.floor(_config.tileZoomStep)) {
+			console.warn('XYZTileManager - tileZoomStep should be int number. ')
+			_config.tileZoomStep = Math.floor(_config.tileZoomStep)
+		}
+
+		super({
+			..._config,
 			getViewTiles: (polaris, minZoom, maxZoom) => {
-				return getViewTiles(polaris, minZoom, maxZoom, this.config.viewZoomReduction)
+				return getViewTiles(
+					polaris,
+					minZoom,
+					maxZoom,
+					this.config.viewZoomReduction,
+					this.config.tileZoomStep
+				)
 			},
 			getParentTileToken,
 			getChildTileTokens,
@@ -34,7 +52,8 @@ const getViewTiles = (
 	polaris: Polaris,
 	minZoom: number,
 	maxZoom: number,
-	viewZoomReduction: number
+	viewZoomReduction: number,
+	tileZoomStep: number
 ) => {
 	const geoRange = polaris.getGeoRange()
 	const lnglatMin = [Infinity, Infinity]
@@ -50,8 +69,12 @@ const getViewTiles = (
 	let zoom = Math.floor(polaris.cameraProxy.zoom)
 	zoom = Math.min(Math.max(minZoom, zoom), maxZoom)
 
+	// apply zoom reduction
 	viewZoomReduction = Math.min(Math.max(0, viewZoomReduction), zoom - 1)
 	zoom -= viewZoomReduction
+
+	// @TODO apply zoom step
+	// const zoomStep = Math.floor(viewZoomReduction)
 
 	const xyz0 = lngLatToGoogle(lnglatMin, zoom)
 	const xyz1 = lngLatToGoogle(lnglatMax, zoom)

@@ -26,7 +26,7 @@ export interface AOILayerProps extends STDLayerProps {
 	dataType: 'auto' | 'geojson' | 'pbf'
 
 	/**
-	 * Pass in a user customized RequestManager to replace the default one
+	 * Pass in a user customized RequestManager to replace the default one,
 	 * Set a requestManager from outside and managed by user to let different layers share the same http resources.
 	 */
 	requestManager?: XYZTileRequestManager
@@ -82,6 +82,7 @@ export interface AOILayerProps extends STDLayerProps {
 
 	/**
 	 * Hover LineIndicator level
+	 * @default 2
 	 */
 	hoverLineLevel: number
 
@@ -96,7 +97,20 @@ export interface AOILayerProps extends STDLayerProps {
 	hoverLineColor: number | string
 
 	/**
+	 * The line color rendered on AOIs when un-hovered (normal conditions)
+	 * @default '#000000'
+	 */
+	unHoveredLineColor?: number | string
+
+	/**
+	 * The line opacity rendered on AOIs when un-hovered (normal conditions)
+	 * @default 0.0
+	 */
+	unHoveredLineOpacity?: number
+
+	/**
 	 * Select LineIndicator level
+	 * @default 2
 	 */
 	selectLineLevel: number
 
@@ -128,7 +142,7 @@ export interface AOILayerProps extends STDLayerProps {
 
 	/**
 	 * The limit of tile cache count
-	 * default is 512
+	 * @default 512
 	 */
 	cacheSize?: number
 
@@ -144,15 +158,15 @@ export interface AOILayerProps extends STDLayerProps {
 	customTileKeyGen?: (x: number, y: number, z: number) => string
 
 	/**
-	 * Increasing view zoom reduction will let layer request less but lower level tiles
+	 * Increasing view zoom reduction will let layer request less but lower level tiles,
 	 * This may help with low fetching speed problem
 	 */
 	viewZoomReduction?: number
 
 	/**
-	 * TileManager tile update strategy option
+	 * TileManager tile update strategy option,
 	 * use replacement method when current vis tiles are in pending states
-	 * default is true
+	 * @default true
 	 */
 	useParentReplaceUpdate?: boolean
 
@@ -186,6 +200,8 @@ const defaultProps: AOILayerProps = {
 	hoverLineLevel: 2,
 	hoverLineWidth: 1,
 	hoverLineColor: '#333333',
+	unHoveredLineColor: '#000000',
+	unHoveredLineOpacity: 0.0,
 	selectLineLevel: 2,
 	selectLineWidth: 2,
 	selectLineColor: '#00ffff',
@@ -303,6 +319,8 @@ export class AOILayer extends STDLayer {
 				'hoverLineLevel',
 				'hoverLineWidth',
 				'hoverLineColor',
+				'unHoveredLineColor',
+				'unHoveredLineOpacity',
 				'selectLineLevel',
 				'selectLineWidth',
 				'selectLineColor',
@@ -813,6 +831,9 @@ export class AOILayer extends STDLayer {
 		const hoverLineWidth = this.getProps('hoverLineWidth') as number
 		const hoverLineColor = this.getProps('hoverLineColor')
 		const hoverLineLevel = this.getProps('hoverLineLevel')
+		const unHoveredLineColor = this.getProps('unHoveredLineColor')
+		const unHoveredLineOpacity = this.getProps('unHoveredLineOpacity')
+
 		let hoverLevel = hoverLineLevel
 		if (hoverLineWidth > 1 && hoverLineLevel === 1) {
 			hoverLevel = 2
@@ -835,8 +856,10 @@ export class AOILayer extends STDLayer {
 			transparent: true,
 		}
 		const hoverIndicator = new LineIndicator(selectPosArr, hoverLineConfig, {
-			defaultColor: new Color(0.0, 0.0, 0.0),
-			defaultAlpha: 0.0,
+			defaultColor: new Color(unHoveredLineColor),
+			defaultAlpha: unHoveredLineOpacity,
+			// defaultColor: new Color(1.0, 1.0, 1.0),
+			// defaultAlpha: 0.0,
 			highlightColor: new Color(hoverLineColor),
 			highlightAlpha: 1.0,
 		})

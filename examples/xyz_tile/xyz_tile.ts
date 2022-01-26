@@ -18,9 +18,11 @@ const p = new PolarisGSIGL2({
 	projection: new MercatorProjection({
 		center: [104, 35.4],
 	}),
+	antialias: false,
 })
 window['p'] = p
 p.timeline.config.ignoreErrors = false
+p.onViewChange = (cam) => console.log(cam.zoom)
 
 const framesBeforeRequest = 10
 const viewZoomReduction = 0
@@ -92,8 +94,8 @@ const poi = new POILayer({
 	useParentReplaceUpdate: true,
 	// depthTest: false,
 })
-p.add(poi)
-window['poi'] = poi
+// p.add(poi)
+// window['poi'] = poi
 
 // AOI
 const picked: Set<number> = new Set()
@@ -102,8 +104,10 @@ const aoi = new AOILayer({
 	// geojsonFilter: (geojson) => {
 	// 	console.log('aoi', geojson)
 	// },
-	workersNum: Math.max(navigator.hardwareConcurrency - 4, 0),
-	viewZoomReduction,
+	// workersNum: Math.max(navigator.hardwareConcurrency - 4, 0),
+	workersNum: 0,
+	maxZoom: 16,
+	viewZoomReduction: 1,
 	framesBeforeRequest,
 	customFetcher: (x, y, z) => {
 		const url = getAOIUrl(x, y, z)
@@ -112,7 +116,8 @@ const aoi = new AOILayer({
 		const promise = new Promise<any>((resolve, reject) => {
 			fetch(url, { signal })
 				.then((res) => {
-					resolve(res.arrayBuffer())
+					// resolve(res.arrayBuffer())
+					resolve(res.json())
 				})
 				.catch((e) => {
 					reject(e)
@@ -128,12 +133,15 @@ const aoi = new AOILayer({
 		}
 	},
 	// getUrl: getAOIUrl,
+	dataType: 'geojson',
 	getColor: (feature) => feature.properties.id * 13,
 	getOpacity: 0.5,
 	transparent: true,
 	hoverLineWidth: 2,
 	hoverLineColor: '#333333',
-	selectLineWidth: 4,
+	unHoveredLineColor: '#111111',
+	unHoveredLineOpacity: 0.3,
+	selectLineWidth: 6,
 	selectLineColor: '#00afff',
 	pickable: true,
 	onPicked: (info) => {
@@ -166,14 +174,14 @@ const aoi = new AOILayer({
 		})
 	},
 })
-// p.add(aoi)
-// window['aoi'] = aoi
+p.add(aoi)
+window['aoi'] = aoi
 
 // amap
-// const amapLayer = new AMapLayer({
-// 	showLogo: false,
-// })
-// p.add(amapLayer)
+const amapLayer = new AMapLayer({
+	showLogo: false,
+})
+p.add(amapLayer)
 
 async function fetchData() {
 	const data: any[] = []
@@ -187,55 +195,55 @@ async function fetchData() {
 	return data
 }
 
-fetchData().then((data) => {
-	const geojson = data[0]
-	const newGeo = { ...geojson, features: [] }
+// fetchData().then((data) => {
+// 	const geojson = data[0]
+// 	const newGeo = { ...geojson, features: [] }
 
-	console.log('newGeo', newGeo)
+// 	console.log('newGeo', newGeo)
 
-	geojson.features.forEach((feature) => {
-		const level = feature.properties.level
-		const adcode = feature.properties.adcode
-		if (adcode === '100000') {
-			return
-		}
-		if (level === 'province') {
-			newGeo.features.push(Object.assign({}, feature))
-			return
-		}
-	})
+// 	geojson.features.forEach((feature) => {
+// 		const level = feature.properties.level
+// 		const adcode = feature.properties.adcode
+// 		if (adcode === '100000') {
+// 			return
+// 		}
+// 		if (level === 'province') {
+// 			newGeo.features.push(Object.assign({}, feature))
+// 			return
+// 		}
+// 	})
 
-	// Polygons
-	const polygonLayer1 = (window['layer1'] = new PolygonLayer({
-		// projection: new SphereProjection({}),
-		getFillColor: (feature) => {
-			const r = Math.floor(100 + Math.random() * 155).toString(16)
-			const color = `#${r}aa${r}`
-			return color
-		},
-		getSideColor: '#999999',
-		getFillOpacity: 1.0,
-		transparent: false,
-		getThickness: 0,
-		enableExtrude: false,
-		baseAlt: 0,
-		depthTest: true,
-		pickable: true,
-		hoverColor: false,
-		selectColor: false,
-		hoverLineWidth: 1,
-		selectLineWidth: 4,
-		selectLinesHeight: 0,
-		workersCount: 4,
-	}))
-	p.add(polygonLayer1)
-	polygonLayer1.updateData(newGeo)
-	polygonLayer1.onHovered = (info) => {
-		if (!info) return
+// 	// Polygons
+// 	const polygonLayer1 = (window['layer1'] = new PolygonLayer({
+// 		// projection: new SphereProjection({}),
+// 		getFillColor: (feature) => {
+// 			const r = Math.floor(100 + Math.random() * 155).toString(16)
+// 			const color = `#${r}aa${r}`
+// 			return color
+// 		},
+// 		getSideColor: '#999999',
+// 		getFillOpacity: 1.0,
+// 		transparent: false,
+// 		getThickness: 0,
+// 		enableExtrude: false,
+// 		baseAlt: 0,
+// 		depthTest: true,
+// 		pickable: true,
+// 		hoverColor: false,
+// 		selectColor: false,
+// 		hoverLineWidth: 1,
+// 		selectLineWidth: 4,
+// 		selectLinesHeight: 0,
+// 		workersCount: 4,
+// 	}))
+// 	p.add(polygonLayer1)
+// 	polygonLayer1.updateData(newGeo)
+// 	polygonLayer1.onHovered = (info) => {
+// 		if (!info) return
 
-		console.log('polygon')
-	}
-})
+// 		console.log('polygon')
+// 	}
+// })
 
 // info panel
 const panel = document.createElement('div')
@@ -282,8 +290,8 @@ p.timeline.addTrack({
 })
 
 setTimeout(() => {
-	p.setStatesCode('1|120.184302|30.265237|0.000000|0.00000|0.00000|16.55800')
-	// p.setStatesCode('1|120.184302|30.265237|0.000000|0.00000|0.00000|11.74200')
+	// p.setStatesCode('1|120.184302|30.265237|0.000000|0.00000|0.00000|16.55800')
+	p.setStatesCode('1|120.184302|30.265237|0.000000|0.00000|0.00000|11.74200')
 	// p.setStatesCode('1|120.184301|30.265237|0.000000|0.00000|0.00000|16.70400') // closer hz
 }, 500)
 
@@ -352,12 +360,12 @@ function getAOIUrl(x, y, z) {
 			clip_geometry: null,
 			area_code: null,
 			source: '浙江省_杭州市_building',
-			output_format: 'geojson_pbf',
+			output_format: 'geojson',
 			layer: {
 				default: {
 					geometry_type: 'Polygon',
 					visible_columns: [],
-					simplify_scalar: 10,
+					simplify_scalar: 4,
 					filter_expression: null,
 					preserve_collapsed: false,
 					with_boundary: true,
