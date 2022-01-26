@@ -10,7 +10,11 @@ import { deepDiffProps } from './utils'
  *
  * @note this is sync version. do not use async functions as listeners.
  */
-export class PropsManager<TProps extends Record<string, any>> {
+// eslint-disable-next-line @typescript-eslint/ban-types
+export class PropsManager<
+	TProps extends Record<string, any>
+	// TReactiveKey extends keyof TProps = keyof TProps
+> {
 	/**
 	 * type of callback function
 	 */
@@ -26,10 +30,30 @@ export class PropsManager<TProps extends Record<string, any>> {
 	 * current props
 	 */
 	private _props: TProps = {} as TProps // init, safe here
+	// private readonly _staticProps: TProps = {} as TProps // init, safe here
+	// private _reactiveKeys: TReactiveKey[] | null = null
 	/**
 	 * prop keys and their listeners
 	 */
 	private _listeners = new Map<keyof TProps, Set<typeof this._callbackTemplate>>()
+
+	// constructor(initialProps?: TProps)
+	// constructor(initialProps: TProps, reactiveKeys?: TReactiveKey[]) {
+	// 	if (initialProps) this._props = { ...initialProps }
+
+	// 	if (reactiveKeys) {
+	// 		this._reactiveKeys = [...reactiveKeys]
+
+	// 		// move static props
+	// 		for (let i = 0; i < this._reactiveKeys.length; i++) {
+	// 			const key = this._reactiveKeys[i]
+	// 			if (Reflect.has(this._props, key)) {
+	// 				this._staticProps[key] = this._props[key]
+	// 				delete this._props[key]
+	// 			}
+	// 		}
+	// 	}
+	// }
 
 	/**
 	 * Partially update props. Only pass changed or added properties.
@@ -43,6 +67,19 @@ export class PropsManager<TProps extends Record<string, any>> {
 	 * @changed callback 调用顺序会变化
 	 */
 	set(props: Partial<TProps>): void {
+		// changeable keys filter
+		// if (this._reactiveKeys !== null) {
+		// 	const inputKeys = Object.keys(props) as Array<keyof Partial<TProps>>
+		// 	for (let i = 0; i < inputKeys.length; i++) {
+		// 		const inputKey = inputKeys[i]
+		// 		if (this._reactiveKeys.includes(inputKey as any)) {
+		// 			// static keys are provided in new props
+		// 			console.warn(`PropsManager: non-changeable props(${inputKey}) will be ignored.`)
+		// 			delete props[inputKey]
+		// 		}
+		// 	}
+		// }
+
 		this._props = {
 			...this._props,
 			...props,
@@ -95,6 +132,11 @@ export class PropsManager<TProps extends Record<string, any>> {
 	 * 获取属性对应的值
 	 */
 	get<TKey extends keyof TProps>(key: TKey): TProps[TKey] | undefined {
+		// if (this._reactiveKeys !== null && !this._reactiveKeys.includes(key as any)) {
+		// 	return this._staticProps[key]
+		// } else {
+		// 	return this._props[key]
+		// }
 		return this._props[key]
 	}
 
@@ -152,6 +194,23 @@ export class PropsManager<TProps extends Record<string, any>> {
 		this._listeners.clear()
 	}
 }
+
+// function propsFilter<TProps extends Record<string, any>, TKey extends keyof Partial<TProps>>(
+// 	props: TProps,
+// 	keys: TKey[]
+// ): [Pick<TProps, TKey>, Array<keyof Omit<TProps, TKey>>] {
+// 	const result = {} as Pick<TProps, TKey>
+// 	for (let i = 0; i < keys.length; i++) {
+// 		const key = keys[i]
+// 		if (Reflect.has(props, key)) {
+// 			Reflect.set(result, key, props[key])
+// 		}
+// 	}
+
+// 	const otherKeys = Object.keys(props).filter((key) => !keys.includes(key as any))
+
+// 	return [result, otherKeys as Array<keyof Omit<TProps, TKey>>]
+// }
 
 // test
 // const a = new PropsManager<{ cc: 'dd' | 'ee'; ff: 'gg' | 'kk' }>()
