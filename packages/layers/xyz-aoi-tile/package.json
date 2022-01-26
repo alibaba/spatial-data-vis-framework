@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/layer-xyz-aoi-tile",
-    "version": "0.0.0-alpha.12",
+    "version": "0.0.0-alpha.13",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -27,7 +27,7 @@
         "@polaris.gl/utils": "^0.0.0-alpha.12",
         "@polaris.gl/utils-indicator": "^0.0.0-alpha.10",
         "@polaris.gl/utils-request-manager": "^0.0.0-alpha.10",
-        "@polaris.gl/utils-tile-manager": "^0.0.0-alpha.10",
+        "@polaris.gl/utils-tile-manager": "^0.0.0-alpha.13",
         "@polaris.gl/utils-worker-manager": "^0.0.0-alpha.10",
         "@turf/invariant": "^5.1.6",
         "@turf/meta": "^6.0.2",
