@@ -15,33 +15,41 @@
  *
  * @note 几乎没有实用价值
  */
-export class PropsHook {
-	private props: Array<any> = []
+// export class PropsHook {
+// 	private props: Array<any> = []
 
-	useProps(usage: () => void, props: Array<any>): void {
-		const prevProps = this.props
-		const nextProps = props
+// 	useProps(usage: () => void, props: Array<any>): void {
+// 		const prevProps = this.props
+// 		const nextProps = props
 
-		if (areHookInputsEqual(nextProps, prevProps)) {
-			// do nothing
-			return
-		} else {
-			this.props = nextProps
-			usage()
-			return
-		}
-	}
-}
+// 		if (areHookInputsEqual(nextProps, prevProps)) {
+// 			// do nothing
+// 			return
+// 		} else {
+// 			this.props = nextProps
+// 			usage()
+// 			return
+// 		}
+// 	}
+// }
 
 /**
- * 可以使用装饰器让用户显式地 reset older，然后像react一样完全依赖older判断当前是哪个hook
+ * 可以使用装饰器让用户显式地 reset order. 然后像react一样完全依赖 order 判断当前是哪个hook
  */
 
-const hooksRefs = new WeakMap<any, Map<symbol, any[][]>>()
+export type PropSeq = any[]
+export type Hook = PropSeq[]
+export type HooksForAnInstance = Map<symbol, Hook>
 
-let currentHook: any[][]
+// just like React.js, we save all props globally, and use only pointer to identify them
+const hooksRefs = new WeakMap<any, HooksForAnInstance>()
+let currentHook: Hook = []
 let currentPropsPointer = 0
 
+/**
+ * method decorator. used to reset hooks pointers.
+ * @note Must use this if you wan to use hooks api in a method.
+ */
 export function widthHooks(target, name, descriptor) {
 	const symbol = Symbol('hook symbol')
 	const original = descriptor.value
@@ -51,13 +59,13 @@ export function widthHooks(target, name, descriptor) {
 		// gc friendly when the whole instance is disposed
 		let currentHooks = hooksRefs.get(this)
 		if (!currentHooks) {
-			currentHooks = new Map<symbol, any[][]>()
+			currentHooks = new Map<symbol, Hook>()
 			hooksRefs.set(this, currentHooks)
 		}
 
 		let hook = currentHooks.get(symbol)
 		if (!hook) {
-			hook = [[]]
+			hook = [] as Hook
 			currentHooks.set(symbol, hook)
 		}
 		currentHook = hook
@@ -67,7 +75,11 @@ export function widthHooks(target, name, descriptor) {
 	}
 }
 
-export function useProps(usage: () => void, props: Array<any>): void {
+/**
+ * call this function if dependent props changed.
+ * @note act like react-hooks::useCallback
+ */
+export function useProps(usage: () => void, props: PropSeq): void {
 	const prevProps = currentHook[currentPropsPointer]
 	const nextProps = props
 
@@ -84,9 +96,17 @@ export function useProps(usage: () => void, props: Array<any>): void {
 /**
  * shallow compare two arrays
  */
-function areHookInputsEqual(nextDeps: Array<any>, prevDeps: Array<any>) {
+function areHookInputsEqual(nextDeps: PropSeq, prevDeps: PropSeq | undefined): boolean {
 	// Don't bother comparing lengths in prod because these arrays should be
 	// passed inline.
+
+	if (prevDeps === undefined) {
+		return false
+	}
+
+	if (nextDeps === undefined) {
+		throw new Error('useProps must input an array as dependents')
+	}
 
 	for (let i = 0; i < prevDeps.length && i < nextDeps.length; i++) {
 		if (is(nextDeps[i], prevDeps[i])) {

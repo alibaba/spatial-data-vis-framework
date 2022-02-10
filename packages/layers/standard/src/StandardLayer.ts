@@ -8,12 +8,21 @@
  * 但是 typescript 中 mixin 和 decoration 都会造成一定程度的 interface 混乱
  * 因此在这里把constructor里增加的逻辑拆成函数，
  */
-import { AbstractPolaris, Layer, LayerProps, PickEventResult, View } from '@polaris.gl/base'
+import {
+	AbstractLayer,
+	AbstractPolaris,
+	Layer,
+	LayerProps,
+	LayerEventTypes,
+	PickEventResult,
+	View,
+} from '@polaris.gl/base'
 import { GSIView } from '@polaris.gl/view-gsi'
 import { HtmlView } from '@polaris.gl/view-html'
 import { isSimilarProjections } from '@polaris.gl/projection'
 import { Matrix4, Euler, Vector3, Vector2 } from '@gs.i/utils-math'
-import { EventCallBack, PropsManager } from '@polaris.gl/utils-props-manager'
+import { Callback, ListenerOptions } from '@polaris.gl/utils-props-manager'
+// import { PropsManager } from '@polaris.gl/utils-props-manager'
 
 /**
  * 配置项 interface
@@ -26,7 +35,7 @@ export interface StandardLayerProps extends LayerProps {
 	onHovered?: (event: PickEventResult | undefined) => void
 }
 
-export const StandardLayerProps: StandardLayerProps = {
+export const defaultStandardLayerProps: StandardLayerProps = {
 	depthTest: true,
 	renderOrder: 0,
 	pickable: false,
@@ -41,15 +50,13 @@ const _vec2 = new Vector2()
 
 // override some inherited properties and methods interface
 export interface StandardLayer extends Layer {
-	get parent(): StandardLayer
-	get children(): Set<StandardLayer>
-	get root(): StandardLayer
+	getProp<TKey extends keyof StandardLayerProps>(key: TKey): StandardLayerProps[TKey] | undefined
 
-	add: (child: StandardLayer) => void
-	remove: (child: StandardLayer) => void
-	traverse: (f: (obj: StandardLayer) => void) => void
-	traverseVisible: (f: (obj: StandardLayer) => void) => void
-
+	listenProps: <TKeys extends (keyof StandardLayerProps)[]>(
+		keys: TKeys,
+		callback: Callback<StandardLayerProps, TKeys[number]>,
+		options?: ListenerOptions
+	) => void
 	/**
 	 * #### The actual renderable contents.
 	 * A layer can have multi views, e.g. gsiView + htmlView
@@ -92,28 +99,31 @@ export class StandardLayer extends Layer {
 			 * @NOTE 这里设定了两个默认的方法，若Layer有自己的设定逻辑可以重写这两个方法
 			 */
 			this.listenProps(['depthTest'], () => {
-				const depthTest = this.getProps('depthTest')
+				const depthTest = this.getProp('depthTest')
 				if (depthTest !== undefined) {
 					this.onDepthTestChange(depthTest)
 				}
 			})
 			this.listenProps(['renderOrder'], () => {
-				const renderOrder = this.getProps('renderOrder')
+				const renderOrder = this.getProp('renderOrder')
 				if (renderOrder !== undefined) {
 					this.onRenderOrderChange(renderOrder)
 				}
 			})
 
 			// Set onPicked callback to props
-			if (this.getProps('onPicked') !== undefined) {
-				this.onPicked = this.getProps('onPicked')
+			const onPicked = this.getProp('onPicked')
+			if (onPicked !== undefined) {
+				this.onPicked = onPicked
 			}
 
-			if (this.getProps('onHovered') !== undefined) {
-				this.onHovered = this.getProps('onHovered')
+			const onHovered = this.getProp('onHovered')
+			if (onHovered !== undefined) {
+				this.onHovered = onHovered
 			}
 
-			this.parent.getProjection().then((parentProjection) => {
+			const parent = this.parent as this // won't be null @simon
+			parent.getProjection().then((parentProjection) => {
 				this._initProjectionAlignment(projection, parentProjection, polaris)
 			})
 		})
@@ -352,13 +362,6 @@ export class StandardLayer extends Layer {
 		}
 	}
 
-	// #region reactive props update
-
-	/**
-	 * Init propsManager
-	 */
-	protected _propsManager: PropsManager = new PropsManager()
-
 	/**
 	 * 该方法用来被外部使用者调用
 	 *
@@ -366,36 +369,11 @@ export class StandardLayer extends Layer {
 	 * @return {*}  {Promise<void>}
 	 * @memberof Layer
 	 */
-	updateData(data: any): Promise<void> {
+	updateData(data: any): void {
 		return this.setProps({
 			data: data,
 		})
 	}
-
-	/**
-	 * 该方法用来被外部使用者调用
-	 *
-	 * @param {*} props
-	 * @return {*}  {Promise<void>}
-	 * @memberof Layer
-	 */
-	updateProps(props: any): Promise<void> {
-		return this.setProps(props)
-	}
-
-	getProps(key: string) {
-		return this._propsManager.get(key)
-	}
-
-	protected setProps(newProps: any): Promise<void> {
-		return this._propsManager.set(newProps)
-	}
-
-	protected listenProps(propsName: string | Array<string>, callback: EventCallBack) {
-		this._propsManager.listen(propsName, callback)
-	}
-
-	// #endregion
 }
 
 /**

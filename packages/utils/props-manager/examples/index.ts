@@ -2,7 +2,8 @@ import { PropsManager } from '../src/PropsManager'
 
 // import { LayerA, LayerB } from './usagePrivate'
 // import { LayerA, LayerB } from './usageSymbol'
-import { LayerA, LayerB } from './usageAPI'
+// import { LayerA, LayerB } from './usageAPI'
+import { LayerA, LayerB } from './usageHooks'
 console.log(PropsManager)
 console.log(LayerA)
 

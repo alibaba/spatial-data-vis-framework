@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import { deepDiffProps } from './utils'
+import { deepDiffProps, pick } from './utils'
 
 /**
  * Props Manager.
@@ -15,28 +15,21 @@ export class PropsManager<
 	TModifiableKeys extends keyof TProps = keyof TProps
 > {
 	/**
-	 * type of callback function
-	 */
-	private _callbackTemplate: (event: {
-		changedKeys: Array<keyof TProps>
-		/**
-		 * @deprecated rename as changedKeys
-		 */
-		trigger: Array<keyof TProps>
-		/**
-		 * Indicate that this is the initial event triggered immediately after listen.
-		 */
-		initial: boolean
-	}) => void
-
-	/**
 	 * current props
 	 */
 	private _props: TProps = {} as TProps // init, safe here
 	/**
 	 * prop keys and their listeners
 	 */
-	private _listeners = new Map<keyof TProps, Set<typeof this._callbackTemplate>>()
+	private _listeners = new Map<keyof TProps, Set<Callback<TProps>>>()
+
+	/**
+	 * 获取属性对应的值
+	 * @deprecated if you need to use a property, add a listener to it.
+	 */
+	get<TKey extends keyof TProps>(key: TKey): TProps[TKey] | undefined {
+		return this._props[key]
+	}
 
 	/**
 	 * Partially update props. Only pass changed or added properties.
@@ -51,7 +44,7 @@ export class PropsManager<
 	 */
 	set(props: Partial<Pick<TProps, TModifiableKeys>>): void {
 		// debugger
-		// @optimize: only check passed keys and ignore un-listened keys
+		// @optimize: only check *passed* and *listened* keys
 		const _props = {} as Partial<typeof props>
 		const propsKeys = Object.keys(props) as Array<keyof typeof props>
 		for (let i = 0; i < propsKeys.length; i++) {
@@ -73,7 +66,7 @@ export class PropsManager<
 		// @note key 与 callback 是多对多的，这里需要整理出 那些 key 触发了 哪些 callback
 
 		// callback -> changed keys that this callback is listening
-		const callbackKeys = new Map<typeof this._callbackTemplate, Array<keyof TProps>>()
+		const callbackKeys = new Map<Callback<TProps>, Array<keyof TProps>>()
 
 		for (let i = 0; i < changedKeys.length; i++) {
 			const key = changedKeys[i]
@@ -92,19 +85,12 @@ export class PropsManager<
 		callbackKeys.forEach((listenedChangedKeys, callback) => {
 			callback({
 				changedKeys: listenedChangedKeys,
-				trigger: listenedChangedKeys,
+				props: pick(this._props, listenedChangedKeys),
 				initial: false,
 			})
 		})
 
 		return
-	}
-
-	/**
-	 * 获取属性对应的值
-	 */
-	get<TKey extends keyof TProps>(key: TKey): TProps[TKey] | undefined {
-		return this._props[key]
 	}
 
 	/**
@@ -114,30 +100,17 @@ export class PropsManager<
 	 * Actual changed keys (in this listening list) will be passed to the callback.
 	 *
 	 * @note set `options` to be true if you want a callback immediately after listen
-	 *
-	 * @note **using async functions as callback is not thread safe!**
+	 * @note
+	 * **async functions as callback is not thread safe!**
 	 *
 	 * if you intend to do so, either:
 	 * 	- use `version` to check if props changed again
 	 * 	- or just make sure `.set` won't be called again until last return promise fulfilled
 	 */
-	listen<TKeys extends Array<TModifiableKeys>>(
+	addListener<TKeys extends Array<TModifiableKeys>>(
 		keys: TKeys,
-		callback: (event: {
-			changedKeys: TKeys
-			/**
-			 * @deprecated renamed as changedKeys
-			 */
-			trigger: TKeys
-			/**
-			 * Indicate that this is the initial event triggered immediately after listen.
-			 */
-			initial: boolean
-		}) => void,
-		/**
-		 * whether to trigger this callback immediately after listening as the initial event.
-		 */
-		options?: boolean | { immediate?: boolean }
+		callback: Callback<TProps, TKeys[number]>,
+		options?: ListenerOptions
 	): void {
 		for (let i = 0; i < keys.length; i++) {
 			const key = keys[i]
@@ -151,10 +124,11 @@ export class PropsManager<
 		}
 
 		const immediate = options === true ? true : options && options.immediate
+		// const once = typeof options === 'boolean' ? false : options && options.once
 		if (immediate) {
 			callback({
 				changedKeys: keys,
-				trigger: keys,
+				props: pick(this._props, keys),
 				initial: true,
 			})
 		}
@@ -164,7 +138,10 @@ export class PropsManager<
 	 * stop listening for certain keys
 	 * @note will not cancel fired callbacks
 	 */
-	stopListen<TKeys extends Array<TModifiableKeys>>(keys: TKeys, callback: (event) => any): void {
+	removeListeners<TKeys extends Array<TModifiableKeys>>(
+		keys: TKeys,
+		callback: Callback<TProps, TKeys[number]>
+	): void {
 		for (let i = 0; i < keys.length; i++) {
 			const key = keys[i]
 			const listeners = this._listeners.get(key)
@@ -177,7 +154,101 @@ export class PropsManager<
 		this._props = {} as TProps
 		this._listeners.clear()
 	}
+
+	// legacy
+
+	/**
+	 * @alias use {@link addListener} instead
+	 * @note safe to write like this. @simon
+	 */
+	listen = this.addListener
 }
+
+/**
+ * whether trigger this initial event immediately after listen.
+ *
+ * or detailed options
+ */
+export type ListenerOptions =
+	| boolean
+	| {
+			/**
+			 * whether trigger this initial event immediately after listen.
+			 */
+			immediate?: boolean
+			/**
+			 * whether this callback should only be called once
+			 */
+			// once?: boolean
+	  }
+
+/**
+ * listener callback type
+ */
+export type Callback<TProps, TKey extends keyof TProps = keyof TProps> = (event: {
+	/**
+	 * actually changed keys.
+	 */
+	changedKeys: TKey[]
+	/**
+	 * an object including actually changed props.
+	 * @note a property may be undefined if this is the initial event
+	 */
+	props: Pick<TProps, TKey>
+	/**
+	 * Indicate that this is the initial event triggered immediately after listen.
+	 */
+	initial: boolean
+}) => void
+
+/**
+ * hosted instances
+ *
+ * for situations where it's not allowed to use `.propsManager` as a class member
+ *
+ * also an excellent way to hide private stuff
+ */
+
+const managerInstances = new Map<any, PropsManager<any>>()
+export function getPropsManager<TProps, TKey extends keyof TProps = keyof TProps>(obj: object) {
+	let manager = managerInstances.get(obj)
+	if (!manager) {
+		manager = new PropsManager()
+		managerInstances.set(obj, manager)
+	}
+
+	return manager as PropsManager<TProps, TKey>
+}
+export function disposePropsManager(obj: object) {
+	const manager = managerInstances.get(obj)
+	if (manager) {
+		manager.dispose()
+	}
+}
+
+// example of private property
+
+// const safety = new WeakMap()
+
+// class A {
+// 	constructor() {
+// 		safety.set(this, {
+// 			a: 123,
+// 			dd: () => {
+// 				console.log('dd', this.a)
+// 			},
+// 		})
+// 	}
+
+// 	get a() {
+// 		return safety.get(this).a
+// 	}
+
+// 	ss() {
+// 		console.log('ss')
+// 		safety.get(this).dd()
+// 	}
+// }
 
 // test
 // const a = new PropsManager<{ cc: 'dd' | 'ee'; ff: 'gg' | 'kk' }>()

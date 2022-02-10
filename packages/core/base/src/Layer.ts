@@ -20,7 +20,7 @@ export interface LayerProps {
 	views?: { [key: string]: new () => View }
 }
 
-interface EventTypes {
+export interface LayerEventTypes {
 	add: { parent: Layer }
 	remove: { parent: Layer }
 	rootChange: { root: Layer }
@@ -40,7 +40,7 @@ interface EventTypes {
 /**
  * empty layer
  */
-export class Layer extends AbstractLayer<EventTypes> {
+export class Layer extends AbstractLayer<LayerEventTypes> {
 	/**
 	 * readable name of this layer
 	 */
@@ -227,7 +227,7 @@ export class Layer extends AbstractLayer<EventTypes> {
 	/**
 	 * update props
 	 */
-	updateProps(props: never): void {}
+	// updateProps(props: never): void {}
 
 	dispose() {}
 

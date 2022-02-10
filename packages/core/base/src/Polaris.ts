@@ -9,7 +9,7 @@
 
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { AbstractLayer } from './AbstractLayer'
-import { AbstractNode } from './AbstractNode'
+// import { AbstractNode } from './AbstractNode'
 import { Projection, MercatorProjection } from '@polaris.gl/projection'
 import { Timeline } from 'ani-timeline'
 import {
@@ -20,7 +20,7 @@ import {
 	GeographicStates,
 	CameraProxy,
 } from 'camera-proxy'
-import { PropsManager } from '@polaris.gl/utils-props-manager'
+// import { PropsManager } from '@polaris.gl/utils-props-manager'
 import { PolarisProps, defaultProps } from './props/index'
 
 // : Array<keyof PolarisProps>
@@ -79,7 +79,7 @@ interface Events {
 /**
  * AbstractPolaris
  */
-export abstract class AbstractPolaris extends AbstractLayer<Events> {
+export abstract class AbstractPolaris extends AbstractLayer<Events, PolarisProps> {
 	// polaris is always the root
 	override get parent(): null {
 		return null
@@ -142,7 +142,7 @@ export abstract class AbstractPolaris extends AbstractLayer<Events> {
 	 */
 	scale: number
 
-	protected readonly _props: PolarisProps
+	// protected readonly _props: PolarisProps
 
 	protected _disposed = false
 
@@ -151,25 +151,25 @@ export abstract class AbstractPolaris extends AbstractLayer<Events> {
 	/**
 	 * Init propsManager
 	 */
-	private _propsManager = new PropsManager<Pick<PolarisProps, ChangeableKey>>()
+	// private _propsManager = new PropsManager<Pick<PolarisProps, ChangeableKey>>()
 
-	updateProps(props: Partial<Pick<PolarisProps, ChangeableKey>>): void {
-		const [changeableProps, staticKeys] = propsFilter(props, changeableKeys)
+	// updateProps(props: Partial<Pick<PolarisProps, ChangeableKey>>): void {
+	// 	const [changeableProps, staticKeys] = propsFilter(props, changeableKeys)
 
-		if (staticKeys.length > 0) {
-			console.warn(`AbstractPolaris: these props are not changeable: ${staticKeys.join(',')}`)
-		}
+	// 	if (staticKeys.length > 0) {
+	// 		console.warn(`AbstractPolaris: these props are not changeable: ${staticKeys.join(',')}`)
+	// 	}
 
-		this._propsManager.set(changeableProps)
-	}
+	// 	this._propsManager.set(changeableProps)
+	// }
 
-	getProp<TKey extends keyof PolarisProps>(key: TKey): PolarisProps[TKey] | undefined {
-		if (changeableKeys.includes(key as any)) {
-			return this._propsManager.get(key as ChangeableKey)
-		} else {
-			return this._props[key]
-		}
-	}
+	// getProp<TKey extends keyof PolarisProps>(key: TKey): PolarisProps[TKey] | undefined {
+	// 	if (changeableKeys.includes(key as any)) {
+	// 		return this._propsManager.get(key as ChangeableKey)
+	// 	} else {
+	// 		return this._props[key]
+	// 	}
+	// }
 
 	// #endregion
 
@@ -216,10 +216,10 @@ export abstract class AbstractPolaris extends AbstractLayer<Events> {
 		this.timeline = timeline
 		this.projection = projection
 
-		this._props = props
+		// this._props = props
 
-		const [changeableProps, staticKeys] = propsFilter(_props, changeableKeys)
-		this.updateProps(changeableProps)
+		// const [changeableProps, staticKeys] = propsFilter(_props, changeableKeys)
+		// this.updateProps(changeableProps)
 
 		/**
 		 * init html / canvas
@@ -258,8 +258,8 @@ export abstract class AbstractPolaris extends AbstractLayer<Events> {
 		// @todo not a good practice, order dependent
 		// cameraProxy config props listener
 		this.listenProps(['zoomLimit', 'pitchLimit'], () => {
-			cameraProxy['limit'].zoom = this.getProps('zoomLimit')
-			cameraProxy['limit'].pitch = this.getProps('pitchLimit')
+			cameraProxy['limit'].zoom = this.getProp('zoomLimit')
+			cameraProxy['limit'].pitch = this.getProp('pitchLimit')
 		})
 
 		// 更新相机初始状态
@@ -506,12 +506,11 @@ export abstract class AbstractPolaris extends AbstractLayer<Events> {
 	 * @deprecated
 	 */
 	readonly isPolaris = true
+
 	/**
 	 * @deprecated renamed as {@link getProp} for clarity
 	 */
-	getProps(key: keyof PolarisProps) {
-		return this.getProp(key)
-	}
+	// getProps = this.getProp
 
 	// #endregion
 }

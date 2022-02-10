@@ -15,6 +15,7 @@
 import { AbstractNode } from './AbstractNode'
 import type { CameraProxy } from 'camera-proxy'
 import type { AbstractPolaris } from './Polaris'
+import { PropsManager, ListenerOptions, Callback } from '@polaris.gl/utils-props-manager'
 
 type Events = {
 	add: { parent: AbstractLayer<Events> }
@@ -38,7 +39,11 @@ type Events = {
  * @noteCN
  * 在 TEvents 中声明所有可能的事件和回调接口，来在事件接口中获得正确的类型检查。
  */
-export abstract class AbstractLayer<TEvents extends Events> extends AbstractNode<TEvents> {
+export abstract class AbstractLayer<
+	TEvents extends Events,
+	TProps extends Record<string, any> = {},
+	TModifiableProps extends keyof TProps = keyof TProps
+> extends AbstractNode<TEvents> {
 	private _visible = true
 
 	/**
@@ -78,10 +83,56 @@ export abstract class AbstractLayer<TEvents extends Events> extends AbstractNode
 		})
 	}
 
+	// #region props manager
+
 	/**
-	 * update props/configs
+	 * powering the `watchProps` method of this class.
 	 */
-	abstract updateProps(props: any): void
+	#propsManager = new PropsManager<TProps, TModifiableProps>()
+	#props = new Proxy(Object.freeze({}) as Partial<TProps>, {
+		// @note use arrow function to get the private PropsManager
+		get: (target, propertyName, receiver) => {
+			return this.#propsManager.get(propertyName as any)
+		},
+		set: () => {
+			throw new Error('Do not edit props directly. Use setProps instead.')
+		},
+	})
+
+	/**
+	 * a read only props getter
+	 */
+	get props() {
+		return this.#props
+	}
+
+	protected getProp<TKey extends keyof TProps>(key: TKey): TProps[TKey] | undefined {
+		return this.#propsManager.get(key)
+	}
+
+	protected watchProps<TKeys extends Array<TModifiableProps>>(
+		keys: TKeys,
+		callback: Callback<TProps, TKeys[number]>,
+		options?: ListenerOptions
+	): void {
+		this.#propsManager.addListener(keys, callback, options)
+	}
+
+	public setProps(props: Partial<Pick<TProps, TModifiableProps>>) {
+		this.#propsManager.set(props)
+	}
+
+	/**
+	 * update props
+	 * @todo whether rename to setProps?
+	 */
+	updateProps = this.setProps
+
+	/**
+	 *
+	 */
+	listenProps = this.watchProps
+	// #endregion
 
 	/**
 	 * destroy all resources
