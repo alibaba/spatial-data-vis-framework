@@ -21,8 +21,12 @@ export interface PolarisProps extends PolarisGSIProps {
 
 export class PolarisState {
 	polarisInstance: PolarisGSI | null = null
-	width: 500
-	height: 500
+	width = 500
+	height = 500
+	center = [0, 0]
+	zoom = 14
+	pitch = Math.PI * 0.25
+	rotation = 0
 }
 
 // ========================

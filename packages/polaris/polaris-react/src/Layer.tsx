@@ -14,6 +14,12 @@ export class LayerReact extends PureComponent<LayerProps, LayerState> {
 		this.init()
 	}
 
+	componentWillUnmount() {
+		if (this.state.layerInstance) {
+			this.state.layerInstance.dispose()
+		}
+	}
+
 	init() {
 		const { polarisInstance, layerClass, getLayerInstance, ...otherLayerProps } = this.props
 

@@ -9,28 +9,34 @@ import { AMapLayer } from '@polaris.gl/layer-amap'
 
 const container = document.querySelector('#container') as HTMLDivElement
 
-class App extends React.Component<any, any> {
+class App extends React.Component {
 	state: any = {
 		width: 500,
 		height: 500,
+		center: [0, 0],
+		zoom: 3,
+		rotation: 0,
 	}
 
 	constructor(props: any) {
 		super(props)
 	}
 
-	componentDidMount(): void {
+	componentDidMount() {
 		setTimeout(() => {
-			console.log('change width/height')
+			console.log('view change')
 			this.setState({
 				width: 700,
 				height: 700,
+				center: [5, 5],
+				zoom: 5,
+				rotation: 1.7,
 			})
 		}, 1500)
 	}
 
 	render() {
-		const { width, height } = this.state
+		const { width, height, center, zoom, rotation } = this.state
 
 		// markers data
 		const div = document.createElement('div')
@@ -39,7 +45,7 @@ class App extends React.Component<any, any> {
 		div.style.width = '40px'
 		div.style.height = '40px'
 		const data: any[] = []
-		for (let i = 0; i < 10; i++) {
+		for (let i = 0; i < 20; i++) {
 			const html = div.cloneNode() as HTMLElement
 			html.style.background = `#${Math.floor(Math.random() * 0xffffff).toString(16)}`
 			html.innerHTML = 'text' + i
@@ -57,11 +63,13 @@ class App extends React.Component<any, any> {
 				polarisClass={PolarisLite}
 				width={width}
 				height={height}
+				center={center}
+				zoom={zoom}
+				rotation={rotation}
 				background={'transparent'}
-				zoom={3.0}
 				autoResize={true}
-				getPolarisInstance={(polaris) => {
-					console.log('polarisInstance', polaris)
+				getPolarisInstance={(polarisInstance) => {
+					console.log('polarisInstance', polarisInstance)
 				}}>
 				<LayerReact
 					layerClass={HelperLayer}
