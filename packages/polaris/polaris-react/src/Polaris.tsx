@@ -1,9 +1,7 @@
 import React, { Children, cloneElement, createRef, PureComponent } from 'react'
-import { TPolarisProps, PolarisProps, PolarisState } from './types'
+import { PolarisProps, PolarisState } from './types'
 
-export class PolarisReact extends PureComponent<TPolarisProps, PolarisState> {
-	static defaultProps = new PolarisProps()
-
+export class PolarisReact extends PureComponent<PolarisProps, PolarisState> {
 	refRoot: React.RefObject<any>
 
 	constructor(props) {
@@ -18,21 +16,21 @@ export class PolarisReact extends PureComponent<TPolarisProps, PolarisState> {
 		this.init()
 	}
 
-	init = () => {
-		const { width, height, PolarisClass, ...otherProps } = this.props
+	init() {
+		const { polarisClass, getPolarisInstance, ...otherProps } = this.props
 
-		if (!PolarisClass) {
-			throw new Error(`PolarisReact - 'PolarisClass' must be provided`)
+		if (!polarisClass) {
+			throw new Error(`PolarisReact - prop 'polarisClass' must be provided`)
 		}
 
-		const polarisInstance = new PolarisClass({
+		const polarisInstance = new polarisClass({
 			container: this.refRoot.current,
-			width,
-			height,
 			...otherProps,
 		})
 
-		console.log('polarisInstance', polarisInstance)
+		if (getPolarisInstance) {
+			getPolarisInstance(polarisInstance)
+		}
 
 		this.setState({
 			polarisInstance,
@@ -54,6 +52,7 @@ export class PolarisReact extends PureComponent<TPolarisProps, PolarisState> {
 						if (child === undefined || child === null) {
 							return
 						}
+						// pass polarisInstance to child components
 						return cloneElement(child as any, { polarisInstance: this.state.polarisInstance })
 					})}
 			</div>

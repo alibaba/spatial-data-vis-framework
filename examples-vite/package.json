@@ -13,7 +13,8 @@
 		"@polaris.gl/react": "^0.0.0-alpha.9",
 		"@polaris.gl/layer-std-helper": "^0.0.0-alpha.9",
 		"@polaris.gl/layer-geojson": "0.0.0-alpha.9",
-		"@polaris.gl/layer-std-marker": "0.0.0-alpha.9"
+		"@polaris.gl/layer-std-marker": "0.0.0-alpha.9",
+		"@polaris.gl/layer-amap": "0.0.0-alpha.9"
 	},
 	"devDependencies": {
 		"typescript": ">4.4.0",

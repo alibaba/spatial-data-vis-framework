@@ -285,7 +285,7 @@ export class PolarisGSI extends AbstractPolaris implements PolarisGSI {
 
 		this.traverse((obj) => {
 			// obj._onViewChange.forEach((f) => f(this.cameraProxy, this))
-			this.dispatchEvent({
+			obj.dispatchEvent({
 				type: 'viewChange',
 				cameraProxy: this.cameraProxy,
 				polaris: this,

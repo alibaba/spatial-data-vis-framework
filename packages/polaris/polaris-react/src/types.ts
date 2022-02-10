@@ -3,64 +3,54 @@ import { PolarisGSI, PolarisGSIProps } from '@polaris.gl/gsi'
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
 
 // ========================
-// Polaris types
+// Types: Polaris
 // ========================
 
 type PolarisGSICtor = new (props: PolarisGSIProps) => PolarisGSI
 
-export interface TPolarisProps extends PolarisGSIProps {
+export interface PolarisProps extends PolarisGSIProps {
 	/**
-	 * Any subclass' constructor of PolarisGSI
+	 * Constructor of any subclass of PolarisGSI
 	 */
-	PolarisClass?: PolarisGSICtor
+	polarisClass: PolarisGSICtor
 
-	width: number
+	getPolarisInstance?: (polarisInstance: PolarisGSI) => void
 
-	height: number
-}
-
-export class PolarisProps implements TPolarisProps {
-	width: 500
-
-	height: 500
+	[prop: string]: any
 }
 
 export class PolarisState {
 	polarisInstance: PolarisGSI | null = null
+	width: 500
+	height: 500
 }
 
 // ========================
-// Layer types
+// Types: Layer
 // ========================
 
 type LayerCtor = new (props: StandardLayerProps) => StandardLayer
 
-export interface TLayerProps extends StandardLayerProps {
+export interface LayerProps extends StandardLayerProps {
 	/**
 	 * The Polaris instance passed from PolarisReact parent component
-	 * @NOTE DO NOT USE THIS PROP UNLESS YOU WERE TOLD TO DO SO
+	 * @ATTENTION DO NOT USE THIS PROP UNLESS YOU WERE TOLD TO DO SO
 	 */
 	polarisInstance?: PolarisGSI
 
 	/**
-	 * Any subclass' constructor of StandardLayer
+	 * Constructor of any subclass of StandardLayer
 	 */
-	LayerClass?: LayerCtor
+	layerClass: LayerCtor
 
-	depthTest?: boolean
+	getLayerInstance?: (layerInstance: StandardLayer) => void
 
-	renderOrder?: number
-
-	pickable?: boolean
-
-	onPicked?: (event: PickEventResult | undefined) => void
-
-	onHovered?: (event: PickEventResult | undefined) => void
-
-	[name: string]: any
+	[prop: string]: any
 }
 
-export class LayerProps implements TLayerProps {
+export class DefaultLayerProps implements LayerProps {
+	layerClass: typeof StandardLayer
+
 	depthTest: false
 
 	renderOrder: 0
