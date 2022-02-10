@@ -10,7 +10,10 @@ import { deepDiffProps } from './utils'
  *
  * @note this is sync version. do not use async functions as listeners.
  */
-export class PropsManager<TProps extends Record<string, any>> {
+export class PropsManager<
+	TProps extends Record<string, any>,
+	TModifiableKeys extends keyof TProps = keyof TProps
+> {
 	/**
 	 * type of callback function
 	 */
@@ -20,6 +23,10 @@ export class PropsManager<TProps extends Record<string, any>> {
 		 * @deprecated rename as changedKeys
 		 */
 		trigger: Array<keyof TProps>
+		/**
+		 * Indicate that this is the initial event triggered immediately after listen.
+		 */
+		initial: boolean
 	}) => void
 
 	/**
@@ -42,13 +49,9 @@ export class PropsManager<TProps extends Record<string, any>> {
 	 * @changed callback 接受的参数中，changedKeys 只会包含自己 listen 的，而不是全部变化的key
 	 * @changed callback 调用顺序会变化
 	 */
-	set(props: Partial<TProps>): void {
-		this._props = {
-			...this._props,
-			...props,
-		}
-
-		// @optimize: ignore un-listened props
+	set(props: Partial<Pick<TProps, TModifiableKeys>>): void {
+		// debugger
+		// @optimize: only check passed keys and ignore un-listened keys
 		const _props = {} as Partial<typeof props>
 		const propsKeys = Object.keys(props) as Array<keyof typeof props>
 		for (let i = 0; i < propsKeys.length; i++) {
@@ -59,6 +62,11 @@ export class PropsManager<TProps extends Record<string, any>> {
 		}
 
 		const changedKeys = deepDiffProps(_props, this._props)
+
+		this._props = {
+			...this._props,
+			...props,
+		}
 
 		if (changedKeys.length === 0) return
 
@@ -85,6 +93,7 @@ export class PropsManager<TProps extends Record<string, any>> {
 			callback({
 				changedKeys: listenedChangedKeys,
 				trigger: listenedChangedKeys,
+				initial: false,
 			})
 		})
 
@@ -104,15 +113,15 @@ export class PropsManager<TProps extends Record<string, any>> {
 	 * If any of these keys changed. callback will be called.
 	 * Actual changed keys (in this listening list) will be passed to the callback.
 	 *
+	 * @note set `options` to be true if you want a callback immediately after listen
+	 *
 	 * @note **using async functions as callback is not thread safe!**
 	 *
 	 * if you intend to do so, either:
 	 * 	- use `version` to check if props changed again
 	 * 	- or just make sure `.set` won't be called again until last return promise fulfilled
-	 *
-	 * @note initial callback will be fired immediately. set `immediately` false to disable
 	 */
-	listen<TKeys extends Array<keyof TProps>>(
+	listen<TKeys extends Array<TModifiableKeys>>(
 		keys: TKeys,
 		callback: (event: {
 			changedKeys: TKeys
@@ -120,7 +129,15 @@ export class PropsManager<TProps extends Record<string, any>> {
 			 * @deprecated renamed as changedKeys
 			 */
 			trigger: TKeys
-		}) => void
+			/**
+			 * Indicate that this is the initial event triggered immediately after listen.
+			 */
+			initial: boolean
+		}) => void,
+		/**
+		 * whether to trigger this callback immediately after listening as the initial event.
+		 */
+		options?: boolean | { immediate?: boolean }
 	): void {
 		for (let i = 0; i < keys.length; i++) {
 			const key = keys[i]
@@ -132,13 +149,22 @@ export class PropsManager<TProps extends Record<string, any>> {
 
 			listeners.add(callback as any)
 		}
+
+		const immediate = options === true ? true : options && options.immediate
+		if (immediate) {
+			callback({
+				changedKeys: keys,
+				trigger: keys,
+				initial: true,
+			})
+		}
 	}
 
 	/**
 	 * stop listening for certain keys
 	 * @note will not cancel fired callbacks
 	 */
-	stopListen<TKeys extends Array<keyof TProps>>(keys: TKeys, callback: (event) => any): void {
+	stopListen<TKeys extends Array<TModifiableKeys>>(keys: TKeys, callback: (event) => any): void {
 		for (let i = 0; i < keys.length; i++) {
 			const key = keys[i]
 			const listeners = this._listeners.get(key)
