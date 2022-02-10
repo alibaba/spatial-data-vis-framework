@@ -5,7 +5,7 @@ import { TileToken } from './types'
 
 export const defaultConfig = {
 	viewZoomReduction: 0,
-	tileZoomStep: 1,
+	zoomStep: 1,
 }
 
 export type XYZTileManagerConfig = Omit<
@@ -23,12 +23,14 @@ export class XYZTileManager extends CommonTileManager {
 			...config,
 		}
 		if (_config.viewZoomReduction !== Math.floor(_config.viewZoomReduction)) {
-			console.warn('XYZTileManager - viewZoomReduction should be int number. ')
 			_config.viewZoomReduction = Math.floor(_config.viewZoomReduction)
+			console.warn(
+				`XYZTileManager - viewZoomReduction should be integer, using ${_config.viewZoomReduction}`
+			)
 		}
-		if (_config.tileZoomStep !== Math.floor(_config.tileZoomStep)) {
-			console.warn('XYZTileManager - tileZoomStep should be int number. ')
-			_config.tileZoomStep = Math.floor(_config.tileZoomStep)
+		if (_config.zoomStep !== Math.floor(_config.zoomStep)) {
+			_config.zoomStep = Math.floor(_config.zoomStep)
+			console.warn(`XYZTileManager - tileZoomStep should be integer, using ${_config.zoomStep}`)
 		}
 
 		super({
@@ -39,7 +41,7 @@ export class XYZTileManager extends CommonTileManager {
 					minZoom,
 					maxZoom,
 					this.config.viewZoomReduction,
-					this.config.tileZoomStep
+					this.config.zoomStep
 				)
 			},
 			getParentTileToken,
@@ -53,11 +55,15 @@ const getViewTiles = (
 	minZoom: number,
 	maxZoom: number,
 	viewZoomReduction: number,
-	tileZoomStep: number
+	zoomStep: number
 ) => {
 	const geoRange = polaris.getGeoRange()
 	const lnglatMin = [Infinity, Infinity]
 	const lnglatMax = [-Infinity, -Infinity]
+
+	if (geoRange === undefined) {
+		return []
+	}
 
 	geoRange.forEach((lnglat) => {
 		lnglatMin[0] = Math.min(lnglat[0], lnglatMin[0])
@@ -73,8 +79,8 @@ const getViewTiles = (
 	viewZoomReduction = Math.min(Math.max(0, viewZoomReduction), zoom - 1)
 	zoom -= viewZoomReduction
 
-	// @TODO apply zoom step
-	// const zoomStep = Math.floor(viewZoomReduction)
+	// apply zoom step
+	zoom -= (zoom - minZoom) % zoomStep
 
 	const xyz0 = lngLatToGoogle(lnglatMin, zoom)
 	const xyz1 = lngLatToGoogle(lnglatMax, zoom)

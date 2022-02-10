@@ -164,6 +164,11 @@ export interface AOILayerProps extends STDLayerProps {
 	viewZoomReduction?: number
 
 	/**
+	 * Tile update zoom step, set this > 1 will let layer decrease its tile requests
+	 */
+	viewZoomStep?: number
+
+	/**
 	 * TileManager tile update strategy option,
 	 * use replacement method when current vis tiles are in pending states
 	 * @default true
@@ -186,9 +191,7 @@ export interface AOILayerProps extends STDLayerProps {
  */
 const defaultProps: AOILayerProps = {
 	dataType: 'auto',
-	getUrl: (x, y, z) => {
-		throw new Error('getUrl prop is not defined')
-	},
+	getUrl: (x, y, z) => 'CUSTOM_URL_FOR_TILES_HERE',
 	minZoom: 3,
 	maxZoom: 20,
 	featureIdKey: 'id',
@@ -208,6 +211,7 @@ const defaultProps: AOILayerProps = {
 	framesBeforeRequest: 10,
 	cacheSize: 512,
 	viewZoomReduction: 0,
+	viewZoomStep: 1,
 	useParentReplaceUpdate: true,
 	workersNum: 0,
 	debug: false,
@@ -410,6 +414,7 @@ export class AOILayer extends STDLayer {
 						this._releaseTile(tile, token)
 					},
 					printErrors: this.getProps('debug'),
+					zoomStep: 2,
 				})
 
 				this.tileManager.start()

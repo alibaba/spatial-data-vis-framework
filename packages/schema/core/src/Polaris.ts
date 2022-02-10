@@ -294,8 +294,11 @@ export abstract class Polaris extends Layer implements RootLayer {
 	}
 
 	getGeoRange() {
-		const viewCoords = this.cameraProxy.getGeoViewCoords()
-		return viewCoords.map((coords) => this.projection.unproject(coords.x, coords.y, coords.z))
+		const viewCoords = this.cameraProxy.getGeoViewCoords() as any[]
+		if (viewCoords.every((v) => v !== undefined)) {
+			return viewCoords.map((coords) => this.projection.unproject(coords.x, coords.y, coords.z))
+		}
+		return undefined
 	}
 
 	resize(width, height, ratio = 1.0, externalScale = 1.0) {

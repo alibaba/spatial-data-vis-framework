@@ -108,6 +108,7 @@ const aoi = new AOILayer({
 	workersNum: 0,
 	maxZoom: 16,
 	viewZoomReduction: 1,
+	viewZoomStep: 2,
 	framesBeforeRequest,
 	customFetcher: (x, y, z) => {
 		const url = getAOIUrl(x, y, z)
