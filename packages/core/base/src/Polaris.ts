@@ -24,24 +24,24 @@ import {
 import { PolarisProps, defaultProps } from './props/index'
 
 // : Array<keyof PolarisProps>
-const changeableKeys = [
-	// camera
-	'cameraFar' as const,
-	'cameraNear' as const,
-	'fov' as const,
-	'pitch' as const,
-	'pitchLimit' as const,
-	'zoom' as const,
-	'zoomLimit' as const,
-	'rotation' as const,
-	'center' as const,
-	// size
-	'width' as const,
-	'height' as const,
-	'ratio' as const,
-]
+// const changeableKeys = [
+// 	// camera
+// 	'cameraFar' as const,
+// 	'cameraNear' as const,
+// 	'fov' as const,
+// 	'pitch' as const,
+// 	'pitchLimit' as const,
+// 	'zoom' as const,
+// 	'zoomLimit' as const,
+// 	'rotation' as const,
+// 	'center' as const,
+// 	// size
+// 	'width' as const,
+// 	'height' as const,
+// 	'ratio' as const,
+// ]
 
-type ChangeableKey = typeof changeableKeys[0]
+// type ChangeableKey = typeof changeableKeys[0]
 
 export { colorToString } from './props/index'
 export type { PolarisProps } from './props/index'
@@ -67,7 +67,7 @@ interface Events {
 	add: never
 	remove: never
 	rootChange: never
-	visibilityChange: {}
+	visibilityChange: Record<string, never> // empty object
 	viewChange: {
 		cameraProxy: CameraProxy
 		polaris: AbstractPolaris /* typeof Polaris */
@@ -142,36 +142,7 @@ export abstract class AbstractPolaris extends AbstractLayer<Events, PolarisProps
 	 */
 	scale: number
 
-	// protected readonly _props: PolarisProps
-
 	protected _disposed = false
-
-	// #region reactive props update
-
-	/**
-	 * Init propsManager
-	 */
-	// private _propsManager = new PropsManager<Pick<PolarisProps, ChangeableKey>>()
-
-	// updateProps(props: Partial<Pick<PolarisProps, ChangeableKey>>): void {
-	// 	const [changeableProps, staticKeys] = propsFilter(props, changeableKeys)
-
-	// 	if (staticKeys.length > 0) {
-	// 		console.warn(`AbstractPolaris: these props are not changeable: ${staticKeys.join(',')}`)
-	// 	}
-
-	// 	this._propsManager.set(changeableProps)
-	// }
-
-	// getProp<TKey extends keyof PolarisProps>(key: TKey): PolarisProps[TKey] | undefined {
-	// 	if (changeableKeys.includes(key as any)) {
-	// 		return this._propsManager.get(key as ChangeableKey)
-	// 	} else {
-	// 		return this._props[key]
-	// 	}
-	// }
-
-	// #endregion
 
 	constructor(props: PolarisProps) {
 		super()

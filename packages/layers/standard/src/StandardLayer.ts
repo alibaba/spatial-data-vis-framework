@@ -12,8 +12,8 @@ import {
 	AbstractLayer,
 	AbstractPolaris,
 	Layer,
-	LayerProps,
 	LayerEventTypes,
+	LayerProps,
 	PickEventResult,
 	View,
 } from '@polaris.gl/base'
@@ -49,14 +49,15 @@ const _vec3 = new Vector3()
 const _vec2 = new Vector2()
 
 // override some inherited properties and methods interface
-export interface StandardLayer extends Layer {
+export interface StandardLayer {
 	getProp<TKey extends keyof StandardLayerProps>(key: TKey): StandardLayerProps[TKey] | undefined
 
-	listenProps: <TKeys extends (keyof StandardLayerProps)[]>(
+	watchProps: <TKeys extends (keyof StandardLayerProps)[]>(
 		keys: TKeys,
 		callback: Callback<StandardLayerProps, TKeys[number]>,
 		options?: ListenerOptions
 	) => void
+
 	/**
 	 * #### The actual renderable contents.
 	 * A layer can have multi views, e.g. gsiView + htmlView
@@ -98,13 +99,13 @@ export class StandardLayer extends Layer {
 			 * 每个Layer应当都有depthTest和renderOrder的prop listener
 			 * @NOTE 这里设定了两个默认的方法，若Layer有自己的设定逻辑可以重写这两个方法
 			 */
-			this.listenProps(['depthTest'], () => {
+			this.watchProps(['depthTest'], () => {
 				const depthTest = this.getProp('depthTest')
 				if (depthTest !== undefined) {
 					this.onDepthTestChange(depthTest)
 				}
 			})
-			this.listenProps(['renderOrder'], () => {
+			this.watchProps(['renderOrder'], () => {
 				const renderOrder = this.getProp('renderOrder')
 				if (renderOrder !== undefined) {
 					this.onRenderOrderChange(renderOrder)

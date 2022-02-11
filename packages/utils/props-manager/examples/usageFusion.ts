@@ -23,7 +23,7 @@ export interface PropsA {
 export type ModifiablePropsA = 'a'
 
 export class LayerA<
-	TProps extends Record<string, any> = {},
+	TProps extends Record<string, any> = Record<string, never>,
 	TModifiableKeys extends keyof TProps = keyof TProps
 > {
 	// #region props manager

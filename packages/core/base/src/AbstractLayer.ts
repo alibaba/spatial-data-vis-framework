@@ -118,21 +118,9 @@ export abstract class AbstractLayer<
 		this.#propsManager.addListener(keys, callback, options)
 	}
 
-	public setProps(props: Partial<Pick<TProps, TModifiableProps>>) {
+	setProps(props: Partial<Pick<TProps, TModifiableProps>>) {
 		this.#propsManager.set(props)
 	}
-
-	/**
-	 * update props
-	 * @todo whether rename to setProps?
-	 */
-	updateProps = this.setProps
-
-	/**
-	 *
-	 */
-	listenProps = this.watchProps
-	// #endregion
 
 	/**
 	 * destroy all resources
@@ -140,6 +128,19 @@ export abstract class AbstractLayer<
 	abstract dispose(): void
 
 	// #region legacy apis
+
+	/**
+	 * update props
+	 * @todo whether rename to setProps?
+	 * @deprecated
+	 */
+	updateProps = this.setProps
+
+	/**
+	 * @deprecated
+	 */
+	listenProps = this.watchProps
+	// #endregion
 
 	/**
 	 * @deprecated use {@link https://www.typescriptlang.org/docs/handbook/2/classes.html#this-based-type-guards}

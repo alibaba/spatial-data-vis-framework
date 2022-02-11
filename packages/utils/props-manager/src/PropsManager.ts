@@ -250,6 +250,14 @@ export function disposePropsManager(obj: object) {
 // 	}
 // }
 
+// class A {
+// 	#aa = 1
+// }
+
+// class B extends A {
+// 	#aa = 2
+// }
+
 // test
 // const a = new PropsManager<{ cc: 'dd' | 'ee'; ff: 'gg' | 'kk' }>()
 // a.listen(['cc'], async (event) => {})
