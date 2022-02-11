@@ -121,5 +121,30 @@ e.getD('pc')
 
 const _32 = e.getThis()
 
+class H {
+	ss: { a: { r: number } }
+
+	getSS(): this['ss'] {
+		return this.ss
+	}
+}
+
+class M extends H {
+	declare ss: {
+		a: { r: number; s: boolean }
+		b: boolean
+	}
+}
+
+const m = new M()
+const ss = m.getSS()
+
+class L extends M {
+	declare ss: {
+		a: { r: number }
+		b: boolean
+	}
+}
+
 //
 export const a = 0

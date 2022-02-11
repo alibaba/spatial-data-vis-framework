@@ -18,9 +18,6 @@ import type { AbstractPolaris } from './Polaris'
 import { PropsManager, ListenerOptions, Callback } from '@polaris.gl/utils-props-manager'
 
 type Events = {
-	add: { parent: AbstractLayer<Events> }
-	remove: { parent: AbstractLayer<Events> }
-	rootChange: { root: AbstractLayer<Events> }
 	visibilityChange: {}
 	viewChange: {
 		cameraProxy: CameraProxy
@@ -40,10 +37,14 @@ type Events = {
  * 在 TEvents 中声明所有可能的事件和回调接口，来在事件接口中获得正确的类型检查。
  */
 export abstract class AbstractLayer<
-	TEvents extends Events,
-	TProps extends Record<string, any> = {},
+	TProps extends Record<string, any> = any,
 	TModifiableProps extends keyof TProps = keyof TProps
-> extends AbstractNode<TEvents> {
+> extends AbstractNode {
+	declare EventTypes: AbstractNode['EventTypes'] & Events
+
+	readonly isBase = true
+	readonly isAbstractLayer = true
+
 	private _visible = true
 
 	/**
@@ -74,12 +75,14 @@ export abstract class AbstractLayer<
 		this.visible = false
 	}
 
-	traverseVisible(handler: (node: this /* AbstractLayer<TEvents> */) => void): void {
+	traverseVisible(handler: (node: AbstractLayer /* this */) => void): void {
 		if (!this.visible) return
 
 		handler(this)
 		this.children.forEach((child) => {
-			child.traverseVisible(handler)
+			if (AbstractLayer.is(child)) {
+				child.traverseVisible(handler)
+			}
 		})
 	}
 
@@ -127,6 +130,24 @@ export abstract class AbstractLayer<
 	 */
 	abstract dispose(): void
 
+	/**
+	 * callback when object/layer is added to a parent
+	 * @note different from addEventListener('add'), this will be triggered if the layer is already added to a parent
+	 */
+	set onAdd(f: (parent: AbstractNode) => void) {
+		if (this.parent) {
+			f(this.parent)
+		} else {
+			this.addEventListener(
+				'add',
+				(event) => {
+					f(event.parent)
+				},
+				{ once: true }
+			)
+		}
+	}
+
 	// #region legacy apis
 
 	/**
@@ -141,25 +162,6 @@ export abstract class AbstractLayer<
 	 */
 	listenProps = this.watchProps
 	// #endregion
-
-	/**
-	 * @deprecated use {@link https://www.typescriptlang.org/docs/handbook/2/classes.html#this-based-type-guards}
-	 */
-	readonly isBase = true
-	/**
-	 * @deprecated use {@link https://www.typescriptlang.org/docs/handbook/2/classes.html#this-based-type-guards}
-	 */
-	readonly isAbstractLayer = true
-
-	/**
-	 * @deprecated use {@link .addEventListener} instead
-	 * callback when object/layer is added to a parent
-	 */
-	set onAdd(f: (parent) => void) {
-		this.addEventListener('add', (event) => {
-			f(event.parent)
-		})
-	}
 
 	/**
 	 * @deprecated use {@link .addEventListener} instead
@@ -212,6 +214,10 @@ export abstract class AbstractLayer<
 	}
 
 	// #endregion
+
+	static is(v): v is AbstractLayer {
+		return v.isAbstractNode && (v.isAbstractLayer || v.isBase)
+	}
 }
 
 // test code

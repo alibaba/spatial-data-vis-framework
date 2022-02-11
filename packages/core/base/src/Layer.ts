@@ -20,10 +20,10 @@ export interface LayerProps {
 	views?: { [key: string]: new () => View }
 }
 
-export interface LayerEventTypes {
-	add: { parent: Layer }
-	remove: { parent: Layer }
-	rootChange: { root: Layer }
+export interface LayerEventTypes<TThis> {
+	// add: { parent: TThis }
+	// remove: { parent: TThis }
+	// rootChange: { root: TThis }
 	visibilityChange: {}
 	viewChange: {
 		cameraProxy: CameraProxy
@@ -40,7 +40,9 @@ export interface LayerEventTypes {
 /**
  * empty layer
  */
-export class Layer extends AbstractLayer<LayerEventTypes> {
+export class Layer extends AbstractLayer<LayerProps> {
+	declare EventTypes: AbstractLayer['EventTypes'] & LayerEventTypes<this>
+
 	/**
 	 * readable name of this layer
 	 */

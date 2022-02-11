@@ -79,7 +79,9 @@ interface Events {
 /**
  * AbstractPolaris
  */
-export abstract class AbstractPolaris extends AbstractLayer<Events, PolarisProps> {
+export abstract class AbstractPolaris extends AbstractLayer<PolarisProps> {
+	declare EventTypes: AbstractLayer['EventTypes'] & Events
+
 	// polaris is always the root
 	override get parent(): null {
 		return null

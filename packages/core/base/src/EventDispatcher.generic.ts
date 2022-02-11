@@ -19,16 +19,15 @@
  * @note inspired by {@link [three.js](https://github.com/mrdoob/eventdispatcher.js/)}
  *
  */
-export class EventDispatcher<EventTypes extends Record<string, Record<string, any>> = any> {
-	// type-only
-	declare readonly EventTypes: EventTypes
-
-	private _listeners = {} as Record<keyof this['EventTypes'], ListenerCbk<this, any>[]>
+export class EventDispatcher<
+	TEventTypes extends Record<string, Record<string, any>> = Record<string, never>
+> {
+	private _listeners = {} as Record<keyof TEventTypes, ListenerCbk<this, any>[]>
 	private _options = new WeakMap<ListenerCbk<this, any>, ListenerOptions>()
 
 	readonly isEventDispatcher = true
 
-	addEventListener<TEventTypeName extends keyof this['EventTypes']>(
+	addEventListener<TEventTypeName extends keyof TEventTypes>(
 		/**
 		 * type of the event
 		 */
@@ -56,7 +55,7 @@ export class EventDispatcher<EventTypes extends Record<string, Record<string, an
 		}
 	}
 
-	removeEventListener<TEventTypeName extends keyof this['EventTypes']>(
+	removeEventListener<TEventTypeName extends keyof TEventTypes>(
 		/**
 		 * type of the event
 		 */
@@ -80,8 +79,8 @@ export class EventDispatcher<EventTypes extends Record<string, Record<string, an
 		}
 	}
 
-	dispatchEvent<TEventTypeName extends keyof this['EventTypes']>(
-		event: this['EventTypes'][TEventTypeName] & {
+	dispatchEvent<TEventTypeName extends keyof TEventTypes>(
+		event: TEventTypes[TEventTypeName] & {
 			/**
 			 * assign the event type
 			 */
@@ -118,7 +117,7 @@ export class EventDispatcher<EventTypes extends Record<string, Record<string, an
 		}
 	}
 
-	removeAllEventListeners<TEventTypeName extends keyof this['EventTypes']>(type: TEventTypeName) {
+	removeAllEventListeners<TEventTypeName extends keyof TEventTypes>(type: TEventTypeName) {
 		const listeners = this._listeners
 
 		if (listeners[type] !== undefined) {
@@ -131,8 +130,8 @@ export class EventDispatcher<EventTypes extends Record<string, Record<string, an
 	 * @node use this only if you know what you're doing
 	 * @deprecated may be removed in future versions
 	 */
-	protected dispatchAnEvent<TEventTypeName extends keyof this['EventTypes']>(
-		event: this['EventTypes'][TEventTypeName] & {
+	protected dispatchAnEvent<TEventTypeName extends keyof TEventTypes>(
+		event: TEventTypes[TEventTypeName] & {
 			/**
 			 * assign the event type
 			 */
@@ -173,17 +172,20 @@ export interface ListenerOptions {
 	once?: boolean
 }
 
+// utility type to extract generic type
+export type ExtractEventTypes<P> = P extends EventDispatcher<infer T> ? T : never
+
 /**
  * type of listener callback function
  */
 export type ListenerCbk<
-	TTarget extends EventDispatcher,
-	TName extends keyof TTarget['EventTypes']
+	TTarget extends EventDispatcher<any>,
+	TName extends keyof ExtractEventTypes<TTarget>
 > = (
 	/**
 	 * emitted event.
 	 */
-	event: TTarget['EventTypes'][TName] & {
+	event: ExtractEventTypes<TTarget>[TName] & {
 		target: TTarget // self
 		type: TName
 	}
@@ -193,16 +195,12 @@ export type ListenerCbk<
  * event object passed to a callback
  */
 export type CbkEvent<
-	TTarget extends EventDispatcher,
-	TName extends keyof TTarget['EventTypes']
-> = TTarget['EventTypes'][TName] & {
+	TTarget extends EventDispatcher<any>,
+	TName extends keyof ExtractEventTypes<TTarget>
+> = ExtractEventTypes<TTarget>[TName] & {
 	target: TTarget // self
 	type: TName
 }
-
-// export function addEvents<TEvents extends Record<string, Record<string, any>>>(events: TEvents) {
-// 	return function (constructor: Function)
-// }
 
 // type test code
 // const e = new EventDispatcher<{ aaa: { data: any }; add: { parent: any } }>()

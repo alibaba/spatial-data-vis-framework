@@ -7,27 +7,54 @@
  * @author Simon
  */
 
-import { EventDispatcher, EventOptions } from './EventDispatcher'
+import { EventDispatcher } from './EventDispatcher'
+
+/**
+ * @explain ### Why not using `this` as the type of `parent`?
+ *
+ * > `this` as a type, will always refer to the subclass.
+ * > While `parent` doesn't have to be the same subclass with this.
+ *
+ * Technically. Anything extending AbstractNode can be added to the node-tree.
+ * LayerA->parent doesn't have to be an instance of LayerA.
+ * It can be an instance of LayerB, or Polaris, or some wried stuff used as a container.
+ *
+ * If a system needs all the nodes fit into a specific sub-class.
+ * (Like Polaris.gl needs every node to be either Layer or Polaris, instead of AbstractNode)
+ * It should add constrains in sub-class. With following principles:
+ *
+ * - AbstractNode shouldn't mind logics of its sub-classes.
+ * - For parent/child/root, use specific class instead of `this`.
+ * - Only use `this` if it's actually about itself.
+ *
+ * The underlying problem of this:
+ * - This kind of feature should be implemented with mixins.
+ */
 
 type Events = {
-	add: { parent: AbstractNode<Events> }
-	remove: { parent: AbstractNode<Events> }
-	rootChange: { root: AbstractNode<Events> | null }
+	add: { parent: AbstractNode }
+	remove: { parent: AbstractNode }
+	rootChange: { root: AbstractNode | null }
 }
+
+// let a : Events
+// a.add.parent
 
 /**
  * Tree structure
  * @note handles tree context
  */
-export class AbstractNode<TEvents extends Events> extends EventDispatcher<TEvents> {
+export class AbstractNode extends EventDispatcher {
+	declare EventTypes: Events
+
 	/**
 	 * has this node been added and removed before
 	 * @note currently not support re-add an used node
 	 */
 	private _removed = false
-	private _root: null | this /* AbstractNode<TEvents> */ = null
-	private _parent: null | this /* AbstractNode<TEvents> */ = null
-	private _children = new Set<this /* AbstractNode<TEvents> */>()
+	private _root: null | AbstractNode = null
+	private _parent: null | AbstractNode = null
+	private _children = new Set<AbstractNode>()
 
 	/**
 	 * parent node
@@ -53,7 +80,7 @@ export class AbstractNode<TEvents extends Events> extends EventDispatcher<TEvent
 		return this._root
 	}
 
-	add(child: this /* AbstractNode<TEvents> */): void {
+	add(child: AbstractNode): void {
 		if (this.children.has(child)) {
 			console.warn('This node has already been added.')
 			return
@@ -89,7 +116,7 @@ export class AbstractNode<TEvents extends Events> extends EventDispatcher<TEvent
 		})
 	}
 
-	remove(child: this /* AbstractNode<TEvents> */): void {
+	remove(child: AbstractNode): void {
 		this.children.delete(child)
 
 		// emit `remove` on child
@@ -120,52 +147,11 @@ export class AbstractNode<TEvents extends Events> extends EventDispatcher<TEvent
 		}
 	}
 
-	traverse(handler: (node: this /* AbstractNode<TEvents> */) => void): void {
-		handler(this)
+	// traverse<TNode extends AbstractNode>(handler: (node: TNode) => void): void {
+	traverse(handler: (node: AbstractNode) => void): void {
+		handler(this as AbstractNode)
 		this.children.forEach((child) => child.traverse(handler))
 	}
-
-	/**
-	 * override {@link EventDispatcher.addEventListener} to handle `add` event
-	 * @note `add` event will be emitted immediately if parent already exists.
-	 */
-	addEventListener<TEventTypeName extends keyof TEvents>(
-		/**
-		 * type of the event
-		 */
-		type: TEventTypeName,
-		/**
-		 * callback function for the event
-		 */
-		listener: (
-			/**
-			 * emitted event.
-			 */
-			event: TEvents[TEventTypeName] & {
-				target: any // self
-				type: TEventTypeName
-			}
-		) => void,
-		/**
-		 * An object that specifies characteristics about the event listener
-		 */
-		options?: EventOptions
-	): void {
-		super.addEventListener(type, listener, options)
-
-		if (type === 'add' && this.parent) {
-			// @note this is serious, will emit all add event, when only itself should be emitted
-			// this.dispatchEvent({ type: 'add', target: this, parent: this.parent })
-			this.dispatchAnEvent<'add'>(
-				{ type: 'add', target: this, parent: this.parent },
-				listener as any
-			)
-		}
-	}
-
-	/**
-	 * @deprecated use {@link https://www.typescriptlang.org/docs/handbook/2/classes.html#this-based-type-guards}
-	 */
 
 	readonly isAbstractNode = true
 }
