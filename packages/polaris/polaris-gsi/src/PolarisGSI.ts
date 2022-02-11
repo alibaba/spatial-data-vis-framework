@@ -466,7 +466,7 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 
 		// Sort and get the closest picked layer
 		if (candidates.length > 0) {
-			candidates.sort(this._pickedLayerSortFn)
+			candidates.sort(this._pickedLayerSorter)
 			if (options.deepPicking) {
 				return candidates
 			} else {
@@ -668,8 +668,9 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 	/**
 	 * 处理picking事件结果排序
 	 * @qianxun fix: should compare transparency before distance comparison
+	 * @qianxun fix: 2nd
 	 */
-	protected _pickedLayerSortFn(a: LayerPickEvent, b: LayerPickEvent): number {
+	protected _pickedLayerSorter(a: LayerPickEvent, b: LayerPickEvent): number {
 		const meshA = a.object as MeshDataType
 		const meshB = b.object as MeshDataType
 
@@ -687,14 +688,24 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 				meshB.material.alphaMode === 'BLEND_ADD' ||
 				meshB.material.alphaMode === 'MASK'
 
+			const aDepth = meshA.material.depthTest
+			const bDepth = meshB.material.depthTest
+
+			// compare transparent
+			// transparent object is always rendered after opaque object
+			if (aTransparent === true && bTransparent === false) {
+				return -1
+			} else if (aTransparent === false && bTransparent === true) {
+				return 1
+			}
+			// if both are true, compare renderOrder
+			else if (aTransparent === true && bTransparent === true) {
+				return meshB.renderOrder - meshA.renderOrder
+			}
+			// both false transparent
 			// compare depthTest
-			// if both are true, compare distance
-			if (meshA.material.depthTest !== undefined && meshB.material.depthTest !== undefined) {
-				// if (meshA.material.depthTest === true && meshB.material.depthTest === true) {
-				// 	return a.distance - b.distance
-				// }
-				const aDepth = meshA.material.depthTest
-				const bDepth = meshB.material.depthTest
+			// if depthTests are true, compare distance
+			else if (aDepth !== undefined && bDepth !== undefined) {
 				if (aDepth === bDepth) {
 					// both true
 					if (aDepth === true) {
@@ -721,13 +732,6 @@ export class PolarisGSI extends Polaris implements PolarisGSI {
 						return meshB.renderOrder - meshA.renderOrder
 					}
 				}
-			}
-			// compare transparent
-			// transparent object is always rendered after opaque object
-			else if (aTransparent === true && bTransparent === false) {
-				return -1
-			} else if (aTransparent === false && bTransparent === true) {
-				return 1
 			}
 			// compare renderOrder
 			// lower renderOrder => earlier to render => covered by higher renderOrder

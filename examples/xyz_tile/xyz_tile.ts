@@ -33,6 +33,8 @@ const poi = new POILayer({
 	// geojsonFilter: (geojson) => {
 	// 	console.log('poi', geojson)
 	// },
+	renderOrder: 200,
+	baseAlt: 0,
 	framesBeforeRequest,
 	viewZoomReduction,
 	dataType: 'pbf',
@@ -74,7 +76,7 @@ const poi = new POILayer({
 	},
 	onHovered: (data) => {
 		if (lastHovered !== undefined) {
-			// poi.highlightByIds([lastHovered], { type: 'none' })
+			poi.highlightByIds([lastHovered], { type: 'none' })
 		}
 
 		if (!data || data.data.feature === undefined) return
@@ -84,18 +86,16 @@ const poi = new POILayer({
 		const feature = data.data.feature
 		const id = feature.properties.id
 		if (!id) return
-		// poi.highlightByIds([id], { type: 'hover' })
+		poi.highlightByIds([id], { type: 'hover' })
 		lastHovered = id
 
 		// console.log('id', id)
 	},
-
-	baseAlt: 10,
 	useParentReplaceUpdate: true,
 	// depthTest: false,
 })
-// p.add(poi)
-// window['poi'] = poi
+p.add(poi)
+window['poi'] = poi
 
 // AOI
 const picked: Set<number> = new Set()
@@ -104,11 +104,13 @@ const aoi = new AOILayer({
 	// geojsonFilter: (geojson) => {
 	// 	console.log('aoi', geojson)
 	// },
+	renderOrder: 100,
+	baseAlt: 0,
 	// workersNum: Math.max(navigator.hardwareConcurrency - 4, 0),
 	workersNum: 0,
 	maxZoom: 16,
-	viewZoomReduction: 1,
-	viewZoomStep: 2,
+	viewZoomReduction: 0,
+	viewZoomStep: 1,
 	framesBeforeRequest,
 	customFetcher: (x, y, z) => {
 		const url = getAOIUrl(x, y, z)
@@ -162,6 +164,7 @@ const aoi = new AOILayer({
 	},
 	onHovered: (info) => {
 		if (info && info.data && info.data.feature) {
+			console.log('aoi')
 			const feature = info.data.feature
 			const id = feature.properties.id
 			aoi.highlightByIds([hovered], { type: 'none' })
