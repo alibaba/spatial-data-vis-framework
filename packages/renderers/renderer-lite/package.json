@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/renderer-lite",
-    "version": "0.0.0-alpha.10",
+    "version": "0.0.0-alpha.14",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -20,8 +20,8 @@
         "@gs.i/frontend-sdk": "^0.0.0-beta",
         "@gs.i/schema": "^0.0.0-beta",
         "@gs.i/utils-raycast": "^0.0.0-beta",
-        "@polaris.gl/schema": "^0.0.0-alpha.10",
-        "@polaris.gl/view-gsi": "^0.0.0-alpha.10"
+        "@polaris.gl/schema": "^0.0.0-alpha.14",
+        "@polaris.gl/view-gsi": "^0.0.0-alpha.14"
     },
     "devDependencies": {
         "@types/offscreencanvas": "latest",

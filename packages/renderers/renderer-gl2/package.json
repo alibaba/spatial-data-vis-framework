@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/renderer-gl2",
-    "version": "0.0.0-alpha.10",
+    "version": "0.0.0-alpha.14",
     "description": "",
     "private": true,
     "main": "dist/GL2Renderer.js",
@@ -18,7 +18,7 @@
     },
     "dependencies": {
         "@gs.i/schema": "^0.0.0-beta",
-        "@polaris.gl/schema": "^0.0.0-alpha.10"
+        "@polaris.gl/schema": "^0.0.0-alpha.14"
     },
     "devDependencies": {
         "typescript": ">4.4.0"
