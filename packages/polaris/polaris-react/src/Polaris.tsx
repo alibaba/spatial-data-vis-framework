@@ -44,7 +44,7 @@ export class PolarisReact extends PureComponent<PolarisProps, PolarisState> {
 			getPolarisInstance(polarisInstance)
 		}
 
-		// cache camera status to let component do statesCode update automatically
+		// cache camera status to automatically update statesCode when they are changed
 		const center = otherProps.center || this.state.center
 		const pitch = otherProps.pitch || this.state.pitch
 		const rotation = otherProps.rotation || this.state.rotation
@@ -113,7 +113,7 @@ export class PolarisReact extends PureComponent<PolarisProps, PolarisState> {
 	}
 
 	render() {
-		const { children, width, height, center, zoom, pitch, rotation } = this.props
+		const { children, width, height } = this.props
 		const { polarisInstance } = this.state
 
 		return (

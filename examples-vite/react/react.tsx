@@ -9,6 +9,26 @@ import { AMapLayer } from '@polaris.gl/layer-amap'
 
 const container = document.querySelector('#container') as HTMLDivElement
 
+// markers data
+const div = document.createElement('div')
+div.style.fontSize = '12px'
+div.style.background = '#00ffff'
+div.style.width = '40px'
+div.style.height = '40px'
+const markerData: any[] = []
+for (let i = 0; i < 20; i++) {
+	const html = div.cloneNode() as HTMLElement
+	html.style.background = `#${Math.floor(Math.random() * 0xffffff).toString(16)}`
+	html.innerHTML = 'text' + i
+	markerData.push({
+		lng: Math.random() * 360,
+		lat: -60 + Math.random() * 120,
+		alt: 0, // 1000000 * Math.random(),
+		html: html,
+		autoHide: false, // Math.random() > 0.5,
+	})
+}
+
 class App extends React.Component {
 	state: any = {
 		width: 500,
@@ -24,39 +44,28 @@ class App extends React.Component {
 
 	componentDidMount() {
 		setTimeout(() => {
-			console.log('view change')
-			this.setState({
+			const newState = {
 				width: 700,
 				height: 700,
-				center: [5, 5],
-				zoom: 5,
-				rotation: 1.7,
-			})
+			}
+			console.log('size change', newState)
+			this.setState(newState)
 		}, 1500)
+
+		setTimeout(() => {
+			const newState = {
+				center: [-10, 0],
+				zoom: 4,
+				rotation: -1,
+				markerData,
+			}
+			console.log('view change', newState)
+			this.setState(newState)
+		}, 3000)
 	}
 
 	render() {
-		const { width, height, center, zoom, rotation } = this.state
-
-		// markers data
-		const div = document.createElement('div')
-		div.style.fontSize = '12px'
-		div.style.background = '#00ffff'
-		div.style.width = '40px'
-		div.style.height = '40px'
-		const data: any[] = []
-		for (let i = 0; i < 20; i++) {
-			const html = div.cloneNode() as HTMLElement
-			html.style.background = `#${Math.floor(Math.random() * 0xffffff).toString(16)}`
-			html.innerHTML = 'text' + i
-			data.push({
-				lng: Math.random() * 360,
-				lat: -90 + Math.random() * 180,
-				alt: 0, // 1000000 * Math.random(),
-				html: html,
-				autoHide: false, // Math.random() > 0.5,
-			})
-		}
+		const { width, height, center, zoom, rotation, markerData } = this.state
 
 		return (
 			<PolarisReact
@@ -70,6 +79,7 @@ class App extends React.Component {
 				autoResize={true}
 				getPolarisInstance={(polarisInstance) => {
 					console.log('polarisInstance', polarisInstance)
+					window['p'] = polarisInstance
 				}}>
 				<LayerReact
 					layerClass={HelperLayer}
@@ -77,14 +87,16 @@ class App extends React.Component {
 					getLayerInstance={(layerInstance) => {
 						console.log('helperLayer', layerInstance)
 					}}></LayerReact>
-				<LayerReact
-					layerClass={MarkerLayer}
-					data={data}
-					offsetX={-20}
-					offsetY={-20}
-					getLayerInstance={(layerInstance) => {
-						console.log('markerLayer', layerInstance)
-					}}></LayerReact>
+				{markerData && (
+					<LayerReact
+						layerClass={MarkerLayer}
+						data={markerData}
+						offsetX={-20}
+						offsetY={-20}
+						getLayerInstance={(layerInstance) => {
+							console.log('markerLayer', layerInstance)
+						}}></LayerReact>
+				)}
 				<LayerReact layerClass={AMapLayer}></LayerReact>
 			</PolarisReact>
 		)
