@@ -19,9 +19,11 @@
  * @note inspired by {@link [three.js](https://github.com/mrdoob/eventdispatcher.js/)}
  *
  */
-export class EventDispatcher<EventTypes extends Record<string, Record<string, any>> = any> {
-	// type-only
-	declare readonly EventTypes: EventTypes
+export class EventDispatcher {
+	/**
+	 * used to indicate the event names and their callback types
+	 */
+	declare readonly EventTypes: Record<string, unknown>
 
 	private _listeners = {} as Record<keyof this['EventTypes'], ListenerCbk<this, any>[]>
 	private _options = new WeakMap<ListenerCbk<this, any>, ListenerOptions>()
