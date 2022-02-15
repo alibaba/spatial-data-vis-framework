@@ -12,7 +12,7 @@
  */
 /* eslint-disable @typescript-eslint/ban-types */
 
-import { AbstractNode, AbstractNodeEvents } from './AbstractNode'
+import { AbstractNode } from './AbstractNode'
 import type { CameraProxy } from 'camera-proxy'
 import type { AbstractPolaris } from './Polaris'
 import { PropsManager, ListenerOptions, Callback } from '@polaris.gl/utils-props-manager'
@@ -93,16 +93,6 @@ export abstract class AbstractLayer<
 	 * powering the `watchProps` method of this class.
 	 */
 	#propsManager = new PropsManager<TProps>()
-
-	// readonly props: Partial<TProps> = new Proxy(Object.freeze({}) as Partial<TProps>, {
-	// 	// @note use arrow function to get the private PropsManager
-	// 	get: (target, propertyName, receiver) => {
-	// 		return this.#propsManager.get(propertyName as any)
-	// 	},
-	// 	set: () => {
-	// 		throw new Error('Do not edit props directly. Use setProps instead.')
-	// 	},
-	// })
 
 	protected getProp<TKey extends keyof TProps>(key: TKey): TProps[TKey] {
 		return this.#propsManager.get(key)
