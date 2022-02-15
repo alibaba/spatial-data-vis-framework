@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/layer-xyz-poi-tile",
-    "version": "0.0.0-alpha.15",
+    "version": "0.0.0-alpha.16",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -26,7 +26,7 @@
         "@polaris.gl/schema": "^0.0.0-alpha.14",
         "@polaris.gl/utils": "^0.0.0-alpha.14",
         "@polaris.gl/utils-request-manager": "^0.0.0-alpha.10",
-        "@polaris.gl/utils-tile-manager": "^0.0.0-alpha.15",
+        "@polaris.gl/utils-tile-manager": "^0.0.0-alpha.16",
         "@turf/invariant": "^5.1.6",
         "@turf/meta": "^6.0.2",
         "@turf/polygon-to-line": "^6.3.0",
