@@ -7,7 +7,7 @@
  * @author Simon
  */
 
-import { EventDispatcher } from './EventDispatcher'
+import { EventDispatcher } from './EventDispatcher.pure'
 
 /**
  * @explain ### Why not using `this` as the type of `parent`?

@@ -139,12 +139,12 @@ class M extends H {
 const m = new M()
 const ss = m.getSS()
 
-class L extends M {
-	declare ss: {
-		a: { r: number }
-		b: boolean
-	}
-}
+// class L extends M {
+// 	declare ss: {
+// 		a: { r: number }
+// 		b: boolean
+// 	}
+// }
 
 //
 export const a = 0
