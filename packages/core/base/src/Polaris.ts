@@ -23,7 +23,7 @@ import { PolarisProps, defaultProps } from './props/index'
 export { colorToString } from './props/index'
 export type { PolarisProps } from './props/index'
 
-export interface AbstractPolarisEvents {
+export type AbstractPolarisEvents = {
 	add: never
 	remove: never
 	rootChange: never
@@ -39,7 +39,7 @@ export interface AbstractPolarisEvents {
 /**
  * AbstractPolaris
  */
-export abstract class AbstractPolaris extends AbstractLayer {
+export abstract class AbstractPolaris extends AbstractLayer<AbstractPolarisEvents> {
 	// polaris is always the root
 	override get parent(): null {
 		return null
@@ -100,7 +100,7 @@ export abstract class AbstractPolaris extends AbstractLayer {
 	 */
 	scale: number
 
-	protected _disposed = false
+	#disposed = false
 
 	constructor(props: PolarisProps) {
 		super()
@@ -186,7 +186,7 @@ export abstract class AbstractPolaris extends AbstractLayer {
 
 		// @todo not a good practice, order dependent
 		// cameraProxy config props listener
-		this.listenProps(['zoomLimit', 'pitchLimit'], () => {
+		this.watchProps(['zoomLimit', 'pitchLimit'], () => {
 			cameraProxy['limit'].zoom = this.getProp('zoomLimit')
 			cameraProxy['limit'].pitch = this.getProp('pitchLimit')
 		})
@@ -374,7 +374,7 @@ export abstract class AbstractPolaris extends AbstractLayer {
 	}
 
 	tick() {
-		if (this._disposed) {
+		if (this.#disposed) {
 			throw new Error('Polaris - This instance is disposed. Create a new one if needed.')
 		}
 

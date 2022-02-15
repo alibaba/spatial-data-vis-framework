@@ -16,6 +16,8 @@ import { AbstractNode } from './AbstractNode'
 import type { CameraProxy } from 'camera-proxy'
 import type { AbstractPolaris } from './Polaris'
 import { PropsManager, ListenerOptions, Callback } from '@polaris.gl/utils-props-manager'
+// import type { Projection } from '@polaris.gl/projection'
+// import type Timeline from 'ani-timeline'
 
 export type AbstractLayerEvents = {
 	visibilityChange: {}
@@ -43,18 +45,18 @@ export abstract class AbstractLayer<
 	readonly isBase = true
 	readonly isAbstractLayer = true
 
-	private _visible = true
+	#visible = true
 
 	/**
 	 * visibility of this layer
 	 */
 	get visible() {
-		return this._visible
+		return this.#visible
 	}
 
 	set visible(v: boolean) {
-		if (this._visible !== v) {
-			this._visible = v
+		if (this.#visible !== v) {
+			this.#visible = v
 			this.dispatchEvent({ type: 'visibilityChange' })
 		}
 	}
@@ -107,7 +109,7 @@ export abstract class AbstractLayer<
 	}
 
 	setProps(props: Partial<TProps>) {
-		this.#propsManager.set(props)
+		this.#propsManager.set(props as any)
 	}
 
 	/**

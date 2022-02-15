@@ -52,31 +52,25 @@ export class Layer<
 	readonly view: { [key: string]: View }
 
 	/**
-	 * Initialization entry
-	 *
-	 * you can use this.timeline, this.projection and polaris safely
-	 *
-	 * exactly same effect as this.addEventListener('init')
-	 *
-	 * @alias this.addEventListener('init')
-	 */
-	protected init?(projection: Projection, timeline: Timeline, polaris: AbstractPolaris): void
-
-	/**
 	 * @constructor
 	 * @param props
 	 */
-	constructor(props: LayerProps = {}) {
+	constructor(props?: TProps) {
 		super()
 
-		this.name = props.name || 'abstract-layer'
+		// const  p = this.getProp('parent')
+		this.setProps({
+			parent: this,
+		})
+
+		this.name = props?.name || 'abstract-layer'
 
 		// 本地投影和时间线
-		this.#projectionLocal = props.projection
-		this.#timelineLocal = props.timeline
+		this.#projectionLocal = props?.projection
+		this.#timelineLocal = props?.timeline
 
 		// initialize views by props.views
-		if (props.views) {
+		if (props?.views) {
 			this.view = {}
 			for (const key in props.views) {
 				const ViewClass = props.views[key]
@@ -86,9 +80,11 @@ export class Layer<
 			}
 		}
 
-		if (props.parent) {
+		if (props?.parent) {
 			props.parent.add(this)
 		}
+
+		this.setProps(props || {})
 
 		Promise.all([this.getProjection(), this.getTimeline(), this.getPolaris()]).then(
 			([projection, timeline, polaris]) => {
@@ -108,6 +104,46 @@ export class Layer<
 				})
 			}
 		)
+	}
+
+	setProps(props: Partial<TProps | LayerProps>) {
+		/**
+		 * @note keep in mind that:
+		 * Partial<TProps> is not `assignable` until generic type TProps get settled.
+		 * So if you use Partial<GenericType> as a writeable value or function param.
+		 * Use `.t3` like the following code:
+		 *
+		 * ```
+		 * class A<T extends { s: boolean }> {
+		 * 		t1: T
+		 * 		t2: Partial<T>
+		 * 		t3: Partial<T | { s: boolean }>
+		 *
+		 * 		set() {
+		 * 			// write
+		 * 			this.t1 = { s: true } // ❌ TS Error
+		 * 			this.t2 = { s: true } // ❌ TS Error
+		 * 			this.t3 = { s: true } // ✅ TS Pass
+		 * 			this.t3 = { l: true } // ❌ TS Error
+		 *
+		 * 			// read
+		 *			this.t1.s // boolean
+		 *			this.t2.s // boolean | undefined
+		 *			this.t3.s // boolean | undefined
+		 * 		}
+		 * }
+		 *
+		 * class B extends A<{ l: boolean; s: boolean }> {
+		 * 		set() {
+		 * 			this.t1 = { s: true } // ❌ TS Error
+		 * 			this.t2 = { s: true } // ✅ TS Pass
+		 * 			this.t3 = { s: true } // ✅ TS Pass
+		 * 			this.t3 = { l: true } // ✅ TS Pass
+		 * 		}
+		 * }
+		 * ```
+		 */
+		super.setProps(props as any)
 	}
 
 	/**
@@ -247,7 +283,7 @@ export class Layer<
 	/**
 	 * if this layer has been added to a polaris instance, this will be set.
 	 */
-	#polarisResolved: AbstractPolaris | null
+	#polarisResolved?: AbstractPolaris
 
 	// #region legacy apis
 
@@ -280,6 +316,13 @@ export class Layer<
 	get resolvedTimeline(): Timeline | undefined {
 		return this.#timelineResolved
 	}
+	/**
+	 * sync interface. legacy only. not recommended.
+	 * @deprecated
+	 */
+	get resolvedPolaris(): AbstractPolaris | undefined {
+		return this.#polarisResolved
+	}
 
 	/**
 	 * @deprecated use {@link .addEventListener} instead
@@ -310,6 +353,32 @@ export class Layer<
 		this.addEventListener('hover', (event) => {
 			f(event.result)
 		})
+	}
+
+	/**
+	 * @deprecated use {@link .addEventListener} instead
+	 *
+	 * Initialization entry
+	 *
+	 * you can use this.timeline, this.projection and polaris safely
+	 *
+	 * exactly same effect as this.addEventListener('init')
+	 *
+	 * @alias this.addEventListener('init')
+	 */
+	init?: (projection: Projection, timeline: Timeline, polaris: AbstractPolaris) => void
+
+	/**
+	 * @deprecated use addEventListener('init')
+	 */
+	set onInit(f: (projection: Projection, timeline: Timeline, polaris: AbstractPolaris) => void) {
+		this.addEventListener(
+			'init',
+			(event) => {
+				f(event.projection, event.timeline, event.polaris)
+			},
+			{ once: true }
+		)
 	}
 
 	// #endregion

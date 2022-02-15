@@ -8,20 +8,12 @@
  * 但是 typescript 中 mixin 和 decoration 都会造成一定程度的 interface 混乱
  * 因此在这里把constructor里增加的逻辑拆成函数，
  */
-import {
-	AbstractLayer,
-	AbstractPolaris,
-	Layer,
-	LayerEventTypes,
-	LayerProps,
-	PickEventResult,
-	View,
-} from '@polaris.gl/base'
+import { AbstractPolaris, Layer, LayerProps, PickEventResult, View } from '@polaris.gl/base'
 import { GSIView } from '@polaris.gl/view-gsi'
 import { HtmlView } from '@polaris.gl/view-html'
 import { isSimilarProjections } from '@polaris.gl/projection'
 import { Matrix4, Euler, Vector3, Vector2 } from '@gs.i/utils-math'
-import { Callback, ListenerOptions } from '@polaris.gl/utils-props-manager'
+// import { Callback, ListenerOptions } from '@polaris.gl/utils-props-manager'
 // import { PropsManager } from '@polaris.gl/utils-props-manager'
 
 /**
@@ -33,6 +25,9 @@ export interface StandardLayerProps extends LayerProps {
 	pickable?: boolean
 	onPicked?: (event: PickEventResult | undefined) => void
 	onHovered?: (event: PickEventResult | undefined) => void
+
+	// data
+	data?: any
 }
 
 export const defaultStandardLayerProps: StandardLayerProps = {
@@ -48,37 +43,19 @@ const _mat4 = new Matrix4()
 const _vec3 = new Vector3()
 const _vec2 = new Vector2()
 
-// override some inherited properties and methods interface
-export interface StandardLayer {
-	getProp<TKey extends keyof StandardLayerProps>(key: TKey): StandardLayerProps[TKey] | undefined
-
-	watchProps: <TKeys extends (keyof StandardLayerProps)[]>(
-		keys: TKeys,
-		callback: Callback<StandardLayerProps, TKeys[number]>,
-		options?: ListenerOptions
-	) => void
-
-	/**
-	 * #### The actual renderable contents.
-	 * A layer can have multi views, e.g. gsiView + htmlView
-	 *
-	 * 🚧 @note
-	 * - kind of over-design. name and interface may change into future.
-	 * - this is for framework developers to add third-party renderers.
-	 * - should not be exposed to client developers.
-	 * - **only use this if you know what you are doing.**
-	 */
-	view: { gsi: GSIView; html: HtmlView; [name: string]: View }
-}
-
 /**
  * Standard Layer
  * 标准 Layer，包含 GSIView 作为 3D 容器，HTMLView 作为 2D 容器
  */
-export class StandardLayer extends Layer {
+export class StandardLayer<
+	TEventTypes extends Record<string, any> = any,
+	TProps extends StandardLayerProps = StandardLayerProps
+> extends Layer<TEventTypes, TProps> {
 	readonly isStandardLayer = true
 
-	constructor(props: StandardLayerProps) {
+	view: { gsi: GSIView; html: HtmlView; [name: string]: View }
+
+	constructor(props: TProps) {
 		super(props)
 
 		if (!this.view) {
@@ -128,8 +105,6 @@ export class StandardLayer extends Layer {
 				this._initProjectionAlignment(projection, parentProjection, polaris)
 			})
 		})
-
-		this.setProps(props)
 	}
 
 	/**
@@ -206,20 +181,23 @@ export class StandardLayer extends Layer {
 	 * @memberof StandardLayer
 	 */
 	toScreenXY(lng: number, lat: number, alt = 0): Vector2 | undefined {
-		if (!this.polaris) {
-			// console.warn('Polaris::StandardLayer - Layer has no polaris info, add it to a polaris first. ')
+		const polaris = this.resolvedPolaris
+		if (!polaris) {
+			console.warn(
+				'Polaris::StandardLayer - Add Layer to polaris-scene before calling `toScreenXY`.'
+			)
 			return
 		}
 		const worldPos = this.toWorldPosition(lng, lat, alt)
 		if (!worldPos) return
 
-		const screenXY = this.polaris.getScreenXY(worldPos.x, worldPos.y, worldPos.z)
+		const screenXY = polaris.getScreenXY(worldPos.x, worldPos.y, worldPos.z)
 		if (!screenXY) return
 
 		const xy = _vec2.fromArray(screenXY)
 
 		// Align to html dom x/y
-		xy.y = this.polaris.height - xy.y
+		xy.y = polaris.height - xy.y
 
 		return xy
 	}
@@ -361,6 +339,46 @@ export class StandardLayer extends Layer {
 				})
 			}
 		}
+	}
+
+	setProps(props: Partial<TProps | StandardLayerProps>) {
+		/**
+		 * @note keep in mind that:
+		 * Partial<TProps> is not `assignable` until generic type TProps get settled.
+		 * So if you use Partial<GenericType> as a writeable value or function param.
+		 * Use `.t3` like the following code:
+		 *
+		 * ```
+		 * class A<T extends { s: boolean }> {
+		 * 		t1: T
+		 * 		t2: Partial<T>
+		 * 		t3: Partial<T | { s: boolean }>
+		 *
+		 * 		set() {
+		 * 			// write
+		 * 			this.t1 = { s: true } // ❌ TS Error
+		 * 			this.t2 = { s: true } // ❌ TS Error
+		 * 			this.t3 = { s: true } // ✅ TS Pass
+		 * 			this.t3 = { l: true } // ❌ TS Error
+		 *
+		 * 			// read
+		 *			this.t1.s // boolean
+		 *			this.t2.s // boolean | undefined
+		 *			this.t3.s // boolean | undefined
+		 * 		}
+		 * }
+		 *
+		 * class B extends A<{ l: boolean; s: boolean }> {
+		 * 		set() {
+		 * 			this.t1 = { s: true } // ❌ TS Error
+		 * 			this.t2 = { s: true } // ✅ TS Pass
+		 * 			this.t3 = { s: true } // ✅ TS Pass
+		 * 			this.t3 = { l: true } // ✅ TS Pass
+		 * 		}
+		 * }
+		 * ```
+		 */
+		super.setProps(props as any)
 	}
 
 	/**

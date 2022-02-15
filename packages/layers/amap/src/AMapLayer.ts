@@ -46,7 +46,8 @@ export const defaultProps: AMapLayerProps = {
 	],
 }
 
-export class AMapLayer extends StandardLayer {
+// eslint-disable-next-line @typescript-eslint/ban-types
+export class AMapLayer extends StandardLayer<{}, AMapLayerProps> {
 	projection
 	cam
 	map
@@ -55,72 +56,71 @@ export class AMapLayer extends StandardLayer {
 	key
 
 	constructor(props: Partial<AMapLayerProps> = {}) {
-		super(props)
-		props = {
+		super({
+			name: 'AMapLayer',
 			...defaultProps,
 			...props,
-		}
+		})
 		this.setProps(props)
 
-		this.name = this.group.name = 'AMapLayer'
+		this.group.name = 'AMapLayer'
 		this.element.className = 'polaris-amap-layer'
 		this.element.id = 'polaris-amap-layer'
-	}
 
-	init = (projection, timeline, polaris) => {
-		// polaris图层背景透明
-		this.polaris = polaris
-		polaris['renderer'].renderer.setClearAlpha(0.0)
-		// 获取相机和投影
-		this.cam = polaris.cameraProxy
-		this.projection = projection
+		this.addEventListener('init', ({ projection, timeline, polaris }) => {
+			// polaris图层背景透明
+			polaris['renderer'].renderer.setClearAlpha(0.0)
+			// 获取相机和投影
+			this.cam = polaris.cameraProxy
+			this.projection = projection
 
-		// amap属性监听
-		this.listenProps(
-			[
-				'key',
-				'showLogo',
-				'showLabel',
-				'zooms',
-				'style',
-				'layers',
-				'features',
-				'zIndex',
-				'amapInstance',
-			],
-			() => {
-				const amapInstance = this.getProps('amapInstance')
-				const key = this.getProps('key')
-				const zooms = this.getProps('zooms')
+			// amap属性监听
+			this.listenProps(
+				[
+					'key',
+					'showLogo',
+					'showLabel',
+					'zooms',
+					'style',
+					'layers',
+					'features',
+					'zIndex',
+					'amapInstance',
+				],
+				() => {
+					const amapInstance = this.getProp('amapInstance')
+					const key = this.getProp('key')
+					const zooms = this.getProp('zooms')
 
-				// set polaris zoomLimit the same as AMap
-				polaris.updateProps({
-					zoomLimit: zooms,
-				})
+					// set polaris zoomLimit the same as AMap
+					polaris.updateProps({
+						zoomLimit: zooms,
+					})
 
-				if (amapInstance) {
-					// use custom instance
-					this.map = amapInstance
-					this._initAmapCamera(polaris)
-					this.onViewChange = (cam) => {
-						this._synchronizeCameras(cam, polaris, projection)
-					}
-				} else if (!window.AMap || this.key !== key) {
-					this.key = key
-					this._loadJSAPI(key, () => {
-						this._initAMap(window.AMap)
+					if (amapInstance) {
+						// use custom instance
+						this.map = amapInstance
 						this._initAmapCamera(polaris)
 						this.onViewChange = (cam) => {
 							this._synchronizeCameras(cam, polaris, projection)
 						}
-						// 更新地图
+					} else if (!window.AMap || this.key !== key) {
+						this.key = key
+						this._loadJSAPI(key, () => {
+							this._initAMap(window.AMap)
+							this._initAmapCamera(polaris)
+							this.onViewChange = (cam) => {
+								this._synchronizeCameras(cam, polaris, projection)
+							}
+							// 更新地图
+							this._updateAMap(window.AMap)
+						})
+					} else {
 						this._updateAMap(window.AMap)
-					})
-				} else {
-					this._updateAMap(window.AMap)
+					}
 				}
-			}
-		)
+			)
+		})
 	}
 
 	/**
@@ -168,7 +168,7 @@ export class AMapLayer extends StandardLayer {
 		}
 
 		this.element.style.position = 'absolute'
-		this.element.style.zIndex = this.getProps('zIndex') ?? -9999
+		this.element.style.zIndex = `${this.getProp('zIndex') ?? -9999}`
 
 		if (AMap !== undefined) {
 			// 钉钉、手淘、阿里数据webview中amap默认不开启WebGL绘制，强制开启需要设置全局属性:
@@ -192,7 +192,7 @@ export class AMapLayer extends StandardLayer {
 				features: ['bg', 'road'],
 				// 区别投影
 				crs: this.projection.type === 'MercatorProjection' ? 'EPSG3857' : 'EPSG4326',
-				showLabel: this.getProps('showLabel'),
+				showLabel: this.getProp('showLabel'),
 			})
 		}
 	}
@@ -202,14 +202,14 @@ export class AMapLayer extends StandardLayer {
 	 */
 	_updateAMap = (AMap) => {
 		// 图层顺序
-		const zIndex = this.getProps('zIndex')
+		const zIndex = this.getProp('zIndex')
 
 		if (this.element) {
-			this.element.style.zIndex = zIndex
+			this.element.style.zIndex = `${zIndex}`
 		}
-		const style = this.getProps('style')
-		const layers = this.getProps('layers')
-		const features = this.getProps('features')
+		const style = this.getProp('style')
+		const layers = this.getProp('layers')
+		const features = this.getProp('features')
 		if (AMap !== undefined) {
 			// 改变样式
 			this.map.setMapStyle('amap://styles/' + style)
@@ -246,7 +246,7 @@ export class AMapLayer extends StandardLayer {
 			this.map.setFeatures(featuresArr)
 
 			// 是否显示高德logo和copyright
-			const showLogo = this.getProps('showLogo')
+			const showLogo = this.getProp('showLogo')
 			const logoElement = document.getElementsByClassName('amap-logo')[0]
 			const colpyRightElement = document.getElementsByClassName('amap-copyright')[0]
 			if (!showLogo && logoElement && colpyRightElement) {
@@ -267,7 +267,7 @@ export class AMapLayer extends StandardLayer {
 
 		const cam = polaris.cameraProxy
 		// 限制polaris的zoom范围与高德对应
-		const zooms = this.getProps('zooms')
+		const zooms = this.getProp('zooms')
 		const zoomMin = zooms[0]
 		const zoomMax = zooms[1]
 		if (cam.zoom <= zoomMin) {
@@ -310,8 +310,8 @@ export class AMapLayer extends StandardLayer {
 
 		const { zoom, pitch, rotation, center } = cameraProxy
 		const { canvasWidth, canvasHeight } = polaris
-		const ZOOM_MIN = this.getProps('zooms')[0]
-		const ZOOM_MAX = this.getProps('zooms')[1]
+		const ZOOM_MIN = this.getProp('zooms')[0]
+		const ZOOM_MAX = this.getProp('zooms')[1]
 		const lnglatCenter = projection.unproject(...center)
 
 		// 限制polaris的zooms与高德对应
