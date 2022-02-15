@@ -27,6 +27,15 @@ type Events = {
 	afterRender: { polaris: AbstractPolaris /* typeof Polaris */ }
 }
 
+export type Props<
+	TProps extends Record<string, any> = any,
+	TModifiableKeys extends keyof TProps = keyof TProps
+> = Partial<TProps>
+export type ExtractProps<T> = T extends Props<infer TProps, any> ? TProps : never
+export type ExtractModifiableKeys<T> = T extends Props<any, infer TModifiableKeys>
+	? TModifiableKeys
+	: never
+
 /**
  * Base class for layers
  *
@@ -36,11 +45,13 @@ type Events = {
  * @noteCN
  * 在 TEvents 中声明所有可能的事件和回调接口，来在事件接口中获得正确的类型检查。
  */
-export abstract class AbstractLayer<
-	TProps extends Record<string, any> = any,
-	TModifiableProps extends keyof TProps = keyof TProps
-> extends AbstractNode {
+export abstract class AbstractLayer extends AbstractNode {
+	/**
+	 *
+	 */
 	declare EventTypes: AbstractNode['EventTypes'] & Events
+
+	declare props: Props
 
 	readonly isBase = true
 	readonly isAbstractLayer = true
@@ -91,37 +102,38 @@ export abstract class AbstractLayer<
 	/**
 	 * powering the `watchProps` method of this class.
 	 */
-	#propsManager = new PropsManager<TProps, TModifiableProps>()
-	#props = new Proxy(Object.freeze({}) as Partial<TProps>, {
-		// @note use arrow function to get the private PropsManager
-		get: (target, propertyName, receiver) => {
-			return this.#propsManager.get(propertyName as any)
-		},
-		set: () => {
-			throw new Error('Do not edit props directly. Use setProps instead.')
-		},
-	})
+	#propsManager = new PropsManager<
+		ExtractProps<this['props']>,
+		ExtractModifiableKeys<this['props']>
+	>()
 
-	/**
-	 * a read only props getter
-	 */
-	get props() {
-		return this.#props
-	}
+	// readonly props: Props = new Proxy(Object.freeze({}) as Partial<ExtractProps<this['props']>>, {
+	// 	// @note use arrow function to get the private PropsManager
+	// 	get: (target, propertyName, receiver) => {
+	// 		return this.#propsManager.get(propertyName as any)
+	// 	},
+	// 	set: () => {
+	// 		throw new Error('Do not edit props directly. Use setProps instead.')
+	// 	},
+	// })
 
-	protected getProp<TKey extends keyof TProps>(key: TKey): TProps[TKey] | undefined {
+	protected getProp<TKey extends keyof ExtractProps<this['props']>>(
+		key: TKey
+	): ExtractProps<this['props']>[TKey] | undefined {
 		return this.#propsManager.get(key)
 	}
 
-	protected watchProps<TKeys extends Array<TModifiableProps>>(
+	protected watchProps<TKeys extends Array<ExtractModifiableKeys<this['props']>>>(
 		keys: TKeys,
-		callback: Callback<TProps, TKeys[number]>,
+		callback: Callback<ExtractProps<this['props']>, TKeys[number]>,
 		options?: ListenerOptions
 	): void {
 		this.#propsManager.addListener(keys, callback, options)
 	}
 
-	setProps(props: Partial<Pick<TProps, TModifiableProps>>) {
+	setProps(
+		props: Partial<Pick<ExtractProps<this['props']>, ExtractModifiableKeys<this['props']>>>
+	) {
 		this.#propsManager.set(props)
 	}
 

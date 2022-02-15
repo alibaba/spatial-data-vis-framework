@@ -156,6 +156,10 @@ export class AbstractNode extends EventDispatcher {
 	readonly isAbstractNode = true
 }
 
+export function isAbstractNode(v: any): v is AbstractNode {
+	return v.isEventDispatcher && v.isAbstractNode
+}
+
 // test code
 // const a = new AbstractNode()
 // a.addEventListener('add', (event) => {

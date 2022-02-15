@@ -25,8 +25,10 @@ export class EventDispatcher {
 	 */
 	declare readonly EventTypes: Record<string, unknown>
 
-	private _listeners = {} as Record<keyof this['EventTypes'], ListenerCbk<this, any>[]>
-	private _options = new WeakMap<ListenerCbk<this, any>, ListenerOptions>()
+	// #_listeners = {} as Record<keyof this['EventTypes'], ListenerCbk<this, any>[]>
+	#_listeners = {} as any
+	// #_options = new WeakMap<ListenerCbk<this, any>, ListenerOptions>()
+	#_options = new WeakMap<any, ListenerOptions>()
 
 	readonly isEventDispatcher = true
 
@@ -44,7 +46,7 @@ export class EventDispatcher {
 		 */
 		options?: ListenerOptions
 	): void {
-		const listeners = this._listeners
+		const listeners = this.#_listeners
 
 		if (listeners[type] === undefined) {
 			listeners[type] = []
@@ -53,7 +55,7 @@ export class EventDispatcher {
 		if (listeners[type].indexOf(listener) === -1) {
 			listeners[type].push(listener)
 			if (options !== undefined) {
-				this._options.set(listener, options)
+				this.#_options.set(listener, options)
 			}
 		}
 	}
@@ -68,7 +70,7 @@ export class EventDispatcher {
 		 */
 		listener: ListenerCbk<this, TEventTypeName>
 	): void {
-		const listeners = this._listeners
+		const listeners = this.#_listeners
 		const listenerArray = listeners[type]
 
 		if (listenerArray !== undefined) {
@@ -94,7 +96,7 @@ export class EventDispatcher {
 			throw new Error('event.type is required')
 		}
 
-		const listeners = this._listeners
+		const listeners = this.#_listeners
 		const listenerArray = listeners[event.type]
 
 		if (listenerArray !== undefined) {
@@ -113,7 +115,7 @@ export class EventDispatcher {
 
 				listener.call(this, eventOut)
 
-				if (this._options.get(listener)?.once) {
+				if (this.#_options.get(listener)?.once) {
 					this.removeEventListener(event.type, listener)
 				}
 			}
@@ -121,7 +123,7 @@ export class EventDispatcher {
 	}
 
 	removeAllEventListeners<TEventTypeName extends keyof this['EventTypes']>(type: TEventTypeName) {
-		const listeners = this._listeners
+		const listeners = this.#_listeners
 
 		if (listeners[type] !== undefined) {
 			listeners[type] = []
@@ -155,7 +157,7 @@ export class EventDispatcher {
 
 		listener.call(this, eventOut)
 
-		if (this._options.get(listener)?.once) {
+		if (this.#_options.get(listener)?.once) {
 			this.removeEventListener(event.type, listener)
 		}
 	}
@@ -200,6 +202,10 @@ export type CbkEvent<
 > = TTarget['EventTypes'][TName] & {
 	target: TTarget // self
 	type: TName
+}
+
+export function isEventDispatcher(v: any): v is EventDispatcher {
+	return v.isEventDispatcher === true
 }
 
 // export function addEvents<TEvents extends Record<string, Record<string, any>>>(events: TEvents) {

@@ -12,7 +12,9 @@
     "nohoist": [
       "**/@polaris.gl/examples/**",
       "**/@polaris.gl/examples-vite/**",
-      "**/@types/**"
+      "**/@types/**",
+      "**/vite",
+      "**/vite/**"
     ]
   },
   "scripts": {

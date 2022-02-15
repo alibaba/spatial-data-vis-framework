@@ -20,7 +20,7 @@ export interface LayerProps {
 	views?: { [key: string]: new () => View }
 }
 
-export interface LayerEventTypes<TThis> {
+export interface LayerEventTypes {
 	// add: { parent: TThis }
 	// remove: { parent: TThis }
 	// rootChange: { root: TThis }
@@ -41,7 +41,7 @@ export interface LayerEventTypes<TThis> {
  * empty layer
  */
 export class Layer extends AbstractLayer<LayerProps> {
-	declare EventTypes: AbstractLayer['EventTypes'] & LayerEventTypes<this>
+	declare EventTypes: AbstractLayer['EventTypes'] & LayerEventTypes
 
 	/**
 	 * readable name of this layer
@@ -149,7 +149,7 @@ export class Layer extends AbstractLayer<LayerProps> {
 				return
 			}
 			// 等待获得 parent 之后再请求 parent tree
-			this.onAdd = (parent: Layer) => {
+			this.onAdd = (parent) => {
 				parent.getProjection().then((projection) => {
 					this._projectionResolved = projection
 					resolve(projection)
@@ -183,7 +183,7 @@ export class Layer extends AbstractLayer<LayerProps> {
 				return
 			}
 			// 等待获得 parent 之后再请求 parent tree
-			this.onAdd = (parent: Layer) => {
+			this.onAdd = (parent) => {
 				parent.getTimeline().then((timeline) => {
 					this._timelineResolved = timeline
 					resolve(timeline)
@@ -212,7 +212,7 @@ export class Layer extends AbstractLayer<LayerProps> {
 				return
 			}
 			// 等待获得 parent 之后再请求 parent tree
-			this.onAdd = (parent: Layer) => {
+			this.onAdd = (parent) => {
 				parent.getPolaris().then((polaris) => {
 					this.polaris = polaris
 					resolve(polaris)
