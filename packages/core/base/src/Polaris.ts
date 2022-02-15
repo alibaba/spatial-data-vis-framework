@@ -7,9 +7,7 @@
  * Polaris 入口类 基类
  */
 
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import { AbstractLayer } from './AbstractLayer'
-// import { AbstractNode } from './AbstractNode'
+import { AbstractLayer, isAbstractLayer } from './AbstractLayer'
 import { Projection, MercatorProjection } from '@polaris.gl/projection'
 import { Timeline } from 'ani-timeline'
 import {
@@ -20,50 +18,12 @@ import {
 	GeographicStates,
 	CameraProxy,
 } from 'camera-proxy'
-// import { PropsManager } from '@polaris.gl/utils-props-manager'
 import { PolarisProps, defaultProps } from './props/index'
-
-// : Array<keyof PolarisProps>
-// const changeableKeys = [
-// 	// camera
-// 	'cameraFar' as const,
-// 	'cameraNear' as const,
-// 	'fov' as const,
-// 	'pitch' as const,
-// 	'pitchLimit' as const,
-// 	'zoom' as const,
-// 	'zoomLimit' as const,
-// 	'rotation' as const,
-// 	'center' as const,
-// 	// size
-// 	'width' as const,
-// 	'height' as const,
-// 	'ratio' as const,
-// ]
-
-// type ChangeableKey = typeof changeableKeys[0]
 
 export { colorToString } from './props/index'
 export type { PolarisProps } from './props/index'
 
-// function propsFilter<TProps extends Record<string, any>, TKey extends keyof Partial<TProps>>(
-// 	props: TProps,
-// 	keys: TKey[]
-// ): [Pick<TProps, TKey>, Array<keyof Omit<TProps, TKey>>] {
-// 	const result = {} as Pick<TProps, TKey>
-// 	for (let i = 0; i < keys.length; i++) {
-// 		const key = keys[i]
-// 		if (Reflect.has(props, key)) {
-// 			Reflect.set(props, key, props[key])
-// 		}
-// 	}
-
-// 	const otherKeys = Object.keys(props).filter((key) => !keys.includes(key as any))
-
-// 	return [result, otherKeys as Array<keyof Omit<TProps, TKey>>]
-// }
-
-interface Events {
+export interface AbstractPolarisEvents {
 	add: never
 	remove: never
 	rootChange: never
@@ -79,9 +39,7 @@ interface Events {
 /**
  * AbstractPolaris
  */
-export abstract class AbstractPolaris extends AbstractLayer<PolarisProps> {
-	declare EventTypes: AbstractLayer['EventTypes'] & Events
-
+export abstract class AbstractPolaris extends AbstractLayer {
 	// polaris is always the root
 	override get parent(): null {
 		return null
@@ -89,8 +47,6 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps> {
 	override get root(): this {
 		return this
 	}
-
-	// canvas: HTMLCanvasElement
 
 	cameraProxy: AnimatedCameraProxy
 	cameraControl?: PointerControl | TouchControl
@@ -253,6 +209,8 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps> {
 		this.onBeforeRender = () => {
 			const newStatesCode = this.cameraProxy.statesCode
 			this.traverse((obj) => {
+				if (!isAbstractLayer(obj)) return
+
 				if (obj.statesCode !== newStatesCode) {
 					obj.statesCode = newStatesCode
 					// obj._onViewChange.forEach((f) => f(this.cameraProxy, this))
@@ -387,8 +345,13 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps> {
 		this.cameraProxy.config.canvasHeight = this.canvasHeight
 		this.cameraProxy.ratio = this.ratio // -> this.cam.update()
 
-		this.props.width = width
-		this.props.height = height
+		// this.props.width = width
+		// this.props.height = height
+
+		this.setProps({
+			width,
+			height,
+		})
 
 		this.setExternalScale(externalScale)
 	}
@@ -416,7 +379,7 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps> {
 		}
 
 		// onBeforeRender
-		this.traverse((obj) => {
+		this.traverseVisible((obj) => {
 			if (obj.visible) {
 				// obj._onBeforeRender.forEach((cbk) => cbk(this, this.cameraProxy))
 				obj.dispatchEvent({ type: 'beforeRender', polaris: this })
@@ -426,7 +389,7 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps> {
 		this.render()
 
 		// onAfterRender
-		this.traverse((obj) => {
+		this.traverseVisible((obj) => {
 			if (obj.visible) {
 				// obj._onAfterRender.forEach((cbk) => cbk(this, this.cameraProxy))
 				obj.dispatchEvent({ type: 'afterRender', polaris: this })

@@ -8,6 +8,13 @@ import { deepDiffProps, pick } from './utils'
 /**
  * Props Manager.
  *
+ * @compare_logic
+ *
+ * Props are shallow-copied but deep-compared.
+ * That means:
+ * - Changing an array or object "in position" will not be detected.
+ * - Using deep objects as props is OK. But changing them will cause performance issue.
+ *
  * @note this is sync version. do not use async functions as listeners.
  */
 export class PropsManager<
@@ -27,7 +34,7 @@ export class PropsManager<
 	 * 获取属性对应的值
 	 * @deprecated if you need to use a property, add a listener to it.
 	 */
-	get<TKey extends keyof TProps>(key: TKey): TProps[TKey] | undefined {
+	get<TKey extends keyof TProps>(key: TKey): TProps[TKey] {
 		return this._props[key]
 	}
 

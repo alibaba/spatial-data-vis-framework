@@ -2,7 +2,6 @@
  * Copyright (C) 2021 Alibaba Group Holding Limited
  * All rights reserved.
  */
-/* eslint-disable @typescript-eslint/ban-types */
 
 import { AbstractLayer } from './AbstractLayer'
 import { Projection } from '@polaris.gl/projection'
@@ -10,7 +9,6 @@ import { Timeline } from 'ani-timeline'
 
 import { AbstractPolaris } from './Polaris'
 import { View } from './View'
-import type { CameraProxy } from 'camera-proxy'
 
 export interface LayerProps {
 	name?: string
@@ -20,17 +18,7 @@ export interface LayerProps {
 	views?: { [key: string]: new () => View }
 }
 
-export interface LayerEventTypes {
-	// add: { parent: TThis }
-	// remove: { parent: TThis }
-	// rootChange: { root: TThis }
-	visibilityChange: {}
-	viewChange: {
-		cameraProxy: CameraProxy
-		polaris: AbstractPolaris /* typeof Polaris */
-	}
-	beforeRender: { polaris: AbstractPolaris /* typeof Polaris */ }
-	afterRender: { polaris: AbstractPolaris /* typeof Polaris */ }
+export type LayerEvents = {
 	pick: { result?: PickEventResult }
 	hover: { result?: PickEventResult }
 	init: { projection: Projection; timeline: Timeline; polaris: AbstractPolaris }
@@ -40,13 +28,16 @@ export interface LayerEventTypes {
 /**
  * empty layer
  */
-export class Layer extends AbstractLaye {
-	declare EventTypes: AbstractLayer['EventTypes'] & LayerEventTypes
+export class Layer<
+	TEventTypes extends Record<string, Record<string, any>> = any,
+	TProps extends LayerProps = LayerProps
+> extends AbstractLayer<TEventTypes & LayerEvents, TProps> {
+	readonly isLayer = true
 
 	/**
 	 * readable name of this layer
 	 */
-	name: string
+	readonly name: string
 
 	/**
 	 * #### The actual renderable contents.
@@ -58,12 +49,7 @@ export class Layer extends AbstractLaye {
 	 * - should not be exposed to client developers.
 	 * - **only use this if you know what you are doing.**
 	 */
-	view: { [key: string]: View }
-
-	/**
-	 * if this layer has been added to a polaris instance, this will be set.
-	 */
-	polaris: AbstractPolaris | null
+	readonly view: { [key: string]: View }
 
 	/**
 	 * Initialization entry
@@ -86,8 +72,8 @@ export class Layer extends AbstractLaye {
 		this.name = props.name || 'abstract-layer'
 
 		// 本地投影和时间线
-		this._projectionLocal = props.projection
-		this._timelineLocal = props.timeline
+		this.#projectionLocal = props.projection
+		this.#timelineLocal = props.timeline
 
 		// initialize views by props.views
 		if (props.views) {
@@ -130,28 +116,34 @@ export class Layer extends AbstractLaye {
 	getProjection(): Promise<Projection> {
 		return new Promise((resolve) => {
 			// 	请求本地
-			if (this._projectionLocal) {
-				resolve(this._projectionLocal)
+			if (this.#projectionLocal) {
+				resolve(this.#projectionLocal)
 				return
 			}
 			// parent tree 回溯结果的本地缓存
-			if (this._projectionResolved) {
-				resolve(this._projectionResolved)
+			if (this.#projectionResolved) {
+				resolve(this.#projectionResolved)
 				return
 			}
 			// 请求 parent tree
 			if (this.parent) {
+				if (!isLayer(this.parent))
+					throw new Error('Can not resolve projection from parent because parent is not a Layer.')
+
 				// 把任务迭代地交给上级，而非自己去一层层遍历上级
 				this.parent.getProjection().then((projection) => {
-					this._projectionResolved = projection
+					this.#projectionResolved = projection
 					resolve(projection)
 				})
 				return
 			}
 			// 等待获得 parent 之后再请求 parent tree
 			this.onAdd = (parent) => {
+				if (!isLayer(parent))
+					throw new Error('Can not resolve projection from parent because parent is not a Layer.')
+
 				parent.getProjection().then((projection) => {
-					this._projectionResolved = projection
+					this.#projectionResolved = projection
 					resolve(projection)
 				})
 			}
@@ -164,28 +156,34 @@ export class Layer extends AbstractLaye {
 	getTimeline(): Promise<Timeline> {
 		return new Promise((resolve) => {
 			// 	请求本地
-			if (this._timelineLocal) {
-				resolve(this._timelineLocal)
+			if (this.#timelineLocal) {
+				resolve(this.#timelineLocal)
 				return
 			}
 			// parent tree 回溯结果的本地缓存
-			if (this._timelineResolved) {
-				resolve(this._timelineResolved)
+			if (this.#timelineResolved) {
+				resolve(this.#timelineResolved)
 				return
 			}
 			// 请求 parent tree
 			if (this.parent) {
+				if (!isLayer(this.parent))
+					throw new Error('Can not resolve timeline from parent because parent is not a Layer.')
+
 				// 把任务迭代地交给上级，而非自己去一层层遍历上级
 				this.parent.getTimeline().then((timeline) => {
-					this._timelineResolved = timeline
+					this.#timelineResolved = timeline
 					resolve(timeline)
 				})
 				return
 			}
 			// 等待获得 parent 之后再请求 parent tree
 			this.onAdd = (parent) => {
+				if (!isLayer(parent))
+					throw new Error('Can not resolve timeline from parent because parent is not a Layer.')
+
 				parent.getTimeline().then((timeline) => {
-					this._timelineResolved = timeline
+					this.#timelineResolved = timeline
 					resolve(timeline)
 				})
 			}
@@ -198,23 +196,29 @@ export class Layer extends AbstractLaye {
 	getPolaris(): Promise<AbstractPolaris> {
 		return new Promise((resolve) => {
 			// 	请求本地
-			if (this.polaris) {
-				resolve(this.polaris)
+			if (this.#polarisResolved) {
+				resolve(this.#polarisResolved)
 				return
 			}
 			// 请求 parent tree
 			if (this.parent) {
+				if (!isLayer(this.parent))
+					throw new Error('Can not resolve polaris from parent because parent is not a Layer.')
+
 				// 把任务迭代地交给上级，而非自己去一层层遍历上级
 				this.parent.getPolaris().then((polaris) => {
-					this.polaris = polaris
+					this.#polarisResolved = polaris
 					resolve(polaris)
 				})
 				return
 			}
 			// 等待获得 parent 之后再请求 parent tree
 			this.onAdd = (parent) => {
+				if (!isLayer(parent))
+					throw new Error('Can not resolve polaris from parent because parent is not a Layer.')
+
 				parent.getPolaris().then((polaris) => {
-					this.polaris = polaris
+					this.#polarisResolved = polaris
 					resolve(polaris)
 				})
 			}
@@ -229,52 +233,37 @@ export class Layer extends AbstractLaye {
 	/**
 	 * update props
 	 */
-	// updateProps(props: never): void {}
 
 	dispose() {}
 
-	// #region legacy apis
-
 	// 本地传入
-	/**
-	 * @deprecated
-	 */
-	private _timelineLocal?: Timeline
-	/**
-	 * @deprecated
-	 */
-	private _projectionLocal?: Projection
+	#timelineLocal?: Timeline
+	#projectionLocal?: Projection
 
 	// 从 parent tree 上回溯到的，本地缓存（避免每次都回溯）
-	/**
-	 * @deprecated
-	 */
-	private _timelineResolved?: Timeline
-	/**
-	 * @deprecated
-	 */
-	private _projectionResolved?: Projection
+	#timelineResolved?: Timeline
+	#projectionResolved?: Projection
 
-	// get projection(): Promise<Projection> {
-	// 	return this.getProjection()
-	// }
-	// get timeline(): Promise<Timeline> {
-	// 	return this.getTimeline()
-	// }
+	/**
+	 * if this layer has been added to a polaris instance, this will be set.
+	 */
+	#polarisResolved: AbstractPolaris | null
+
+	// #region legacy apis
 
 	/**
 	 * sync interface. legacy only. not recommended.
 	 * @deprecated
 	 */
 	get localProjection(): Projection | undefined {
-		return this._projectionLocal
+		return this.#projectionLocal
 	}
 	/**
 	 * sync interface. legacy only. not recommended.
 	 * @deprecated
 	 */
 	get resolvedProjection(): Projection | undefined {
-		return this._projectionResolved
+		return this.#projectionResolved
 	}
 
 	/**
@@ -282,14 +271,14 @@ export class Layer extends AbstractLaye {
 	 * @deprecated
 	 */
 	get localTimeline(): Timeline | undefined {
-		return this._timelineLocal
+		return this.#timelineLocal
 	}
 	/**
 	 * sync interface. legacy only. not recommended.
 	 * @deprecated
 	 */
 	get resolvedTimeline(): Timeline | undefined {
-		return this._timelineResolved
+		return this.#timelineResolved
 	}
 
 	/**
@@ -323,12 +312,11 @@ export class Layer extends AbstractLaye {
 		})
 	}
 
-	/**
-	 * @deprecated use {@link https://www.typescriptlang.org/docs/handbook/2/classes.html#this-based-type-guards}
-	 */
-	readonly isLayer = true
-
 	// #endregion
+}
+
+export function isLayer(v: any): v is Layer {
+	return v.isLayer && v.isAbstractLayer && v.isAbstractNode && v.isEventDispatcher
 }
 
 //

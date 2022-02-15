@@ -12,12 +12,12 @@
  */
 /* eslint-disable @typescript-eslint/ban-types */
 
-import { AbstractNode, AbstractNodeEvents } from './AbstractNode'
+import { AbstractNode } from './AbstractNode'
 import type { CameraProxy } from 'camera-proxy'
 import type { AbstractPolaris } from './Polaris'
 import { PropsManager, ListenerOptions, Callback } from '@polaris.gl/utils-props-manager'
 
-export type AbstractLayerEvents = {
+type Events = {
 	visibilityChange: {}
 	viewChange: {
 		cameraProxy: CameraProxy
@@ -26,6 +26,15 @@ export type AbstractLayerEvents = {
 	beforeRender: { polaris: AbstractPolaris /* typeof Polaris */ }
 	afterRender: { polaris: AbstractPolaris /* typeof Polaris */ }
 }
+
+export type Props<
+	TProps extends Record<string, any> = any,
+	TModifiableKeys extends keyof TProps = keyof TProps
+> = Partial<TProps>
+export type ExtractProps<T> = T extends Props<infer TProps, any> ? TProps : never
+export type ExtractModifiableKeys<T> = T extends Props<any, infer TModifiableKeys>
+	? TModifiableKeys
+	: never
 
 /**
  * Base class for layers
@@ -36,10 +45,14 @@ export type AbstractLayerEvents = {
  * @noteCN
  * 在 TEvents 中声明所有可能的事件和回调接口，来在事件接口中获得正确的类型检查。
  */
-export abstract class AbstractLayer<
-	TEventTypes extends Record<string, Record<string, any>> = any,
-	TProps extends Record<string, any> = any
-> extends AbstractNode<TEventTypes & AbstractLayerEvents> {
+export abstract class AbstractLayer extends AbstractNode {
+	/**
+	 *
+	 */
+	declare EventTypes: AbstractNode['EventTypes'] & Events
+
+	declare props: Props
+
 	readonly isBase = true
 	readonly isAbstractLayer = true
 
@@ -73,15 +86,12 @@ export abstract class AbstractLayer<
 		this.visible = false
 	}
 
-	/**
-	 * @deprecated May change in future
-	 */
 	traverseVisible(handler: (node: AbstractLayer /* this */) => void): void {
 		if (!this.visible) return
 
 		handler(this)
 		this.children.forEach((child) => {
-			if (isAbstractLayer(child)) {
+			if (AbstractLayer.is(child)) {
 				child.traverseVisible(handler)
 			}
 		})
@@ -92,9 +102,12 @@ export abstract class AbstractLayer<
 	/**
 	 * powering the `watchProps` method of this class.
 	 */
-	#propsManager = new PropsManager<TProps>()
+	#propsManager = new PropsManager<
+		ExtractProps<this['props']>,
+		ExtractModifiableKeys<this['props']>
+	>()
 
-	// readonly props: Partial<TProps> = new Proxy(Object.freeze({}) as Partial<TProps>, {
+	// readonly props: Props = new Proxy(Object.freeze({}) as Partial<ExtractProps<this['props']>>, {
 	// 	// @note use arrow function to get the private PropsManager
 	// 	get: (target, propertyName, receiver) => {
 	// 		return this.#propsManager.get(propertyName as any)
@@ -104,19 +117,23 @@ export abstract class AbstractLayer<
 	// 	},
 	// })
 
-	protected getProp<TKey extends keyof TProps>(key: TKey): TProps[TKey] {
+	protected getProp<TKey extends keyof ExtractProps<this['props']>>(
+		key: TKey
+	): ExtractProps<this['props']>[TKey] | undefined {
 		return this.#propsManager.get(key)
 	}
 
-	protected watchProps<TKeys extends Array<keyof TProps>>(
+	protected watchProps<TKeys extends Array<ExtractModifiableKeys<this['props']>>>(
 		keys: TKeys,
-		callback: Callback<TProps, TKeys[number]>,
+		callback: Callback<ExtractProps<this['props']>, TKeys[number]>,
 		options?: ListenerOptions
 	): void {
 		this.#propsManager.addListener(keys, callback, options)
 	}
 
-	setProps(props: Partial<TProps>) {
+	setProps(
+		props: Partial<Pick<ExtractProps<this['props']>, ExtractModifiableKeys<this['props']>>>
+	) {
 		this.#propsManager.set(props)
 	}
 
@@ -209,10 +226,10 @@ export abstract class AbstractLayer<
 	}
 
 	// #endregion
-}
 
-export function isAbstractLayer(v: any): v is AbstractLayer {
-	return v.isAbstractLayer && v.isAbstractNode && v.isEventDispatcher
+	static is(v): v is AbstractLayer {
+		return v.isAbstractNode && (v.isAbstractLayer || v.isBase)
+	}
 }
 
 // test code

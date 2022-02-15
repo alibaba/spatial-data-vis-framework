@@ -31,22 +31,25 @@ import { EventDispatcher } from './EventDispatcher'
  * - This kind of feature should be implemented with mixins.
  */
 
-type Events = {
+// let a : Events
+// a.add.parent
+
+/**
+ * Event types
+ */
+export type AbstractNodeEvents = {
 	add: { parent: AbstractNode }
 	remove: { parent: AbstractNode }
 	rootChange: { root: AbstractNode | null }
 }
 
-// let a : Events
-// a.add.parent
-
 /**
  * Tree structure
  * @note handles tree context
  */
-export class AbstractNode extends EventDispatcher {
-	declare EventTypes: Events
-
+export class AbstractNode<
+	TEventTypes extends Record<string, Record<string, any>> = any
+> extends EventDispatcher<TEventTypes & AbstractNodeEvents> {
 	/**
 	 * has this node been added and removed before
 	 * @note currently not support re-add an used node

@@ -8,6 +8,8 @@
  * @author Simon
  */
 
+import { IEventDispatcher } from './EventDispatcher.interface'
+
 /**
  * An object that dispatches events.
  *
@@ -19,15 +21,13 @@
  * @note inspired by {@link [three.js](https://github.com/mrdoob/eventdispatcher.js/)}
  *
  */
-export class EventDispatcher<
-	TEventTypes extends Record<string, Record<string, any>> = Record<string, any>
-> {
+export class EventDispatcher implements IEventDispatcher {
 	#listeners = {} as any
 	#options = new WeakMap<Function, ListenerOptions>()
 
-	readonly isEventDispatcher: true
+	readonly isEventDispatcher = true
 
-	addEventListener<TEventTypeName extends keyof TEventTypes>(
+	addEventListener<TEventTypeName extends string>(
 		/**
 		 * type of the event
 		 */
@@ -35,7 +35,7 @@ export class EventDispatcher<
 		/**
 		 * callback function for the event
 		 */
-		listener: ListenerCbk<TEventTypes, TEventTypeName>,
+		listener: ListenerCbk<TEventTypeName>,
 		/**
 		 * An object that specifies characteristics about the event listener
 		 */
@@ -55,7 +55,7 @@ export class EventDispatcher<
 		}
 	}
 
-	removeEventListener<TEventTypeName extends keyof TEventTypes>(
+	removeEventListener<TEventTypeName extends string>(
 		/**
 		 * type of the event
 		 */
@@ -63,7 +63,7 @@ export class EventDispatcher<
 		/**
 		 * callback function for the event
 		 */
-		listener: ListenerCbk<TEventTypes, TEventTypeName>
+		listener: ListenerCbk<TEventTypeName>
 	): void {
 		const listeners = this.#listeners
 		const listenerArray = listeners[type]
@@ -79,7 +79,7 @@ export class EventDispatcher<
 		}
 	}
 
-	dispatchEvent<TEventTypeName extends keyof TEventTypes>(
+	dispatchEvent<TEventTypeName extends string>(
 		event: Record<string, any> & {
 			/**
 			 * assign the event type
@@ -95,7 +95,7 @@ export class EventDispatcher<
 		const listenerArray = listeners[event.type]
 
 		if (listenerArray !== undefined) {
-			const eventOut = event as any
+			const eventOut = event as CbkEvent<TEventTypeName>
 
 			eventOut.target = this
 
@@ -117,7 +117,7 @@ export class EventDispatcher<
 		}
 	}
 
-	removeAllEventListeners<TEventTypeName extends keyof TEventTypes>(type: TEventTypeName): void {
+	removeAllEventListeners<TEventTypeName extends string>(type: TEventTypeName) {
 		const listeners = this.#listeners
 
 		if (listeners[type] !== undefined) {
@@ -137,13 +137,13 @@ export class EventDispatcher<
 			 */
 			type: TEventTypeName
 		},
-		listener: ListenerCbk<TEventTypes, TEventTypeName>
+		listener: ListenerCbk<TEventTypeName>
 	): void {
 		if (!event.type) {
 			throw new Error('event.type is required')
 		}
 
-		const eventOut = event as any
+		const eventOut = event as CbkEvent<TEventTypeName>
 
 		eventOut.target = this
 
@@ -157,11 +157,12 @@ export class EventDispatcher<
 		}
 	}
 }
+
 /**
  * options
  * @note drop DOM related options
  */
-interface ListenerOptions {
+export interface ListenerOptions {
 	/**
 	 * A boolean value indicating that the listener should be invoked at most once after
 	 * being added. If true, the listener would be automatically removed when invoked.
@@ -174,22 +175,35 @@ interface ListenerOptions {
 /**
  * type of listener callback function
  */
-type ListenerCbk<
-	TEventTypes extends Record<string, Record<string, any>>,
-	TName extends keyof TEventTypes
-> = (
+export type ListenerCbk<TName extends string> = (
 	/**
 	 * emitted event.
 	 */
-	event: TEventTypes[TName] & {
-		target: EventDispatcher<TEventTypes> // self
+	event: Record<string, any> & {
+		target: EventDispatcher // self
 		type: TName
 	}
 ) => void
 
+/**
+ * event object passed to a callback
+ */
+export type CbkEvent<TName extends string> = Record<string, any> & {
+	target: EventDispatcher // self
+	type: TName
+}
+
+export function isEventDispatcher(v: any): v is EventDispatcher {
+	return v.isEventDispatcher === true
+}
+
+// export function addEvents<TEvents extends Record<string, Record<string, any>>>(events: TEvents) {
+// 	return function (constructor: Function)
+// }
+
 // type test code
 // const e = new EventDispatcher<{ aaa: { data: any }; add: { parent: any } }>()
-// const e = new EventDispatcher()
+// const e = new EventDispatcher() as IEventDispatcher<{ aaa: { data: any }; add: { parent: any } }>
 // e.addEventListener('aaa', (event) => {event})
 // e.addEventListener('add', (event) => {})
 // e.addEventListener('ccc', (event) => {})
@@ -203,5 +217,3 @@ type ListenerCbk<
 // const a : Record<string, any> & {'bb': number} = {bb:2}
 
 // a.cc
-
-// type a = keyof Record<string, any>
