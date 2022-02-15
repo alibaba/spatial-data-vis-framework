@@ -177,11 +177,21 @@ export interface POILayerProps extends STDLayerProps {
 	viewZoomReduction?: number
 
 	/**
+	 * Tile update zoom step, set this > 1 will let layer decrease its tile requests
+	 */
+	viewZoomStep?: number
+
+	/**
 	 * TileManager tile update strategy option
 	 * use replacement method when current vis tiles are in pending states
-	 * default is true
+	 * default is false
 	 */
 	useParentReplaceUpdate?: boolean
+
+	/**
+	 *
+	 */
+	debug?: boolean
 }
 
 /**
@@ -189,9 +199,7 @@ export interface POILayerProps extends STDLayerProps {
  */
 export const defaultProps: POILayerProps = {
 	dataType: 'auto',
-	getUrl: (x, y, z) => {
-		throw new Error('getUrl prop is not defined')
-	},
+	getUrl: (x, y, z) => 'CUSTOM_TILES_URL_HERE',
 	minZoom: 3,
 	maxZoom: 20,
 	featureIdKey: 'id',
@@ -213,15 +221,26 @@ export const defaultProps: POILayerProps = {
 	framesBeforeRequest: 10,
 	cacheSize: 512,
 	viewZoomReduction: 0,
-	useParentReplaceUpdate: true,
+	viewZoomStep: 1,
+	useParentReplaceUpdate: false,
+	debug: false,
 }
 
 export class POILayer extends STDLayer {
 	matr: MatrPoint
 
-	requestManager: XYZTileRequestManager
+	get tileManager() {
+		if (this.getProps('debug')) {
+			return this._tileManager
+		} else {
+			console.warn('TileManager can only be get in debug mode')
+			return undefined
+		}
+	}
 
-	tileManager: XYZTileManager
+	protected _requestManager: XYZTileRequestManager
+
+	protected _tileManager: XYZTileManager
 
 	private _ratio: number
 
@@ -277,6 +296,25 @@ export class POILayer extends STDLayer {
 	 * highlight api for TileLayers
 	 */
 	highlightByIds: (idsArr: number[], style: { [name: string]: any }) => void
+
+	/**
+	 * get the current tile loading status of this layer
+	 */
+	getLoadingStatus(): { pends: number; total: number } {
+		if (!this._tileManager) {
+			// not inited yet
+			return {
+				pends: 0,
+				total: 0,
+			}
+		}
+		const pends = this._tileManager.getPendingTilesCount()
+		const total = this._tileManager.getVisibleTilesCount()
+		return {
+			pends,
+			total,
+		}
+	}
 
 	init(projection, timeline, polaris) {
 		const p = polaris as PolarisGSI
@@ -355,13 +393,13 @@ export class POILayer extends STDLayer {
 					}
 				}
 
-				if (this.requestManager) {
-					this.requestManager.dispose()
+				if (this._requestManager) {
+					this._requestManager.dispose()
 				}
 
 				const customFetcher = this.getProps('customFetcher')
 				const customTileKeyGen = this.getProps('customTileKeyGen')
-				this.requestManager =
+				this._requestManager =
 					this.getProps('requestManager') ??
 					new XYZTileRequestManager({
 						dataType,
@@ -372,11 +410,11 @@ export class POILayer extends STDLayer {
 						},
 					})
 
-				if (this.tileManager) {
-					this.tileManager.dispose()
+				if (this._tileManager) {
+					this._tileManager.dispose()
 				}
 
-				this.tileManager = new XYZTileManager({
+				this._tileManager = new XYZTileManager({
 					layer: this,
 					minZoom: this.getProps('minZoom'),
 					maxZoom: this.getProps('maxZoom'),
@@ -384,15 +422,17 @@ export class POILayer extends STDLayer {
 					framesBeforeUpdate: this.getProps('framesBeforeRequest'),
 					viewZoomReduction: this.getProps('viewZoomReduction'),
 					useParentReplaceUpdate: this.getProps('useParentReplaceUpdate'),
+					zoomStep: this.getProps('viewZoomStep'),
 					getTileRenderables: (tileToken) => {
 						return this._createTileRenderables(tileToken, projection, polaris)
 					},
 					onTileRelease: (tile, token) => {
 						this._releaseTile(tile, token)
 					},
+					printErrors: this.getProps('debug'),
 				})
 
-				this.tileManager.start()
+				this._tileManager.start()
 			}
 		)
 
@@ -449,15 +489,8 @@ export class POILayer extends STDLayer {
 		this._indexMeshMap = new Map()
 		this._idMeshesMap = new Map()
 		this._idStyleMap = new Map()
-		this.requestManager.dispose()
-		this.tileManager.dispose()
-	}
-
-	getState() {
-		const pendsCount = this.tileManager ? this.tileManager.getPendsCount() : undefined
-		return {
-			pendsCount,
-		}
+		this._requestManager.dispose()
+		this._tileManager.dispose()
 	}
 
 	private _checkProps(polaris: PolarisGSI) {
@@ -487,7 +520,7 @@ export class POILayer extends STDLayer {
 			y = token[1],
 			z = token[2]
 
-		const requestPending = this.requestManager.request({ x, y, z })
+		const requestPending = this._requestManager.request({ x, y, z })
 		const requestPromise = requestPending.promise
 		const cacheKey = this._getCacheKey(x, y, z)
 
@@ -821,12 +854,12 @@ export class POILayer extends STDLayer {
 	}
 
 	private _pickPOI(polaris: Base, canvasCoords: CoordV2, ndc: CoordV2): PickEvent | undefined {
-		if (!this.tileManager || !(polaris instanceof PolarisGSI)) return
+		if (!this._tileManager || !(polaris instanceof PolarisGSI)) return
 
 		const markers: Marker[] = []
 		const meshes: Mesh[] = []
 
-		const renderableList = this.tileManager.getVisibleTiles()
+		const renderableList = this._tileManager.getVisibleTiles()
 		renderableList.forEach((r) => markers.push(...(r.layers as Marker[])))
 		renderableList.forEach((r) => meshes.push(...(r.meshes as Mesh[])))
 

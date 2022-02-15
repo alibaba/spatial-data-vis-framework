@@ -92,7 +92,7 @@ export type CommonTileManagerConfig = {
 	 * which means if the request failed TileManager will use an empty tile.
 	 * @default false
 	 */
-	RetryErroredRequests?: boolean
+	retryErroredRequests?: boolean
 }
 
 const defaultConfig = {
@@ -103,7 +103,7 @@ const defaultConfig = {
 	framesBeforeAbort: 5,
 	useParentReplaceUpdate: true,
 	printErrors: false,
-	RetryErroredRequests: false,
+	retryErroredRequests: false,
 }
 
 export class CommonTileManager implements TileManager {
@@ -131,22 +131,8 @@ export class CommonTileManager implements TileManager {
 		this._stableFrames = 0
 	}
 
-	/**
-	 * Will not include empty TileRenderables
-	 *
-	 * @return {*}  {CachedTileRenderables[]}
-	 * @memberof CommonTileManager
-	 */
 	getVisibleTiles(): CachedTileRenderables[] {
 		return Array.from(this._currVisibleTiles)
-
-		// const visTiles: CachedTileRenderables[] = []
-		// this._currVisibleTiles.forEach((tile) => {
-		// 	if (tile.layers.length > 0 || tile.meshes.length > 0) {
-		// 		visTiles.push(tile)
-		// 	}
-		// })
-		// return visTiles
 	}
 
 	forEachTile(f: (TileRenderables: TileRenderables, index?: number) => any) {
@@ -232,8 +218,12 @@ export class CommonTileManager implements TileManager {
 		}
 	}
 
-	getPendsCount() {
+	getPendingTilesCount() {
 		return this._promiseMap.size
+	}
+
+	getVisibleTilesCount() {
+		return this._currVisibleKeys.length
 	}
 
 	private _updateViewChange(polaris: any) {
@@ -301,12 +291,12 @@ export class CommonTileManager implements TileManager {
 					}
 
 					if (!this._promiseMap.has(cacheKey)) {
-						// promise was either aborted by us or never requested (which is abnormal)
-						// @NOTE: We do not identify the 'AbortError string from this error obj,
-						// as in many apps the errors are intercepted in the way of rejection.
-						// So, we should never assume the error.name/.message to be some specific string.
+						// promise was either aborted by us manually or never requested (which is abnormal)
+						// @NOTE: We do not identify the 'AbortError' string from this error object
+						// as in many apps the error will be intercepted through out the way of rejection.
+						// That means we would never assume the error.name/.message to be some specific value.
 						// We should only identify it from the user's abort() function return value.
-						// When abort() returns { success: true }, the promiseCache will be removed from map
+						// When abort() returns { success: true }, the promiseCache will be removed from this map.
 						return
 					}
 
@@ -314,7 +304,7 @@ export class CommonTileManager implements TileManager {
 						console.error('Polaris::TileManager - getTileRenderables error', err)
 					}
 
-					if (this.config.RetryErroredRequests) {
+					if (this.config.retryErroredRequests) {
 						// delete errored requests, retry next time
 						this._promiseMap.delete(cacheKey)
 					} else {

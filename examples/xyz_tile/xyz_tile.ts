@@ -147,6 +147,7 @@ const aoi = new AOILayer({
 	selectLineWidth: 6,
 	selectLineColor: '#00afff',
 	pickable: true,
+	debug: true,
 	onPicked: (info) => {
 		console.log('info', info)
 		// aoi.highlightByIds(Array.from(picked), { type: 'none' })
@@ -267,21 +268,21 @@ p.timeline.addTrack({
 
 		if (poi && p.children.has(poi)) {
 			info += '--- poi ---' + '\n'
-			info += 'vis tiles: ' + poi.tileManager.getVisibleTiles().length + '\n'
-			info += 'pends: ' + poi.getState().pendsCount + '\n'
+			info += 'vis tiles: ' + poi.getLoadingStatus().total + '\n'
+			info += 'pends: ' + poi.getLoadingStatus().pends + '\n'
 		}
 
 		if (aoi && p.children.has(aoi)) {
 			info += '--- aoi ---' + '\n'
-			info += 'vis tiles: ' + aoi.tileManager.getVisibleTiles().length + '\n'
-			info += 'pends: ' + aoi.getState().pendsCount + '\n'
+			info += 'vis tiles: ' + aoi.getLoadingStatus().total + '\n'
+			info += 'pends: ' + aoi.getLoadingStatus().pends + '\n'
 
-			const reqTimes = aoi.tileManager
+			const reqTimes = aoi['_tileManager']
 				.getVisibleTiles()
 				.map((tile) => Math.round(aoi.info.times.get(tile.key).reqTime))
 			info += 'max req: ' + Math.max(...reqTimes) + 'ms\n'
 
-			const genTimes = aoi.tileManager
+			const genTimes = aoi['_tileManager']
 				.getVisibleTiles()
 				.map((tile) => Math.round(aoi.info.times.get(tile.key).genTime))
 			info += 'max gen: ' + Math.max(...genTimes) + 'ms\n'

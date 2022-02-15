@@ -61,7 +61,12 @@ export interface TileManager {
 	/**
 	 * Get current pending (requesting/generating) tiles count
 	 */
-	getPendsCount(): number
+	getPendingTilesCount(): number
+
+	/**
+	 * Get current total count of tiles that should be visible (including tiles being requesting/generating)
+	 */
+	getVisibleTilesCount(): number
 
 	/**
 	 * forEach call for every cached tiles

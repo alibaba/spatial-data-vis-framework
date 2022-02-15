@@ -191,7 +191,7 @@ export interface AOILayerProps extends STDLayerProps {
  */
 const defaultProps: AOILayerProps = {
 	dataType: 'auto',
-	getUrl: (x, y, z) => 'CUSTOM_URL_FOR_TILES_HERE',
+	getUrl: (x, y, z) => 'CUSTOM_TILES_URL_HERE',
 	minZoom: 3,
 	maxZoom: 20,
 	featureIdKey: 'id',
@@ -226,14 +226,23 @@ type IndicatorRangeInfo = {
 export class AOILayer extends STDLayer {
 	matr: MatrUnlit
 
-	requestManager: XYZTileRequestManager
-
-	tileManager: XYZTileManager
-
 	/**
 	 * Performance info
 	 */
 	info: { times: Map<number | string, { reqTime: number; genTime: number }> }
+
+	get tileManager() {
+		if (this.getProps('debug')) {
+			return this._tileManager
+		} else {
+			console.warn('TileManager can only be get in debug mode')
+			return undefined
+		}
+	}
+
+	protected _requestManager: XYZTileRequestManager
+
+	protected _tileManager: XYZTileManager
 
 	/**
 	 * WorkerManager
@@ -275,6 +284,11 @@ export class AOILayer extends STDLayer {
 
 	private _selectedIds: Set<number | string>
 
+	/**
+	 * debug prop
+	 */
+	private _renderBSphere: boolean
+
 	constructor(props: Partial<AOILayerProps> = {}) {
 		const _props = {
 			...defaultProps,
@@ -288,6 +302,25 @@ export class AOILayer extends STDLayer {
 	 * highlight api for TileLayers
 	 */
 	highlightByIds: (idsArr: number[], style: { [name: string]: any }) => void
+
+	/**
+	 * get the current tile loading status of this layer
+	 */
+	getLoadingStatus(): { pends: number; total: number } {
+		if (!this._tileManager) {
+			// not inited yet
+			return {
+				pends: 0,
+				total: 0,
+			}
+		}
+		const pends = this._tileManager.getPendingTilesCount()
+		const total = this._tileManager.getVisibleTilesCount()
+		return {
+			pends,
+			total,
+		}
+	}
 
 	init(projection, timeline, polaris) {
 		const p = polaris as Polaris
@@ -335,6 +368,7 @@ export class AOILayer extends STDLayer {
 				'customTileKeyGen',
 				'cacheSize',
 				'viewZoomReduction',
+				'viewZoomStep',
 				'useParentReplaceUpdate',
 			],
 			() => {
@@ -378,13 +412,13 @@ export class AOILayer extends STDLayer {
 					}
 				}
 
-				if (this.requestManager) {
-					this.requestManager.dispose()
+				if (this._requestManager) {
+					this._requestManager.dispose()
 				}
 
 				const customFetcher = this.getProps('customFetcher')
 				const customTileKeyGen = this.getProps('customTileKeyGen')
-				this.requestManager =
+				this._requestManager =
 					this.getProps('requestManager') ??
 					new XYZTileRequestManager({
 						dataType,
@@ -395,11 +429,11 @@ export class AOILayer extends STDLayer {
 						},
 					})
 
-				if (this.tileManager) {
-					this.tileManager.dispose()
+				if (this._tileManager) {
+					this._tileManager.dispose()
 				}
 
-				this.tileManager = new XYZTileManager({
+				this._tileManager = new XYZTileManager({
 					layer: this,
 					minZoom: this.getProps('minZoom'),
 					maxZoom: this.getProps('maxZoom'),
@@ -407,6 +441,7 @@ export class AOILayer extends STDLayer {
 					framesBeforeUpdate: this.getProps('framesBeforeRequest'),
 					viewZoomReduction: this.getProps('viewZoomReduction'),
 					useParentReplaceUpdate: this.getProps('useParentReplaceUpdate'),
+					zoomStep: this.getProps('viewZoomStep'),
 					getTileRenderables: (tileToken) => {
 						return this._createTileRenderables(tileToken, projection, polaris)
 					},
@@ -414,10 +449,9 @@ export class AOILayer extends STDLayer {
 						this._releaseTile(tile, token)
 					},
 					printErrors: this.getProps('debug'),
-					zoomStep: 2,
 				})
 
-				this.tileManager.start()
+				this._tileManager.start()
 			}
 		)
 
@@ -472,17 +506,10 @@ export class AOILayer extends STDLayer {
 		this._hoveredIds = new Set()
 		this._selectedIds = new Set()
 		this._indicators = new Set()
-		this.requestManager.dispose()
-		this.tileManager.dispose()
+		this._requestManager.dispose()
+		this._tileManager.dispose()
 		if (this._workerManager) {
 			this._workerManager.dispose()
-		}
-	}
-
-	getState() {
-		const pendsCount = this.tileManager ? this.tileManager.getPendsCount() : undefined
-		return {
-			pendsCount,
 		}
 	}
 
@@ -493,17 +520,19 @@ export class AOILayer extends STDLayer {
 			y = token[1],
 			z = token[2]
 
-		const requestPending = this.requestManager.request({ x, y, z })
+		const requestPending = this._requestManager.request({ x, y, z })
 		const cacheKey = this._getCacheKey(x, y, z)
 
 		// perf indicator
-		this.info.times.set(cacheKey, { reqTime: performance.now(), genTime: 0 })
+		if (this.getProps('debug')) {
+			this.info.times.set(cacheKey, { reqTime: performance.now(), genTime: 0 })
+		}
 
 		const promise = new Promise<TileRenderables>((resolve, reject) => {
 			requestPending.promise
 				.then((data) => {
 					// Perf log
-					const time = this.info.times.get(cacheKey)
+					const time = this.getProps('debug') ? this.info.times.get(cacheKey) : undefined
 					if (time) {
 						time.reqTime = performance.now() - time.reqTime
 						time.genTime = performance.now()
@@ -802,7 +831,7 @@ export class AOILayer extends STDLayer {
 		mesh.geometry = geom
 		mesh.material = this.matr
 
-		if (this.getProps('debug') && geom.boundingSphere) {
+		if (this.getProps('debug') && this._renderBSphere && geom.boundingSphere) {
 			const wireframe = new Mesh({
 				name: 'bsphere-wireframe',
 				geometry: genBSphereWireframe(geom.boundingSphere),
@@ -839,6 +868,7 @@ export class AOILayer extends STDLayer {
 		const unHoveredLineColor = this.getProps('unHoveredLineColor')
 		const unHoveredLineOpacity = this.getProps('unHoveredLineOpacity')
 
+		// hover indicator
 		let hoverLevel = hoverLineLevel
 		if (hoverLineWidth > 1 && hoverLineLevel === 1) {
 			hoverLevel = 2
@@ -870,7 +900,7 @@ export class AOILayer extends STDLayer {
 		})
 		hoverIndicator.gline.extras.isHoverIndicator = true
 
-		// Select indicator
+		// select indicator
 		const selectLineWidth = this.getProps('selectLineWidth') as number
 		const selectLineColor = this.getProps('selectLineColor')
 		const selectLineLevel = this.getProps('selectLineLevel')
@@ -914,8 +944,8 @@ export class AOILayer extends STDLayer {
 	}
 
 	private _pickAOI(polaris: Base, canvasCoords: CoordV2, ndc: CoordV2): PickEvent | undefined {
-		if (!this.tileManager || !(polaris instanceof PolarisGSI)) return
-		const tiles = this.tileManager.getVisibleTiles()
+		if (!this._tileManager || !(polaris instanceof PolarisGSI)) return
+		const tiles = this._tileManager.getVisibleTiles()
 		for (let i = 0; i < tiles.length; i++) {
 			const tile = tiles[i]
 			const meshes = tile.meshes
