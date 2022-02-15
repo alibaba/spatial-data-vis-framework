@@ -22,7 +22,7 @@ const p = new PolarisGSIGL2({
 })
 window['p'] = p
 p.timeline.config.ignoreErrors = false
-p.onViewChange = (cam) => console.log(cam.zoom)
+p.onViewChange = (cam) => console.log('zoom', cam.zoom)
 
 const framesBeforeRequest = 10
 const viewZoomReduction = 0

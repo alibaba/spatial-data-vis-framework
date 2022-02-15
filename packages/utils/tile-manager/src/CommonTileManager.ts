@@ -93,6 +93,15 @@ export type CommonTileManagerConfig = {
 	 * @default false
 	 */
 	retryErroredRequests?: boolean
+
+	/**
+	 * The ratio to check if the current level tiles should replace parent tiles
+	 * only if the: currAvailableTilesCount > totalTilesShouldBeVisible * ratio is true, the parent tiles will be hidden
+	 * and replaced by correct tiles
+	 * @default 0.3
+	 * @NOTE this config will only work if 'useParentReplaceUpdate' option is on
+	 */
+	replacementRatio?: number
 }
 
 const defaultConfig = {
@@ -102,6 +111,7 @@ const defaultConfig = {
 	framesBeforeUpdate: 5,
 	framesBeforeAbort: 5,
 	useParentReplaceUpdate: true,
+	replacementRatio: 0.3,
 	printErrors: false,
 	retryErroredRequests: false,
 }
@@ -380,7 +390,7 @@ export class CommonTileManager implements TileManager {
 	 * steps:
 	 * 1. check state & list unready tiles
 	 * 2. get nearest available parents for unready tiles
-	 * 3. show parent tiles instead of unready tiles, but hide those children covered by them
+	 * 3. show parent tiles instead of unready tiles, while hiding children covered by them
 	 *
 	 */
 	private _updateCurrTilesVisReplaceVer() {
@@ -399,7 +409,8 @@ export class CommonTileManager implements TileManager {
 		// if there is any tiles already generated, it can be displayed
 		// replace the low level tiles with generated high level tile immediately
 		// will let user know map is loading
-		if (availableKeys.size > 0) {
+		if (availableKeys.size > this._currVisibleKeys.length * this.config.replacementRatio) {
+			// availableKeys.size > 0
 			this._updateCurrTilesVisibility()
 			return
 		}

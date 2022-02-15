@@ -189,6 +189,15 @@ export interface POILayerProps extends STDLayerProps {
 	useParentReplaceUpdate?: boolean
 
 	/**
+	 * The ratio to check if the current level tiles should replace parent tiles
+	 * only if the: currAvailableTilesCount > totalTilesShouldBeVisible * ratio is true, the parent tiles will be hidden
+	 * and replaced by correct tiles
+	 * @default 0.3
+	 * @NOTE this config will only work if 'useParentReplaceUpdate' option is on
+	 */
+	replacementRatio?: number
+
+	/**
 	 *
 	 */
 	debug?: boolean
@@ -223,6 +232,7 @@ export const defaultProps: POILayerProps = {
 	viewZoomReduction: 0,
 	viewZoomStep: 1,
 	useParentReplaceUpdate: false,
+	replacementRatio: 0.3,
 	debug: false,
 }
 
@@ -355,6 +365,7 @@ export class POILayer extends STDLayer {
 				'cacheSize',
 				'viewZoomReduction',
 				'useParentReplaceUpdate',
+				'replacementRatio',
 			],
 			() => {
 				this._checkProps(p)
@@ -422,6 +433,7 @@ export class POILayer extends STDLayer {
 					framesBeforeUpdate: this.getProps('framesBeforeRequest'),
 					viewZoomReduction: this.getProps('viewZoomReduction'),
 					useParentReplaceUpdate: this.getProps('useParentReplaceUpdate'),
+					replacementRatio: this.getProps('replacementRatio'),
 					zoomStep: this.getProps('viewZoomStep'),
 					getTileRenderables: (tileToken) => {
 						return this._createTileRenderables(tileToken, projection, polaris)
