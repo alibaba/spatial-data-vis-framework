@@ -40,7 +40,7 @@ export interface LayerEventTypes {
 /**
  * empty layer
  */
-export class Layer extends AbstractLayer<LayerProps> {
+export class Layer extends AbstractLaye {
 	declare EventTypes: AbstractLayer['EventTypes'] & LayerEventTypes
 
 	/**
