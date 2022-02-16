@@ -4,6 +4,7 @@
  *
  * @author Simon
  *
+ *
  * @note about performance of class extending
  * 		@link https://mathiasbynens.be/notes/prototypes
  * 		@link https://webkit.org/blog/6756/es6-feature-complete/#:~:text=Property%20Conditions%20and-,Adaptive%20Watchpoints,-Since%20TryGetById%20participates
@@ -18,7 +19,6 @@ import type { AbstractLayerEvents } from './events'
 
 /**
  * Base class for layers, with reactive props and event model.
- *
  */
 export abstract class AbstractLayer<
 	TProps extends Record<string, any> = Record<string, any>,

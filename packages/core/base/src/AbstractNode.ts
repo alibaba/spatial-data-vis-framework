@@ -7,7 +7,7 @@
  * @author Simon
  */
 
-import { EventDispatcher, EventMapBase, DefaultEventMap } from './EventDispatcher'
+import { EventDispatcher } from './EventDispatcher'
 
 import type { AbstractNodeEvents } from './events'
 

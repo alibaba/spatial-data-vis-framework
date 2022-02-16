@@ -38,6 +38,10 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 
 	#layerStatesCode = new WeakMap<AbstractLayer, string>()
 
+	/**
+	 * @todo readonly props should use getter
+	 */
+
 	cameraProxy: AnimatedCameraProxy
 	cameraControl?: PointerControl | TouchControl
 	cameraman: Cameraman
@@ -101,6 +105,11 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 		}
 
 		/**
+		 * @todo timeline projection ... unchangeable props
+		 */
+		this.setProps(_props)
+
+		/**
 		 * init timeline
 		 */
 		const timeline =
@@ -118,6 +127,7 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 		/**
 		 * 等到全部初始化完成后再开始计时运行
 		 * @TODO 应该允许更精确的控制
+		 * @TODO not safe for input timeline
 		 */
 		setTimeout(() => {
 			this.timeline.play()
