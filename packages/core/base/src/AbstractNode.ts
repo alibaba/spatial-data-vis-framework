@@ -7,7 +7,9 @@
  * @author Simon
  */
 
-import { EventDispatcher, EventBase } from './EventDispatcher'
+import { EventDispatcher, EventMapBase, DefaultEventMap } from './EventDispatcher'
+
+import type { AbstractNodeEvents } from './events'
 
 /**
  * @explain ### Why not using `this` as the type of `parent`?
@@ -31,34 +33,13 @@ import { EventDispatcher, EventBase } from './EventDispatcher'
  * - This kind of feature should be implemented with mixins.
  */
 
-// Event types
-
-/**
- * the event when this node is added to a parent node
- * @note will only happen once, because node can only be added once.
- * @note if the node is already added. this event will not fire
- */
-type AddEvent = { type: 'add'; parent: AbstractNode }
-/**
- * the event when this node is removed from its parent node
- * @note will only happen once, because node can only be added once.
- * @note if the node is already removed. this event will not fire
- */
-type RemoveEvent = { type: 'remove'; parent: AbstractNode }
-/**
- * the event when this node is removed from its parent node
- * @note will only happen once, because node can only be added once.
- * @note if the node is already removed. this event will not fire
- */
-type RootChangeEvent = { type: 'rootChange'; root: AbstractNode | null }
-
 /**
  * Tree structure
  * @note handles tree context
  */
-export class AbstractNode<TExtraEvents extends EventBase = EventBase> extends EventDispatcher<
-	AddEvent | RemoveEvent | RootChangeEvent | TExtraEvents
-> {
+export class AbstractNode<
+	TEventMap extends AbstractNodeEvents = AbstractNodeEvents
+> extends EventDispatcher<TEventMap> {
 	/**
 	 * parent node
 	 * @readonly
@@ -166,6 +147,34 @@ export class AbstractNode<TExtraEvents extends EventBase = EventBase> extends Ev
 	#root: null | AbstractNode = null
 	#parent: null | AbstractNode = null
 	#children = new Set<AbstractNode>()
+
+	/**
+	 * callback when object/layer is added to a parent
+	 * @note different from addEventListener('add'), this will be triggered if the layer is already added to a parent
+	 */
+	set onAdd(f: (parent: AbstractNode) => void) {
+		if (this.parent) {
+			f(this.parent)
+		} else {
+			this.addEventListener(
+				'add',
+				(event) => {
+					f(event.parent)
+				},
+				{ once: true }
+			)
+		}
+	}
+
+	/**
+	 * @deprecated use {@link .addEventListener} instead
+	 * callback when object/layer is removed from parent
+	 */
+	set onRemove(f: (parent) => void) {
+		this.addEventListener('remove', (event) => {
+			f(event.parent)
+		})
+	}
 }
 
 export function isAbstractNode(v: any): v is AbstractNode {

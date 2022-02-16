@@ -45,7 +45,7 @@ export const DefaultLayerProps: FlyLineLayerProps = {
  *      repeat
  *  }... ]
  */
-export class FlyLineLayer extends StandardLayer<Record<string, never>, FlyLineLayerProps> {
+export class FlyLineLayer extends StandardLayer<FlyLineLayerProps> {
 	props: FlyLineLayerProps
 
 	flyline: FlyLine
@@ -104,36 +104,36 @@ export class FlyLineLayer extends StandardLayer<Record<string, never>, FlyLineLa
 		this.timeline = timeline
 
 		const listeningFlylineProps = [
-			'data',
-			'level',
-			'color',
-			'opacity',
-			'transparent',
-			'lineWidth',
-			'pointSize',
-			'texture',
-			'image',
-			'flipY',
-			'resolution',
-			'usePerspective',
-			'usePoint',
-			'infinity',
-			'lineSegments',
-			'flyPercent',
-			'pool',
-			'easing',
-			'frameDropping',
-			'useColors',
-			'colors',
+			'data' as const,
+			'level' as const,
+			'color' as const,
+			'opacity' as const,
+			'transparent' as const,
+			'lineWidth' as const,
+			'pointSize' as const,
+			'texture' as const,
+			'image' as const,
+			'flipY' as const,
+			'resolution' as const,
+			'usePerspective' as const,
+			'usePoint' as const,
+			'infinity' as const,
+			'lineSegments' as const,
+			'flyPercent' as const,
+			'pool' as const,
+			'easing' as const,
+			'frameDropping' as const,
+			'useColors' as const,
+			'colors' as const,
 		]
 		this.listenProps(listeningFlylineProps, () => {
 			listeningFlylineProps.forEach((key) => {
-				this.props[key] = this.getProp(key)
+				this.props[key] = this.getProp(key) as any // @todo hwo to check this kind of type
 			})
 			const data = this.getProp('data')
 			if (!data || !data.length) return
 
-			this.props.pool = Math.max(data.length, this.getProp('pool'))
+			this.props.pool = Math.max(data.length, this.getProp('pool') ?? 1)
 			// Re-create flyline instance
 			this.createFlyline(timeline, polaris)
 			this.updateFlylinesData(data)
@@ -267,18 +267,18 @@ export class FlyLineLayer extends StandardLayer<Record<string, never>, FlyLineLa
 			onStart: () => {},
 			onEnd: () => {
 				this.flyline.matr.alphaMode = this.getProp('transparent') ? 'BLEND' : 'OPAQUE'
-				this.flyline.matr.opacity = this.getProp('opacity')
+				this.flyline.matr.opacity = this.getProp('opacity') ?? 1
 				this.group.visible = true
 			},
 			onUpdate: (t, p) => {
-				this.flyline.matr.opacity = this.getProp('opacity') * p
+				this.flyline.matr.opacity = (this.getProp('opacity') ?? 1) * p
 			},
 		})
 	}
 
 	async hide(duration = 1000) {
 		this.flyline.matr.alphaMode = 'BLEND'
-		this.flyline.matr.opacity = this.getProp('opacity')
+		this.flyline.matr.opacity = this.getProp('opacity') ?? 1
 
 		const timeline = await this.getTimeline()
 		timeline.addTrack({
@@ -288,11 +288,11 @@ export class FlyLineLayer extends StandardLayer<Record<string, never>, FlyLineLa
 			onStart: () => {},
 			onEnd: () => {
 				this.flyline.matr.alphaMode = this.getProp('transparent') ? 'BLEND' : 'OPAQUE'
-				this.flyline.matr.opacity = this.getProp('opacity')
+				this.flyline.matr.opacity = this.getProp('opacity') ?? 1
 				this.group.visible = false
 			},
 			onUpdate: (t, p) => {
-				this.flyline.matr.opacity = this.getProp('opacity') * (1 - p)
+				this.flyline.matr.opacity = (this.getProp('opacity') ?? 1) * (1 - p)
 			},
 		})
 	}

@@ -13,30 +13,17 @@
 
 import { AbstractNode } from './AbstractNode'
 import type { CameraProxy } from 'camera-proxy'
-import type { AbstractPolaris } from './Polaris'
 import { PropsManager, ListenerOptions, Callback } from '@polaris.gl/utils-props-manager'
-
-export type AbstractLayerEvents = {
-	/**
-	 *
-	 */
-	visibilityChange: Record<string, never>
-	viewChange: {
-		cameraProxy: CameraProxy
-		polaris: AbstractPolaris /* typeof Polaris */
-	}
-	beforeRender: { polaris: AbstractPolaris /* typeof Polaris */ }
-	afterRender: { polaris: AbstractPolaris /* typeof Polaris */ }
-}
+import type { AbstractLayerEvents } from './events'
 
 /**
  * Base class for layers, with reactive props and event model.
  *
  */
 export abstract class AbstractLayer<
-	TExtraEvents extends Record<string, Record<string, any>> = Record<string, never>,
-	TProps extends Record<string, any> = any
-> extends AbstractNode<TExtraEvents & AbstractLayerEvents> {
+	TProps extends Record<string, any> = Record<string, any>,
+	TExtraEventMap extends AbstractLayerEvents = AbstractLayerEvents
+> extends AbstractNode<TExtraEventMap> {
 	readonly isBase = true
 	readonly isAbstractLayer = true
 
@@ -57,11 +44,28 @@ export abstract class AbstractLayer<
 	}
 
 	/**
-	 * 相机状态，用于对比视角是否发生变化
-	 *
-	 * camera states
+	 * @deprecated use {@link .addEventListener} instead
+	 * callback when object/layer
 	 */
-	statesCode = ''
+	set onVisibilityChange(f: () => void) {
+		this.addEventListener('visibilityChange', () => {
+			f()
+		})
+	}
+
+	/**
+	 * @deprecated May change in future
+	 */
+	traverseVisible(handler: (node: AbstractLayer /* this */) => void): void {
+		if (!this.visible) return
+
+		handler(this)
+		this.children.forEach((child) => {
+			if (isAbstractLayer(child)) {
+				child.traverseVisible(handler)
+			}
+		})
+	}
 
 	show() {
 		this.visible = true
@@ -98,24 +102,6 @@ export abstract class AbstractLayer<
 	 */
 	abstract dispose(): void
 
-	/**
-	 * callback when object/layer is added to a parent
-	 * @note different from addEventListener('add'), this will be triggered if the layer is already added to a parent
-	 */
-	set onAdd(f: (parent: AbstractNode) => void) {
-		if (this.parent) {
-			f(this.parent)
-		} else {
-			this.addEventListener(
-				'add',
-				(event) => {
-					f(event.parent)
-				},
-				{ once: true }
-			)
-		}
-	}
-
 	// #region legacy apis
 
 	/**
@@ -140,16 +126,6 @@ export abstract class AbstractLayer<
 	 * @deprecated use {@link getProp} instead
 	 */
 	protected getProps = this.getProp
-
-	/**
-	 * @deprecated use {@link .addEventListener} instead
-	 * callback when object/layer is removed from parent
-	 */
-	set onRemove(f: (parent) => void) {
-		this.addEventListener('remove', (event) => {
-			f(event.parent)
-		})
-	}
 
 	/**
 	 * @deprecated use {@link .addEventListener} instead
@@ -178,30 +154,6 @@ export abstract class AbstractLayer<
 	set onAfterRender(f: (polaris: any /* typeof Polaris */) => void) {
 		this.addEventListener('afterRender', (event) => {
 			f(event.polaris)
-		})
-	}
-
-	/**
-	 * @deprecated use {@link .addEventListener} instead
-	 * callback when object/layer
-	 */
-	set onVisibilityChange(f: () => void) {
-		this.addEventListener('visibilityChange', () => {
-			f()
-		})
-	}
-
-	/**
-	 * @deprecated May change in future
-	 */
-	traverseVisible(handler: (node: AbstractLayer /* this */) => void): void {
-		if (!this.visible) return
-
-		handler(this)
-		this.children.forEach((child) => {
-			if (isAbstractLayer(child)) {
-				child.traverseVisible(handler)
-			}
 		})
 	}
 

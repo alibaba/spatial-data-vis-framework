@@ -46,7 +46,7 @@ export const defaultProps: AMapLayerProps = {
 	],
 }
 
-export class AMapLayer extends StandardLayer<Record<string, never>, AMapLayerProps> {
+export class AMapLayer extends StandardLayer<AMapLayerProps> {
 	projection
 	cam
 	map

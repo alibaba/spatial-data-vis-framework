@@ -8,7 +8,14 @@
  * 但是 typescript 中 mixin 和 decoration 都会造成一定程度的 interface 混乱
  * 因此在这里把constructor里增加的逻辑拆成函数，
  */
-import { AbstractPolaris, Layer, LayerProps, PickEventResult, View } from '@polaris.gl/base'
+import {
+	AbstractPolaris,
+	Layer,
+	LayerProps,
+	PickEventResult,
+	View,
+	LayerEvents,
+} from '@polaris.gl/base'
 import { GSIView } from '@polaris.gl/view-gsi'
 import { HtmlView } from '@polaris.gl/view-html'
 import { isSimilarProjections } from '@polaris.gl/projection'
@@ -54,9 +61,9 @@ const _vec2 = new Vector2()
  * 标准 Layer，包含 GSIView 作为 3D 容器，HTMLView 作为 2D 容器
  */
 export class StandardLayer<
-	TEventTypes extends Record<string, any> = any,
-	TProps extends StandardLayerProps = StandardLayerProps
-> extends Layer<TEventTypes, TProps> {
+	TProps extends StandardLayerProps = StandardLayerProps,
+	TEventTypes extends LayerEvents = LayerEvents
+> extends Layer<TProps, TEventTypes> {
 	readonly isStandardLayer = true
 
 	view: { gsi: GSIView; html: HtmlView; [name: string]: View }
@@ -82,18 +89,26 @@ export class StandardLayer<
 			 * 每个Layer应当都有depthTest和renderOrder的prop listener
 			 * @NOTE 这里设定了两个默认的方法，若Layer有自己的设定逻辑可以重写这两个方法
 			 */
-			this.watchProps(['depthTest'], () => {
-				const depthTest = this.getProp('depthTest')
-				if (depthTest !== undefined) {
-					this.onDepthTestChange(depthTest)
-				}
-			})
-			this.watchProps(['renderOrder'], () => {
-				const renderOrder = this.getProp('renderOrder')
-				if (renderOrder !== undefined) {
-					this.onRenderOrderChange(renderOrder)
-				}
-			})
+			this.watchProps(
+				['depthTest'],
+				() => {
+					const depthTest = this.getProp('depthTest')
+					if (depthTest !== undefined) {
+						this.onDepthTestChange(depthTest)
+					}
+				},
+				true
+			)
+			this.watchProps(
+				['renderOrder'],
+				() => {
+					const renderOrder = this.getProp('renderOrder')
+					if (renderOrder !== undefined) {
+						this.onRenderOrderChange(renderOrder)
+					}
+				},
+				true
+			)
 
 			// Set onPicked callback to props
 			const onPicked = this.getProp('onPicked')
@@ -378,9 +393,9 @@ export class StandardLayer<
 		 * 		}
 		 * }
 		 *
-		 * class B extends A<{ l: boolean; s: boolean }> {
+		 * class B extends A<{ l?: boolean; s: boolean }> {
 		 * 		set() {
-		 * 			this.t1 = { s: true } // ❌ TS Error
+		 * 			this.t1 = { s: true } // ✅ TS Pass
 		 * 			this.t2 = { s: true } // ✅ TS Pass
 		 * 			this.t3 = { s: true } // ✅ TS Pass
 		 * 			this.t3 = { l: true } // ✅ TS Pass

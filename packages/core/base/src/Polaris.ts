@@ -19,27 +19,15 @@ import {
 	CameraProxy,
 } from 'camera-proxy'
 import { PolarisProps, defaultProps } from './props/index'
+import type { AbstractPolarisEvents } from './events'
 
 export { colorToString } from './props/index'
 export type { PolarisProps } from './props/index'
 
-export type AbstractPolarisEvents = {
-	add: never
-	remove: never
-	rootChange: never
-	visibilityChange: Record<string, never> // empty object
-	viewChange: {
-		cameraProxy: CameraProxy
-		polaris: AbstractPolaris /* typeof Polaris */
-	}
-	beforeRender: { polaris: AbstractPolaris /* typeof Polaris */ }
-	afterRender: { polaris: AbstractPolaris /* typeof Polaris */ }
-}
-
 /**
  * AbstractPolaris
  */
-export abstract class AbstractPolaris extends AbstractLayer<AbstractPolarisEvents> {
+export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, AbstractPolarisEvents> {
 	// polaris is always the root
 	override get parent(): null {
 		return null
@@ -47,6 +35,8 @@ export abstract class AbstractPolaris extends AbstractLayer<AbstractPolarisEvent
 	override get root(): this {
 		return this
 	}
+
+	#layerStatesCode = new WeakMap<AbstractLayer, string>()
 
 	cameraProxy: AnimatedCameraProxy
 	cameraControl?: PointerControl | TouchControl
@@ -206,18 +196,18 @@ export abstract class AbstractPolaris extends AbstractLayer<AbstractPolarisEvent
 
 		this.cameraProxy = cameraProxy
 
-		this.onBeforeRender = () => {
+		this.addEventListener('beforeRender', (e) => {
 			const newStatesCode = this.cameraProxy.statesCode
 			this.traverse((obj) => {
 				if (!isAbstractLayer(obj)) return
 
-				if (obj.statesCode !== newStatesCode) {
-					obj.statesCode = newStatesCode
+				if (this.#layerStatesCode.get(obj) !== newStatesCode) {
+					this.#layerStatesCode.set(obj, newStatesCode)
 					// obj._onViewChange.forEach((f) => f(this.cameraProxy, this))
 					obj.dispatchEvent({ type: 'viewChange', cameraProxy: this.cameraProxy, polaris: this })
 				}
 			})
-		}
+		})
 
 		// 基本绘制循环
 		this.timeline.addTrack({
@@ -380,20 +370,14 @@ export abstract class AbstractPolaris extends AbstractLayer<AbstractPolarisEvent
 
 		// onBeforeRender
 		this.traverseVisible((obj) => {
-			if (obj.visible) {
-				// obj._onBeforeRender.forEach((cbk) => cbk(this, this.cameraProxy))
-				obj.dispatchEvent({ type: 'beforeRender', polaris: this })
-			}
+			obj.dispatchEvent({ type: 'beforeRender', polaris: this })
 		})
 
 		this.render()
 
 		// onAfterRender
 		this.traverseVisible((obj) => {
-			if (obj.visible) {
-				// obj._onAfterRender.forEach((cbk) => cbk(this, this.cameraProxy))
-				obj.dispatchEvent({ type: 'afterRender', polaris: this })
-			}
+			obj.dispatchEvent({ type: 'afterRender', polaris: this })
 		})
 	}
 

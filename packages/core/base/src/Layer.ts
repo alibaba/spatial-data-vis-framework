@@ -9,6 +9,8 @@ import { Timeline } from 'ani-timeline'
 
 import { AbstractPolaris } from './Polaris'
 import { View } from './View'
+import type { LayerEvents } from './events'
+import { CameraProxy } from 'camera-proxy'
 
 export interface LayerProps {
 	name?: string
@@ -18,20 +20,13 @@ export interface LayerProps {
 	views?: { [key: string]: new () => View }
 }
 
-export type LayerEvents = {
-	pick: { result?: PickEventResult }
-	hover: { result?: PickEventResult }
-	init: { projection: Projection; timeline: Timeline; polaris: AbstractPolaris }
-	afterInit: { projection: Projection; timeline: Timeline; polaris: AbstractPolaris }
-}
-
 /**
  * empty layer
  */
 export class Layer<
-	TEventTypes extends Record<string, Record<string, any>> = any,
-	TProps extends LayerProps = LayerProps
-> extends AbstractLayer<TEventTypes & LayerEvents, TProps> {
+	TProps extends LayerProps = LayerProps,
+	TExtraEventMap extends LayerEvents = LayerEvents
+> extends AbstractLayer<TProps, TExtraEventMap> {
 	readonly isLayer = true
 
 	/**
@@ -133,9 +128,9 @@ export class Layer<
 		 * 		}
 		 * }
 		 *
-		 * class B extends A<{ l: boolean; s: boolean }> {
+		 * class B extends A<{ l?: boolean; s: boolean }> {
 		 * 		set() {
-		 * 			this.t1 = { s: true } // ❌ TS Error
+		 * 			this.t1 = { s: true } // ✅ TS Pass
 		 * 			this.t2 = { s: true } // ✅ TS Pass
 		 * 			this.t3 = { s: true } // ✅ TS Pass
 		 * 			this.t3 = { l: true } // ✅ TS Pass
