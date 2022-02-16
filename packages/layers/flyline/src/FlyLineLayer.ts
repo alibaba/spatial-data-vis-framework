@@ -45,7 +45,7 @@ export const DefaultLayerProps: FlyLineLayerProps = {
  *      repeat
  *  }... ]
  */
-export class FlyLineLayer extends StandardLayer {
+export class FlyLineLayer extends StandardLayer<Record<string, never>, FlyLineLayerProps> {
 	props: FlyLineLayerProps
 
 	flyline: FlyLine
@@ -68,22 +68,22 @@ export class FlyLineLayer extends StandardLayer {
 		this.grids = []
 
 		this.listenProps(['renderOrder'], () => {
-			this.flyline && (this.flyline.mesh.renderOrder = this.getProps('renderOrder'))
+			this.flyline && (this.flyline.mesh.renderOrder = this.getProp('renderOrder') ?? 0)
 		})
 
 		this.listenProps(['depthTest'], () => {
-			this.flyline && (this.flyline.mesh.material.depthTest = this.getProps('depthTest'))
+			this.flyline && (this.flyline.mesh.material.depthTest = this.getProp('depthTest') ?? true)
 		})
 
 		this.listenProps(['duration', 'delay', 'repeat', 'minHeight', 'maxHeight', 'data'], () => {
-			this.props['duration'] = this.getProps('duration')
-			this.props['delay'] = this.getProps('delay')
-			this.props['repeat'] = this.getProps('repeat')
-			this.props['minHeight'] = this.getProps('minHeight')
-			this.props['maxHeight'] = this.getProps('maxHeight')
-			const data = this.getProps('data')
+			this.props['duration'] = this.getProp('duration')
+			this.props['delay'] = this.getProp('delay')
+			this.props['repeat'] = this.getProp('repeat')
+			this.props['minHeight'] = this.getProp('minHeight')
+			this.props['maxHeight'] = this.getProp('maxHeight')
+			const data = this.getProp('data')
 			if (!data || !data.length) return
-			this.updateFlylinesData(this.getProps('data'))
+			this.updateFlylinesData(this.getProp('data'))
 		})
 
 		this.onViewChange = (cameraProxy) => {
@@ -128,12 +128,12 @@ export class FlyLineLayer extends StandardLayer {
 		]
 		this.listenProps(listeningFlylineProps, () => {
 			listeningFlylineProps.forEach((key) => {
-				this.props[key] = this.getProps(key)
+				this.props[key] = this.getProp(key)
 			})
-			const data = this.getProps('data')
+			const data = this.getProp('data')
 			if (!data || !data.length) return
 
-			this.props.pool = Math.max(data.length, this.getProps('pool'))
+			this.props.pool = Math.max(data.length, this.getProp('pool'))
 			// Re-create flyline instance
 			this.createFlyline(timeline, polaris)
 			this.updateFlylinesData(data)
@@ -214,22 +214,22 @@ export class FlyLineLayer extends StandardLayer {
 				posEnd = xyzEnd
 			}
 
-			const segment = this.getProps('lineSegments') as number
-			const padding = segment * (this.getProps('flyPercent') as number)
+			const segment = this.getProp('lineSegments') as number
+			const padding = segment * (this.getProp('flyPercent') as number)
 			const grid = new Grid({
 				pointStart: new Vector3().fromArray(posStart),
 				pointEnd: new Vector3().fromArray(posEnd),
 				segment: segment,
 				padding: padding,
-				maxHeight: maxHeight ?? this.getProps('maxHeight'),
-				minHeight: minHeight ?? this.getProps('minHeight'),
+				maxHeight: maxHeight ?? this.getProp('maxHeight'),
+				minHeight: minHeight ?? this.getProp('minHeight'),
 				type: this.geoWrapProjection.isPlaneProjection ? 'onPlane' : 'onSphere',
 			})
 			grids.push({
 				grid: grid,
-				duration: duration || (this.getProps('duration') as number),
-				delay: delay || (this.getProps('delay') as number) * i,
-				repeat: repeat === undefined ? this.getProps('repeat') : repeat,
+				duration: duration || (this.getProp('duration') as number),
+				delay: delay || (this.getProp('delay') as number) * i,
+				repeat: repeat === undefined ? this.getProp('repeat') : repeat,
 			})
 		}
 
@@ -266,19 +266,19 @@ export class FlyLineLayer extends StandardLayer {
 			duration: duration,
 			onStart: () => {},
 			onEnd: () => {
-				this.flyline.matr.alphaMode = this.getProps('transparent') ? 'BLEND' : 'OPAQUE'
-				this.flyline.matr.opacity = this.getProps('opacity')
+				this.flyline.matr.alphaMode = this.getProp('transparent') ? 'BLEND' : 'OPAQUE'
+				this.flyline.matr.opacity = this.getProp('opacity')
 				this.group.visible = true
 			},
 			onUpdate: (t, p) => {
-				this.flyline.matr.opacity = this.getProps('opacity') * p
+				this.flyline.matr.opacity = this.getProp('opacity') * p
 			},
 		})
 	}
 
 	async hide(duration = 1000) {
 		this.flyline.matr.alphaMode = 'BLEND'
-		this.flyline.matr.opacity = this.getProps('opacity')
+		this.flyline.matr.opacity = this.getProp('opacity')
 
 		const timeline = await this.getTimeline()
 		timeline.addTrack({
@@ -287,12 +287,12 @@ export class FlyLineLayer extends StandardLayer {
 			duration: duration,
 			onStart: () => {},
 			onEnd: () => {
-				this.flyline.matr.alphaMode = this.getProps('transparent') ? 'BLEND' : 'OPAQUE'
-				this.flyline.matr.opacity = this.getProps('opacity')
+				this.flyline.matr.alphaMode = this.getProp('transparent') ? 'BLEND' : 'OPAQUE'
+				this.flyline.matr.opacity = this.getProp('opacity')
 				this.group.visible = false
 			},
 			onUpdate: (t, p) => {
-				this.flyline.matr.opacity = this.getProps('opacity') * (1 - p)
+				this.flyline.matr.opacity = this.getProp('opacity') * (1 - p)
 			},
 		})
 	}

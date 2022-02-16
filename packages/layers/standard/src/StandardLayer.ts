@@ -20,7 +20,13 @@ import { Matrix4, Euler, Vector3, Vector2 } from '@gs.i/utils-math'
  * 配置项 interface
  */
 export interface StandardLayerProps extends LayerProps {
+	/**
+	 * @deprecated @todo may break internal 3d scene
+	 */
 	depthTest?: boolean
+	/**
+	 * @deprecated @todo may break internal 3d scene
+	 */
 	renderOrder?: number
 	pickable?: boolean
 	onPicked?: (event: PickEventResult | undefined) => void
@@ -211,7 +217,9 @@ export class StandardLayer<
 
 	/**
 	 * depthTest的设定函数，可被子类重写
-	 * @NOTE 默认只遍历group内的第一层
+	 * @node 默认只遍历group内的第一层
+	 * @todo It doesn't work as excepted in 3d space
+	 * @deprecated
 	 */
 	protected onDepthTestChange(depthTest: boolean) {
 		this.group.children.forEach((mesh) => {
@@ -223,7 +231,9 @@ export class StandardLayer<
 
 	/**
 	 * renderOrder的设定函数，可被子类重写
-	 * @NOTE 默认只遍历group内的第一层
+	 * @node 默认只遍历group内的第一层
+	 * @todo It doesn't work as excepted in 3d space
+	 * @deprecated
 	 */
 	protected onRenderOrderChange(renderOrder: number) {
 		this.group.children.forEach((mesh) => {

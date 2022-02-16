@@ -7,14 +7,10 @@
  * @author Simon
  */
 
-export interface EventBase {
-	type: string
-}
-
 /**
  * An object that dispatches events.
  *
- * @generic {TEvents} Event type names and their event object interface
+ * @generic {TEventTypes} Event type names and their event object interface
  *
  * Use exactly same API with {@link [DOM::EventTarget](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget)}.
  * However Polaris shouldn't rely on DOM environment. So implement them here.
@@ -22,22 +18,24 @@ export interface EventBase {
  * @note inspired by {@link [three.js](https://github.com/mrdoob/eventdispatcher.js/)}
  *
  */
-export class EventDispatcher<TEvents extends EventBase = EventBase> {
+export class EventDispatcher<
+	TEventTypes extends Record<string, Record<string, any>> = Record<string, any>
+> {
 	#listeners = {} as any
 	// eslint-disable-next-line @typescript-eslint/ban-types
 	#options = new WeakMap<Function, ListenerOptions>()
 
 	readonly isEventDispatcher: true
 
-	addEventListener<TEventType extends TEvents['type']>(
+	addEventListener<TEventTypeName extends keyof TEventTypes>(
 		/**
 		 * type of the event
 		 */
-		type: TEventType,
+		type: TEventTypeName,
 		/**
 		 * callback function for the event
 		 */
-		listener: ListenerCbk<TEvents, TEventType>,
+		listener: ListenerCbk<TEventTypes, TEventTypeName>,
 		/**
 		 * An object that specifies characteristics about the event listener
 		 */
@@ -57,15 +55,15 @@ export class EventDispatcher<TEvents extends EventBase = EventBase> {
 		}
 	}
 
-	removeEventListener<TEventType extends TEvents['type']>(
+	removeEventListener<TEventTypeName extends keyof TEventTypes>(
 		/**
 		 * type of the event
 		 */
-		type: TEventType,
+		type: TEventTypeName,
 		/**
 		 * callback function for the event
 		 */
-		listener: ListenerCbk<TEvents, TEventType>
+		listener: ListenerCbk<TEventTypes, TEventTypeName>
 	): void {
 		const listeners = this.#listeners
 		const listenerArray = listeners[type]
@@ -81,8 +79,13 @@ export class EventDispatcher<TEvents extends EventBase = EventBase> {
 		}
 	}
 
-	dispatchEvent<TEventType extends TEvents['type']>(
-		event: Extract<TEvents, { type: TEventType }>
+	dispatchEvent<TEventTypeName extends keyof TEventTypes>(
+		event: Record<string, any> & {
+			/**
+			 * assign the event type
+			 */
+			type: TEventTypeName
+		}
 	): void {
 		if (!event.type) {
 			throw new Error('event.type is required')
@@ -114,7 +117,7 @@ export class EventDispatcher<TEvents extends EventBase = EventBase> {
 		}
 	}
 
-	removeAllEventListeners<TEventType extends TEvents['type']>(type: TEventType): void {
+	removeAllEventListeners<TEventTypeName extends keyof TEventTypes>(type: TEventTypeName): void {
 		const listeners = this.#listeners
 
 		if (listeners[type] !== undefined) {
@@ -127,14 +130,14 @@ export class EventDispatcher<TEvents extends EventBase = EventBase> {
 	 * @node use this only if you know what you're doing
 	 * @deprecated may be removed in future versions
 	 */
-	protected dispatchAnEvent<TEventType extends string>(
+	protected dispatchAnEvent<TEventTypeName extends string>(
 		event: {
 			/**
 			 * assign the event type
 			 */
-			type: TEventType
+			type: TEventTypeName
 		},
-		listener: ListenerCbk<TEvents, TEventType>
+		listener: ListenerCbk<TEventTypes, TEventTypeName>
 	): void {
 		if (!event.type) {
 			throw new Error('event.type is required')
@@ -171,21 +174,23 @@ interface ListenerOptions {
 /**
  * type of listener callback function
  */
-type ListenerCbk<TEvents extends EventBase, TEventType extends TEvents['type']> = (
+type ListenerCbk<
+	TEventTypes extends Record<string, Record<string, any>>,
+	TName extends keyof TEventTypes
+> = (
 	/**
 	 * emitted event.
 	 */
-	event: Extract<TEvents, { type: TEventType }> & {
-		target: EventDispatcher // self
-		// target: EventDispatcher<TEvents> // self
-		// type: TEventType
+	event: TEventTypes[TName] & {
+		target: EventDispatcher<TEventTypes> // self
+		type: TName
 	}
 ) => void
 
 // type test code
-// const e = new EventDispatcher<{ type: 'aaa'; data: any } | { type: 'add'; parent: any }>()
+// const e = new EventDispatcher<{ aaa: { data: any }; add: { parent: any } }>()
 // const e = new EventDispatcher()
-// e.addEventListener('aaa', (event) => {})
+// e.addEventListener('aaa', (event) => {event})
 // e.addEventListener('add', (event) => {})
 // e.addEventListener('ccc', (event) => {})
 // e.removeEventListener('aaa', (event) => {})

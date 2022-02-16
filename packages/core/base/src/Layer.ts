@@ -356,19 +356,6 @@ export class Layer<
 	}
 
 	/**
-	 * @deprecated use {@link .addEventListener} instead
-	 *
-	 * Initialization entry
-	 *
-	 * you can use this.timeline, this.projection and polaris safely
-	 *
-	 * exactly same effect as this.addEventListener('init')
-	 *
-	 * @alias this.addEventListener('init')
-	 */
-	init?: (projection: Projection, timeline: Timeline, polaris: AbstractPolaris) => void
-
-	/**
 	 * @deprecated use addEventListener('init')
 	 */
 	set onInit(f: (projection: Projection, timeline: Timeline, polaris: AbstractPolaris) => void) {
@@ -382,6 +369,21 @@ export class Layer<
 	}
 
 	// #endregion
+}
+
+export interface Layer {
+	/**
+	 * @deprecated use {@link .addEventListener} instead
+	 *
+	 * Initialization entry
+	 *
+	 * you can use this.timeline, this.projection and polaris safely
+	 *
+	 * exactly same effect as this.addEventListener('init')
+	 *
+	 * @alias this.addEventListener('init')
+	 */
+	init?(projection: Projection, timeline: Timeline, polaris: AbstractPolaris): void
 }
 
 export function isLayer(v: any): v is Layer {

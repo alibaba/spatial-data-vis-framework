@@ -10,17 +10,17 @@
  * 		If V8 uses validity cell to do inline cache for prototype methods.
  * 		The length of prototype chain shouldn't affect the performance.
  */
-/* eslint-disable @typescript-eslint/ban-types */
 
 import { AbstractNode } from './AbstractNode'
 import type { CameraProxy } from 'camera-proxy'
 import type { AbstractPolaris } from './Polaris'
 import { PropsManager, ListenerOptions, Callback } from '@polaris.gl/utils-props-manager'
-// import type { Projection } from '@polaris.gl/projection'
-// import type Timeline from 'ani-timeline'
 
 export type AbstractLayerEvents = {
-	visibilityChange: {}
+	/**
+	 *
+	 */
+	visibilityChange: Record<string, never>
 	viewChange: {
 		cameraProxy: CameraProxy
 		polaris: AbstractPolaris /* typeof Polaris */
@@ -30,18 +30,13 @@ export type AbstractLayerEvents = {
 }
 
 /**
- * Base class for layers
+ * Base class for layers, with reactive props and event model.
  *
- * @note
- * TEvents is a generic type. Containing event names and event object types.
- *
- * @noteCN
- * 在 TEvents 中声明所有可能的事件和回调接口，来在事件接口中获得正确的类型检查。
  */
 export abstract class AbstractLayer<
-	TEventTypes extends Record<string, Record<string, any>> = any,
+	TExtraEvents extends Record<string, Record<string, any>> = Record<string, never>,
 	TProps extends Record<string, any> = any
-> extends AbstractNode<TEventTypes & AbstractLayerEvents> {
+> extends AbstractNode<TExtraEvents & AbstractLayerEvents> {
 	readonly isBase = true
 	readonly isAbstractLayer = true
 
@@ -73,20 +68,6 @@ export abstract class AbstractLayer<
 	}
 	hide() {
 		this.visible = false
-	}
-
-	/**
-	 * @deprecated May change in future
-	 */
-	traverseVisible(handler: (node: AbstractLayer /* this */) => void): void {
-		if (!this.visible) return
-
-		handler(this)
-		this.children.forEach((child) => {
-			if (isAbstractLayer(child)) {
-				child.traverseVisible(handler)
-			}
-		})
 	}
 
 	// #region props manager
@@ -145,10 +126,20 @@ export abstract class AbstractLayer<
 	updateProps = this.setProps
 
 	/**
-	 * @deprecated
+	 * @deprecated use {@link watchProps} instead. with `{immediate: true}` as options
 	 */
-	listenProps = this.watchProps
+	protected listenProps<TKeys extends Array<keyof TProps>>(
+		keys: TKeys,
+		callback: Callback<TProps, TKeys[number]>
+	): void {
+		this.#propsManager.addListener(keys, callback, { immediate: true })
+	}
 	// #endregion
+
+	/**
+	 * @deprecated use {@link getProp} instead
+	 */
+	protected getProps = this.getProp
 
 	/**
 	 * @deprecated use {@link .addEventListener} instead
@@ -197,6 +188,20 @@ export abstract class AbstractLayer<
 	set onVisibilityChange(f: () => void) {
 		this.addEventListener('visibilityChange', () => {
 			f()
+		})
+	}
+
+	/**
+	 * @deprecated May change in future
+	 */
+	traverseVisible(handler: (node: AbstractLayer /* this */) => void): void {
+		if (!this.visible) return
+
+		handler(this)
+		this.children.forEach((child) => {
+			if (isAbstractLayer(child)) {
+				child.traverseVisible(handler)
+			}
 		})
 	}
 

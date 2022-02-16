@@ -46,8 +46,7 @@ export const defaultProps: AMapLayerProps = {
 	],
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-export class AMapLayer extends StandardLayer<{}, AMapLayerProps> {
+export class AMapLayer extends StandardLayer<Record<string, never>, AMapLayerProps> {
 	projection
 	cam
 	map

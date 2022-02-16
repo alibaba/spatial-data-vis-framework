@@ -7,7 +7,7 @@
  * @author Simon
  */
 
-import { EventDispatcher } from './EventDispatcher'
+import { EventDispatcher, EventBase } from './EventDispatcher'
 
 /**
  * @explain ### Why not using `this` as the type of `parent`?
@@ -31,40 +31,40 @@ import { EventDispatcher } from './EventDispatcher'
  * - This kind of feature should be implemented with mixins.
  */
 
-// let a : Events
-// a.add.parent
+// Event types
 
 /**
- * Event types
+ * the event when this node is added to a parent node
+ * @note will only happen once, because node can only be added once.
+ * @note if the node is already added. this event will not fire
  */
-export type AbstractNodeEvents = {
-	add: { parent: AbstractNode }
-	remove: { parent: AbstractNode }
-	rootChange: { root: AbstractNode | null }
-}
+type AddEvent = { type: 'add'; parent: AbstractNode }
+/**
+ * the event when this node is removed from its parent node
+ * @note will only happen once, because node can only be added once.
+ * @note if the node is already removed. this event will not fire
+ */
+type RemoveEvent = { type: 'remove'; parent: AbstractNode }
+/**
+ * the event when this node is removed from its parent node
+ * @note will only happen once, because node can only be added once.
+ * @note if the node is already removed. this event will not fire
+ */
+type RootChangeEvent = { type: 'rootChange'; root: AbstractNode | null }
 
 /**
  * Tree structure
  * @note handles tree context
  */
-export class AbstractNode<
-	TEventTypes extends Record<string, Record<string, any>> = any
-> extends EventDispatcher<TEventTypes & AbstractNodeEvents> {
-	/**
-	 * has this node been added and removed before
-	 * @note currently not support re-add an used node
-	 */
-	private _removed = false
-	private _root: null | AbstractNode = null
-	private _parent: null | AbstractNode = null
-	private _children = new Set<AbstractNode>()
-
+export class AbstractNode<TExtraEvents extends EventBase = EventBase> extends EventDispatcher<
+	AddEvent | RemoveEvent | RootChangeEvent | TExtraEvents
+> {
 	/**
 	 * parent node
 	 * @readonly
 	 */
 	get parent() {
-		return this._parent
+		return this.#parent
 	}
 
 	/**
@@ -72,7 +72,7 @@ export class AbstractNode<
 	 * @readonly
 	 */
 	get children() {
-		return this._children
+		return this.#children
 	}
 
 	/**
@@ -80,7 +80,7 @@ export class AbstractNode<
 	 * @readonly
 	 */
 	get root() {
-		return this._root
+		return this.#root
 	}
 
 	add(child: AbstractNode): void {
@@ -88,7 +88,7 @@ export class AbstractNode<
 			console.warn('This node has already been added.')
 			return
 		}
-		if (child._removed) {
+		if (child.#removed) {
 			console.warn(`This node has already been removed before. Do not re-use.`)
 			return
 		}
@@ -99,7 +99,7 @@ export class AbstractNode<
 			console.warn('This node already has a parent.')
 			child.parent.remove(child)
 		}
-		child._parent = this
+		child.#parent = this
 
 		// emit `add` before `rootChange`
 
@@ -112,7 +112,7 @@ export class AbstractNode<
 		this.traverse((node) => {
 			// skip current node
 			if (node !== this) {
-				node._root = root
+				node.#root = root
 				// emit event from parent node
 				node.dispatchEvent({ type: 'rootChange', root })
 			}
@@ -124,12 +124,12 @@ export class AbstractNode<
 
 		// emit `remove` on child
 
-		child._parent = null
+		child.#parent = null
 		child.dispatchEvent({ type: 'remove', parent: this })
 
 		// update root and emit `rootChange`
 
-		child._root = null
+		child.#root = null
 		child.dispatchEvent({ type: 'rootChange', root: null })
 
 		// find root and assign to all children
@@ -137,7 +137,7 @@ export class AbstractNode<
 		child.traverse((node) => {
 			// skip current node
 			if (node !== child) {
-				node._root = root
+				node.#root = root
 				// emit event from parent node
 				node.dispatchEvent({ type: 'rootChange', root })
 			}
@@ -157,6 +157,15 @@ export class AbstractNode<
 	}
 
 	readonly isAbstractNode = true
+
+	/**
+	 * has this node been added and removed before
+	 * @note currently not support re-add an used node
+	 */
+	#removed = false
+	#root: null | AbstractNode = null
+	#parent: null | AbstractNode = null
+	#children = new Set<AbstractNode>()
 }
 
 export function isAbstractNode(v: any): v is AbstractNode {
