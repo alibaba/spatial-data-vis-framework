@@ -21,7 +21,6 @@ import type { AbstractPolaris } from './Polaris'
  * 		@event_inheritance
  * 		AbstractNodeEvents ⊆ AbstractLayerEvents ⊆ LayerEvents ⊆ StandardLayer
  * 									└-⊆ AbstractPolarisEvents ⊆ PolarisGSIEvents
- * 		@note event inheritance is done by typescript operator `&`
  *
  * The lifecycle of a layer has 3 stages. Each of which corresponding events are
  * triggered in certain order.
@@ -183,34 +182,3 @@ export type AbstractPolarisEvents = AbstractLayerEvents & {
 	remove: never
 	rootChange: never
 }
-
-// utility
-
-/**
- * utility type to map event types to event
- *
- * @example
- * @input
- * {type: 'a', data: number} | {type: 'b', data: boolean}
- * @output
- * {
- * 		a: {type: 'a', data: number}
- * 		b: {type: 'b', data: boolean}
- * }
- */
-// export type EventsMap<EventUnion extends EventBase> = {
-// 	[P in EventUnion['type']]: Extract<EventUnion, { type: P }>
-// }
-
-// export type ExtendEvents<A extends EventBase, B extends EventBase, U = A | B> = U
-// export type ExtendEvents<
-// 	A extends EventBase,
-// 	B extends EventBase,
-// 	U = { [P in A['type']]: Extract<A, { type: P }> } & { [Q in B['type']]: Extract<B, { type: Q }> }
-// > = U
-//  export type ExtendEvents<
-// 	 A extends EventBase,
-// 	 B extends EventBase,
-// 	 U = { [P in A['type']]: Extract<A, { type: P }> } & { [Q in B['type']]: Extract<B, { type: Q }> }
-//  > = U
-// export type ExtendEvents<A extends EventBase, B extends EventBase, U = A | B> = {[P in A['type'] | B['type']]: number}

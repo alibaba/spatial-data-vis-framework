@@ -10,7 +10,6 @@ import { Timeline } from 'ani-timeline'
 import { AbstractPolaris } from './Polaris'
 import { View } from './View'
 import type { LayerEvents } from './events'
-import { CameraProxy } from 'camera-proxy'
 
 export interface LayerProps {
 	name?: string

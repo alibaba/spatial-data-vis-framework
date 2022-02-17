@@ -16,7 +16,6 @@ import {
 	TouchControl,
 	Cameraman,
 	GeographicStates,
-	CameraProxy,
 } from 'camera-proxy'
 import { PolarisProps, defaultProps } from './props/index'
 import type { AbstractPolarisEvents } from './events'
