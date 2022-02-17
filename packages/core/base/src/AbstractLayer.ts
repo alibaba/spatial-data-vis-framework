@@ -85,12 +85,24 @@ export abstract class AbstractLayer<
 		return this.#propsManager.get(key)
 	}
 
-	protected watchProps<TKeys extends Array<keyof TProps>>(
+	/**
+	 * listen to changes of a series of props.
+	 * @note callback will be fired if any of these keys changed
+	 */
+	watchProps<TKeys extends Array<keyof TProps>>(
 		keys: TKeys,
 		callback: Callback<TProps, TKeys[number]>,
 		options?: ListenerOptions
 	): void {
 		this.#propsManager.addListener(keys, callback, options)
+	}
+
+	watchProp<TKey extends keyof TProps>(
+		key: TKey,
+		callback: Callback<TProps, TKey>,
+		options?: ListenerOptions
+	): void {
+		this.#propsManager.addListener([key], callback, options)
 	}
 
 	setProps(props: Partial<TProps>) {

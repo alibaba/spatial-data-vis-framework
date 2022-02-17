@@ -1,5 +1,6 @@
 import { EventDispatcher } from '../src/EventDispatcher'
 import { AbstractNode } from '../src/AbstractNode'
+import { AbstractLayer } from '../src/AbstractLayer'
 
 test('EventDispatcher', () => {
 	type Events = {
@@ -85,7 +86,98 @@ test('AbstractNode', () => {
 	// root.add(inode) // throw: `This child already has a parent.`
 })
 
-// test('')
+test('AbstractLayer', () => {
+	type Props = {
+		parent?: AbstractLayer
+		name: string
+		aa: number
+		bb?: boolean
+		cc?: boolean
+	}
+	class L extends AbstractLayer<Props> {
+		constructor(initialProps: Props) {
+			super()
+
+			this.setProps(initialProps)
+
+			this.watchProps(
+				['aa', 'cc'],
+				(e) => {
+					console.log(this.getProp('name'), `: aa or cc changed (immediate fired)`)
+				},
+				{ immediate: true }
+			)
+
+			this.watchProp('aa', (e) => {
+				console.log(this.getProp('name'), ': aa changed', this.getProp('aa'))
+			})
+
+			this.watchProps(['aa', 'bb'], (e) => {
+				console.log(
+					this.getProp('name'),
+					': aa or bb changed',
+					this.getProp('aa'),
+					this.getProp('bb')
+				)
+			})
+
+			this.watchProps(['parent', 'name'], (e) => {
+				console.error('Do not modify static props')
+			})
+
+			this.addEventListener('visibilityChange', (e) => {
+				console.log('visibilityChange', e)
+			})
+		}
+		dispose() {}
+	}
+
+	const root = new L({
+		name: 'root',
+		aa: 1,
+	})
+
+	const leaf = new L({
+		name: 'leaf',
+		aa: 2,
+	})
+
+	// root.setProps({ name: 'hacked' }) // log error
+
+	root.setProps({
+		aa: 3,
+	})
+	root.setProps({
+		aa: 3,
+	})
+	root.setProps({
+		aa: 4,
+	})
+	leaf.setProps({
+		bb: false,
+	})
+	leaf.setProps({
+		bb: true,
+	})
+	leaf.setProps({
+		bb: undefined,
+	})
+
+	console.log('show')
+	root.show()
+
+	console.log('hide')
+	root.hide()
+
+	console.log('hide')
+	root.hide()
+
+	console.log('show')
+	root.show()
+
+	console.log('visible = false')
+	root.visible = false
+})
 
 // ===
 
@@ -94,3 +186,12 @@ function test(name: string, fun: () => void) {
 	fun()
 	console.groupEnd()
 }
+
+type A = { aa: number }
+// type B = {} extends A ? true : false // false
+// type B = {aa: number} extends A ? true : false // true
+// type B = {aa: boolean} extends A ? true : false // false
+// type B = {aa?: number} extends A ? true : false // false
+// type B = {aa?: number} extends Partial<A> ? true : false // true
+// type B = {aa: number} extends Partial<A> ? true : false // true
+type B = {} extends Partial<A> ? true : false // true

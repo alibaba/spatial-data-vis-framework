@@ -13,7 +13,7 @@ import type { LayerEvents } from './events'
 
 export interface LayerProps {
 	name?: string
-	parent?: Layer
+	parent?: Layer<any>
 	timeline?: Timeline
 	projection?: Projection
 	views?: { [key: string]: new () => View }
@@ -23,7 +23,7 @@ export interface LayerProps {
  * empty layer
  */
 export class Layer<
-	TProps extends LayerProps = LayerProps,
+	TProps extends LayerProps = any,
 	TExtraEventMap extends LayerEvents = LayerEvents
 > extends AbstractLayer<TProps, TExtraEventMap> {
 	readonly isLayer = true
@@ -102,7 +102,8 @@ export class Layer<
 
 	setProps(props: Partial<TProps | LayerProps>) {
 		/**
-		 * @note keep in mind that:
+		 * @todo feels like a bug of tsc
+		 * @note
 		 * Partial<TProps> is not `assignable` until generic type TProps get settled.
 		 * So if you use Partial<GenericType> as a writeable value or function param.
 		 * Use `.t3` like the following code:
@@ -116,7 +117,7 @@ export class Layer<
 		 * 		set() {
 		 * 			// write
 		 * 			this.t1 = { s: true } // ❌ TS Error
-		 * 			this.t2 = { s: true } // ❌ TS Error
+		 * 			this.t2 = { s: true } // ❌ TS Error <- this should pass
 		 * 			this.t3 = { s: true } // ✅ TS Pass
 		 * 			this.t3 = { l: true } // ❌ TS Error
 		 *
