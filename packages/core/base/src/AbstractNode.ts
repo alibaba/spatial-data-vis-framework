@@ -133,15 +133,11 @@ export class AbstractNode<
 		child.dispatchEvent({ type: 'add', parent: this })
 
 		// update root and emit `rootChange`
-		// find root and assign to all children
-		const root = this.root || this
-		this.traverse((node) => {
-			// skip current node
-			if (node !== this) {
-				node.#root = root
-				// emit event from parent node
-				node.dispatchEvent({ type: 'rootChange', root })
-			}
+		// @note only this child and its sub-tree are affected.
+		const root = this.root || this // @careful
+		child.traverse((node) => {
+			node.#root = root
+			node.dispatchEvent({ type: 'rootChange', root })
 		})
 	}
 
@@ -157,25 +153,19 @@ export class AbstractNode<
 		// update root and emit `rootChange`
 		child.dispatchEvent({ type: 'rootChange', root: null })
 
-		// find root and assign to all children
-		const root = child
+		// update root and emit `rootChange`
+		// @note only this child and its sub-tree are affected.
+		const root = child // @careful
 		child.traverse((node) => {
-			// skip current node
-			if (node !== child) {
-				node.#root = root
-				// emit event from parent node
-				node.dispatchEvent({ type: 'rootChange', root })
-			}
+			node.#root = root
+			node.dispatchEvent({ type: 'rootChange', root })
 		})
 	}
 
 	removeAll(): void {
-		for (const child of this.children) {
-			this.remove(child)
-		}
+		this.children.forEach((child) => this.remove(child))
 	}
 
-	// traverse<TNode extends AbstractNode>(handler: (node: TNode) => void): void {
 	traverse(handler: (node: AbstractNode) => void): void {
 		handler(this as AbstractNode)
 		this.children.forEach((child) => child.traverse(handler))
