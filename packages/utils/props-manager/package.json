@@ -13,9 +13,9 @@
         "access": "public"
     },
     "scripts": {
+        "start": "vite --open /examples/ --cors",
         "build": "./scripts/build.sh",
         "clean": "./scripts/clean.sh",
-        "start": "vite --open /examples/ --cors",
         "rebuild": "npm run clean && npm run build"
     },
     "dependencies": {

@@ -12,9 +12,7 @@
     "nohoist": [
       "**/@polaris.gl/examples/**",
       "**/@polaris.gl/examples-vite/**",
-      "**/@types/**",
-      "**/vite",
-      "**/vite/**"
+      "**/@types/**"
     ]
   },
   "scripts": {
@@ -28,6 +26,7 @@
     "watch": "node scripts/watch.mjs --fast"
   },
   "devDependencies": {
+    "vite": "*",
     "typescript": "^4.5.4",
     "@typescript-eslint/eslint-plugin": "5.8.0",
     "@typescript-eslint/parser": "5.8.0",
@@ -39,6 +38,5 @@
     "concurrently": "^6.4.0",
     "chokidar": "^3.5.2"
   },
-  "optionalDependencies": {},
-  "dependencies": {}
+  "optionalDependencies": {}
 }

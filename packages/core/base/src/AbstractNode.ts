@@ -2,9 +2,33 @@
  * Copyright (C) 2022 Alibaba Group Holding Limited
  * All rights reserved.
  *
- * @class AbstractNode
- * @description An abstract tree structure based on EventDispatcher.
  * @author Simon
+ * @class AbstractNode
+ * @description
+ *
+ * An abstract tree structure based on EventDispatcher.
+ *
+ * The tree constructed with AbstractNode is designed to be a "scene graph" :
+ * - N-ary(多叉树), a node can have multiple children.
+ * - directed(有向), from root to leaf.
+ * - acyclic(无环), no loop.
+ * - rooted(有单一根), every node has only one parent
+ *
+ * Also you can not re-use a removed node or change its position.
+ */
+
+/**
+ * @loop_detection
+ * Since we do not allow a node has multiple parents. The only scenario of loop
+ * is when the root is added to a inode/leaf of the tree.
+ *
+ * @example
+ *
+ * root.add(inode)
+ * inode.add(leaf)
+ * leaf.add(inode) // error
+ * leaf.add(root) // loop
+ * inode.add(root) // loop
  */
 
 import { EventDispatcher } from './EventDispatcher'
@@ -32,6 +56,11 @@ import type { AbstractNodeEvents } from './events'
  * The underlying problem of this:
  * - This kind of feature should be implemented with mixins.
  */
+
+/**
+ * the max depth of the tree
+ */
+const MAX_DEPTH = 1024
 
 /**
  * Tree structure
@@ -65,29 +94,45 @@ export class AbstractNode<
 	}
 
 	add(child: AbstractNode): void {
-		if (this.children.has(child)) {
-			console.warn('This node has already been added.')
-			return
+		if (child.parent) {
+			throw new Error(`AbstractNode: This child already has a parent.`)
 		}
+		// @note If changing parent is not allowed. This would be redundant,
+		// if (this.children.has(child)) {
+		// 	throw new Error(`AbstractNode: This child has already been added to current node.`)
+		// }
 		if (child.#removed) {
-			console.warn(`This node has already been removed before. Do not re-use.`)
-			return
+			throw new Error(`AbstractNode: This node has already been removed before. Do not re-use.`)
+		}
+		if (child === this) {
+			throw new Error(`AbstractNode: A node cannot be added to itself.`)
+		}
+
+		// loop detection.
+		if (this.root === child) {
+			throw new Error(`AbstractNode: A loop is detected.`)
+		}
+
+		// depth detection
+		let depth = 0
+		let ancestor = this as AbstractNode | null
+		while (ancestor) {
+			ancestor = ancestor.parent
+			depth++
+
+			if (depth > MAX_DEPTH) {
+				throw new Error(`AbstractNode: Max tree depth exceeded. (${MAX_DEPTH})`)
+			}
 		}
 
 		this.children.add(child)
 
-		if (child.parent) {
-			console.warn('This node already has a parent.')
-			child.parent.remove(child)
-		}
 		child.#parent = this
 
 		// emit `add` before `rootChange`
-
 		child.dispatchEvent({ type: 'add', parent: this })
 
 		// update root and emit `rootChange`
-
 		// find root and assign to all children
 		const root = this.root || this
 		this.traverse((node) => {
@@ -103,14 +148,13 @@ export class AbstractNode<
 	remove(child: AbstractNode): void {
 		this.children.delete(child)
 
-		// emit `remove` on child
-
 		child.#parent = null
+		child.#root = null
+
+		// emit `remove` on child
 		child.dispatchEvent({ type: 'remove', parent: this })
 
 		// update root and emit `rootChange`
-
-		child.#root = null
 		child.dispatchEvent({ type: 'rootChange', root: null })
 
 		// find root and assign to all children
@@ -171,14 +215,24 @@ export class AbstractNode<
 	 * callback when object/layer is removed from parent
 	 */
 	set onRemove(f: (parent) => void) {
-		this.addEventListener('remove', (event) => {
-			f(event.parent)
-		})
+		this.addEventListener(
+			'remove',
+			(event) => {
+				f(event.parent)
+			},
+			{ once: true }
+		)
 	}
 }
 
 export function isAbstractNode(v: any): v is AbstractNode {
 	return v.isEventDispatcher && v.isAbstractNode
+}
+export function isRootNode(v: AbstractNode) {
+	return v.parent === null
+}
+export function isLeafNode(v: AbstractNode) {
+	return v.children.size === 0
 }
 
 // test code

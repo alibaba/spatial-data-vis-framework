@@ -13,15 +13,6 @@ import type { AbstractPolaris } from './Polaris'
 /**
  * @description
  *
- * Events interface is a part of every classes, and inherit along with classes.
- *
- * 		@class_inheritance
- * 		EventDispatcher -> AbstractNode -> AbstractLayer -> Layer -> StandardLayer
- * 												└-> AbstractPolaris -> PolarisGSI
- * 		@event_inheritance
- * 		AbstractNodeEvents ⊆ AbstractLayerEvents ⊆ LayerEvents ⊆ StandardLayer
- * 									└-⊆ AbstractPolarisEvents ⊆ PolarisGSIEvents
- *
  * The lifecycle of a layer has 3 stages. Each of which corresponding events are
  * triggered in certain order.
  *
@@ -35,7 +26,7 @@ import type { AbstractPolaris } from './Polaris'
  * 			scene, so that instance of Polaris/Timeline/Projection can be resolved)
  * 		4. `ViewChangeEvent` (once, right before first rendering)
  *
- * 		@stage_1 rendering
+ * 		@stage_1 render loop
  * 		Events of this stage may happen multiple times during rendering.
  * 		**NO ORDER GUARANTEED.**
  *
@@ -45,9 +36,18 @@ import type { AbstractPolaris } from './Polaris'
  * 			on both layer and polaris instance)
  *
  *
- * 		@stage_2 deconstruct
+ * 		@stage_2 deconstruction
  * 		1. `RemoveEvent` (only happen once if you implicitly remove a layer)
  * 		2. `Layer.dispose`
+ *
+ * Events interfaces inherit along with classes.
+ *
+ * 		@class_inheritance
+ * 		EventDispatcher -> AbstractNode -> AbstractLayer -> Layer -> StandardLayer
+ * 												└-> AbstractPolaris -> PolarisGSI
+ * 		@event_inheritance
+ * 		AbstractNodeEvents ⊆ AbstractLayerEvents ⊆ LayerEvents ⊆ StandardLayer
+ * 									└-⊆ AbstractPolarisEvents ⊆ PolarisGSIEvents
  *
  * @note
  * - Layer.watchProps is not a part of lifecycle events. Props change may happen
@@ -59,6 +59,10 @@ import type { AbstractPolaris } from './Polaris'
  *
  * @suggestion
  * Write everything in the `InitEvent` listener, including watchProps, to avoid mistakes.
+ *
+ * @examples
+ *
+ *
  */
 
 /**
