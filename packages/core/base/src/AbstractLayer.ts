@@ -56,7 +56,7 @@ export abstract class AbstractLayer<
 	/**
 	 * @deprecated May change in future
 	 */
-	traverseVisible(handler: (node: AbstractLayer /* this */) => void): void {
+	traverseVisible(handler: (node: AbstractLayer<any /* do not assume generic */>) => void): void {
 		if (!this.visible) return
 
 		handler(this)

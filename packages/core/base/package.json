@@ -26,7 +26,6 @@
         "camera-proxy": "alpha"
     },
     "devDependencies": {
-        "vite": "*",
         "typescript": ">4.4.0"
     }
 }

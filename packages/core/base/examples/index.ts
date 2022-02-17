@@ -85,6 +85,8 @@ test('AbstractNode', () => {
 	// root.add(inode) // throw: `This child already has a parent.`
 })
 
+// test('')
+
 // ===
 
 function test(name: string, fun: () => void) {

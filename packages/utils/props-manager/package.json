@@ -22,7 +22,6 @@
         "lodash": ">4.0.0"
     },
     "devDependencies": {
-        "vite": "*",
         "typescript": ">4.4.0"
     }
 }

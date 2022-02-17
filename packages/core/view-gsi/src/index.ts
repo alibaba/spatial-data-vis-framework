@@ -51,7 +51,7 @@ export class GSIView extends View {
 		 * 将具体的视觉元素加入到树中
 		 */
 		layer.onAdd = (parent) => {
-			this.onAdd(parent)
+			this.onAdd(parent as any)
 		}
 
 		/**
