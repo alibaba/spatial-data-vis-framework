@@ -1,6 +1,6 @@
 import { Polaris } from '@polaris.gl/schema'
 import { CommonTileManager, CommonTileManagerConfig } from './CommonTileManager'
-import { lngLatToGoogle } from 'global-mercator'
+import { lngLatToGoogle, googleToBBox } from 'global-mercator'
 import { TileToken } from './types'
 
 export const defaultConfig = {
@@ -50,6 +50,29 @@ export class XYZTileManager extends CommonTileManager {
 	}
 }
 
+const getXYRange = (lnglatMin: number[], lnglatMax: number[], zoom: number) => {
+	const xyz0 = lngLatToGoogle(lnglatMin, zoom)
+	const xyz1 = lngLatToGoogle(lnglatMax, zoom)
+	const xyMin = [Math.min(xyz0[0], xyz1[0]), Math.min(xyz0[1], xyz1[1])]
+	const xyMax = [Math.max(xyz0[0], xyz1[0]), Math.max(xyz0[1], xyz1[1])]
+	const xMin = xyMin[0]
+	const yMin = xyMin[1]
+	const xMax = xyMax[0]
+	const yMax = xyMax[1]
+	return { xMin, yMin, xMax, yMax }
+}
+
+const bboxToTiles = (lnglatMin: number[], lnglatMax: number[], zoom: number) => {
+	const { xMin, yMin, xMax, yMax } = getXYRange(lnglatMin, lnglatMax, zoom)
+	const tileList: [number, number, number][] = []
+	for (let x = xMin; x <= xMax; x++) {
+		for (let y = yMin; y <= yMax; y++) {
+			tileList.push([x, y, zoom])
+		}
+	}
+	return tileList
+}
+
 const getViewTiles = (
 	polaris: Polaris,
 	minZoom: number,
@@ -82,25 +105,11 @@ const getViewTiles = (
 	// apply zoom step
 	zoom -= (zoom - minZoom) % zoomStep
 
-	const xyz0 = lngLatToGoogle(lnglatMin, zoom)
-	const xyz1 = lngLatToGoogle(lnglatMax, zoom)
-
-	const xyMin = [Math.min(xyz0[0], xyz1[0]), Math.min(xyz0[1], xyz1[1])]
-	const xyMax = [Math.max(xyz0[0], xyz1[0]), Math.max(xyz0[1], xyz1[1])]
-	const xMin = xyMin[0]
-	const yMin = xyMin[1]
-	const xMax = xyMax[0] + 1
-	const yMax = xyMax[1] + 1
-
-	const tileList: [number, number, number][] = []
-	for (let x = xMin; x < xMax; x++) {
-		for (let y = yMin; y < yMax; y++) {
-			tileList.push([x, y, zoom])
-		}
-	}
+	const tileList = bboxToTiles(lnglatMin, lnglatMax, zoom)
 
 	// sort tileTokens from view mid to view edge
 	// to let the mid view tiles request earlier
+	const { xMin, yMin, xMax, yMax } = getXYRange(lnglatMin, lnglatMax, zoom)
 	const mid = [(xMin + xMax) * 0.5, (yMin + yMax) * 0.5]
 	tileList.sort(
 		(a, b) =>
@@ -129,44 +138,97 @@ const getParentTileToken = (token: TileToken) => {
 	return [parentX, parentY, parentZ]
 }
 
+/**
+ * @QianXun performance issue fixed, 10 times faster than the old method.
+ */
 const getChildTileTokens = (token: TileToken, targetZoom: number) => {
+	const inputX = typeof token[0] === 'string' ? parseInt(token[0]) : token[0]
+	const inputY = typeof token[1] === 'string' ? parseInt(token[1]) : token[1]
 	const inputZ = typeof token[2] === 'string' ? parseInt(token[2]) : token[2]
+
 	targetZoom = Math.floor(targetZoom)
 
 	if (inputZ >= targetZoom) {
 		throw new Error('targetZoom should be larger than token[2]')
 	}
 
-	const parents: TileToken[] = [token]
-	const children: TileToken[] = []
+	const bbox = googleToBBox([inputX, inputY, inputZ])
+	const lnglatMin = [bbox[0], bbox[1]]
+	const lnglatMax = [bbox[2], bbox[3]]
 
-	while (parents.length) {
-		const currToken = parents.shift()
-		if (!currToken) {
-			continue
-		}
-
-		const x = typeof currToken[0] === 'string' ? parseInt(currToken[0]) : currToken[0],
-			y = typeof currToken[1] === 'string' ? parseInt(currToken[1]) : currToken[1],
-			z = typeof currToken[2] === 'string' ? parseInt(currToken[2]) : currToken[2]
-
-		const childZ = z + 1
-
-		if (childZ > targetZoom) {
-			continue
-		}
-
-		// x => x * 2 + 0/1
-		// y => y * 2 + 0/1
-		// z => z + 1
-		for (let childX = 0; childX <= 1; childX++) {
-			for (let childY = 0; childY <= 1; childY++) {
-				const child = [2 * x + childX, 2 * y + childY, childZ]
-				children.push(child)
-				parents.push(child)
-			}
-		}
-	}
+	const children = bboxToTiles(lnglatMin, lnglatMax, targetZoom)
 
 	return children
 }
+
+// const getChildTileTokensOld = (token: TileToken, targetZoom: number) => {
+// 	const inputZ = typeof token[2] === 'string' ? parseInt(token[2]) : token[2]
+// 	targetZoom = Math.floor(targetZoom)
+
+// 	if (inputZ >= targetZoom) {
+// 		throw new Error('targetZoom should be larger than token[2]')
+// 	}
+
+// 	const parents: TileToken[] = [token]
+// 	const children: TileToken[] = []
+
+// 	while (parents.length) {
+// 		const currToken = parents.shift()
+// 		if (!currToken) {
+// 			break
+// 		}
+
+// 		const x = typeof currToken[0] === 'string' ? parseInt(currToken[0]) : currToken[0],
+// 			y = typeof currToken[1] === 'string' ? parseInt(currToken[1]) : currToken[1],
+// 			z = typeof currToken[2] === 'string' ? parseInt(currToken[2]) : currToken[2]
+
+// 		const childZ = z + 1
+
+// 		if (childZ > targetZoom) {
+// 			continue
+// 		}
+
+// 		// x => x * 2 + 0/1
+// 		// y => y * 2 + 0/1
+// 		// z => z + 1
+// 		for (let childX = 0; childX <= 1; childX++) {
+// 			for (let childY = 0; childY <= 1; childY++) {
+// 				const child = [2 * x + childX, 2 * y + childY, childZ]
+// 				children.push(child)
+// 				parents.push(child)
+// 			}
+// 		}
+// 	}
+
+// 	return children
+// }
+
+// // -------------
+// // performance test
+// // -------------
+// const args: any[] = []
+// for (let i = 0; i < 100; i++) {
+// 	const x = Math.round(Math.random() * 200 - 100) + 1707
+// 	const y = Math.round(Math.random() * 200 - 100) + 842
+// 	const token = [x, y, 11]
+// 	const targetZoom = 18
+// 	args.push({
+// 		token,
+// 		targetZoom,
+// 	})
+// }
+
+// const n1 = performance.now()
+// args.forEach((item) => {
+// 	getChildTileTokens(item.token, item.targetZoom)
+// })
+// const t1 = performance.now() - n1
+
+// const n2 = performance.now()
+// args.forEach((item) => {
+// 	getChildTileTokensOld(item.token, item.targetZoom)
+// })
+// const t2 = performance.now() - n2
+
+// console.log('t1', t1)
+// console.log('t2', t2)

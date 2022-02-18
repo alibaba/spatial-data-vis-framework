@@ -418,7 +418,7 @@ export class CommonTileManager implements TileManager {
 		// unready to parent tiles replacement
 		const childKeysCoveredByParent: Set<string> = new Set()
 		unreadyKeys.forEach((key) => {
-			const parentTileInfo = this._findReadyParentTile(this.keyToTileToken(key))
+			const parentTileInfo = this._findAvailableParentTile(this.keyToTileToken(key))
 			if (!parentTileInfo) return
 
 			const { parentToken, includedChildTokens } = parentTileInfo
@@ -551,7 +551,7 @@ export class CommonTileManager implements TileManager {
 		})
 	}
 
-	private _findReadyParentTile(token: TileToken):
+	private _findAvailableParentTile(token: TileToken):
 		| {
 				parentToken: TileToken
 				includedChildTokens: TileToken[]
