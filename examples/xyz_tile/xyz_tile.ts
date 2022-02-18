@@ -331,7 +331,7 @@ function getPOIUrl(x, y, z) {
 					aggregation: {
 						zlevel: [1, 15],
 						clustering_method: 'bin',
-						clustering_scalar: 2000,
+						clustering_scalar: 500,
 						fields: {
 							count_number: ['id', 'count'],
 							sum_number: ['count', 'sum'],

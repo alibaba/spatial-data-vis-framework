@@ -604,9 +604,7 @@ export class Marker extends STDLayer {
 			const left = this._screenXY.x + this.getProps('offsetX')
 			const top = this._screenXY.y + this.getProps('offsetY')
 
-			// FIX: performance issues to get offsetLeft/offsetTop each frame
-			el.style.left = `${left}px`
-			el.style.top = `${top}px`
+			el.style.transform = `translate(${left}px, ${top}px)`
 
 			if (el.style.visibility === 'hidden') {
 				el.style.visibility = 'inherit'
