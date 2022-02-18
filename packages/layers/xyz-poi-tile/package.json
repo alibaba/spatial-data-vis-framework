@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/layer-xyz-poi-tile",
-    "version": "0.0.0-alpha.17",
+    "version": "0.0.0-alpha.18",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -21,7 +21,7 @@
         "@gs.i/utils-math": "^0.0.0-beta",
         "@polaris.gl/gsi": "^0.0.0-alpha.14",
         "@polaris.gl/layer-std": "^0.0.0-alpha.14",
-        "@polaris.gl/layer-std-marker": "^0.0.0-alpha.14",
+        "@polaris.gl/layer-std-marker": "^0.0.0-alpha.18",
         "@polaris.gl/projection": "^0.0.0-alpha.10",
         "@polaris.gl/schema": "^0.0.0-alpha.14",
         "@polaris.gl/utils": "^0.0.0-alpha.14",
