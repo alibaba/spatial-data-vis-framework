@@ -1,10 +1,10 @@
-import { PolarisGSI } from '@polaris.gl/gsi'
-import { Color, Vector2 } from '@gs.i/utils-math'
 /**
  * Copyright (C) 2021 Alibaba Group Holding Limited
  * All rights reserved.
  */
 
+import { PolarisGSI } from '@polaris.gl/gsi'
+import { Color, Vector2 } from '@gs.i/utils-math'
 import { STDLayer, STDLayerProps } from '@polaris.gl/layer-std'
 import { SimplifiedMarker } from './SimplifiedMarker'
 
