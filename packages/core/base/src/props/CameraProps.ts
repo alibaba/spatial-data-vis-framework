@@ -53,4 +53,4 @@ export const defaultCameraProps = {
 	cameraControl: true,
 }
 
-export type CameraProps = typeof defaultCameraProps
+export type CameraProps = Partial<typeof defaultCameraProps>

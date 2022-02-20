@@ -81,7 +81,7 @@ export abstract class AbstractLayer<
 	 */
 	#propsManager = new PropsManager<TProps>()
 
-	protected getProp<TKey extends keyof TProps>(key: TKey): TProps[TKey] {
+	getProp<TKey extends keyof TProps>(key: TKey): TProps[TKey] {
 		return this.#propsManager.get(key)
 	}
 

@@ -7,7 +7,7 @@ import { AbstractLayer } from './AbstractLayer'
 import { Projection } from '@polaris.gl/projection'
 import { Timeline } from 'ani-timeline'
 
-import { AbstractPolaris } from './Polaris'
+import { AbstractPolaris, isPolaris } from './Polaris'
 import { View } from './View'
 import type { LayerEvents } from './events'
 
@@ -51,11 +51,6 @@ export class Layer<
 	 */
 	constructor(props?: TProps) {
 		super()
-
-		// const  p = this.getProp('parent')
-		this.setProps({
-			parent: this,
-		})
 
 		this.name = props?.name || 'abstract-layer'
 
@@ -143,6 +138,11 @@ export class Layer<
 
 	/**
 	 * 获取该Layer的投影模块
+	 *
+	 * Resolve the Projection instance for this layer.
+	 * - if projection is input as initial props, always use that one
+	 * - if not, will search parent tree until find the nearest projection instance
+	 * - if still not, will wait until current root is added to another tree
 	 */
 	getProjection(): Promise<Projection> {
 		return new Promise((resolve) => {
@@ -156,33 +156,55 @@ export class Layer<
 				resolve(this.#projectionResolved)
 				return
 			}
+
 			// 请求 parent tree
 			if (this.parent) {
-				if (!isLayer(this.parent))
-					throw new Error('Can not resolve projection from parent because parent is not a Layer.')
+				if (isPolaris(this.parent)) {
+					this.#projectionResolved = this.parent.projection
+					resolve(this.parent.projection)
+				} else if (isLayer(this.parent)) {
+					// 把任务迭代地交给上级，而非自己去一层层遍历上级
+					this.parent.getProjection().then((projection) => {
+						this.#projectionResolved = projection
+						resolve(projection)
+					})
+				} else {
+					throw new Error(
+						'Can not resolve projection from parent because parent is not a Layer or Polaris.'
+					)
+				}
 
-				// 把任务迭代地交给上级，而非自己去一层层遍历上级
-				this.parent.getProjection().then((projection) => {
-					this.#projectionResolved = projection
-					resolve(projection)
-				})
 				return
 			}
-			// 等待获得 parent 之后再请求 parent tree
-			this.onAdd = (parent) => {
-				if (!isLayer(parent))
-					throw new Error('Can not resolve projection from parent because parent is not a Layer.')
 
-				parent.getProjection().then((projection) => {
-					this.#projectionResolved = projection
-					resolve(projection)
-				})
-			}
+			// else: 等待获得 parent 之后再请求 parent tree
+			this.addEventListener('add', (e) => {
+				const parent = e.parent
+				if (isPolaris(parent)) {
+					this.#projectionResolved = parent.projection
+					resolve(parent.projection)
+				} else if (isLayer(parent)) {
+					// 把任务迭代地交给上级，而非自己去一层层遍历上级
+					parent.getProjection().then((projection) => {
+						this.#projectionResolved = projection
+						resolve(projection)
+					})
+				} else {
+					throw new Error(
+						'Can not resolve projection from parent because parent is not a Layer or Polaris.'
+					)
+				}
+			})
 		})
 	}
 
 	/**
 	 * 获取该Layer的时间线模块
+	 *
+	 * Resolve the Timeline instance for this layer.
+	 * - if timeline is input as initial props, always use that one
+	 * - if not, will search parent tree until find the nearest timeline instance
+	 * - if still not, will wait until current root is added to another tree
 	 */
 	getTimeline(): Promise<Timeline> {
 		return new Promise((resolve) => {
@@ -196,33 +218,54 @@ export class Layer<
 				resolve(this.#timelineResolved)
 				return
 			}
+
 			// 请求 parent tree
 			if (this.parent) {
-				if (!isLayer(this.parent))
-					throw new Error('Can not resolve timeline from parent because parent is not a Layer.')
+				if (isPolaris(this.parent)) {
+					this.#timelineResolved = this.parent.timeline
+					resolve(this.parent.timeline)
+				} else if (isLayer(this.parent)) {
+					// 把任务迭代地交给上级，而非自己去一层层遍历上级
+					this.parent.getTimeline().then((timeline) => {
+						this.#timelineResolved = timeline
+						resolve(timeline)
+					})
+				} else {
+					throw new Error(
+						'Can not resolve timeline from parent because parent is not a Layer or Polaris.'
+					)
+				}
 
-				// 把任务迭代地交给上级，而非自己去一层层遍历上级
-				this.parent.getTimeline().then((timeline) => {
-					this.#timelineResolved = timeline
-					resolve(timeline)
-				})
 				return
 			}
-			// 等待获得 parent 之后再请求 parent tree
-			this.onAdd = (parent) => {
-				if (!isLayer(parent))
-					throw new Error('Can not resolve timeline from parent because parent is not a Layer.')
 
-				parent.getTimeline().then((timeline) => {
-					this.#timelineResolved = timeline
-					resolve(timeline)
-				})
-			}
+			// else: 等待获得 parent 之后再请求 parent tree
+			this.addEventListener('add', (e) => {
+				const parent = e.parent
+				if (isPolaris(parent)) {
+					this.#timelineResolved = parent.timeline
+					resolve(parent.timeline)
+				} else if (isLayer(parent)) {
+					// 把任务迭代地交给上级，而非自己去一层层遍历上级
+					parent.getTimeline().then((timeline) => {
+						this.#timelineResolved = timeline
+						resolve(timeline)
+					})
+				} else {
+					throw new Error(
+						'Can not resolve timeline from parent because parent is not a Layer or Polaris.'
+					)
+				}
+			})
 		})
 	}
 
 	/**
 	 * 获取该Layer的Polaris实例
+	 *
+	 * Resolve the Polaris instance for this layer.
+	 * - will search parent tree until find the root Polaris instance
+	 * - if still not, will wait until current root is added to another tree
 	 */
 	getPolaris(): Promise<AbstractPolaris> {
 		return new Promise((resolve) => {
@@ -231,28 +274,47 @@ export class Layer<
 				resolve(this.#polarisResolved)
 				return
 			}
+
+			// @todo @optimize use .root instead of .parent
+
 			// 请求 parent tree
 			if (this.parent) {
-				if (!isLayer(this.parent))
-					throw new Error('Can not resolve polaris from parent because parent is not a Layer.')
+				if (isPolaris(this.parent)) {
+					this.#polarisResolved = this.parent
+					resolve(this.parent)
+				} else if (isLayer(this.parent)) {
+					// 把任务迭代地交给上级，而非自己去一层层遍历上级
+					this.parent.getPolaris().then((polaris) => {
+						this.#polarisResolved = polaris
+						resolve(polaris)
+					})
+				} else {
+					throw new Error(
+						'Can not resolve polaris from parent because parent is not a Layer or Polaris.'
+					)
+				}
 
-				// 把任务迭代地交给上级，而非自己去一层层遍历上级
-				this.parent.getPolaris().then((polaris) => {
-					this.#polarisResolved = polaris
-					resolve(polaris)
-				})
 				return
 			}
-			// 等待获得 parent 之后再请求 parent tree
-			this.onAdd = (parent) => {
-				if (!isLayer(parent))
-					throw new Error('Can not resolve polaris from parent because parent is not a Layer.')
 
-				parent.getPolaris().then((polaris) => {
-					this.#polarisResolved = polaris
-					resolve(polaris)
-				})
-			}
+			// else: 等待获得 parent 之后再请求 parent tree
+			this.addEventListener('add', (e) => {
+				const parent = e.parent
+				if (isPolaris(parent)) {
+					this.#polarisResolved = parent
+					resolve(parent)
+				} else if (isLayer(parent)) {
+					// 把任务迭代地交给上级，而非自己去一层层遍历上级
+					parent.getPolaris().then((polaris) => {
+						this.#polarisResolved = polaris
+						resolve(polaris)
+					})
+				} else {
+					throw new Error(
+						'Can not resolve polaris from parent because parent is not a Layer or Polaris.'
+					)
+				}
+			})
 		})
 	}
 

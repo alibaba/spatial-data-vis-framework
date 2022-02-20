@@ -17,8 +17,9 @@ import {
 	Cameraman,
 	GeographicStates,
 } from 'camera-proxy'
-import { PolarisProps, defaultProps } from './props/index'
+import { PolarisProps, defaultProps, STATIC_PROPS } from './props/index'
 import type { AbstractPolarisEvents } from './events'
+import { debug } from './utils'
 
 export { colorToString } from './props/index'
 export type { PolarisProps } from './props/index'
@@ -35,33 +36,44 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 		return this
 	}
 
-	#layerStatesCode = new WeakMap<AbstractLayer, string>()
+	/**
+	 * store view states of layers, used to emit viewChange event on layers
+	 */
+	#layerViewStates = new WeakMap<AbstractLayer, ViewStates>()
 
 	/**
 	 * @todo readonly props should use getter
 	 */
 
-	cameraProxy: AnimatedCameraProxy
-	cameraControl?: PointerControl | TouchControl
-	cameraman: Cameraman
+	readonly cameraProxy: AnimatedCameraProxy
+	readonly cameraControl?: PointerControl | TouchControl
+	readonly cameraman: Cameraman
 
-	timeline: Timeline
-	projection: Projection
+	readonly timeline: Timeline
+	readonly projection: Projection
+
+	#width: number
+	#height: number
+	#ratio: number
 
 	/**
 	 * with of content @pixel
 	 * @note change this by calling resize
-	 * @default 1
+	 * @default 500
 	 * @readonly
 	 */
-	width: number
+	get width() {
+		return this.#width
+	}
 	/**
 	 * height of content @pixel
 	 * @note change this by calling resize
-	 * @default 1
+	 * @default 500
 	 * @readonly
 	 */
-	height: number
+	get height() {
+		return this.#height
+	}
 	/**
 	 * actual width of the canvas @pixel
 	 * - canvasWidth = width * ratio
@@ -83,7 +95,9 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 	 * @default 1
 	 * @readonly
 	 */
-	ratio: number
+	get ratio() {
+		return this.#ratio
+	}
 
 	/**
 	 * scale of this canvas, scale the canvas with css.
@@ -91,7 +105,9 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 	 * @default 1
 	 * @readonly
 	 */
-	scale: number
+	// get scale() {
+	// 	return this.getProp('scale') ?? defaultProps.scale
+	// }
 
 	#disposed = false
 
@@ -103,10 +119,19 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 			...props,
 		}
 
-		/**
-		 * @todo timeline projection ... unchangeable props
-		 */
 		this.setProps(_props)
+
+		this.#width = _props.width
+		this.#height = _props.height
+		this.#ratio = _props.ratio
+
+		this.watchProps(['width', 'height', 'ratio'], (e) => {
+			this.resize(
+				this.getProp('width') ?? this.#width,
+				this.getProp('height') ?? this.#height,
+				this.getProp('ratio') ?? this.#ratio
+			)
+		})
 
 		/**
 		 * init timeline
@@ -153,12 +178,6 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 		 * init html / canvas
 		 */
 
-		// 逻辑像素
-		this.width = _props.width || /* props.container.offsetWidth || */ 1024
-		this.height = _props.height || /* props.container.offsetHeight || */ 760
-		this.ratio = _props.ratio || 1.0
-		this.scale = 1.0
-
 		// 物理像素
 		const canvasWidth = this.canvasWidth
 		const canvasHeight = this.canvasWidth
@@ -173,11 +192,6 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 			timeline,
 			/** @LIMIT 开启inert会影响的部分：SphereProject同步，Animations的结束时间，暂时关闭inert */
 			inert: false,
-			// TODO 可控制
-			limit: {
-				pitch: _props.pitchLimit,
-				zoom: _props.zoomLimit,
-			},
 			canvasWidth,
 			canvasHeight,
 			onUpdate: () => {},
@@ -185,10 +199,14 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 
 		// @todo not a good practice, order dependent
 		// cameraProxy config props listener
-		this.watchProps(['zoomLimit', 'pitchLimit'], () => {
-			cameraProxy['limit'].zoom = this.getProp('zoomLimit')
-			cameraProxy['limit'].pitch = this.getProp('pitchLimit')
-		})
+		this.watchProps(
+			['zoomLimit', 'pitchLimit'],
+			() => {
+				cameraProxy['limit'].zoom = this.getProp('zoomLimit')
+				cameraProxy['limit'].pitch = this.getProp('pitchLimit')
+			},
+			true
+		)
 
 		// 更新相机初始状态
 		const geo = this.projection.project(...(center as [number, number, number]))
@@ -205,14 +223,32 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 
 		this.cameraProxy = cameraProxy
 
+		// check view change for all layers every frame
 		this.addEventListener('beforeRender', (e) => {
 			const newStatesCode = this.cameraProxy.statesCode
+			const newWidth = this.width
+			const newHeight = this.height
+			const newRatio = this.ratio
+			// debugger
 			this.traverse((obj) => {
 				if (!isAbstractLayer(obj)) return
 
-				if (this.#layerStatesCode.get(obj) !== newStatesCode) {
-					this.#layerStatesCode.set(obj, newStatesCode)
-					// obj._onViewChange.forEach((f) => f(this.cameraProxy, this))
+				let viewStates = this.#layerViewStates.get(obj)
+				if (!viewStates) {
+					viewStates = {} as ViewStates
+					this.#layerViewStates.set(obj, viewStates)
+				}
+
+				if (
+					viewStates.width !== newWidth ||
+					viewStates.height !== newHeight ||
+					viewStates.ratio !== newRatio ||
+					viewStates.statesCode !== newStatesCode
+				) {
+					viewStates.width = newWidth
+					viewStates.height = newHeight
+					viewStates.ratio = newRatio
+					viewStates.statesCode = newStatesCode
 					obj.dispatchEvent({ type: 'viewChange', cameraProxy: this.cameraProxy, polaris: this })
 				}
 			})
@@ -220,7 +256,7 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 
 		// 基本绘制循环
 		this.timeline.addTrack({
-			id: '绘制循环',
+			id: 'polaris_render_loop',
 			duration: Infinity,
 			loop: false,
 			onUpdate: () => {
@@ -232,6 +268,11 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 					this.tick()
 				}
 			},
+		})
+
+		// static props(change these props will not be reacted or even cause problems)
+		this.watchProps(STATIC_PROPS, (e) => {
+			console.error(`Do not modify static props: [${e.changedKeys.join(',')}]`)
 		})
 	}
 
@@ -331,12 +372,17 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 		return viewCoords.map((coords) => this.projection.unproject(coords.x, coords.y, coords.z))
 	}
 
-	resize(width, height, ratio = 1.0, externalScale = 1.0) {
+	resize(width: number, height: number, ratio = this.#ratio) {
+		// break loop
+		if (width === this.#width && height === this.#height && ratio === this.#ratio) return
+
+		debug(`Polaris:: .resize(${width}, ${height}, ${ratio})`)
+
 		// TODO 重建PointerControl
 
-		this.width = width
-		this.height = height
-		this.ratio = ratio || this.ratio
+		this.#width = width
+		this.#height = height
+		this.#ratio = ratio
 
 		this.cameraProxy.canvasWidth = this.canvasWidth
 		this.cameraProxy.canvasHeight = this.canvasHeight
@@ -344,33 +390,33 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 		this.cameraProxy.config.canvasHeight = this.canvasHeight
 		this.cameraProxy.ratio = this.ratio // -> this.cam.update()
 
-		// this.props.width = width
-		// this.props.height = height
-
+		// sync back
+		// @note needs to break loop
 		this.setProps({
 			width,
 			height,
+			ratio,
 		})
 
-		this.setExternalScale(externalScale)
+		// this.setExternalScale(externalScale)
 	}
 
 	setRatio(ratio = 1.0) {
-		this.resize(this.width, this.height, ratio)
+		this.resize(this.#width, this.#height, ratio)
 	}
 
-	/**
-	 * 设置外部画布缩放比例
-	 * @NOTE 调用此接口时，需要确认是否画布或容器已从外部设置了额外scale，如: style.transform
-	 * @param {number} [scale=1.0] 对应外部设置的画布缩放值
-	 * @memberof Polaris
-	 */
-	setExternalScale(scale = 1.0) {
-		this.scale = scale || this.scale
-		if (this.cameraControl) {
-			this.cameraControl.scale = this.scale
-		}
-	}
+	// /**
+	//  * 设置外部画布缩放比例
+	//  * @NOTE 调用此接口时，需要确认是否画布或容器已从外部设置了额外scale，如: style.transform
+	//  * @param {number} [scale=1.0] 对应外部设置的画布缩放值
+	//  * @memberof Polaris
+	//  */
+	// setExternalScale(scale = 1.0) {
+	// 	this.scale = scale || this.scale
+	// 	if (this.cameraControl) {
+	// 		this.cameraControl.scale = this.scale
+	// 	}
+	// }
 
 	tick() {
 		if (this.#disposed) {
@@ -431,15 +477,7 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 
 	// #region legacy apis
 
-	/**
-	 * @deprecated
-	 */
 	readonly isPolaris = true
-
-	/**
-	 * @deprecated renamed as {@link getProp} for clarity
-	 */
-	// getProps = this.getProp
 
 	// #endregion
 }
@@ -452,3 +490,17 @@ export type Polaris = AbstractPolaris
  * @deprecated renamed as {@link AbstractPolaris} for clarity
  */
 export const Polaris = AbstractPolaris
+
+export function isPolaris(v: any = {}): v is AbstractPolaris {
+	return v.isPolaris && v.isAbstractLayer && v.isAbstractNode && v.isEventDispatcher
+}
+
+/**
+ * States related to viewChange event
+ */
+type ViewStates = {
+	width: number
+	height: number
+	ratio: number
+	statesCode: string
+}

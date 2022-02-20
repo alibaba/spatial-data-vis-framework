@@ -24,7 +24,6 @@ import type { AbstractPolaris } from './Polaris'
  * 		2. `RootChangeEvent` (at least once)
  * 		3. `Layer.init` and `InitEvent` (once, after the layer is added to a polaris
  * 			scene, so that instance of Polaris/Timeline/Projection can be resolved)
- * 		4. `ViewChangeEvent` (once, right before first rendering)
  *
  * 		@stage_1 render loop
  * 		Events of this stage may happen multiple times during rendering.
@@ -40,8 +39,8 @@ import type { AbstractPolaris } from './Polaris'
  * 		1. `RemoveEvent` (only happen once if you implicitly remove a layer)
  * 		2. `Layer.dispose`
  *
- * While instance of Polaris, as a special kind of Layer, is the root of the layer tree.
- * Hence, there are certain events that will never be triggered:
+ * A Polaris instance, as a special kind of Layer, is the root of the layer tree.
+ * Hence, there are certain events that will never be triggered for it:
  *
  * 		- AddEvent (root node will never be added to a parent)
  * 		- RootChangeEvent
@@ -66,10 +65,6 @@ import type { AbstractPolaris } from './Polaris'
  *
  * @suggestion
  * Write everything in the `InitEvent` listener, including watchProps, to avoid mistakes.
- *
- * @examples
- *
- *
  */
 
 /**

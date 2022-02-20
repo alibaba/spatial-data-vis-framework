@@ -30,3 +30,10 @@ export type EventsMap<EventUnion extends EventBase> = {
 // 	 U = { [P in A['type']]: Extract<A, { type: P }> } & { [Q in B['type']]: Extract<B, { type: Q }> }
 //  > = U
 // export type ExtendEvents<A extends EventBase, B extends EventBase, U = A | B> = {[P in A['type'] | B['type']]: number}
+
+const DEBUG = true
+export const debug: typeof console.debug = (...args) => {
+	if (DEBUG) {
+		console.debug('debug:', args)
+	}
+}

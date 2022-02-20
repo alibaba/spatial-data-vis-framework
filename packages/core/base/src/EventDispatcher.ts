@@ -30,7 +30,7 @@ export class EventDispatcher<TEventTypes extends EventMapBase = any> {
 	// eslint-disable-next-line @typescript-eslint/ban-types
 	#options = new WeakMap<Function, ListenerOptions>()
 
-	readonly isEventDispatcher: true
+	readonly isEventDispatcher = true
 
 	addEventListener<TEventTypeName extends keyof TEventTypes>(
 		/**

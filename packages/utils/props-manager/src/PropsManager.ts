@@ -39,7 +39,7 @@ export class PropsManager<
 	}
 
 	/**
-	 * Partially update props. Only pass changed or added properties.
+	 * Partially update props. Only input changed or added properties.
 	 *
 	 * 初始化/更新属性，可以是增量更新
 	 *
@@ -50,7 +50,6 @@ export class PropsManager<
 	 * @changed callback 调用顺序会变化
 	 */
 	set(props: Partial<Pick<TProps, TModifiableKeys>>): void {
-		// debugger
 		// @optimize: only check *passed* and *listened* keys
 		const _props = {} as Partial<typeof props>
 		const propsKeys = Object.keys(props) as Array<keyof typeof props>
@@ -169,6 +168,84 @@ export class PropsManager<
 	 * @note safe to write like this. @simon
 	 */
 	listen = this.addListener
+
+	// experimental
+
+	/**
+	 * update props directly without trigger dirty-checking
+	 * @deprecated @experimental may change in future
+	 * @deprecated it's the same to save an editable copy outside of the propsManager
+	 *
+	 * @note use this only if you handled props change manually.
+	 * @note only affect one calling.
+	 *
+	 * @problems
+	 * 如果未来增加 “延迟回调” 或者 “合并藏检查”，该设计能否兼容
+	 *
+	 * @case_0
+	 *
+	 * { // batch dirty check
+	 * 	a.setProps({k: 0})
+	 * }
+	 *
+	 * { // batch dirty check
+	 * 	a.setProps({k: 2})
+	 * 	a.setProps({k: 3}, true)
+	 * 	a.setProps({k: 0})
+	 * }
+	 *
+	 * * won't trigger, but ok
+	 *
+	 * @case_1
+	 *
+	 * { // batch dirty check
+	 * 	a.setProps({k: 0})
+	 * }
+	 *
+	 * { // batch dirty check
+	 * 	a.setProps({k: 2})
+	 * 	a.setProps({k: 3})
+	 * 	a.setProps({k: 4}, true)
+	 * }
+	 *
+	 * * won't trigger, can be problematic
+	 *
+	 * @case_2
+	 *
+	 * { // batch dirty check
+	 * 	a.setProps({k: 0})
+	 * 	a.setProps({k: 1}, true)
+	 * }
+	 *
+	 * { // batch dirty check
+	 * 	a.setProps({k: 0})
+	 * }
+	 *
+	 * * trigger
+	 *
+	 * @case_3
+	 *
+	 * { // batch dirty check
+	 * 	a.setProps({k: 0})
+	 * }
+	 *
+	 * { // batch dirty check
+	 * 	a.setProps({k: 1}, true)
+	 * 	a.setProps({k: 0})
+	 * }
+	 *
+	 * * won't trigger, difference between case_2 is definitely problematic
+	 *
+	 * @potential_solve
+	 * Make `direct .setProps` and `.getProps` work like `async fence`,
+	 * always `finalize` dirty-check when calling?
+	 */
+	bypass(props: Partial<Pick<TProps, TModifiableKeys>>): void {
+		this._props = {
+			...this._props,
+			...props,
+		}
+	}
 }
 
 /**
@@ -232,38 +309,6 @@ export function disposePropsManager(obj: object) {
 		manager.dispose()
 	}
 }
-
-// example of private property
-
-// const safety = new WeakMap()
-
-// class A {
-// 	constructor() {
-// 		safety.set(this, {
-// 			a: 123,
-// 			dd: () => {
-// 				console.log('dd', this.a)
-// 			},
-// 		})
-// 	}
-
-// 	get a() {
-// 		return safety.get(this).a
-// 	}
-
-// 	ss() {
-// 		console.log('ss')
-// 		safety.get(this).dd()
-// 	}
-// }
-
-// class A {
-// 	#aa = 1
-// }
-
-// class B extends A {
-// 	#aa = 2
-// }
 
 // test
 // const a = new PropsManager<{ cc: 'dd' | 'ee'; ff: 'gg' | 'kk' }>()
