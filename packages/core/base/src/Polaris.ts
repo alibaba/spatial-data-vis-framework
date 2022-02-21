@@ -7,7 +7,7 @@
  * Polaris 入口类 基类
  */
 
-import { AbstractLayer, isAbstractLayer } from './AbstractLayer'
+import { AbstractLayer, isAbstractLayer } from './Layer'
 import { Projection, MercatorProjection } from '@polaris.gl/projection'
 import { Timeline } from 'ani-timeline'
 import {
@@ -28,18 +28,8 @@ export type { PolarisProps } from './props/index'
  * AbstractPolaris
  */
 export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, AbstractPolarisEvents> {
-	// polaris is always the root
-	override get parent(): null {
-		return null
-	}
-	override get root(): this {
-		return this
-	}
-
-	/**
-	 * store view states of layers, used to emit viewChange event on layers
-	 */
-	#layerViewStates = new WeakMap<AbstractLayer, ViewStates>()
+	readonly isAbstractPolaris = true
+	readonly isPolaris = true
 
 	/**
 	 * @todo readonly props should use getter
@@ -57,57 +47,9 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 	#ratio: number
 
 	/**
-	 * with of content @pixel
-	 * @note change this by calling resize
-	 * @default 500
-	 * @readonly
+	 * store view states of layers, used to emit viewChange event on layers
 	 */
-	get width() {
-		return this.#width
-	}
-	/**
-	 * height of content @pixel
-	 * @note change this by calling resize
-	 * @default 500
-	 * @readonly
-	 */
-	get height() {
-		return this.#height
-	}
-	/**
-	 * actual width of the canvas @pixel
-	 * - canvasWidth = width * ratio
-	 */
-	get canvasWidth() {
-		return this.width * this.ratio
-	}
-	/**
-	 * actual height of the canvas @pixel
-	 * - canvasHeight = heigh * ratio
-	 */
-	get canvasHeight() {
-		return this.height * this.ratio
-	}
-
-	/**
-	 * pixel ratio, this affect the actual rendering resolution.
-	 * @note change this by calling resize or setRatio
-	 * @default 1
-	 * @readonly
-	 */
-	get ratio() {
-		return this.#ratio
-	}
-
-	/**
-	 * scale of this canvas, scale the canvas with css.
-	 * @note change this by calling resize or setExternalScale
-	 * @default 1
-	 * @readonly
-	 */
-	// get scale() {
-	// 	return this.getProp('scale') ?? defaultProps.scale
-	// }
+	#layerViewStates = new WeakMap<AbstractLayer, ViewStates>()
 
 	#disposed = false
 
@@ -272,9 +214,58 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 
 		// static props(change these props will not be reacted or even cause problems)
 		this.watchProps(STATIC_PROPS, (e) => {
-			console.error(`Do not modify static props: [${e.changedKeys.join(',')}]`)
+			const msg = `Do not modify static props: [${e.changedKeys.join(',')}]`
+			this.dispatchEvent({ type: 'error', error: new Error(msg) })
+			console.error(msg)
 		})
 	}
+
+	// #region width and height
+
+	/**
+	 * with of content @pixel
+	 * @note change this by calling resize
+	 * @default 500
+	 * @readonly
+	 */
+	get width() {
+		return this.#width
+	}
+	/**
+	 * height of content @pixel
+	 * @note change this by calling resize
+	 * @default 500
+	 * @readonly
+	 */
+	get height() {
+		return this.#height
+	}
+	/**
+	 * actual width of the canvas @pixel
+	 * - canvasWidth = width * ratio
+	 */
+	get canvasWidth() {
+		return this.width * this.ratio
+	}
+	/**
+	 * actual height of the canvas @pixel
+	 * - canvasHeight = heigh * ratio
+	 */
+	get canvasHeight() {
+		return this.height * this.ratio
+	}
+
+	/**
+	 * pixel ratio, this affect the actual rendering resolution.
+	 * @note change this by calling resize or setRatio
+	 * @default 1
+	 * @readonly
+	 */
+	get ratio() {
+		return this.#ratio
+	}
+
+	// #endregion
 
 	pause() {
 		this.timeline.pause()
@@ -401,23 +392,6 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 		// this.setExternalScale(externalScale)
 	}
 
-	setRatio(ratio = 1.0) {
-		this.resize(this.#width, this.#height, ratio)
-	}
-
-	// /**
-	//  * 设置外部画布缩放比例
-	//  * @NOTE 调用此接口时，需要确认是否画布或容器已从外部设置了额外scale，如: style.transform
-	//  * @param {number} [scale=1.0] 对应外部设置的画布缩放值
-	//  * @memberof Polaris
-	//  */
-	// setExternalScale(scale = 1.0) {
-	// 	this.scale = scale || this.scale
-	// 	if (this.cameraControl) {
-	// 		this.cameraControl.scale = this.scale
-	// 	}
-	// }
-
 	tick() {
 		if (this.#disposed) {
 			throw new Error('Polaris - This instance is disposed. Create a new one if needed.')
@@ -475,10 +449,36 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 	 */
 	abstract getScreenXY(x: number, y: number, z: number): number[] | undefined
 
-	// #region legacy apis
+	// #endregion
 
-	readonly isPolaris = true
+	// #region override AbstractLayer
+	// polaris is always the root
+	override get parent(): null {
+		return null
+	}
+	override get root(): this {
+		return this
+	}
 
+	// polaris is always visible
+	override get visible(): true {
+		return true
+	}
+	override set visible(v: any) {
+		throw new Error('do not set visibility on polaris')
+	}
+	override show(): never {
+		throw new Error('do not set visibility on polaris')
+	}
+	override hide(): never {
+		throw new Error('do not set visibility on polaris')
+	}
+	override view: never
+
+	// polaris is always inited
+	override get inited(): true {
+		return true
+	}
 	// #endregion
 }
 

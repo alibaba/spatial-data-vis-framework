@@ -3,36 +3,51 @@
  * All rights reserved.
  */
 
-import { AbstractLayer } from './AbstractLayer'
-import { Projection } from '@polaris.gl/projection'
-import { Timeline } from 'ani-timeline'
+import type { Projection } from '@polaris.gl/projection'
+import type { Timeline } from 'ani-timeline'
+import type { CameraProxy } from 'camera-proxy'
+import type { AbstractLayerEvents } from './events'
 
-import { AbstractPolaris, isPolaris } from './Polaris'
+import { Node } from './Node'
 import { View } from './View'
-import type { LayerEvents } from './events'
+import { AbstractPolaris, isPolaris } from './Polaris'
+import { Callback, ListenerOptions, PropsManager } from '@polaris.gl/utils-props-manager'
 
 export interface LayerProps {
 	name?: string
-	parent?: Layer<any>
+	parent?: AbstractLayer<any>
 	timeline?: Timeline
 	projection?: Projection
 	views?: { [key: string]: new () => View }
 }
 
+// override Node & EventDispatcher interfaces to hide underlying implements.
+export interface AbstractLayer {
+	get parent(): AbstractLayer | null
+	get children(): Set<AbstractLayer>
+	get root(): AbstractLayer | null
+	add(child: AbstractLayer): void
+	remove(child: AbstractLayer): void
+	traverse(handler: (node: AbstractLayer) => void): void
+	set onAdd(f: (parent: any) => void) // workaround ts bug
+	set onRemove(f: (parent: any) => void)
+}
+
 /**
  * empty layer
  */
-export class Layer<
+export abstract class AbstractLayer<
 	TProps extends LayerProps = any,
-	TExtraEventMap extends LayerEvents = LayerEvents
-> extends AbstractLayer<TProps, TExtraEventMap> {
-	readonly isLayer = true
-
+	TExtraEventMap extends AbstractLayerEvents = AbstractLayerEvents
+> extends Node<TExtraEventMap> {
+	/**
+	 * type indicator
+	 */
+	readonly isAbstractLayer = true
 	/**
 	 * readable name of this layer
 	 */
 	readonly name: string
-
 	/**
 	 * #### The actual renderable contents.
 	 * A layer can have multi views, e.g. gsiView + htmlView
@@ -44,6 +59,23 @@ export class Layer<
 	 * - **only use this if you know what you are doing.**
 	 */
 	readonly view: { [key: string]: View }
+
+	#inited = false
+	#visible = true
+	#propsManager = new PropsManager<TProps>()
+
+	// 本地传入
+	#timelineLocal?: Timeline
+	#projectionLocal?: Projection
+
+	// 从 parent tree 上回溯到的，本地缓存（避免每次都回溯）
+	#timelineResolved?: Timeline
+	#projectionResolved?: Projection
+
+	/**
+	 * if this layer has been added to a polaris instance, this will be set.
+	 */
+	#polarisResolved?: AbstractPolaris
 
 	/**
 	 * @constructor
@@ -75,8 +107,20 @@ export class Layer<
 
 		this.setProps(props || {})
 
-		Promise.all([this.getProjection(), this.getTimeline(), this.getPolaris()]).then(
-			([projection, timeline, polaris]) => {
+		// init event
+		this.addEventListener('rootChange', async (e) => {
+			if (this.#inited) {
+				const msg = 'InternalError: This layer has already been inited. cannot move a layer'
+				console.error(msg)
+				this.dispatchEvent({ type: 'error', error: new Error('msg') })
+				return
+			}
+
+			if (isPolaris(e.root)) {
+				const projection = await this.getProjection()
+				const timeline = await this.getTimeline()
+				const polaris = e.root as AbstractPolaris
+
 				this.init && this.init(projection, timeline, polaris)
 
 				this.dispatchEvent({
@@ -85,6 +129,9 @@ export class Layer<
 					timeline,
 					polaris,
 				})
+
+				this.#inited = true
+
 				this.dispatchEvent({
 					type: 'afterInit',
 					projection,
@@ -92,49 +139,85 @@ export class Layer<
 					polaris,
 				})
 			}
-		)
+		})
+	}
+
+	/**
+	 * whether this layer had been inited (added to an polaris tree and triggered InitEvent)
+	 */
+	get inited() {
+		return this.#inited
+	}
+
+	/**
+	 * visibility of this layer
+	 */
+	get visible() {
+		return this.#visible
+	}
+
+	set visible(v: boolean) {
+		if (this.#visible !== v) {
+			this.#visible = v
+			this.dispatchEvent({ type: 'visibilityChange' })
+		}
+	}
+
+	abstract raycast(
+		polaris: AbstractPolaris,
+		canvasCoord: CoordV2,
+		ndc: CoordV2
+	): PickEvent | undefined
+
+	abstract dispose(): void
+
+	show() {
+		this.visible = true
+	}
+	hide() {
+		this.visible = false
+	}
+
+	getProp<TKey extends keyof TProps>(key: TKey): TProps[TKey] {
+		return this.#propsManager.get(key)
+	}
+
+	/**
+	 * listen to changes of a series of props.
+	 * @note callback will be fired if any of these keys changed
+	 */
+	watchProps<TKeys extends Array<keyof TProps>>(
+		keys: TKeys,
+		callback: Callback<TProps, TKeys[number]>,
+		options?: ListenerOptions
+	): void {
+		this.#propsManager.addListener(keys, callback, options)
+	}
+
+	watchProp<TKey extends keyof TProps>(
+		key: TKey,
+		callback: Callback<TProps, TKey>,
+		options?: ListenerOptions
+	): void {
+		this.#propsManager.addListener([key], callback, options)
 	}
 
 	setProps(props: Partial<TProps | LayerProps>) {
-		/**
-		 * @todo feels like a bug of tsc
-		 * @note
-		 * Partial<TProps> is not `assignable` until generic type TProps get settled.
-		 * So if you use Partial<GenericType> as a writeable value or function param.
-		 * Use `.t3` like the following code:
-		 *
-		 * ```
-		 * class A<T extends { s: boolean }> {
-		 * 		t1: T
-		 * 		t2: Partial<T>
-		 * 		t3: Partial<T | { s: boolean }>
-		 *
-		 * 		set() {
-		 * 			// write
-		 * 			this.t1 = { s: true } // ❌ TS Error
-		 * 			this.t2 = { s: true } // ❌ TS Error <- this should pass
-		 * 			this.t3 = { s: true } // ✅ TS Pass
-		 * 			this.t3 = { l: true } // ❌ TS Error
-		 *
-		 * 			// read
-		 *			this.t1.s // boolean
-		 *			this.t2.s // boolean | undefined
-		 *			this.t3.s // boolean | undefined
-		 * 		}
-		 * }
-		 *
-		 * class B extends A<{ l?: boolean; s: boolean }> {
-		 * 		set() {
-		 * 			this.t1 = { s: true } // ✅ TS Pass
-		 * 			this.t2 = { s: true } // ✅ TS Pass
-		 * 			this.t3 = { s: true } // ✅ TS Pass
-		 * 			this.t3 = { l: true } // ✅ TS Pass
-		 * 		}
-		 * }
-		 * ```
-		 */
-		super.setProps(props as any)
+		this.#propsManager.set(props as any)
 	}
+
+	traverseVisible(handler: (node: AbstractLayer<any /* do not assume generic */>) => void): void {
+		if (!this.visible) return
+
+		handler(this)
+		this.children.forEach((child) => {
+			if (isAbstractLayer(child)) {
+				child.traverseVisible(handler)
+			}
+		})
+	}
+
+	// #region resolver
 
 	/**
 	 * 获取该Layer的投影模块
@@ -162,7 +245,7 @@ export class Layer<
 				if (isPolaris(this.parent)) {
 					this.#projectionResolved = this.parent.projection
 					resolve(this.parent.projection)
-				} else if (isLayer(this.parent)) {
+				} else if (isAbstractLayer(this.parent)) {
 					// 把任务迭代地交给上级，而非自己去一层层遍历上级
 					this.parent.getProjection().then((projection) => {
 						this.#projectionResolved = projection
@@ -183,7 +266,7 @@ export class Layer<
 				if (isPolaris(parent)) {
 					this.#projectionResolved = parent.projection
 					resolve(parent.projection)
-				} else if (isLayer(parent)) {
+				} else if (isAbstractLayer(parent)) {
 					// 把任务迭代地交给上级，而非自己去一层层遍历上级
 					parent.getProjection().then((projection) => {
 						this.#projectionResolved = projection
@@ -224,7 +307,7 @@ export class Layer<
 				if (isPolaris(this.parent)) {
 					this.#timelineResolved = this.parent.timeline
 					resolve(this.parent.timeline)
-				} else if (isLayer(this.parent)) {
+				} else if (isAbstractLayer(this.parent)) {
 					// 把任务迭代地交给上级，而非自己去一层层遍历上级
 					this.parent.getTimeline().then((timeline) => {
 						this.#timelineResolved = timeline
@@ -245,7 +328,7 @@ export class Layer<
 				if (isPolaris(parent)) {
 					this.#timelineResolved = parent.timeline
 					resolve(parent.timeline)
-				} else if (isLayer(parent)) {
+				} else if (isAbstractLayer(parent)) {
 					// 把任务迭代地交给上级，而非自己去一层层遍历上级
 					parent.getTimeline().then((timeline) => {
 						this.#timelineResolved = timeline
@@ -282,7 +365,7 @@ export class Layer<
 				if (isPolaris(this.parent)) {
 					this.#polarisResolved = this.parent
 					resolve(this.parent)
-				} else if (isLayer(this.parent)) {
+				} else if (isAbstractLayer(this.parent)) {
 					// 把任务迭代地交给上级，而非自己去一层层遍历上级
 					this.parent.getPolaris().then((polaris) => {
 						this.#polarisResolved = polaris
@@ -303,7 +386,7 @@ export class Layer<
 				if (isPolaris(parent)) {
 					this.#polarisResolved = parent
 					resolve(parent)
-				} else if (isLayer(parent)) {
+				} else if (isAbstractLayer(parent)) {
 					// 把任务迭代地交给上级，而非自己去一层层遍历上级
 					parent.getPolaris().then((polaris) => {
 						this.#polarisResolved = polaris
@@ -318,31 +401,7 @@ export class Layer<
 		})
 	}
 
-	raycast(polaris: AbstractPolaris, canvasCoord: CoordV2, ndc: CoordV2): PickEvent | undefined {
-		warnUnimplementedRaycast()
-		return
-	}
-
-	/**
-	 * update props
-	 */
-
-	dispose() {}
-
-	// 本地传入
-	#timelineLocal?: Timeline
-	#projectionLocal?: Projection
-
-	// 从 parent tree 上回溯到的，本地缓存（避免每次都回溯）
-	#timelineResolved?: Timeline
-	#projectionResolved?: Projection
-
-	/**
-	 * if this layer has been added to a polaris instance, this will be set.
-	 */
-	#polarisResolved?: AbstractPolaris
-
-	// #region legacy apis
+	// #endregion
 
 	/**
 	 * sync interface. legacy only. not recommended.
@@ -379,6 +438,27 @@ export class Layer<
 	 */
 	get resolvedPolaris(): AbstractPolaris | undefined {
 		return this.#polarisResolved
+	}
+
+	// #region legacy apis
+
+	/**
+	 * @deprecated use {@link isAbstractLayer}
+	 */
+	readonly isBase = true
+	/**
+	 * @deprecated use {@link isAbstractLayer}
+	 */
+	readonly isLayer = true
+
+	/**
+	 * @deprecated use {@link .addEventListener} instead
+	 * callback when object/layer
+	 */
+	set onVisibilityChange(f: () => void) {
+		this.addEventListener('visibilityChange', () => {
+			f()
+		})
 	}
 
 	/**
@@ -425,10 +505,58 @@ export class Layer<
 		)
 	}
 
-	// #endregion
-}
+	/**
+	 * update props
+	 * @todo whether rename to setProps?
+	 * @deprecated
+	 */
+	updateProps = this.setProps
 
-export interface Layer {
+	/**
+	 * @deprecated use {@link watchProps} instead. with `{immediate: true}` as options
+	 */
+	protected listenProps<TKeys extends Array<keyof TProps>>(
+		keys: TKeys,
+		callback: Callback<TProps, TKeys[number]>
+	): void {
+		this.#propsManager.addListener(keys, callback, { immediate: true })
+	}
+
+	/**
+	 * @deprecated use {@link getProp} instead
+	 */
+	protected getProps = this.getProp
+
+	/**
+	 * @deprecated use {@link .addEventListener} instead
+	 * callback when camera state is changed
+	 */
+	set onViewChange(f: (cam: CameraProxy, polaris: any /* typeof Polaris */) => void) {
+		this.addEventListener('viewChange', (event) => {
+			f(event.cameraProxy, event.polaris)
+		})
+	}
+
+	/**
+	 * @deprecated use {@link .addEventListener} instead
+	 * callback before object/layer to be rendered in every frame
+	 */
+	set onBeforeRender(f: (polaris: any /* typeof Polaris */) => void) {
+		this.addEventListener('beforeRender', (event) => {
+			f(event.polaris)
+		})
+	}
+
+	/**
+	 * @deprecated use {@link .addEventListener} instead
+	 * callback after object/layer rendered in every frame
+	 */
+	set onAfterRender(f: (polaris: any /* typeof Polaris */) => void) {
+		this.addEventListener('afterRender', (event) => {
+			f(event.polaris)
+		})
+	}
+
 	/**
 	 * @deprecated use {@link .addEventListener} instead
 	 *
@@ -441,11 +569,16 @@ export interface Layer {
 	 * @alias this.addEventListener('init')
 	 */
 	init?(projection: Projection, timeline: Timeline, polaris: AbstractPolaris): void
+	// #endregion
 }
 
-export function isLayer(v: any): v is Layer {
-	return v.isLayer && v.isAbstractLayer && v.isAbstractNode && v.isEventDispatcher
+export function isAbstractLayer(v: any): v is AbstractLayer
+export function isAbstractLayer(v: AbstractLayer): v is AbstractLayer {
+	return v.isAbstractLayer && v.isAbstractNode && v.isEventDispatcher
 }
+export const isLayer = isAbstractLayer
+
+export const Layer = AbstractLayer
 
 //
 
@@ -500,18 +633,45 @@ export interface PickEventResult extends PickEvent {
 	}
 }
 
-// helpers
-let warnUnimplementedRaycastCount = 0
-function warnUnimplementedRaycast() {
-	if (warnUnimplementedRaycastCount < 10) {
-		console.warn('Layer::raycast not implemented. implement this method in subclass if pick-ale.')
-	}
-	if (warnUnimplementedRaycastCount === 10) {
-		console.warn('Layer::warnUnimplementedRaycast too many warnings. no more will be reported.')
-	}
-	warnUnimplementedRaycastCount++
-}
-
 // test code
 // const a = new Layer()
 // a.parent
+
+/**
+ * @todo always needs to override .setProps(Partial<TProps | LayerProps>)
+ * @note feels like a bug of tsc
+ * @note
+ * Partial<TProps> is not `assignable` until generic type TProps get settled.
+ * So if you use Partial<GenericType> as a writeable value or function param.
+ * Use `.t3` like the following code:
+ *
+ * ```
+ * class A<T extends { s: boolean }> {
+ * 		t1: T
+ * 		t2: Partial<T>
+ * 		t3: Partial<T | { s: boolean }>
+ *
+ * 		set() {
+ * 			// write
+ * 			this.t1 = { s: true } // ❌ TS Error
+ * 			this.t2 = { s: true } // ❌ TS Error <- this should pass
+ * 			this.t3 = { s: true } // ✅ TS Pass
+ * 			this.t3 = { l: true } // ❌ TS Error
+ *
+ * 			// read
+ *			this.t1.s // boolean
+ *			this.t2.s // boolean | undefined
+ *			this.t3.s // boolean | undefined
+ * 		}
+ * }
+ *
+ * class B extends A<{ l?: boolean; s: boolean }> {
+ * 		set() {
+ * 			this.t1 = { s: true } // ✅ TS Pass
+ * 			this.t2 = { s: true } // ✅ TS Pass
+ * 			this.t3 = { s: true } // ✅ TS Pass
+ * 			this.t3 = { l: true } // ✅ TS Pass
+ * 		}
+ * }
+ * ```
+ */

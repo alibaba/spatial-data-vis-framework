@@ -4,8 +4,7 @@
  */
 
 export * from './EventDispatcher'
-export * from './AbstractNode'
-export * from './AbstractLayer'
+export * from './Node'
 export * from './Layer'
 export * from './Polaris'
 export * from './Renderer'

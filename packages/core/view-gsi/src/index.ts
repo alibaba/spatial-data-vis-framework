@@ -8,7 +8,7 @@
  * 但是 typescript 中 mixin 和 decoration 都会造成一定程度的 interface 混乱
  * 因此在这里把constructor里增加的逻辑拆成函数，
  */
-import { View, Layer } from '@polaris.gl/base'
+import { View, AbstractLayer } from '@polaris.gl/base'
 import { Mesh } from '@gs.i/frontend-sdk'
 
 export class GSIView extends View {
@@ -35,9 +35,9 @@ export class GSIView extends View {
 		// super.init(layer)
 	}
 
-	layer: Layer
+	layer: AbstractLayer
 
-	init(layer: Layer): this {
+	init(layer: AbstractLayer): this {
 		this.layer = layer
 
 		/**
@@ -78,7 +78,7 @@ export class GSIView extends View {
 	/**
 	 * Implement
 	 */
-	onAdd(parent: Layer) {
+	onAdd(parent: AbstractLayer) {
 		const parentView = parent.view.gsi
 		if (!parentView) {
 			throw new Error('Polaris::GSIView - Parent layer has no GSIView')
@@ -93,7 +93,7 @@ export class GSIView extends View {
 	/**
 	 * Implement
 	 */
-	onRemove(parent: Layer) {
+	onRemove(parent: AbstractLayer) {
 		const parentView = parent.view.gsi
 		if (!parentView) {
 			return
@@ -104,6 +104,6 @@ export class GSIView extends View {
 	}
 
 	static check(view): view is GSIView {
-		return view && view['isGSIView']
+		return view && view.isGSIView
 	}
 }

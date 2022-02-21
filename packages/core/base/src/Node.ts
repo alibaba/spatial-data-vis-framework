@@ -33,7 +33,7 @@
 
 import { EventDispatcher } from './EventDispatcher'
 
-import type { AbstractNodeEvents } from './events'
+import type { NodeEvents } from './events'
 
 /**
  * @explain ### Why not using `this` as the type of `parent`?
@@ -66,9 +66,7 @@ const MAX_DEPTH = 1024
  * Tree structure
  * @note handles tree context
  */
-export class AbstractNode<
-	TEventMap extends AbstractNodeEvents = AbstractNodeEvents
-> extends EventDispatcher<TEventMap> {
+export class Node<TEventMap extends NodeEvents = NodeEvents> extends EventDispatcher<TEventMap> {
 	/**
 	 * parent node
 	 * @readonly
@@ -93,7 +91,7 @@ export class AbstractNode<
 		return this.#root
 	}
 
-	add(child: AbstractNode): void {
+	add(child: Node): void {
 		if (child.parent) {
 			throw new Error(`AbstractNode: This child already has a parent.`)
 		}
@@ -115,7 +113,7 @@ export class AbstractNode<
 
 		// depth detection
 		let depth = 0
-		let ancestor = this as AbstractNode | null
+		let ancestor = this as Node | null
 		while (ancestor) {
 			ancestor = ancestor.parent
 			depth++
@@ -141,7 +139,7 @@ export class AbstractNode<
 		})
 	}
 
-	remove(child: AbstractNode): void {
+	remove(child: Node): void {
 		this.children.delete(child)
 
 		child.#parent = null
@@ -166,8 +164,8 @@ export class AbstractNode<
 		this.children.forEach((child) => this.remove(child))
 	}
 
-	traverse(handler: (node: AbstractNode) => void): void {
-		handler(this as AbstractNode)
+	traverse(handler: (node: Node) => void): void {
+		handler(this as Node)
 		this.children.forEach((child) => child.traverse(handler))
 	}
 
@@ -178,15 +176,15 @@ export class AbstractNode<
 	 * @note currently not support re-add an used node
 	 */
 	#removed = false
-	#root: null | AbstractNode = null
-	#parent: null | AbstractNode = null
-	#children = new Set<AbstractNode>()
+	#root: null | Node = null
+	#parent: null | Node = null
+	#children = new Set<Node>()
 
 	/**
 	 * callback when object/layer is added to a parent
 	 * @note different from addEventListener('add'), this will be triggered if the layer is already added to a parent
 	 */
-	set onAdd(f: (parent: AbstractNode) => void) {
+	set onAdd(f: (parent: Node) => void) {
 		if (this.parent) {
 			f(this.parent)
 		} else {
@@ -215,13 +213,13 @@ export class AbstractNode<
 	}
 }
 
-export function isAbstractNode(v: any): v is AbstractNode {
+export function isAbstractNode(v: any): v is Node {
 	return v.isEventDispatcher && v.isAbstractNode
 }
-export function isRootNode(v: AbstractNode) {
+export function isRootNode(v: Node) {
 	return v.parent === null
 }
-export function isLeafNode(v: AbstractNode) {
+export function isLeafNode(v: Node) {
 	return v.children.size === 0
 }
 

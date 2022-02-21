@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import { MeshDataType } from '@gs.i/schema'
+import { RenderableNode } from '@gs.i/schema-scene'
 import {
 	Object3D,
 	Vector3,
@@ -21,7 +21,7 @@ import {
 	AmbientLight,
 	DirectionalLight,
 	PointLight,
-} from '@gs.i/three-lite-renderer'
+} from 'three-lite'
 import { Renderer, colorToString, PolarisProps, PickResult } from '@polaris.gl/base'
 import {
 	DefaultConfig as ConvConfig,
@@ -33,8 +33,8 @@ import * as SDK from '@gs.i/frontend-sdk'
 import { GSIView } from '@polaris.gl/view-gsi'
 // import * as postprocessing from 'postprocessing'
 // const { EffectComposer, ShaderPass } = postprocessing
-import { calcCamNearFar } from './Utils'
-import { Raycaster, RaycastInfo } from '@gs.i/utils-raycast'
+import { calcCamNearFar } from './utils'
+import { Raycaster, RaycastInfo } from '@gs.i/processor-raycast'
 
 /**
  *
@@ -43,7 +43,7 @@ import { Raycaster, RaycastInfo } from '@gs.i/utils-raycast'
  * @interface RendererProps
  * @extends {PolarisProps}
  */
-export interface RendererProps extends PolarisProps {
+export interface RendererProps extends Required<PolarisProps> {
 	enableReflection?: boolean
 	reflectionRatio?: number
 	castShadow?: boolean
@@ -70,7 +70,7 @@ const _vec3 = new Vector3()
  * @extends {Renderer}
  */
 export class LiteRenderer extends Renderer {
-	props: RendererProps
+	props: Required<RendererProps>
 
 	/**
 	 * GSI - threelite 转换器
@@ -115,7 +115,7 @@ export class LiteRenderer extends Renderer {
 	/**
 	 * 转换后的 GL2 group
 	 */
-	private _group: RenderableObject3D
+	private _group: Object3D
 
 	/**
 	 * Postprocessing
@@ -275,7 +275,10 @@ export class LiteRenderer extends Renderer {
 		 * 		WebGL2
 		 * 			使用一个独立的 color buffer，同步绘制
 		 */
-		this.raycaster = new Raycaster()
+		this.raycaster = new Raycaster({
+			boundingProcessor: ConvConfig.boundingProcessor,
+			matrixProcessor: ConvConfig.matrixProcessor,
+		})
 		this._internalThreeRaycaster = new ThreeRaycaster()
 
 		/**
@@ -508,7 +511,7 @@ export class LiteRenderer extends Renderer {
 	 * @memberof GSIGL2Renderer
 	 */
 	pick(
-		object: MeshDataType,
+		object: RenderableNode,
 		ndcCoords: { x: number; y: number },
 		options: { allInters?: boolean; threshold?: number; backfaceCulling?: boolean }
 	): PickResult {
@@ -519,8 +522,8 @@ export class LiteRenderer extends Renderer {
 
 		this._internalThreeRaycaster.setFromCamera(ndcCoords, this.camera)
 		this.raycaster.set(
-			this._internalThreeRaycaster.ray.origin.toArray(),
-			this._internalThreeRaycaster.ray.direction.toArray()
+			this._internalThreeRaycaster.ray.origin.clone(),
+			this._internalThreeRaycaster.ray.direction.clone()
 		)
 		this.raycaster.near = this.camera.near
 		this.raycaster.far = Infinity
@@ -529,38 +532,8 @@ export class LiteRenderer extends Renderer {
 			return result
 		}
 
-		let info: RaycastInfo
 		options = options ?? {}
-		if (object.geometry.mode === 'TRIANGLES') {
-			let backfaceCulling = options.backfaceCulling
-			if (backfaceCulling === undefined) {
-				backfaceCulling = object.material ? object.material.side === 'front' : false
-			}
-			info = this.raycaster.intersectTriangleMesh(
-				object,
-				backfaceCulling,
-				options.allInters ?? false
-			)
-		} else if (object.geometry.mode === 'LINES') {
-			if (!options.threshold) {
-				console.error('Polaris::GSIGL2Renderer - Invalid picking parameter: options.threshold. ')
-				return result
-			}
-			info = this.raycaster.intersectLineMesh(object, options.threshold, options.allInters ?? false)
-		} else if (object.geometry.mode === 'SPRITE') {
-			info = this.raycaster.intersectSpriteMesh(
-				object,
-				this.camera.position,
-				this.camera.rotation,
-				true,
-				options.allInters ?? true // Sprites intersection needs all inters
-			)
-		} else {
-			console.warn(
-				`Polaris::GSIGL2Renderer - Geometry mode '${object.geometry.mode}' not supported for picking yet. `
-			)
-			return result
-		}
+		const info = this.raycaster.raycast(object, options.allInters ?? false)
 
 		if (info.hit) {
 			return info

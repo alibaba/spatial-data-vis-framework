@@ -12,7 +12,7 @@
  * 		The length of prototype chain shouldn't affect the performance.
  */
 
-import { AbstractNode } from './AbstractNode'
+import { Node } from './Node'
 import type { CameraProxy } from 'camera-proxy'
 import { PropsManager, ListenerOptions, Callback } from '@polaris.gl/utils-props-manager'
 import type { AbstractLayerEvents } from './events'
@@ -23,7 +23,7 @@ import type { AbstractLayerEvents } from './events'
 export abstract class AbstractLayer<
 	TProps extends Record<string, any> = Record<string, any>,
 	TExtraEventMap extends AbstractLayerEvents = AbstractLayerEvents
-> extends AbstractNode<TExtraEventMap> {
+> extends Node<TExtraEventMap> {
 	readonly isBase = true
 	readonly isAbstractLayer = true
 
@@ -171,6 +171,8 @@ export abstract class AbstractLayer<
 
 	// #endregion
 }
+
+// override base classes interfaces
 
 export function isAbstractLayer(v: any): v is AbstractLayer {
 	return v.isAbstractLayer && v.isAbstractNode && v.isEventDispatcher

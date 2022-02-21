@@ -5,10 +5,11 @@
 import type { Projection } from '@polaris.gl/projection'
 import type { Timeline } from 'ani-timeline'
 import type { CameraProxy } from 'camera-proxy'
-import type { AbstractNode } from './AbstractNode'
+import type { Node } from './Node'
 export type { EventBase, EventMapBase, DefaultEventMap } from './EventDispatcher'
 import type { PickEventResult } from './Layer'
 import type { AbstractPolaris } from './Polaris'
+import type { AbstractLayer } from './Layer'
 
 /**
  * @description
@@ -49,11 +50,11 @@ import type { AbstractPolaris } from './Polaris'
  * Events interfaces inherit along with classes.
  *
  * 		@class_inheritance
- * 		EventDispatcher -> AbstractNode -> AbstractLayer -> Layer -> StandardLayer
- * 												└-> AbstractPolaris -> PolarisGSI
+ * 		EventDispatcher -> Node -> AbstractLayer -> StandardLayer
+ * 									 └-> AbstractPolaris -> PolarisGSI
  * 		@event_inheritance
- * 		AbstractNodeEvents ⊆ AbstractLayerEvents ⊆ LayerEvents ⊆ StandardLayer
- * 									└-⊆ AbstractPolarisEvents ⊆ PolarisGSIEvents
+ * 		NodeEvents ⊆ AbstractLayerEvents ⊆ StandardLayer
+ * 							└-⊆ AbstractPolarisEvents ⊆ PolarisGSIEvents
  *
  * @note
  * - Layer.watchProps is not a part of lifecycle events. Props change may happen
@@ -68,7 +69,7 @@ import type { AbstractPolaris } from './Polaris'
  */
 
 /**
- * @section AbstractNodeEvents
+ * @section NodeEvents
  * @description
  * tree and scene-graph related events
  */
@@ -78,24 +79,24 @@ import type { AbstractPolaris } from './Polaris'
  * @note will only happen once, because node can only be added once.
  * @note if the node is already added. this event will not fire
  */
-type AddEvent = { type: 'add'; parent: AbstractNode }
+type NodeAddEvent = { type: 'add'; parent: Node }
 /**
  * the event when this node is removed from its parent node
  * @note will only happen once, because node can only be added once.
  * @note if the node is already removed. this event will not fire
  */
-type RemoveEvent = { type: 'remove'; parent: AbstractNode }
+type NodeRemoveEvent = { type: 'remove'; parent: Node }
 /**
  * the event when this node is removed from its parent node
  * @note will only happen once, because node can only be added once.
  * @note if the node is already removed. this event will not fire
  */
-type RootChangeEvent = { type: 'rootChange'; root: AbstractNode | null }
+type NodeRootChangeEvent = { type: 'rootChange'; root: Node | null }
 
-export type AbstractNodeEvents = {
-	add: AddEvent
-	remove: RemoveEvent
-	rootChange: RootChangeEvent
+export type NodeEvents = {
+	add: NodeAddEvent
+	remove: NodeRemoveEvent
+	rootChange: NodeRootChangeEvent
 }
 
 /**
@@ -103,6 +104,25 @@ export type AbstractNodeEvents = {
  * @description
  * events shared between layer and polaris
  */
+
+/**
+ * the event when this layer is added to a parent layer
+ * @note will only happen once, because layer can only be added once.
+ * @note if the layer is already added. this event will not fire
+ */
+type AddEvent = { type: 'add'; parent: AbstractLayer }
+/**
+ * the event when this layer is removed from its parent layer
+ * @note will only happen once, because layer can only be added once.
+ * @note if the layer is already removed. this event will not fire
+ */
+type RemoveEvent = { type: 'remove'; parent: AbstractLayer }
+/**
+ * the event when this layer is removed from its parent layer
+ * @note will only happen once, because layer can only be added once.
+ * @note if the layer is already removed. this event will not fire
+ */
+type RootChangeEvent = { type: 'rootChange'; root: AbstractLayer | null }
 
 /**
  * the event when visibility change
@@ -126,19 +146,10 @@ type BeforeRenderEvent = { type: 'beforeRender'; polaris: AbstractPolaris /* typ
  * @triggered every frame
  */
 type AfterRenderEvent = { type: 'afterRender'; polaris: AbstractPolaris /* typeof Polaris */ }
-
-export type AbstractLayerEvents = AbstractNodeEvents & {
-	visibilityChange: VisibilityChangeEvent
-	viewChange: ViewChangeEvent
-	beforeRender: BeforeRenderEvent
-	afterRender: AfterRenderEvent
-}
-
 /**
- * @section LayerEvents
- * @description
- * events shared between layer and polaris
+ * the event triggered when an error is thrown from a callback function
  */
+type ErrorEvent = { type: 'error'; error: Error; msg: any }
 
 /**
  * the event when this layer is mouse-picked
@@ -170,12 +181,22 @@ type AfterInitEvent = {
 	polaris: AbstractPolaris
 }
 
-export type LayerEvents = AbstractLayerEvents & {
+export type AbstractLayerEvents = {
+	error: ErrorEvent
+	add: AddEvent
+	remove: RemoveEvent
+	rootChange: RootChangeEvent
+	visibilityChange: VisibilityChangeEvent
+	viewChange: ViewChangeEvent
+	beforeRender: BeforeRenderEvent
+	afterRender: AfterRenderEvent
 	pick: PickEvent
 	hover: HoverEvent
 	init: InitEvent
 	afterInit: AfterInitEvent
 }
+
+export type LayerEvents = AbstractLayerEvents
 
 /**
  * @section AbstractPolarisEvents
@@ -187,4 +208,8 @@ export type AbstractPolarisEvents = AbstractLayerEvents & {
 	add: never
 	remove: never
 	rootChange: never
+	pick: never
+	hover: never
+	init: never
+	afterInit: never
 }

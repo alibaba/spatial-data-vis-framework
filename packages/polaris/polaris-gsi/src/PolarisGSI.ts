@@ -4,7 +4,7 @@
  */
 
 import { isDISPOSED, MeshDataType } from '@gs.i/schema'
-import { OptimizePass, GSIRefiner } from '@gs.i/utils-optimize'
+// import { OptimizePass, GSIRefiner } from '@gs.i/utils-optimize'
 import { HtmlView } from '@polaris.gl/view-html'
 import { GSIView } from '@polaris.gl/view-gsi'
 import {
@@ -22,7 +22,7 @@ import { isTouchDevice } from '@polaris.gl/utils'
 import * as Projections from '@polaris.gl/projection'
 import { StandardLayer } from '@polaris.gl/layer-std'
 import Hammer from 'hammerjs'
-import { throttle } from './Utils'
+import { throttle } from './utils'
 
 export interface PolarisGSIProps extends PolarisProps {
 	enablePicking?: boolean

@@ -1,5 +1,5 @@
 {
-    "name": "@polaris.gl/view-gsi",
+    "name": "@polaris.gl/utils-props-manager",
     "version": "0.0.0-alpha.9",
     "description": "",
     "main": "dist/index.js",
@@ -9,19 +9,19 @@
         "README.md",
         "dist/*"
     ],
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
+        "start": "vite --open /examples/ --cors",
         "build": "./scripts/build.sh",
         "clean": "./scripts/clean.sh",
         "rebuild": "npm run clean && npm run build"
     },
     "dependencies": {
-        "@gs.i/frontend-sdk": "0.2.0-alpha",
-        "@polaris.gl/base": "^0.0.0-alpha.9"
+        "lodash": ">4.0.0"
     },
     "devDependencies": {
         "typescript": ">4.4.0"
-    },
-    "publishConfig": {
-        "access": "public"
     }
 }

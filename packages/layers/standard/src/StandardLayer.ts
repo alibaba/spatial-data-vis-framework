@@ -8,6 +8,8 @@
  * 但是 typescript 中 mixin 和 decoration 都会造成一定程度的 interface 混乱
  * 因此在这里把constructor里增加的逻辑拆成函数，
  */
+
+import { Mesh } from '@gs.i/frontend-sdk'
 import {
 	AbstractPolaris,
 	Layer,
@@ -20,6 +22,7 @@ import { GSIView } from '@polaris.gl/view-gsi'
 import { HtmlView } from '@polaris.gl/view-html'
 import { isSimilarProjections } from '@polaris.gl/projection'
 import { Matrix4, Euler, Vector3, Vector2 } from '@gs.i/utils-math'
+import { isRenderable } from '@gs.i/schema-scene'
 // import { Callback, ListenerOptions } from '@polaris.gl/utils-props-manager'
 // import { PropsManager } from '@polaris.gl/utils-props-manager'
 
@@ -132,7 +135,7 @@ export class StandardLayer<
 	 * root group of GSI objects
 	 * @note all renderable contents shall be put here
 	 */
-	get group() {
+	get group(): Mesh {
 		return this.view.gsi.group
 	}
 
@@ -152,12 +155,22 @@ export class StandardLayer<
 	 * @param {number} z
 	 * @return {*}  {(number[] | undefined)}
 	 * @memberof StandardLayer
+	 * @deprecated @todo 确认命名正确，可能是本地坐标而非世界坐标
 	 */
 	toLngLatAlt(x: number, y: number, z: number): number[] | undefined {
-		const transform = this.view.gsi.groupWrapper.transform
-		const worldMatrix = transform.worldMatrix ?? transform.matrix
 		const projection = this.localProjection ?? this.resolvedProjection
-		if (!projection) return
+		if (!projection) {
+			console.warn('can not call toLngLatAlt until layer resolved projection and polaris.')
+			return
+		}
+
+		const polaris = this.resolvedPolaris
+		if (!polaris) {
+			console.warn('can not call toLngLatAlt until layer resolved projection and polaris.')
+			return
+		}
+
+		const worldMatrix = this.view.gsi.groupWrapper.getWorldMatrix()
 		const inverseMat = _mat4.fromArray(worldMatrix).invert()
 		const v = _vec3.set(x, y, z)
 		// Transform to pure world xyz
@@ -174,10 +187,10 @@ export class StandardLayer<
 	 * @return {*}  {(Vector3 | undefined)}
 	 * If the layer has no projection, or a worldMatrix yet, an {undefined} result will be returned.
 	 * @memberof StandardLayer
+	 * @todo 确认命名正确，可能是本地坐标而非世界坐标
 	 */
 	toWorldPosition(lng: number, lat: number, alt = 0): Vector3 | undefined {
-		const transform = this.view.gsi.groupWrapper.transform
-		const worldMatrix = transform.worldMatrix ?? transform.matrix
+		const worldMatrix = this.view.gsi.groupWrapper.getWorldMatrix()
 		const projection = this.localProjection ?? this.resolvedProjection
 		if (!projection) {
 			// console.warn('Polaris::StandardLayer - Layer has no projection info, define a projection or add it to a parent layer first. ')
@@ -238,8 +251,14 @@ export class StandardLayer<
 	 */
 	protected onDepthTestChange(depthTest: boolean) {
 		this.group.children.forEach((mesh) => {
-			if (mesh.material) {
-				mesh.material.depthTest = depthTest ?? mesh.material.depthTest
+			if (isRenderable(mesh)) {
+				//
+				mesh.material.extensions || (mesh.material.extensions = {})
+				mesh.material.extensions.EXT_matr_advanced ||
+					(mesh.material.extensions.EXT_matr_advanced = {})
+
+				mesh.material.extensions.EXT_matr_advanced.depthTest =
+					depthTest ?? mesh.material.extensions.EXT_matr_advanced.depthTest
 			}
 		})
 	}
@@ -252,12 +271,20 @@ export class StandardLayer<
 	 */
 	protected onRenderOrderChange(renderOrder: number) {
 		this.group.children.forEach((mesh) => {
-			if (mesh.geometry && mesh.material) {
-				mesh.renderOrder = renderOrder ?? mesh.renderOrder
+			if (isRenderable(mesh)) {
+				//
+				mesh.extensions || (mesh.extensions = {})
+				mesh.extensions.EXT_mesh_order || (mesh.extensions.EXT_mesh_order = {})
+
+				mesh.extensions.EXT_mesh_order.renderOrder =
+					renderOrder ?? mesh.extensions.EXT_mesh_order.renderOrder
 			}
 		})
 	}
 
+	/**
+	 * TODO 该部分应该出现在Polaris中，tree中的layer不一定都是StandardLayer
+	 */
 	private _initProjectionAlignment(selfProjection, parentProjection, polaris) {
 		const DEG2RAD = Math.PI / 180
 		const groupWrapper = this.view.gsi.groupWrapper
@@ -293,9 +320,9 @@ export class StandardLayer<
 					const mat2 = new Matrix4()
 					const mat3 = new Matrix4()
 
-					this.onViewChange = (cam, p) => {
+					this.onViewChange = (cam, p: AbstractPolaris) => {
 						// TODO 每帧重复计算多次
-						const lnglat = (p as AbstractPolaris).getGeoCenter()
+						const lnglat = p.getGeoCenter()
 
 						/**
 						 * @Qianxun
@@ -332,7 +359,9 @@ export class StandardLayer<
 						 * @todo 立即更新matrixWorld
 						 */
 						groupMat.identity().multiply(mat3).multiply(mat2).multiply(mat1)
-						groupWrapper.transform.matrix = groupMat.elements
+						// @todo GSIMesh.transform 只能是 TRS 或 Matrix 形式，不能两者切换
+						// groupWrapper.transform.matrix = groupMat.elements
+						console.error('TODO NOT IMPLEMENTED (父级为平面,子级为球面)')
 					}
 				} else {
 					// SETTINGS.debug &&
