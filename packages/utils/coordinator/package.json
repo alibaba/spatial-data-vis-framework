@@ -1,5 +1,5 @@
 {
-    "name": "@polaris.gl/utils-props-manager",
+    "name": "@polaris.gl/utils-coordinator",
     "version": "0.0.0-alpha.9",
     "description": "",
     "main": "dist/index.js",
@@ -19,7 +19,8 @@
         "rebuild": "npm run clean && npm run build"
     },
     "dependencies": {
-        "lodash": ">4.0.0"
+        "@gs.i/utils-math": "*",
+        "@polaris.gl/projection": "^0.0.0-alpha.9"
     },
     "devDependencies": {
         "typescript": ">4.4.0"
