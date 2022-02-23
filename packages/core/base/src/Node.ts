@@ -60,7 +60,7 @@ import type { NodeEvents } from './events'
 /**
  * the max depth of the tree
  */
-const MAX_DEPTH = 1024
+export const MAX_DEPTH = 1024
 
 /**
  * Tree structure

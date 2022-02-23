@@ -15,6 +15,7 @@
         "rebuild": "npm run clean && npm run build"
     },
     "dependencies": {
+        "@gs.i/schema-scene": "0.2.0-alpha",
         "@gs.i/frontend-sdk": "0.2.0-alpha",
         "@polaris.gl/base": "^0.0.0-alpha.9"
     },

@@ -7,8 +7,9 @@
  * Polaris 入口类 基类
  */
 
-import { AbstractLayer, isAbstractLayer } from './Layer'
+import { AbstractLayer, resolveProjection, resolveTimeline } from './Layer'
 import { Projection, MercatorProjection } from '@polaris.gl/projection'
+import { Coordinator } from '@polaris.gl/coordinator'
 import { Timeline } from 'ani-timeline'
 import {
 	PointerControl,
@@ -165,20 +166,33 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 
 		this.cameraProxy = cameraProxy
 
-		// check view change for all layers every frame
+		// handle projection alignment and ViewChangeEvent, on every frame
 		this.addEventListener('beforeRender', (e) => {
 			const newStatesCode = this.cameraProxy.statesCode
 			const newWidth = this.width
 			const newHeight = this.height
 			const newRatio = this.ratio
-			// debugger
-			this.traverse((obj) => {
-				if (!isAbstractLayer(obj)) return
 
-				let viewStates = this.#layerViewStates.get(obj)
+			this.traverse((layer) => {
+				// projection alignment
+				// skip root
+				if (layer.parent) {
+					const parentProjection = resolveProjection(layer.parent) as Projection
+					const projection = resolveProjection(layer) as Projection
+
+					const visualCenter = this.getGeoCenter()
+					const alignmentMatrix = Coordinator.getRelativeMatrix(parentProjection, projection, [
+						visualCenter[0],
+						visualCenter[1],
+					])
+					layer.updateAlignmentMatrix(alignmentMatrix)
+				}
+
+				// ViewChange detection
+				let viewStates = this.#layerViewStates.get(layer)
 				if (!viewStates) {
 					viewStates = {} as ViewStates
-					this.#layerViewStates.set(obj, viewStates)
+					this.#layerViewStates.set(layer, viewStates)
 				}
 
 				if (
@@ -191,7 +205,7 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 					viewStates.height = newHeight
 					viewStates.ratio = newRatio
 					viewStates.statesCode = newStatesCode
-					obj.dispatchEvent({ type: 'viewChange', cameraProxy: this.cameraProxy, polaris: this })
+					layer.dispatchEvent({ type: 'viewChange', cameraProxy: this.cameraProxy, polaris: this })
 				}
 			})
 		})
@@ -449,8 +463,6 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 	 */
 	abstract getScreenXY(x: number, y: number, z: number): number[] | undefined
 
-	// #endregion
-
 	// #region override AbstractLayer
 	// polaris is always the root
 	override get parent(): null {
@@ -478,6 +490,15 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 	// polaris is always inited
 	override get inited(): true {
 		return true
+	}
+
+	// polaris can not be raycast-ed. polaris call raycast on layers
+	override raycast(p: never, c: never, n: never): never {
+		throw new Error('polaris can not be raycast-ed')
+	}
+	// polaris is the root of projection tree. no need to updateAlignmentMatrix
+	override updateAlignmentMatrix(m: never): never {
+		throw new Error('polaris do not updateAlignmentMatrix')
 	}
 	// #endregion
 }

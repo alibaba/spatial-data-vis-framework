@@ -1,5 +1,5 @@
 {
-    "name": "@polaris.gl/utils-coordinator",
+    "name": "@polaris.gl/coordinator",
     "version": "0.0.0-alpha.9",
     "description": "",
     "main": "dist/index.js",
@@ -19,7 +19,7 @@
         "rebuild": "npm run clean && npm run build"
     },
     "dependencies": {
-        "@gs.i/utils-math": "*",
+        "@gs.i/utils-math": "^0.0.0-beta",
         "@polaris.gl/projection": "^0.0.0-alpha.9"
     },
     "devDependencies": {

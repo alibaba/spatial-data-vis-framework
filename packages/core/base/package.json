@@ -20,6 +20,7 @@
     },
     "dependencies": {
         "@gs.i/schema-ext-scene": "^0.0.0-beta",
+        "@polaris.gl/coordinator": "^0.0.0-alpha.9",
         "@polaris.gl/projection": "^0.0.0-alpha.9",
         "@polaris.gl/utils-props-manager": "^0.0.0-alpha.9",
         "ani-timeline": "alpha",

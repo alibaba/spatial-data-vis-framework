@@ -129,7 +129,7 @@ await Promise.all(
 	})
 )
 try {
-	execSync(`lerna bootstrap --force-local -- --ignore-scripts`, { stdio: 'inherit' })
+	execSync(`lerna bootstrap --force-local`, { stdio: 'inherit' })
 
 	// # https://github.com/lerna/lerna/issues/2352
 	// # lerna link is needed
@@ -156,4 +156,4 @@ if (useLocalGSI) {
 }
 
 console.log('本次安装不会安装以下package的依赖，如果需要，可以自行到文件夹中安装')
-console.log(packageBlacklist)
+console.log(ignoredPackages)

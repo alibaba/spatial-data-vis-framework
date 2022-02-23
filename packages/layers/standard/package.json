@@ -17,6 +17,7 @@
     "dependencies": {
         "@gs.i/schema-scene": "0.2.0-alpha",
         "@gs.i/frontend-sdk": "0.2.0-alpha",
+        "@gs.i/processor-matrix": "0.2.0-alpha",
         "@gs.i/utils-math": "^0.0.0-beta",
         "@polaris.gl/base": "^0.0.0-alpha.9",
         "@polaris.gl/projection": "^0.0.0-alpha.9",

@@ -11,20 +11,19 @@
 
 import { Mesh } from '@gs.i/frontend-sdk'
 import {
-	AbstractPolaris,
 	Layer,
 	LayerProps,
 	PickEventResult,
 	View,
 	LayerEvents,
+	AbstractPolaris,
 } from '@polaris.gl/base'
 import { GSIView } from '@polaris.gl/view-gsi'
 import { HtmlView } from '@polaris.gl/view-html'
-import { isSimilarProjections } from '@polaris.gl/projection'
-import { Matrix4, Euler, Vector3, Vector2 } from '@gs.i/utils-math'
+import { Matrix4, Vector3, Vector2 } from '@gs.i/utils-math'
 import { isRenderable } from '@gs.i/schema-scene'
-// import { Callback, ListenerOptions } from '@polaris.gl/utils-props-manager'
-// import { PropsManager } from '@polaris.gl/utils-props-manager'
+import { Projection } from '@polaris.gl/projection'
+import { MatProcessor } from '@gs.i/processor-matrix'
 
 /**
  * 配置项 interface
@@ -38,8 +37,14 @@ export interface StandardLayerProps extends LayerProps {
 	 * @deprecated @todo may break internal 3d scene
 	 */
 	renderOrder?: number
-	pickable?: boolean
+
+	/**
+	 * @deprecated use {@link .addEventListener("pick")} instead
+	 */
 	onPicked?: (event: PickEventResult | undefined) => void
+	/**
+	 * @deprecated use {@link .addEventListener("hover")} instead
+	 */
 	onHovered?: (event: PickEventResult | undefined) => void
 
 	// data
@@ -49,7 +54,6 @@ export interface StandardLayerProps extends LayerProps {
 export const defaultStandardLayerProps: StandardLayerProps = {
 	depthTest: true,
 	renderOrder: 0,
-	pickable: false,
 }
 
 /**
@@ -58,6 +62,11 @@ export const defaultStandardLayerProps: StandardLayerProps = {
 const _mat4 = new Matrix4()
 const _vec3 = new Vector3()
 const _vec2 = new Vector2()
+
+/**
+ * @todo should use the same one from renderer to share cache
+ */
+const defaultMatProcessor = new MatProcessor()
 
 /**
  * Standard Layer
@@ -87,6 +96,9 @@ export class StandardLayer<
 			}
 		}
 
+		// @note
+		// Use AfterInit to make sure this happens after scene
+		// construction which happens when InitEvent.
 		this.addEventListener('afterInit', ({ projection, timeline, polaris }) => {
 			/**
 			 * 每个Layer应当都有depthTest和renderOrder的prop listener
@@ -143,6 +155,20 @@ export class StandardLayer<
 	}
 
 	/**
+	 * get world matrix of this layer's 3d wrapper
+	 *
+	 * @note return undefined if not inited
+	 */
+	getWorldMatrix() {
+		if (!this.inited) {
+			console.warn('can not call getWorldMatrix until layer is inited')
+			return
+		}
+
+		return defaultMatProcessor.getCachedWorldMatrix(this.view.gsi.alignmentWrapper)
+	}
+
+	/**
 	 * 获取世界坐标在当前layer的经纬度
 	 *
 	 * @param {number} x
@@ -151,21 +177,18 @@ export class StandardLayer<
 	 * @return {*}  {(number[] | undefined)}
 	 * @memberof StandardLayer
 	 * @deprecated @todo 确认命名正确，可能是本地坐标而非世界坐标
+	 *
+	 * @note return undefined if not inited
 	 */
 	toLngLatAlt(x: number, y: number, z: number): number[] | undefined {
-		const projection = this.localProjection ?? this.resolvedProjection
-		if (!projection) {
-			console.warn('can not call toLngLatAlt until layer resolved projection and polaris.')
+		if (!this.inited) {
+			console.warn('can not call toLngLatAlt until layer is inited')
 			return
 		}
 
-		const polaris = this.resolvedPolaris
-		if (!polaris) {
-			console.warn('can not call toLngLatAlt until layer resolved projection and polaris.')
-			return
-		}
+		const projection = this.resolveProjection() as Projection // this won't be null after inited
 
-		const worldMatrix = this.view.gsi.groupWrapper.getWorldMatrix()
+		const worldMatrix = this.getWorldMatrix() as number[]
 		const inverseMat = _mat4.fromArray(worldMatrix).invert()
 		const v = _vec3.set(x, y, z)
 		// Transform to pure world xyz
@@ -183,14 +206,17 @@ export class StandardLayer<
 	 * If the layer has no projection, or a worldMatrix yet, an {undefined} result will be returned.
 	 * @memberof StandardLayer
 	 * @todo 确认命名正确，可能是本地坐标而非世界坐标
+	 *
+	 * @note return undefined if not inited
 	 */
 	toWorldPosition(lng: number, lat: number, alt = 0): Vector3 | undefined {
-		const worldMatrix = this.view.gsi.groupWrapper.getWorldMatrix()
-		const projection = this.localProjection ?? this.resolvedProjection
-		if (!projection) {
-			// console.warn('Polaris::StandardLayer - Layer has no projection info, define a projection or add it to a parent layer first. ')
+		if (!this.inited) {
+			console.warn('can not call toWorldPosition until layer is inited')
 			return
 		}
+
+		const worldMatrix = this.getWorldMatrix() as number[]
+		const projection = this.resolveProjection() as Projection
 		const matrix4 = _mat4.fromArray(worldMatrix)
 		const pos = _vec3.fromArray(projection.project(lng, lat, alt))
 		pos.applyMatrix4(matrix4)
@@ -208,15 +234,17 @@ export class StandardLayer<
 	 * or a worldMatrix, or not added to any Polaris yet,
 	 * an {undefined} result will be returned.
 	 * @memberof StandardLayer
+	 *
+	 * @note return undefined if not inited
 	 */
 	toScreenXY(lng: number, lat: number, alt = 0): Vector2 | undefined {
-		const polaris = this.resolvedPolaris
-		if (!polaris) {
-			console.warn(
-				'Polaris::StandardLayer - Add Layer to polaris-scene before calling `toScreenXY`.'
-			)
+		if (!this.inited) {
+			console.warn('can not call toScreenXY until layer is inited')
 			return
 		}
+
+		const polaris = this.root as AbstractPolaris
+
 		const worldPos = this.toWorldPosition(lng, lat, alt)
 		if (!worldPos) return
 
@@ -277,7 +305,7 @@ export class StandardLayer<
 		})
 	}
 
-	setProps(props: Partial<TProps | StandardLayerProps>) {
+	override setProps(props: Partial<TProps | StandardLayerProps>) {
 		/**
 		 * @note keep in mind that:
 		 * Partial<TProps> is not `assignable` until generic type TProps get settled.
@@ -329,9 +357,40 @@ export class StandardLayer<
 			data: data,
 		})
 	}
+
+	override updateAlignmentMatrix(matrix: number[]) {
+		const old = this.view.gsi.alignmentWrapper.transform.matrix as number[]
+		if (!isEqualArray(old, matrix)) {
+			copyArray(matrix, old)
+		}
+	}
+
+	override dispose(): void {}
+
+	override raycast(polaris: AbstractPolaris, canvasCoord, ndc): undefined {
+		return undefined
+	}
 }
 
 /**
  * @deprecated renamed as {@link StandardLayer}
  */
 export const STDLayer = StandardLayer
+
+function isEqualArray(a: number[], b: number[]) {
+	if (a === b) return true
+
+	if (a.length !== b.length) return false
+
+	for (let i = 0; i < a.length; i++) {
+		if (a[i] !== b[i]) return false
+	}
+
+	return true
+}
+
+function copyArray(source: number[], target: number[]) {
+	for (let i = 0; i < source.length; i++) {
+		target[i] = source[i]
+	}
+}

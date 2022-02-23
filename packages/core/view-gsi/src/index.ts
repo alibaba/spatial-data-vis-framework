@@ -10,6 +10,7 @@
  */
 import { View, AbstractLayer } from '@polaris.gl/base'
 import { Mesh } from '@gs.i/frontend-sdk'
+import { BaseNode, Transform3Matrix } from '@gs.i/schema-scene'
 
 export class GSIView extends View {
 	/**
@@ -26,11 +27,20 @@ export class GSIView extends View {
 	 * 系统进行坐标偏移操作的 group
 	 * @note 用户不应该直接操作
 	 */
-	readonly groupWrapper = new Mesh({ name: 'LAYER-WRAPPER-INNER-USE-ONLY' })
+	readonly alignmentWrapper: BaseNode = {
+		name: 'LAYER-WRAPPER-INNER-USE-ONLY',
+		visible: true,
+		transform: {
+			matrix: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1], // identity matrix
+			version: 0,
+		} as Transform3Matrix,
+		children: new Set(),
+	}
 
 	constructor() {
 		super()
-		this.groupWrapper.add(this.group)
+		// @todo @simon should add group into wrapper after alignment ready
+		this.alignmentWrapper.children.add(this.group)
 		// @qianxun: will be called in Layer initialization
 		// super.init(layer)
 	}
@@ -84,7 +94,7 @@ export class GSIView extends View {
 			throw new Error('Polaris::GSIView - Parent layer has no GSIView')
 		}
 		if (GSIView.check(parentView)) {
-			parentView.group.add(this.groupWrapper)
+			parentView.alignmentWrapper.children.add(this.alignmentWrapper)
 		} else {
 			throw new Error('Polaris::GSIView - Cannot append to a different parent view type')
 		}
@@ -99,7 +109,7 @@ export class GSIView extends View {
 			return
 		}
 		if (GSIView.check(parentView)) {
-			parentView.group.remove(this.groupWrapper)
+			parentView.alignmentWrapper.children.delete(this.alignmentWrapper)
 		}
 	}
 
