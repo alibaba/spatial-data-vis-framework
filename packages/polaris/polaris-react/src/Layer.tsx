@@ -1,7 +1,10 @@
 import { PureComponent } from 'react'
 import { LayerProps, DefaultLayerProps, LayerState } from './types'
 
-export class LayerReact extends PureComponent<LayerProps, LayerState> {
+export class LayerReact<TProps = { [name: string]: any }> extends PureComponent<
+	LayerProps & TProps,
+	LayerState
+> {
 	static defaultProps = new DefaultLayerProps()
 
 	constructor(props) {
@@ -18,6 +21,15 @@ export class LayerReact extends PureComponent<LayerProps, LayerState> {
 		if (this.state.layerInstance) {
 			this.state.layerInstance.dispose()
 		}
+	}
+
+	componentDidUpdate(prevProps, prevState, snapshot) {
+		const { layerInstance } = this.state
+		const { polarisInstance, layerClass, getLayerInstance, ...layerProps } = this.props
+
+		if (!layerInstance) return
+
+		layerInstance.updateProps(layerProps)
 	}
 
 	init() {

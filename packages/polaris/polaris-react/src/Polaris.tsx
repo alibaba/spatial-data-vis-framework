@@ -23,9 +23,16 @@ export class PolarisReact extends PureComponent<PolarisProps, PolarisState> {
 	}
 
 	componentDidUpdate() {
+		const { polarisClass, getPolarisInstance, ...restProps } = this.props
+		const { polarisInstance } = this.state
+
+		if (!polarisInstance) return
+
 		if (this.isCameraStatusChanged()) {
-			this.updateCameraStatus()
+			this.updateCameraStatus(polarisInstance)
 		}
+
+		polarisInstance.updateProps(restProps)
 	}
 
 	init() {
@@ -84,11 +91,7 @@ export class PolarisReact extends PureComponent<PolarisProps, PolarisState> {
 		return false
 	}
 
-	private updateCameraStatus() {
-		const { polarisInstance } = this.state
-		if (!polarisInstance) {
-			return
-		}
+	private updateCameraStatus(polarisInstance) {
 		const CODE_VERSION = 1
 		const center = this.props.center || this.state.center
 		const pitch = this.props.pitch || this.state.pitch
@@ -115,7 +118,6 @@ export class PolarisReact extends PureComponent<PolarisProps, PolarisState> {
 	render() {
 		const { children, width, height } = this.props
 		const { polarisInstance } = this.state
-
 		return (
 			<div
 				ref={this.refRoot}

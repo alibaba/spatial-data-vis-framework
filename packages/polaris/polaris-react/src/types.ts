@@ -3,7 +3,7 @@ import { PolarisGSI, PolarisGSIProps } from '@polaris.gl/gsi'
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
 
 // ========================
-// Types: Polaris
+// Types for Polaris
 // ========================
 
 type PolarisGSICtor = new (props: PolarisGSIProps) => PolarisGSI
@@ -30,7 +30,7 @@ export class PolarisState {
 }
 
 // ========================
-// Types: Layer
+// Types for Layer
 // ========================
 
 type LayerCtor = new (props: StandardLayerProps) => StandardLayer
@@ -38,7 +38,7 @@ type LayerCtor = new (props: StandardLayerProps) => StandardLayer
 export interface LayerProps extends StandardLayerProps {
 	/**
 	 * The Polaris instance passed from PolarisReact parent component
-	 * @ATTENTION DO NOT USE THIS PROP UNLESS YOU WERE TOLD TO DO SO
+	 * @ATTENTION DO NOT CHANGE THIS PROP UNLESS YOU KNOW WHAT YOU ARE DOING
 	 */
 	polarisInstance?: PolarisGSI
 
