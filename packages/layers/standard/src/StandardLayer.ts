@@ -366,10 +366,6 @@ export class StandardLayer<
 	}
 
 	override dispose(): void {}
-
-	override raycast(polaris: AbstractPolaris, canvasCoord, ndc): undefined {
-		return undefined
-	}
 }
 
 /**

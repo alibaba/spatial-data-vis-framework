@@ -113,7 +113,7 @@ export class PropsManager<
 	 * 	- use `version` to check if props changed again
 	 * 	- or just make sure `.set` won't be called again until last return promise fulfilled
 	 */
-	addListener<TKeys extends Array<TModifiableKeys>>(
+	addListener<TKeys extends ReadonlyArray<TModifiableKeys>>(
 		keys: TKeys,
 		callback: Callback<TProps, TKeys[number]>,
 		options?: ListenerOptions
@@ -273,7 +273,7 @@ export type Callback<TProps, TKey extends keyof TProps = keyof TProps> = (event:
 	/**
 	 * actually changed keys.
 	 */
-	changedKeys: TKey[]
+	changedKeys: readonly TKey[]
 	/**
 	 * an object including actually changed props.
 	 * @note a property may be undefined if this is the initial event

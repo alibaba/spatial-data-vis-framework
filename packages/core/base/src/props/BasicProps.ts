@@ -59,6 +59,12 @@ export const defaultBasicProps = {
 	 * enable debug mode or not
 	 */
 	debug: false,
+
+	/**
+	 * whether to start play automatically after construction
+	 * @note DO NOT ENABLE THIS IF YOU REUSE THE TIMELINE
+	 */
+	autoplay: true,
 }
 
 export type BasicProps = Partial<typeof defaultBasicProps> & {

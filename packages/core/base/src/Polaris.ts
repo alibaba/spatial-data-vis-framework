@@ -7,17 +7,11 @@
  * Polaris 入口类 基类
  */
 
-import { AbstractLayer, resolveProjection, resolveTimeline } from './Layer'
+import { AbstractLayer, resolveProjection } from './Layer'
 import { Projection, MercatorProjection } from '@polaris.gl/projection'
 import { Coordinator } from '@polaris.gl/coordinator'
 import { Timeline } from 'ani-timeline'
-import {
-	PointerControl,
-	AnimatedCameraProxy,
-	TouchControl,
-	Cameraman,
-	GeographicStates,
-} from 'camera-proxy'
+import { AnimatedCameraProxy, GeographicStates } from 'camera-proxy'
 import { PolarisProps, defaultProps, STATIC_PROPS } from './props/index'
 import type { AbstractPolarisEvents } from './events'
 import { debug } from './utils'
@@ -28,7 +22,10 @@ export type { PolarisProps } from './props/index'
 /**
  * AbstractPolaris
  */
-export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, AbstractPolarisEvents> {
+export abstract class AbstractPolaris<
+	TProps extends PolarisProps = any,
+	TEvents extends AbstractPolarisEvents = AbstractPolarisEvents
+> extends AbstractLayer<TProps, TEvents> {
 	readonly isAbstractPolaris = true
 	readonly isPolaris = true
 
@@ -37,8 +34,6 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 	 */
 
 	readonly cameraProxy: AnimatedCameraProxy
-	readonly cameraControl?: PointerControl | TouchControl
-	readonly cameraman: Cameraman
 
 	readonly timeline: Timeline
 	readonly projection: Projection
@@ -55,6 +50,7 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 	#disposed = false
 
 	constructor(props: PolarisProps) {
+		// @note do not pass props into AbstractLayer constructor
 		super()
 
 		const _props = {
@@ -93,12 +89,15 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 
 		/**
 		 * 等到全部初始化完成后再开始计时运行
-		 * @TODO 应该允许更精确的控制
 		 * @TODO not safe for input timeline
 		 */
-		setTimeout(() => {
-			this.timeline.play()
-		})
+		_props.autoplay &&
+			setTimeout(() => {
+				if (this.timeline.playing)
+					throw new Error('Polaris:: Timeline is already playing. Autoplay may restart timeline.')
+
+				this.timeline.play()
+			})
 
 		/**
 		 * init projection
@@ -401,7 +400,7 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 			width,
 			height,
 			ratio,
-		})
+		} as any) // ridiculous https://github.com/microsoft/TypeScript/issues/19388
 
 		// this.setExternalScale(externalScale)
 	}
@@ -432,7 +431,6 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 	dispose() {
 		this.timeline.dispose()
 		this.cameraProxy.dispose()
-		this.cameraControl && this.cameraControl.dispose()
 	}
 
 	/**
@@ -485,7 +483,6 @@ export abstract class AbstractPolaris extends AbstractLayer<PolarisProps, Abstra
 	override hide(): never {
 		throw new Error('do not set visibility on polaris')
 	}
-	override view: never
 
 	// polaris is always inited
 	override get inited(): true {

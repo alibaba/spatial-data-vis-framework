@@ -172,11 +172,15 @@ export abstract class AbstractLayer<
 		return this.#timelineLocal
 	}
 
-	abstract raycast(
-		polaris: AbstractPolaris,
-		canvasCoord: CoordV2,
-		ndc: CoordV2
-	): PickEvent | undefined
+	/**
+	 * optional raycast implement.
+	 *
+	 * don't implement this if this layer doesn't support raycast
+	 * @param polaris
+	 * @param canvasCoord
+	 * @param ndc
+	 */
+	raycast?(polaris: AbstractPolaris, canvasCoord: CoordV2, ndc: CoordV2): PickEvent | undefined
 
 	// TODO: Is is necessary to dispose propsManager and event Listeners
 	abstract dispose(): void
@@ -203,7 +207,7 @@ export abstract class AbstractLayer<
 	 * listen to changes of a series of props.
 	 * @note callback will be fired if any of these keys changed
 	 */
-	watchProps<TKeys extends Array<keyof TProps>>(
+	watchProps<TKeys extends ReadonlyArray<keyof TProps>>(
 		keys: TKeys,
 		callback: Callback<TProps, TKeys[number]>,
 		options?: ListenerOptions
@@ -228,9 +232,7 @@ export abstract class AbstractLayer<
 
 		handler(this)
 		this.children.forEach((child) => {
-			if (isAbstractLayer(child)) {
-				child.traverseVisible(handler)
-			}
+			child.traverseVisible(handler)
 		})
 	}
 

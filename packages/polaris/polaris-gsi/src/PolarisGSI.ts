@@ -12,14 +12,13 @@ import {
 	PolarisProps,
 	defaultProps as defaultPolarisProps,
 	Renderer,
-	Layer,
+	AbstractLayer,
 	PickEventResult,
 	PickResult,
 	CoordV2,
 } from '@polaris.gl/base'
-import { PointerControl, TouchControl } from 'camera-proxy'
+import { PointerControl, TouchControl, Cameraman } from 'camera-proxy'
 import { isTouchDevice } from '@polaris.gl/utils'
-import * as Projections from '@polaris.gl/projection'
 import { StandardLayer } from '@polaris.gl/layer-std'
 import Hammer from 'hammerjs'
 import { throttle } from './utils'
@@ -28,21 +27,16 @@ export interface PolarisGSIProps extends PolarisProps {
 	enablePicking?: boolean
 }
 
-export const DefaultPolarisGSIProps: PolarisGSIProps = {
+export const DefaultPolarisGSIProps = {
 	...defaultPolarisProps,
 	enablePicking: true,
 }
 
-export interface PolarisGSI extends AbstractPolaris {
-	addOptimizePass(pass: OptimizePass): void
-	addByProjection(layer: Layer, projectionType?: number, center?: number[]): void
-}
-
 export interface LayerPickEvent extends PickEventResult {
-	layer: Layer
+	layer: AbstractLayer
 }
 
-export class PolarisGSI extends AbstractPolaris implements PolarisGSI {
+export class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 	readonly isPolarisGSI = true
 
 	/**
@@ -63,20 +57,13 @@ export class PolarisGSI extends AbstractPolaris implements PolarisGSI {
 	 */
 	renderer: Renderer
 
-	/**
-	 * Scene optimization passes (executed before rendering)
-	 */
-	optimizePasses: OptimizePass[]
+	readonly cameraControl?: PointerControl | TouchControl
+	readonly cameraman: Cameraman
 
 	/**
 	 * pointer 事件封装
 	 */
 	private hammer
-
-	/**
-	 * Projection容器Layers
-	 */
-	private _projLayerWrappers: { [name: string]: Layer }
 
 	/**
 	 * Container resize listener
@@ -89,8 +76,6 @@ export class PolarisGSI extends AbstractPolaris implements PolarisGSI {
 			...props,
 		})
 
-		this.name = 'PolarisGSI'
-		this.optimizePasses = []
 		this.view = {
 			html: new HtmlView(),
 			gsi: new GSIView(),
@@ -132,43 +117,36 @@ export class PolarisGSI extends AbstractPolaris implements PolarisGSI {
 			this.cameraControl.scale = 1.0 / (this.ratio ?? 1.0)
 		}
 
-		// Add optimize passes
-		this.addOptimizePass(
-			new GSIRefiner({
-				frustumCulling: this.props.frustumCulling,
-			})
-		)
-
 		// OptimizePasses会对SceneTree做更改，需排在第一个以便影响后续的Pass获取正确的场景信息
-		const optimizeParams = {
-			cameraPosition: {
-				x: this.cameraProxy.position[0] - this.cameraProxy.center[0],
-				y: this.cameraProxy.position[1] - this.cameraProxy.center[1],
-				z: this.cameraProxy.position[2] - this.cameraProxy.center[2],
-			},
-			cameraRotation: {
-				x: this.cameraProxy.rotationEuler[0],
-				y: this.cameraProxy.rotationEuler[1],
-				z: this.cameraProxy.rotationEuler[2],
-			},
-			cameraNear: this.props.cameraNear,
-			cameraAspect: this.cameraProxy.aspect,
-			cameraFOV: this.cameraProxy.fov,
-			cameraFar: this.props.cameraFar,
-		}
-		this.onBeforeRender = () => {
-			optimizeParams.cameraPosition.x = this.cameraProxy.position[0] - this.cameraProxy.center[0]
-			optimizeParams.cameraPosition.y = this.cameraProxy.position[1] - this.cameraProxy.center[1]
-			optimizeParams.cameraPosition.z = this.cameraProxy.position[2] - this.cameraProxy.center[2]
-			optimizeParams.cameraRotation.x = this.cameraProxy.rotationEuler[0]
-			optimizeParams.cameraRotation.y = this.cameraProxy.rotationEuler[1]
-			optimizeParams.cameraRotation.z = this.cameraProxy.rotationEuler[2]
-			optimizeParams.cameraNear = this.props.cameraNear
-			optimizeParams.cameraAspect = this.cameraProxy.aspect
-			optimizeParams.cameraFOV = this.cameraProxy.fov
-			optimizeParams.cameraFar = this.props.cameraFar
-			this.optimizePasses.forEach((pass) => pass.update(this.view.gsi.groupWrapper, optimizeParams))
-		}
+		// const optimizeParams = {
+		// 	cameraPosition: {
+		// 		x: this.cameraProxy.position[0] - this.cameraProxy.center[0],
+		// 		y: this.cameraProxy.position[1] - this.cameraProxy.center[1],
+		// 		z: this.cameraProxy.position[2] - this.cameraProxy.center[2],
+		// 	},
+		// 	cameraRotation: {
+		// 		x: this.cameraProxy.rotationEuler[0],
+		// 		y: this.cameraProxy.rotationEuler[1],
+		// 		z: this.cameraProxy.rotationEuler[2],
+		// 	},
+		// 	cameraNear: this.props.cameraNear,
+		// 	cameraAspect: this.cameraProxy.aspect,
+		// 	cameraFOV: this.cameraProxy.fov,
+		// 	cameraFar: this.props.cameraFar,
+		// }
+		// this.onBeforeRender = () => {
+		// 	optimizeParams.cameraPosition.x = this.cameraProxy.position[0] - this.cameraProxy.center[0]
+		// 	optimizeParams.cameraPosition.y = this.cameraProxy.position[1] - this.cameraProxy.center[1]
+		// 	optimizeParams.cameraPosition.z = this.cameraProxy.position[2] - this.cameraProxy.center[2]
+		// 	optimizeParams.cameraRotation.x = this.cameraProxy.rotationEuler[0]
+		// 	optimizeParams.cameraRotation.y = this.cameraProxy.rotationEuler[1]
+		// 	optimizeParams.cameraRotation.z = this.cameraProxy.rotationEuler[2]
+		// 	optimizeParams.cameraNear = this.props.cameraNear
+		// 	optimizeParams.cameraAspect = this.cameraProxy.aspect
+		// 	optimizeParams.cameraFOV = this.cameraProxy.fov
+		// 	optimizeParams.cameraFar = this.props.cameraFar
+		// 	this.optimizePasses.forEach((pass) => pass.update(this.view.gsi.groupWrapper, optimizeParams))
+		// }
 
 		/**
 		 * Props listener
@@ -183,13 +161,16 @@ export class PolarisGSI extends AbstractPolaris implements PolarisGSI {
 			'viewOffset',
 			'lights',
 			'postprocessing',
-		]
-		this.listenProps(rendererProps, () => {
+		] as const
+		this.watchProps(rendererProps, (e) => {
+			// const changedProps = e.props
+
 			const newProps = {}
 			for (let i = 0; i < rendererProps.length; i++) {
 				const key = rendererProps[i]
-				newProps[key] = this.getProps(key)
+				newProps[key] = this.getProp(key)
 			}
+
 			if (this.renderer) {
 				this.cameraProxy.fov = newProps['fov']
 				this.renderer.updateProps(newProps)
@@ -197,15 +178,15 @@ export class PolarisGSI extends AbstractPolaris implements PolarisGSI {
 		})
 
 		// Responsive for container resize
-		this.listenProps(['autoResize'], () => {
-			const autoResize = this.getProps('autoResize')
+		this.watchProps(['autoResize'], () => {
+			const autoResize = this.getProp('autoResize')
 			if (autoResize) {
 				if (!this._resizeListener) {
 					this._resizeListener = setInterval(() => {
 						const width = container.clientWidth
 						const height = container.clientHeight
 						if (width !== this.width || height !== this.height) {
-							this.resize(width, height, this.ratio, undefined)
+							this.resize(width, height, this.ratio)
 							this.dispatchEvent({
 								type: 'viewChange',
 								cameraProxy: this.cameraProxy,
@@ -219,14 +200,6 @@ export class PolarisGSI extends AbstractPolaris implements PolarisGSI {
 				this._resizeListener = undefined
 			}
 		})
-	}
-
-	addOptimizePass(pass: OptimizePass) {
-		if (this.optimizePasses.indexOf(pass) > -1) {
-			console.warn('PolarisGSI - You try to repeatedly add an optimize pass')
-			this.optimizePasses.splice(this.optimizePasses.indexOf(pass), 1)
-		}
-		this.optimizePasses.push(pass)
 	}
 
 	setRenderer(renderer: Renderer) {
@@ -268,12 +241,8 @@ export class PolarisGSI extends AbstractPolaris implements PolarisGSI {
 	 * @param {number} [externalScale=1.0] 外部设置的scale值，如style.transform等
 	 * @memberof Polaris
 	 */
-	resize(width, height, ratio = 1.0, externalScale) {
-		if (externalScale !== undefined) {
-			console.warn('Polaris - Please use Polaris.setScale(scale) api. ')
-		}
-
-		super.resize(width, height, ratio, externalScale)
+	resize(width, height, ratio = 1.0) {
+		super.resize(width, height, ratio)
 
 		this.view.html.element.style.width = this.width + 'px'
 		this.view.html.element.style.height = this.height + 'px'
@@ -318,62 +287,6 @@ export class PolarisGSI extends AbstractPolaris implements PolarisGSI {
 			Math.round((deviceCoords[0] + 1) * 0.5 * this.width),
 			Math.round((deviceCoords[1] + 1) * 0.5 * this.height),
 		]
-	}
-
-	/**
-	 * 根据projection类型添加layer至相应layerWrapper中
-	 *
-	 * @param {Layer} layer
-	 * @param {number} projectionType 0 - MercatorProjection | 1 - SphereProjection | 2 - EquirectangularProjectionPDC
-	 * @param {[number, number]} center
-	 * @memberof PolarisGSI
-	 */
-	addByProjection(layer: Layer, projectionType = 0, center: number[] = [0, 0]) {
-		let projName
-		switch (projectionType) {
-			case 0:
-				projName = 'MercatorProjection'
-				break
-			case 1:
-				projName = 'SphereProjection'
-				break
-			case 2:
-				projName = 'EquirectangularProjectionPDC'
-				break
-			case 3:
-				projName = 'EquirectangularProjection'
-				break
-			case 4:
-				projName = 'AzimuthalEquidistantProjection'
-				break
-			case 5:
-				projName = 'GallStereoGraphicProjection'
-				break
-			default:
-				throw new Error(`PolarisGSI - Invalid projectionType: ${projectionType}`)
-		}
-
-		if (Projections[projName] === undefined) {
-			throw new Error(`PolarisGSI - Invalid projectionType: ${projectionType}`)
-		}
-
-		if (!this._projLayerWrappers) {
-			this._projLayerWrappers = {}
-		}
-
-		const wrapperName = projName + '|' + center.toString()
-
-		if (this._projLayerWrappers[wrapperName] === undefined) {
-			this._projLayerWrappers[wrapperName] = new StandardLayer({
-				parent: this,
-				projection: new Projections[projName]({
-					center,
-				}),
-			})
-			this._projLayerWrappers[wrapperName].name = `Wrapper-${wrapperName}`
-		}
-		const wrapper = this._projLayerWrappers[wrapperName]
-		wrapper.add(layer)
 	}
 
 	/**
@@ -440,15 +353,11 @@ export class PolarisGSI extends AbstractPolaris implements PolarisGSI {
 
 		// Collect pick results
 		const candidates: LayerPickEvent[] = []
-		this.traverseVisible((obj) => {
-			// @note pickable only exits on StandardLayer
-			// @note do not bypass type check using props manager
-			const layer = obj as StandardLayer
-			if (layer.isStandardLayer && layer.getProps('pickable')) {
-				if (!layer.raycast) {
-					// console.warn('PolarisGSI - Layer does not implement raycast method. ')
-					return
-				}
+		this.traverseVisible((layer) => {
+			// @note check `pickable` inside `.raycast` method. instead of make it a props
+			// since it is not only a prop. but also the type of the layer
+			// if a layer doesn't support raycasting, leave it implemented
+			if (layer.raycast) {
 				const layerRes = layer.raycast(this, canvasCoords, ndc)
 				if (layerRes) {
 					candidates.push({
@@ -531,7 +440,7 @@ export class PolarisGSI extends AbstractPolaris implements PolarisGSI {
 		})
 		this.hammer.add(tap)
 		this.hammer.on('tap', (e) => {
-			if (this.getProps('enablePicking')) {
+			if (this.getProp('enablePicking')) {
 				const bbox = element.getBoundingClientRect()
 				const left = bbox.left
 				const top = bbox.top
@@ -570,7 +479,7 @@ export class PolarisGSI extends AbstractPolaris implements PolarisGSI {
 				// 3. camera stable frames < N (default 2)
 				// 4. lastTouchedTime < M (default 500ms)
 				if (
-					this.getProps('enablePicking') &&
+					this.getProp('enablePicking') &&
 					isTouched === false &&
 					isMouseDown === false &&
 					this.timeline.currentTime - viewChangeTime > this.timeline.frametime * 2 &&
@@ -590,6 +499,8 @@ export class PolarisGSI extends AbstractPolaris implements PolarisGSI {
 
 	private _mouseMoveHandler: (e: MouseEvent) => any
 
+	// @TODO why? @浅寻
+	// TODO: explanation needed here
 	private _handlePointerEvent(canvasCoords: CoordV2, triggerEventName: 'pick' | 'hover') {
 		// Collect pick results
 		const opts = { deepPicking: this.props.deepPicking ?? false }
@@ -599,10 +510,10 @@ export class PolarisGSI extends AbstractPolaris implements PolarisGSI {
 				// @note pickable only exits on StandardLayer
 				// @note do not bypass type check using props manager
 				const layer = obj as StandardLayer
-				if (layer.isStandardLayer && layer.getProps('pickable')) {
-					// trigger non-picked layer with eventName & no arguments
-					layer.dispatchEvent({ type: triggerEventName })
-				}
+				// if (layer.isStandardLayer && layer.getProp('pickable')) {
+				// trigger non-picked layer with eventName & no arguments
+				layer.dispatchEvent({ type: triggerEventName })
+				// }
 			})
 			return
 		}
@@ -615,15 +526,15 @@ export class PolarisGSI extends AbstractPolaris implements PolarisGSI {
 				// @note do not bypass type check using props manager
 				const layer = obj as StandardLayer
 				const index = pickedLayers.indexOf(layer)
-				if (layer.isStandardLayer && layer.getProps('pickable')) {
-					if (index >= 0) {
-						// trigger picked layer with eventName & result argument
-						layer.dispatchEvent({ type: triggerEventName, result: resultArr[index] })
-					} else {
-						// trigger non-picked layer with eventName & no arguments
-						layer.dispatchEvent({ type: triggerEventName })
-					}
+				// if (layer.isStandardLayer && layer.getProp('pickable')) {
+				if (index >= 0) {
+					// trigger picked layer with eventName & result argument
+					layer.dispatchEvent({ type: triggerEventName, result: resultArr[index] })
+				} else {
+					// trigger non-picked layer with eventName & no arguments
+					layer.dispatchEvent({ type: triggerEventName })
 				}
+				// }
 			})
 		} else {
 			const resultEvent = result
@@ -632,15 +543,15 @@ export class PolarisGSI extends AbstractPolaris implements PolarisGSI {
 				// @note pickable only exits on StandardLayer
 				// @note do not bypass type check using props manager
 				const layer = obj as StandardLayer
-				if (layer.isStandardLayer && layer.getProps('pickable')) {
-					if (layer === pickedLayer) {
-						// trigger picked layer with eventName & result argument
-						layer.dispatchEvent({ type: triggerEventName, result: resultEvent })
-					} else {
-						// trigger non-picked layer with eventName & no arguments
-						layer.dispatchEvent({ type: triggerEventName })
-					}
+				// if (layer.isStandardLayer && layer.getProp('pickable')) {
+				if (layer === pickedLayer) {
+					// trigger picked layer with eventName & result argument
+					layer.dispatchEvent({ type: triggerEventName, result: resultEvent })
+				} else {
+					// trigger non-picked layer with eventName & no arguments
+					layer.dispatchEvent({ type: triggerEventName })
 				}
+				// }
 			})
 		}
 	}

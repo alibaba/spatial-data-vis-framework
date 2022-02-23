@@ -26,7 +26,7 @@ export function deepDiffProps<TPropsType extends Record<string, any>>(
  * From obj, pick a set of properties whose keys are in the array keys
  * @note just like typescript utility type Pick
  */
-export function pick<TObj extends Record<string, any>, TKeys extends Array<keyof TObj>>(
+export function pick<TObj extends Record<string, any>, TKeys extends ReadonlyArray<keyof TObj>>(
 	obj: TObj,
 	keys: TKeys
 ): Pick<TObj, TKeys[number]> {
