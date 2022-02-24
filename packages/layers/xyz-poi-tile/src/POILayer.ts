@@ -303,11 +303,6 @@ export class POILayer extends STDLayer {
 	}
 
 	/**
-	 * highlight api for TileLayers
-	 */
-	highlightByIds: (idsArr: number[], style: { [name: string]: any }) => void
-
-	/**
 	 * get the current tile loading status of this layer
 	 */
 	getLoadingStatus(): { pends: number; total: number } {
@@ -335,6 +330,9 @@ export class POILayer extends STDLayer {
 
 		// cache polaris render ratio for pointSizes computation
 		this._ratio = polaris.ratio ?? 1.0
+
+		/** picking */
+		this.onRaycast = this._pickPOI
 
 		this.listenProps(
 			[
@@ -458,40 +456,36 @@ export class POILayer extends STDLayer {
 			// 	console.warn('POILayer - POILayer under 3D view mode is currently not supported')
 			// }
 		}
+	}
 
-		/** picking */
-		this.onRaycast = this._pickPOI
+	/**
+	 * highlight api for TileLayers
+	 */
+	highlightByIds(idsArr: (number | string)[], style: { [name: string]: any }) {
+		if (!this._idMeshesMap) return
+		if (!style || !style.type) return
 
-		/** highlight api */
-		// this.highlightByIndices = undefined
-
-		/** highlight api 2 */
-		this.highlightByIds = (idsArr: (number | string)[], style: { [name: string]: any }) => {
-			if (!this._idMeshesMap) return
-			if (!style || !style.type) return
-
-			const type = style.type
-			idsArr.forEach((id) => {
-				const meshInfos = this._idMeshesMap.get(id)
-				if (!meshInfos) return
-				meshInfos.forEach((meshInfo) => {
-					const obj = meshInfo.obj
-					const objIdx = meshInfo.objIdx
-					if (obj instanceof Marker) {
-						/** @TODO react on marker highlight */
-						return
-					} else if (obj instanceof Mesh) {
-						if (type === 'none') {
-							this._updatePointSizeByIndex(obj, objIdx, this._getPointStyledSize(style))
-							this._idStyleMap.delete(id)
-						} else if (type === 'hover') {
-							this._updatePointSizeByIndex(obj, objIdx, this._getPointStyledSize(style))
-							this._idStyleMap.set(id, { ...style })
-						}
+		const type = style.type
+		idsArr.forEach((id) => {
+			const meshInfos = this._idMeshesMap.get(id)
+			if (!meshInfos) return
+			meshInfos.forEach((meshInfo) => {
+				const obj = meshInfo.obj
+				const objIdx = meshInfo.objIdx
+				if (obj instanceof Marker) {
+					/** react on marker highlight, to be designed */
+					return
+				} else if (obj instanceof Mesh) {
+					if (type === 'none') {
+						this._updatePointSizeByIndex(obj, objIdx, this._getPointStyledSize(style))
+						this._idStyleMap.delete(id)
+					} else if (type === 'hover') {
+						this._updatePointSizeByIndex(obj, objIdx, this._getPointStyledSize(style))
+						this._idStyleMap.set(id, { ...style })
 					}
-				})
+				}
 			})
-		}
+		})
 	}
 
 	dispose() {

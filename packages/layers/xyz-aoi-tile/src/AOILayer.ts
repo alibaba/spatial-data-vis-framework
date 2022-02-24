@@ -309,11 +309,6 @@ export class AOILayer extends STDLayer {
 	}
 
 	/**
-	 * highlight api for TileLayers
-	 */
-	highlightByIds: (idsArr: number[], style: { [name: string]: any }) => void
-
-	/**
 	 * get the current tile loading status of this layer
 	 */
 	getLoadingStatus(): { pends: number; total: number } {
@@ -338,6 +333,9 @@ export class AOILayer extends STDLayer {
 		if (!projection.isPlaneProjection) {
 			throw new Error('AOILayer - TileLayer can only be used under plane projections')
 		}
+
+		/** picking */
+		this.onRaycast = this._pickAOI
 
 		this.listenProps(['workersNum'], () => {
 			const workersNum = this.getProps('workersNum')
@@ -476,37 +474,29 @@ export class AOILayer extends STDLayer {
 			// 	console.warn('AOILayer - AOILayer under 3D view mode is currently not supported')
 			// }
 		}
+	}
 
-		/** picking */
-		this.onRaycast = this._pickAOI
-
-		/** highlight api */
-		// this.highlightByIndices = (dataIndexArr: number[], style: { [name: string]: any }) => {
-		// 	console.error(
-		// 		'AOILayer - This method is not implemented, please use .highlightByIds() instead. '
-		// 	)
-		// }
-
-		/** highlight api 2 */
-		this.highlightByIds = (idsArr: (number | string)[], style: { [name: string]: any }) => {
-			const type = style.type
-			if (type !== 'hover' && type !== 'select' && type !== 'none') {
-				console.error(`AOILayer - Invalid argument style.type: ${style}`)
-				return
-			}
-			idsArr.forEach((id) => {
-				this._setStyleById(id, type)
-				// cache or delete style
-				if (type === 'none') {
-					this._hoveredIds.delete(id)
-					this._selectedIds.delete(id)
-				} else if (type === 'hover') {
-					this._hoveredIds.add(id)
-				} else if (type === 'select') {
-					this._selectedIds.add(id)
-				}
-			})
+	/**
+	 * highlight api for TileLayers
+	 */
+	highlightByIds(idsArr: (number | string)[], style: { [name: string]: any }) {
+		const type = style.type
+		if (type !== 'hover' && type !== 'select' && type !== 'none') {
+			console.error(`AOILayer - Invalid argument style.type: ${style}`)
+			return
 		}
+		idsArr.forEach((id) => {
+			this._setStyleById(id, type)
+			// cache or delete style
+			if (type === 'none') {
+				this._hoveredIds.delete(id)
+				this._selectedIds.delete(id)
+			} else if (type === 'hover') {
+				this._hoveredIds.add(id)
+			} else if (type === 'select') {
+				this._selectedIds.add(id)
+			}
+		})
 	}
 
 	dispose() {
