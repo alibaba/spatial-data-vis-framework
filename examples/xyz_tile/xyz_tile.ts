@@ -385,3 +385,5 @@ function getAOIUrl(x, y, z) {
 		JSON.stringify(params)
 	)
 }
+
+window['getAOIUrl'] = getAOIUrl

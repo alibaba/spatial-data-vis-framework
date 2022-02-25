@@ -169,11 +169,11 @@ export class CommonTileManager implements TileManager {
 
 	dispose() {
 		this.stop()
-		this._releaseTilesMemory(this._tiles)
 		this._tileMap.clear()
 		this._promiseMap.clear()
 		this._currVisibleTiles.length = 0
 		this._currVisibleKeys.length = 0
+		this._releaseTiles(this._tiles)
 		this._tiles.length = 0
 		this._stableFrames = 0
 	}
@@ -221,7 +221,7 @@ export class CommonTileManager implements TileManager {
 		}
 	}
 
-	async stop() {
+	stop() {
 		if (this._updateTrack) {
 			this._updateTrack.alive = false
 			this._updateTrack = undefined
@@ -472,7 +472,7 @@ export class CommonTileManager implements TileManager {
 		return true
 	}
 
-	private _releaseTilesMemory(tiles: CachedTileRenderables[]) {
+	private _releaseTiles(tiles: CachedTileRenderables[]) {
 		// DEBUG
 		// console.log(
 		// 	'release',
@@ -480,8 +480,6 @@ export class CommonTileManager implements TileManager {
 		// )
 
 		tiles.forEach((tile) => {
-			const key = tile.key
-			this._tileMap.delete(key)
 			const { meshes, layers } = tile
 			meshes.forEach((mesh) => this.config.layer.group.remove(mesh))
 			layers.forEach((layer) => this.config.layer.remove(layer))
@@ -519,7 +517,7 @@ export class CommonTileManager implements TileManager {
 			}
 		})
 
-		this._releaseTilesMemory(deletedTiles)
+		this._releaseTiles(deletedTiles)
 	}
 
 	private _abortOutOfViewPromises() {

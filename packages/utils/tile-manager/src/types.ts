@@ -51,7 +51,7 @@ export interface TileManager {
 	/**
 	 * Stop updating tiles
 	 */
-	stop(): Promise<void>
+	stop(): void
 
 	/**
 	 * Get current visible tiles list
