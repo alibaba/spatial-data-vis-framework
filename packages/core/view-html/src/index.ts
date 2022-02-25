@@ -8,7 +8,7 @@
  * 但是 typescript 中 mixin 和 decoration 都会造成一定程度的 interface 混乱
  * 因此在这里把constructor里增加的逻辑拆成函数，
  */
-import { View, Layer, isLayer } from '@polaris.gl/base'
+import { View, AbstractLayer, isAbstractLayer } from '@polaris.gl/base'
 
 const _DIV = document.createElement('DIV')
 
@@ -36,9 +36,9 @@ export class HtmlView extends View {
 		// super.init(layer)
 	}
 
-	layer: Layer
+	layer: AbstractLayer
 
-	init(layer: Layer): this {
+	init(layer: AbstractLayer): this {
 		this.layer = layer
 
 		/**
@@ -52,10 +52,10 @@ export class HtmlView extends View {
 		 * 将具体的视觉元素加入到树中
 		 */
 		layer.onAdd = (parent) => {
-			if (isLayer(parent)) {
+			if (isAbstractLayer(parent)) {
 				this.onAdd(parent)
 			} else {
-				console.error('parent of a Layer must be a Layer')
+				console.error('parent of a AbstractLayer must be a AbstractLayer')
 			}
 		}
 
@@ -84,7 +84,7 @@ export class HtmlView extends View {
 	/**
 	 * Implement
 	 */
-	onAdd(parent: Layer) {
+	onAdd(parent: AbstractLayer) {
 		const parentView = parent.view.html
 		if (!parentView) {
 			throw new Error('Polaris::HtmlView - Parent layer has no HtmlView')
@@ -102,7 +102,7 @@ export class HtmlView extends View {
 	/**
 	 * Implement
 	 */
-	onRemove(parent: Layer) {
+	onRemove(parent: AbstractLayer) {
 		const parentView = parent.view.html
 		if (!parentView) {
 			return
