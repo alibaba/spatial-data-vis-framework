@@ -438,48 +438,34 @@ export class AOILayer extends STDLayer {
 						},
 					})
 
-				// FIX: do not create new tileManager, instead reuse it and update config
-				// due to multiple props updates triggered by user will cause unexpected behavior
-				if (this._tileManager) {
-					this._tileManager.updateConfig({
-						layer: this,
-						minZoom: this.getProps('minZoom'),
-						maxZoom: this.getProps('maxZoom'),
-						cacheSize: this.getProps('cacheSize'),
-						framesBeforeUpdate: this.getProps('framesBeforeRequest'),
-						viewZoomReduction: this.getProps('viewZoomReduction'),
-						useParentReplaceUpdate: this.getProps('useParentReplaceUpdate'),
-						replacementRatio: this.getProps('replacementRatio'),
-						zoomStep: this.getProps('viewZoomStep'),
-						getTileRenderables: (tileToken) => {
-							return this._createTileRenderables(tileToken, projection, polaris)
-						},
-						onTileRelease: (tile, token) => {
-							this._releaseTile(tile, token)
-						},
-						printErrors: this.getProps('debug'),
-					})
-					this._tileManager.clear()
-				} else {
-					this._tileManager = new XYZTileManager({
-						layer: this,
-						minZoom: this.getProps('minZoom'),
-						maxZoom: this.getProps('maxZoom'),
-						cacheSize: this.getProps('cacheSize'),
-						framesBeforeUpdate: this.getProps('framesBeforeRequest'),
-						viewZoomReduction: this.getProps('viewZoomReduction'),
-						useParentReplaceUpdate: this.getProps('useParentReplaceUpdate'),
-						replacementRatio: this.getProps('replacementRatio'),
-						zoomStep: this.getProps('viewZoomStep'),
-						getTileRenderables: (tileToken) => {
-							return this._createTileRenderables(tileToken, projection, polaris)
-						},
-						onTileRelease: (tile, token) => {
-							this._releaseTile(tile, token)
-						},
-						printErrors: this.getProps('debug'),
-					})
+				// FIX: do not create a new tileManager in every updateProps.
+				// Problems may occur due to potential multiple propUpdates triggered by user
+				const tileManagerConfig = {
+					layer: this,
+					timeline,
+					polaris,
+					minZoom: this.getProps('minZoom'),
+					maxZoom: this.getProps('maxZoom'),
+					cacheSize: this.getProps('cacheSize'),
+					framesBeforeUpdate: this.getProps('framesBeforeRequest'),
+					viewZoomReduction: this.getProps('viewZoomReduction'),
+					useParentReplaceUpdate: this.getProps('useParentReplaceUpdate'),
+					replacementRatio: this.getProps('replacementRatio'),
+					zoomStep: this.getProps('viewZoomStep'),
+					getTileRenderables: (tileToken) => {
+						return this._createTileRenderables(tileToken, projection, polaris)
+					},
+					onTileRelease: (tile, token) => {
+						this._releaseTile(tile, token)
+					},
+					printErrors: this.getProps('debug'),
+				}
+				if (!this._tileManager) {
+					this._tileManager = new XYZTileManager(tileManagerConfig)
 					this._tileManager.start()
+				} else {
+					this._tileManager.updateConfig(tileManagerConfig)
+					this._tileManager.clear()
 				}
 			}
 		)

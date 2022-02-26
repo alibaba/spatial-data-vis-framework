@@ -46,7 +46,7 @@ export interface TileManager {
 	/**
 	 * Start updating tiles
 	 */
-	start(): Promise<void>
+	start(): void
 
 	/**
 	 * Stop updating tiles

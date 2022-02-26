@@ -1,7 +1,6 @@
 import { Timeline } from 'ani-timeline'
 import { STDLayer } from '@polaris.gl/layer-std'
 import { Polaris } from '@polaris.gl/schema'
-import { Projection } from '@polaris.gl/projection'
 import {
 	TileManager,
 	TileRenderables,
@@ -16,6 +15,17 @@ export type CommonTileManagerConfig = {
 	 * Layer
 	 */
 	layer: STDLayer
+
+	/**
+	 * Timeline
+	 * use layer timeline commonly
+	 */
+	timeline: Timeline
+
+	/**
+	 * Polaris
+	 */
+	polaris: Polaris
 
 	/**
 	 * Function to get current view's tile tokens,
@@ -78,11 +88,6 @@ export type CommonTileManagerConfig = {
 	framesBeforeAbort?: number
 
 	/**
-	 * Whether to print any errors to console, default is false
-	 */
-	printErrors?: boolean
-
-	/**
 	 * Whether to display the nearest available parent tile when current tiles are not ready
 	 */
 	useParentReplaceUpdate?: boolean
@@ -102,6 +107,19 @@ export type CommonTileManagerConfig = {
 	 * @NOTE this config will only work if 'useParentReplaceUpdate' option is on
 	 */
 	replacementRatio?: number
+
+	/**
+	 * Whether to print any errors to console, default is false
+	 * @default false
+	 */
+	printErrors?: boolean
+
+	/**
+	 * Check if one layer has multiple TileManager created and used
+	 * may be useful to debug some problems
+	 * @default true
+	 */
+	checkLayerCreationLog?: boolean
 }
 
 const defaultConfig = {
@@ -112,16 +130,14 @@ const defaultConfig = {
 	framesBeforeAbort: 5,
 	useParentReplaceUpdate: true,
 	replacementRatio: 0.3,
-	printErrors: false,
 	retryErroredRequests: false,
+	printErrors: false,
+	checkLayerCreationLog: true,
 }
 
 export class CommonTileManager implements TileManager {
 	config: Required<CommonTileManagerConfig>
 	private _disposed = false
-	private _timeline: Timeline
-	private _polaris: Polaris
-	private _projection: Projection
 	private _updateTrack: any
 	private _tileMap: Map<string, CachedTileRenderables>
 	private _promiseMap: Map<string, CachedTilePromise>
@@ -131,6 +147,7 @@ export class CommonTileManager implements TileManager {
 	private _lastStatesCode: string
 	private _stableFrames: number
 	private _currZoomLevel: number
+	private _viewChangeUpdater: ((cam, polaris) => void) | undefined = undefined
 
 	constructor(config: CommonTileManagerConfig) {
 		this.config = { ...defaultConfig, ...config }
@@ -140,7 +157,9 @@ export class CommonTileManager implements TileManager {
 		this._currVisibleKeys = []
 		this._tiles = []
 		this._stableFrames = 0
-		this._disposePrevIfExist()
+		if (this.config.checkLayerCreationLog) {
+			_checkLayerTileManagerLog(this.config.layer, this)
+		}
 	}
 
 	updateConfig(config: Partial<CommonTileManagerConfig>) {
@@ -192,33 +211,26 @@ export class CommonTileManager implements TileManager {
 	}
 
 	dispose() {
-		this.clear()
+		this.stop()
 		this._disposed = true
+		_removeLayerTileManagerLog(this.config.layer, this)
 	}
 
-	async start() {
-		const layer = this.config.layer
-
-		this.stop()
-
-		if (!this._timeline) {
-			this._timeline = await layer.getTimeline()
-		}
-		if (!this._projection) {
-			this._projection = await layer.getProjection()
-		}
-		if (!this._polaris) {
-			this._polaris = await layer.getPolaris()
-		}
-
-		if (this._disposed || !this.config.layer) {
-			console.error('TileManager has been disposed or lack of config.layer instance')
+	start() {
+		if (this._disposed) {
+			console.error(
+				'Disposed TileManager cannot be re-started. If you only need to clear tile caches, use .clear() api instead. '
+			)
 			return
 		}
 
-		this._updateTrack = this._timeline.addTrack({
+		const { layer, timeline } = this.config
+
+		this.stop()
+
+		this._updateTrack = timeline.addTrack({
 			id: 'TileManager.update',
-			startTime: this._timeline.currentTime,
+			startTime: timeline.currentTime,
 			duration: Infinity,
 			onUpdate: () => {
 				this._stableFrames++
@@ -239,15 +251,22 @@ export class CommonTileManager implements TileManager {
 			},
 		})
 
-		layer.onViewChange = (cam, polaris) => {
+		// onViewChange event
+		const viewChangeUpdater = (cam, polaris) => {
 			this._updateViewChange(polaris)
 		}
+		layer.addEventListener('viewChange', viewChangeUpdater)
+		this._viewChangeUpdater = viewChangeUpdater
 	}
 
 	stop() {
 		if (this._updateTrack) {
 			this._updateTrack.alive = false
 			this._updateTrack = undefined
+		}
+		if (this._viewChangeUpdater) {
+			this.config.layer.removeEventListener('viewChange', this._viewChangeUpdater)
+			this._viewChangeUpdater = undefined
 		}
 	}
 
@@ -259,24 +278,7 @@ export class CommonTileManager implements TileManager {
 		return this._currVisibleKeys.length
 	}
 
-	/**
-	 * Function to check if layer has already had a tileManager
-	 * if so, dispose the prev one and set current one to map
-	 */
-	private _disposePrevIfExist() {
-		const prev = __layer_tileManager_map__.get(this.config.layer)
-		// if the layer has a tileManager already, dispose the previous one
-		if (prev && prev !== this) {
-			prev.stop()
-			prev.dispose()
-		}
-		// set self as current tileManager to layer
-		__layer_tileManager_map__.set(this.config.layer, this)
-	}
-
 	private _updateViewChange(polaris: any) {
-		if (!this._timeline || !this._projection || !this._polaris) return
-
 		const statesCode = polaris.getStatesCode()
 		if (this._lastStatesCode !== statesCode) {
 			this._stableFrames = 0
@@ -285,15 +287,12 @@ export class CommonTileManager implements TileManager {
 	}
 
 	private _updateTiles() {
-		if (!this._timeline || !this._projection || !this._polaris) return
+		const { polaris, minZoom, maxZoom } = this.config
 
-		this._currZoomLevel = this._polaris.cameraProxy.zoom
+		this._currZoomLevel = polaris.cameraProxy.zoom
 
-		const tokenList = this.config.getViewTiles(
-			this._polaris,
-			this.config.minZoom,
-			this.config.maxZoom
-		)
+		const tokenList = this.config.getViewTiles(polaris, minZoom, maxZoom)
+
 		this._currVisibleKeys.length = 0
 
 		tokenList.forEach((token) => {
@@ -370,7 +369,7 @@ export class CommonTileManager implements TileManager {
 
 		const tile = rawTile as CachedTileRenderables
 
-		tile.lastVisTime = this._timeline.currentTime
+		tile.lastVisTime = this.config.timeline.currentTime
 		tile.key = cacheKey
 
 		this._tileMap.set(cacheKey, tile)
@@ -394,7 +393,7 @@ export class CommonTileManager implements TileManager {
 		this._currVisibleTiles.forEach((tile) => {
 			this._setTileVisibility(tile, visibility)
 			if (visibility) {
-				tile.lastVisTime = this._timeline.currentTime
+				tile.lastVisTime = this.config.timeline.currentTime
 			}
 		})
 	}
@@ -511,12 +510,6 @@ export class CommonTileManager implements TileManager {
 	}
 
 	private _releaseTiles(tiles: CachedTileRenderables[]) {
-		// DEBUG
-		// console.log(
-		// 	'release',
-		// 	tiles.map((tile) => tile.key)
-		// )
-
 		tiles.forEach((tile) => {
 			const { meshes, layers } = tile
 			meshes.forEach((mesh) => this.config.layer.group.remove(mesh))
@@ -621,4 +614,28 @@ export class CommonTileManager implements TileManager {
 /**
  * WeakMap to record & ensure each layer only has one TileManager
  */
-const __layer_tileManager_map__ = new WeakMap<STDLayer, TileManager>()
+const _layer_tileManager_map_ = new WeakMap<STDLayer, TileManager>()
+
+/**
+ * Check if a layer has multiple tileManager instances
+ */
+const _checkLayerTileManagerLog = (layer: STDLayer, tileManager: TileManager) => {
+	const prev = _layer_tileManager_map_.get(layer)
+	if (prev) {
+		console.error(
+			'[WARNING] Detected multiple TileManager being used by same layer, this may cause problems. ' +
+				'If this warning is unwanted, set [config.checkLayerCreationLog] to false. '
+		)
+	}
+	// log current tileManager to map
+	_layer_tileManager_map_.set(layer, tileManager)
+}
+
+const _removeLayerTileManagerLog = (layer: STDLayer, tileManager: TileManager) => {
+	const prev = _layer_tileManager_map_.get(layer)
+	if (prev !== tileManager) {
+		console.warn('TileManager not used by this layer')
+		return
+	}
+	_layer_tileManager_map_.delete(layer)
+}
