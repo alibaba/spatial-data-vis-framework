@@ -438,30 +438,49 @@ export class AOILayer extends STDLayer {
 						},
 					})
 
+				// FIX: do not create new tileManager, instead reuse it and update config
+				// due to multiple props updates triggered by user will cause unexpected behavior
 				if (this._tileManager) {
-					this._tileManager.dispose()
+					this._tileManager.updateConfig({
+						layer: this,
+						minZoom: this.getProps('minZoom'),
+						maxZoom: this.getProps('maxZoom'),
+						cacheSize: this.getProps('cacheSize'),
+						framesBeforeUpdate: this.getProps('framesBeforeRequest'),
+						viewZoomReduction: this.getProps('viewZoomReduction'),
+						useParentReplaceUpdate: this.getProps('useParentReplaceUpdate'),
+						replacementRatio: this.getProps('replacementRatio'),
+						zoomStep: this.getProps('viewZoomStep'),
+						getTileRenderables: (tileToken) => {
+							return this._createTileRenderables(tileToken, projection, polaris)
+						},
+						onTileRelease: (tile, token) => {
+							this._releaseTile(tile, token)
+						},
+						printErrors: this.getProps('debug'),
+					})
+					this._tileManager.clear()
+				} else {
+					this._tileManager = new XYZTileManager({
+						layer: this,
+						minZoom: this.getProps('minZoom'),
+						maxZoom: this.getProps('maxZoom'),
+						cacheSize: this.getProps('cacheSize'),
+						framesBeforeUpdate: this.getProps('framesBeforeRequest'),
+						viewZoomReduction: this.getProps('viewZoomReduction'),
+						useParentReplaceUpdate: this.getProps('useParentReplaceUpdate'),
+						replacementRatio: this.getProps('replacementRatio'),
+						zoomStep: this.getProps('viewZoomStep'),
+						getTileRenderables: (tileToken) => {
+							return this._createTileRenderables(tileToken, projection, polaris)
+						},
+						onTileRelease: (tile, token) => {
+							this._releaseTile(tile, token)
+						},
+						printErrors: this.getProps('debug'),
+					})
+					this._tileManager.start()
 				}
-
-				this._tileManager = new XYZTileManager({
-					layer: this,
-					minZoom: this.getProps('minZoom'),
-					maxZoom: this.getProps('maxZoom'),
-					cacheSize: this.getProps('cacheSize'),
-					framesBeforeUpdate: this.getProps('framesBeforeRequest'),
-					viewZoomReduction: this.getProps('viewZoomReduction'),
-					useParentReplaceUpdate: this.getProps('useParentReplaceUpdate'),
-					replacementRatio: this.getProps('replacementRatio'),
-					zoomStep: this.getProps('viewZoomStep'),
-					getTileRenderables: (tileToken) => {
-						return this._createTileRenderables(tileToken, projection, polaris)
-					},
-					onTileRelease: (tile, token) => {
-						this._releaseTile(tile, token)
-					},
-					printErrors: this.getProps('debug'),
-				})
-
-				this._tileManager.start()
 			}
 		)
 
@@ -500,8 +519,10 @@ export class AOILayer extends STDLayer {
 	}
 
 	dispose() {
+		this.info = {
+			times: new Map(),
+		}
 		this._featureCount = 0
-		this.info.times = new Map()
 		this._renderableFeatureMap = new Map()
 		this._featureIndexRangeMap = new Map()
 		this._idIndicatorRangeMap = new Map()

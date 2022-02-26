@@ -15,7 +15,7 @@ export type XYZTileManagerConfig = Omit<
 	Partial<typeof defaultConfig>
 
 export class XYZTileManager extends CommonTileManager {
-	readonly config: CommonTileManagerConfig & Required<XYZTileManagerConfig>
+	config: CommonTileManagerConfig & Required<XYZTileManagerConfig>
 
 	constructor(config: XYZTileManagerConfig) {
 		const _config = {
@@ -47,6 +47,13 @@ export class XYZTileManager extends CommonTileManager {
 			getParentTileToken,
 			getChildTileTokens,
 		})
+	}
+
+	updateConfig(config: Partial<XYZTileManagerConfig>) {
+		this.config = {
+			...this.config,
+			...config,
+		}
 	}
 }
 

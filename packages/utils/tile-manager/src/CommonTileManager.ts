@@ -117,7 +117,8 @@ const defaultConfig = {
 }
 
 export class CommonTileManager implements TileManager {
-	readonly config: Required<CommonTileManagerConfig>
+	config: Required<CommonTileManagerConfig>
+	private _disposed = false
 	private _timeline: Timeline
 	private _polaris: Polaris
 	private _projection: Projection
@@ -139,6 +140,19 @@ export class CommonTileManager implements TileManager {
 		this._currVisibleKeys = []
 		this._tiles = []
 		this._stableFrames = 0
+		this._disposePrevIfExist()
+	}
+
+	updateConfig(config: Partial<CommonTileManagerConfig>) {
+		if (config.layer && this.config.layer !== config.layer) {
+			throw new Error(
+				'Changing layer is not supported, please create a new TileManager if needed. '
+			)
+		}
+		this.config = {
+			...this.config,
+			...config,
+		}
 	}
 
 	getVisibleTiles(): CachedTileRenderables[] {
@@ -167,8 +181,7 @@ export class CommonTileManager implements TileManager {
 		return key.split('|').map((v) => (isNaN(parseFloat(v)) ? v : parseFloat(v)))
 	}
 
-	dispose() {
-		this.stop()
+	clear() {
 		this._tileMap.clear()
 		this._promiseMap.clear()
 		this._currVisibleTiles.length = 0
@@ -178,8 +191,15 @@ export class CommonTileManager implements TileManager {
 		this._stableFrames = 0
 	}
 
+	dispose() {
+		this.clear()
+		this._disposed = true
+	}
+
 	async start() {
 		const layer = this.config.layer
+
+		this.stop()
 
 		if (!this._timeline) {
 			this._timeline = await layer.getTimeline()
@@ -191,7 +211,10 @@ export class CommonTileManager implements TileManager {
 			this._polaris = await layer.getPolaris()
 		}
 
-		this.stop()
+		if (this._disposed || !this.config.layer) {
+			console.error('TileManager has been disposed or lack of config.layer instance')
+			return
+		}
 
 		this._updateTrack = this._timeline.addTrack({
 			id: 'TileManager.update',
@@ -234,6 +257,21 @@ export class CommonTileManager implements TileManager {
 
 	getVisibleTilesCount() {
 		return this._currVisibleKeys.length
+	}
+
+	/**
+	 * Function to check if layer has already had a tileManager
+	 * if so, dispose the prev one and set current one to map
+	 */
+	private _disposePrevIfExist() {
+		const prev = __layer_tileManager_map__.get(this.config.layer)
+		// if the layer has a tileManager already, dispose the previous one
+		if (prev && prev !== this) {
+			prev.stop()
+			prev.dispose()
+		}
+		// set self as current tileManager to layer
+		__layer_tileManager_map__.set(this.config.layer, this)
 	}
 
 	private _updateViewChange(polaris: any) {
@@ -579,3 +617,8 @@ export class CommonTileManager implements TileManager {
 		}
 	}
 }
+
+/**
+ * WeakMap to record & ensure each layer only has one TileManager
+ */
+const __layer_tileManager_map__ = new WeakMap<STDLayer, TileManager>()

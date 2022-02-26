@@ -54,6 +54,11 @@ export interface TileManager {
 	stop(): void
 
 	/**
+	 * Update configs
+	 */
+	updateConfig(config: any): void
+
+	/**
 	 * Get current visible tiles list
 	 */
 	getVisibleTiles(): CachedTileRenderables[]
@@ -79,7 +84,12 @@ export interface TileManager {
 	forEachVisibleTile(f: (TileRenderables: TileRenderables, index?: number) => any)
 
 	/**
-	 * Dispose
+	 * clear all tiles & caches
+	 */
+	clear(): void
+
+	/**
+	 * dispose memory
 	 */
 	dispose(): void
 }

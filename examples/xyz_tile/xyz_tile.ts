@@ -94,8 +94,8 @@ const poi = new POILayer({
 	useParentReplaceUpdate: true,
 	// depthTest: false,
 })
-p.add(poi)
-window['poi'] = poi
+// p.add(poi)
+// window['poi'] = poi
 
 // AOI
 const picked: Set<number> = new Set()
@@ -113,14 +113,14 @@ const aoi = new AOILayer({
 	viewZoomStep: 1,
 	framesBeforeRequest,
 	customFetcher: (x, y, z) => {
-		const url = getAOIUrl(x, y, z)
+		const url = getAOIUrl(x, y, z, false)
 		const controller = new AbortController()
 		const signal = controller.signal
 		const promise = new Promise<any>((resolve, reject) => {
 			fetch(url, { signal })
 				.then((res) => {
-					// resolve(res.arrayBuffer())
-					resolve(res.json())
+					resolve(res.arrayBuffer())
+					// resolve(res.json())
 				})
 				.catch((e) => {
 					reject(e)
@@ -136,7 +136,7 @@ const aoi = new AOILayer({
 		}
 	},
 	// getUrl: getAOIUrl,
-	dataType: 'geojson',
+	dataType: 'auto',
 	getColor: (feature) => feature.properties.id * 13,
 	getOpacity: 0.5,
 	transparent: true,
@@ -182,75 +182,17 @@ const aoi = new AOILayer({
 p.add(aoi)
 window['aoi'] = aoi
 
-// amap
+//
+// ----- AMap -----
+//
 const amapLayer = new AMapLayer({
 	showLogo: false,
 })
 p.add(amapLayer)
 
-async function fetchData() {
-	const data: any[] = []
-
-	const response = await fetch(
-		'https://gw.alipayobjects.com/os/bmw-prod/69f76d0b-8758-49cc-86e7-6fc5728cb3ea.json' // geojson china all
-	)
-	const json = await response.json()
-	data.push(json)
-
-	return data
-}
-
-// fetchData().then((data) => {
-// 	const geojson = data[0]
-// 	const newGeo = { ...geojson, features: [] }
-
-// 	console.log('newGeo', newGeo)
-
-// 	geojson.features.forEach((feature) => {
-// 		const level = feature.properties.level
-// 		const adcode = feature.properties.adcode
-// 		if (adcode === '100000') {
-// 			return
-// 		}
-// 		if (level === 'province') {
-// 			newGeo.features.push(Object.assign({}, feature))
-// 			return
-// 		}
-// 	})
-
-// 	// Polygons
-// 	const polygonLayer1 = (window['layer1'] = new PolygonLayer({
-// 		// projection: new SphereProjection({}),
-// 		getFillColor: (feature) => {
-// 			const r = Math.floor(100 + Math.random() * 155).toString(16)
-// 			const color = `#${r}aa${r}`
-// 			return color
-// 		},
-// 		getSideColor: '#999999',
-// 		getFillOpacity: 1.0,
-// 		transparent: false,
-// 		getThickness: 0,
-// 		enableExtrude: false,
-// 		baseAlt: 0,
-// 		depthTest: true,
-// 		pickable: true,
-// 		hoverColor: false,
-// 		selectColor: false,
-// 		hoverLineWidth: 1,
-// 		selectLineWidth: 4,
-// 		selectLinesHeight: 0,
-// 		workersCount: 4,
-// 	}))
-// 	p.add(polygonLayer1)
-// 	polygonLayer1.updateData(newGeo)
-// 	polygonLayer1.onHovered = (info) => {
-// 		if (!info) return
-
-// 		console.log('polygon')
-// 	}
-// })
-
-// info panel
+//
+// ----- Info Panel -----
+//
 const panel = document.createElement('div')
 panel.style.position = 'absolute'
 panel.style.left = '5px'
@@ -265,29 +207,24 @@ p.timeline.addTrack({
 	startTime: p.timeline.currentTime,
 	onUpdate: () => {
 		let info = ''
-
 		if (poi && p.children.has(poi)) {
 			info += '--- poi ---' + '\n'
 			info += 'vis tiles: ' + poi.getLoadingStatus().total + '\n'
 			info += 'pends: ' + poi.getLoadingStatus().pends + '\n'
 		}
-
 		if (aoi && p.children.has(aoi)) {
 			info += '--- aoi ---' + '\n'
 			info += 'vis tiles: ' + aoi.getLoadingStatus().total + '\n'
 			info += 'pends: ' + aoi.getLoadingStatus().pends + '\n'
-
 			const reqTimes = aoi['_tileManager']
 				.getVisibleTiles()
-				.map((tile) => Math.round(aoi.info.times.get(tile.key).reqTime))
+				.map((tile) => Math.round(aoi.info.times.get(tile.key)?.reqTime ?? 0))
 			info += 'max req: ' + Math.max(...reqTimes) + 'ms\n'
-
 			const genTimes = aoi['_tileManager']
 				.getVisibleTiles()
-				.map((tile) => Math.round(aoi.info.times.get(tile.key).genTime))
+				.map((tile) => Math.round(aoi.info.times.get(tile.key)?.genTime ?? 0))
 			info += 'max gen: ' + Math.max(...genTimes) + 'ms\n'
 		}
-
 		if (panel.innerText !== info) {
 			panel.innerText = info
 		}
@@ -296,12 +233,57 @@ p.timeline.addTrack({
 
 setTimeout(() => {
 	// p.setStatesCode('1|120.184302|30.265237|0.000000|0.00000|0.00000|16.55800')
-	p.setStatesCode('1|120.184302|30.265237|0.000000|0.00000|0.00000|11.74200')
+	p.setStatesCode('1|120.184302|30.265237|0.000000|0.00000|0.00000|15.0000')
 	// p.setStatesCode('1|120.184301|30.265237|0.000000|0.00000|0.00000|16.70400') // closer hz
-}, 500)
+}, 800)
 
 //
+// ----- Update Props Button -----
+//
+const updateAOIProps = () => {
+	const color = Math.floor(Math.random() * 0xffffff)
+	aoi.updateProps({
+		customFetcher: (x, y, z) => {
+			const url = getAOIUrl(x, y, z, false)
+			const controller = new AbortController()
+			const signal = controller.signal
+			const promise = new Promise<any>((resolve, reject) => {
+				fetch(url, { signal })
+					.then((res) => {
+						resolve(res.arrayBuffer())
+						// resolve(res.json())
+					})
+					.catch((e) => {
+						reject(e)
+					})
+			})
+			const abort = () => {
+				controller.abort()
+				return { success: true }
+			}
+			return {
+				promise,
+				abort,
+			}
+		},
+		getColor: () => color,
+	})
+}
+const btn = document.createElement('button')
+btn.innerText = 'Update AOI customFetcher'
+btn.style.position = 'absolute'
+btn.style.left = '4px'
+btn.style.bottom = '4px'
+document.body.appendChild(btn)
+btn.addEventListener('click', () => {
+	updateAOIProps()
+	updateAOIProps()
+	updateAOIProps()
+})
 
+//
+// ----- data -----
+//
 function getPOIUrl(x, y, z) {
 	const params = {
 		PostgreSQL: {
@@ -347,7 +329,7 @@ function getPOIUrl(x, y, z) {
 	)
 }
 
-function getAOIUrl(x, y, z) {
+function getAOIUrl(x, y, z, isGeojson = true) {
 	const params = {
 		PostgreSQL: {
 			dbname: 'EXAMPLE',
@@ -365,7 +347,7 @@ function getAOIUrl(x, y, z) {
 			clip_geometry: null,
 			area_code: null,
 			source: '浙江省_杭州市_building',
-			output_format: 'geojson',
+			output_format: isGeojson ? 'geojson' : 'geojson_pbf',
 			layer: {
 				default: {
 					geometry_type: 'Polygon',
@@ -385,5 +367,3 @@ function getAOIUrl(x, y, z) {
 		JSON.stringify(params)
 	)
 }
-
-window['getAOIUrl'] = getAOIUrl
