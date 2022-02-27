@@ -169,7 +169,7 @@ export class Node<TEventMap extends NodeEvents = NodeEvents> extends EventDispat
 		this.children.forEach((child) => child.traverse(handler))
 	}
 
-	readonly isAbstractNode = true
+	readonly isNode = true
 
 	/**
 	 * has this node been added and removed before
@@ -213,8 +213,8 @@ export class Node<TEventMap extends NodeEvents = NodeEvents> extends EventDispat
 	}
 }
 
-export function isAbstractNode(v: any): v is Node {
-	return v.isEventDispatcher && v.isAbstractNode
+export function isNode(v: any): v is Node {
+	return v.isEventDispatcher && v.isNode
 }
 export function isRootNode(v: Node) {
 	return v.parent === null

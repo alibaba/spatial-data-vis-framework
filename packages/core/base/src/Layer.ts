@@ -377,7 +377,7 @@ export abstract class AbstractLayer<
 
 export function isAbstractLayer(v: any): v is AbstractLayer
 export function isAbstractLayer(v: AbstractLayer): v is AbstractLayer {
-	return v.isAbstractLayer && v.isAbstractNode && v.isEventDispatcher
+	return v.isAbstractLayer && v.isNode && v.isEventDispatcher
 }
 export const isLayer = isAbstractLayer
 

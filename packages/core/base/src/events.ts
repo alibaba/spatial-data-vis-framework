@@ -14,7 +14,7 @@ import type { AbstractLayer } from './Layer'
 /**
  * @description
  *
- * The lifecycle of a layer has 3 stages. Each of which corresponding events are
+ * The lifecycle of a layer has 3 stages. In each of which corresponding events are
  * triggered in certain order.
  *
  * 		@stage_0 initialization
@@ -23,8 +23,9 @@ import type { AbstractLayer } from './Layer'
  * 		0. `Layer.constructor`
  * 		1. `AddEvent` (once)
  * 		2. `RootChangeEvent` (at least once)
- * 		3. `Layer.init` and `InitEvent` (once, after the layer is added to a polaris
- * 			scene, so that instance of Polaris/Timeline/Projection can be resolved)
+ * 		3. `Layer.init` and `InitEvent` (once, after the layer is added to a
+ * 			polaris scene, so that Polaris/Timeline/Projection can be resolved)
+ * 		4. `AfterInitEvent` (once, after InitEvent is triggered)
  *
  * 		@stage_1 render loop
  * 		Events of this stage may happen multiple times during rendering.
@@ -35,7 +36,6 @@ import type { AbstractLayer } from './Layer'
  * 		- `PickEvent` and `HoverEvent` (when mouse moved, only if you enabled picking
  * 			on both layer and polaris instance)
  *
- *
  * 		@stage_2 deconstruction
  * 		1. `RemoveEvent` (only happen once if you implicitly remove a layer)
  * 		2. `Layer.dispose`
@@ -43,9 +43,9 @@ import type { AbstractLayer } from './Layer'
  * A Polaris instance, as a special kind of Layer, is the root of the layer tree.
  * Hence, there are certain events that will never be triggered for it:
  *
- * 		- AddEvent (root node will never be added to a parent)
- * 		- RootChangeEvent
- * 		- RemoveEvent (root node will never be removed from a parent)
+ * 		- `AddEvent` & `RemoveEvent` & `RootChangeEvent` (root node doesn't have a parent)
+ * 		- `InitEvent` & `AfterInitEvent` (Polaris is inited when instanced)
+ * 		- `PickEvent` & `HoverEvent` (Polaris does not contain renderable contents)
  *
  * Events interfaces inherit along with classes.
  *
@@ -196,6 +196,9 @@ export type AbstractLayerEvents = {
 	afterInit: AfterInitEvent
 }
 
+/**
+ * @deprecated renamed as {@link AbstractLayerEvents}
+ */
 export type LayerEvents = AbstractLayerEvents
 
 /**
@@ -203,7 +206,6 @@ export type LayerEvents = AbstractLayerEvents
  * @description
  * events shared between layer and polaris
  */
-
 export type AbstractPolarisEvents = AbstractLayerEvents & {
 	add: never
 	remove: never
