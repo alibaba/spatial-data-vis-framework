@@ -23,11 +23,7 @@ import {
 	PointLight,
 } from 'three-lite'
 import { Renderer, colorToString, PolarisProps, PickResult } from '@polaris.gl/base'
-import {
-	DefaultConfig as ConvConfig,
-	ThreeLiteConverter,
-	RenderableObject3D,
-} from '@gs.i/backend-threelite'
+import { DefaultConfig as ConvConfig, ThreeLiteConverter } from '@gs.i/backend-threelite'
 import { CameraProxy } from 'camera-proxy'
 import * as SDK from '@gs.i/frontend-sdk'
 import { GSIView } from '@polaris.gl/view-gsi'

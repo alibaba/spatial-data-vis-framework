@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import { isDISPOSED, MeshDataType } from '@gs.i/schema'
+import { isDISPOSED, RenderableNode } from '@gs.i/schema-scene'
 // import { OptimizePass, GSIRefiner } from '@gs.i/utils-optimize'
 import { HtmlView } from '@polaris.gl/view-html'
 import { GSIView } from '@polaris.gl/view-gsi'
@@ -116,37 +116,6 @@ export class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 			}
 			this.cameraControl.scale = 1.0 / (this.ratio ?? 1.0)
 		}
-
-		// OptimizePasses会对SceneTree做更改，需排在第一个以便影响后续的Pass获取正确的场景信息
-		// const optimizeParams = {
-		// 	cameraPosition: {
-		// 		x: this.cameraProxy.position[0] - this.cameraProxy.center[0],
-		// 		y: this.cameraProxy.position[1] - this.cameraProxy.center[1],
-		// 		z: this.cameraProxy.position[2] - this.cameraProxy.center[2],
-		// 	},
-		// 	cameraRotation: {
-		// 		x: this.cameraProxy.rotationEuler[0],
-		// 		y: this.cameraProxy.rotationEuler[1],
-		// 		z: this.cameraProxy.rotationEuler[2],
-		// 	},
-		// 	cameraNear: this.props.cameraNear,
-		// 	cameraAspect: this.cameraProxy.aspect,
-		// 	cameraFOV: this.cameraProxy.fov,
-		// 	cameraFar: this.props.cameraFar,
-		// }
-		// this.onBeforeRender = () => {
-		// 	optimizeParams.cameraPosition.x = this.cameraProxy.position[0] - this.cameraProxy.center[0]
-		// 	optimizeParams.cameraPosition.y = this.cameraProxy.position[1] - this.cameraProxy.center[1]
-		// 	optimizeParams.cameraPosition.z = this.cameraProxy.position[2] - this.cameraProxy.center[2]
-		// 	optimizeParams.cameraRotation.x = this.cameraProxy.rotationEuler[0]
-		// 	optimizeParams.cameraRotation.y = this.cameraProxy.rotationEuler[1]
-		// 	optimizeParams.cameraRotation.z = this.cameraProxy.rotationEuler[2]
-		// 	optimizeParams.cameraNear = this.props.cameraNear
-		// 	optimizeParams.cameraAspect = this.cameraProxy.aspect
-		// 	optimizeParams.cameraFOV = this.cameraProxy.fov
-		// 	optimizeParams.cameraFar = this.props.cameraFar
-		// 	this.optimizePasses.forEach((pass) => pass.update(this.view.gsi.groupWrapper, optimizeParams))
-		// }
 
 		/**
 		 * Props listener
@@ -293,7 +262,7 @@ export class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 	 * 射线命中测试
 	 */
 	pickObject(
-		object: MeshDataType,
+		object: RenderableNode,
 		ndcCoords: { x: number; y: number },
 		options?: { allInters?: boolean; threshold?: number; backfaceCulling?: boolean }
 	): PickResult {
@@ -327,6 +296,36 @@ export class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 			}
 		}
 		return this.renderer.pick(object, ndcCoords, options)
+	}
+
+	dispose() {
+		this.cameraProxy.config.onUpdate = () => {}
+		this.cameraProxy['onUpdate'] = () => {}
+
+		if (this.renderer) {
+			this.renderer.dispose()
+		}
+
+		// Remove event listeners
+		this.hammer.off('tap')
+		this.hammer.destroy()
+		const element = this.view.html.element
+		element.removeEventListener('mousemove', this._mouseMoveHandler)
+
+		// Dispose layers
+		this.traverse((base) => {
+			base !== this && base.dispose && base.dispose()
+		})
+
+		this.children.forEach((child) => {
+			this.remove(child)
+		})
+
+		if (this.view.html.element.parentElement) {
+			this.view.html.element.parentElement.removeChild(this.view.html.element)
+		}
+
+		super.dispose()
 	}
 
 	/**
@@ -385,36 +384,6 @@ export class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 		}
 
 		return
-	}
-
-	dispose() {
-		this.cameraProxy.config.onUpdate = () => {}
-		this.cameraProxy['onUpdate'] = () => {}
-
-		if (this.renderer) {
-			this.renderer.dispose()
-		}
-
-		// Remove event listeners
-		this.hammer.off('tap')
-		this.hammer.destroy()
-		const element = this.view.html.element
-		element.removeEventListener('mousemove', this._mouseMoveHandler)
-
-		// Dispose layers
-		this.traverse((base) => {
-			base !== this && base.dispose && base.dispose()
-		})
-
-		this.children.forEach((child) => {
-			this.remove(child)
-		})
-
-		if (this.view.html.element.parentElement) {
-			this.view.html.element.parentElement.removeChild(this.view.html.element)
-		}
-
-		super.dispose()
 	}
 
 	/**

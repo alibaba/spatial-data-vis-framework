@@ -14,9 +14,10 @@ import {
 	Layer,
 	LayerProps,
 	PickEventResult,
-	View,
 	LayerEvents,
 	AbstractPolaris,
+	CoordV2,
+	PickEvent,
 } from '@polaris.gl/base'
 import { GSIView } from '@polaris.gl/view-gsi'
 import { HtmlView } from '@polaris.gl/view-html'
@@ -24,19 +25,25 @@ import { Matrix4, Vector3, Vector2 } from '@gs.i/utils-math'
 import { isRenderable } from '@gs.i/schema-scene'
 import { Projection } from '@polaris.gl/projection'
 import { MatProcessor } from '@gs.i/processor-matrix'
+// import { Raycaster } from '@gs.i/processor-raycast'
 
 /**
  * 配置项 interface
  */
 export interface StandardLayerProps extends LayerProps {
 	/**
-	 * @deprecated @todo may break internal 3d scene
+	 * @deprecated @unreliable may break internal 3d scene
 	 */
 	depthTest?: boolean
 	/**
-	 * @deprecated @todo may break internal 3d scene
+	 * @deprecated @unreliable may break internal 3d scene
 	 */
 	renderOrder?: number
+
+	/**
+	 * whether this layer's gsi view should be raycast-ed
+	 */
+	pickable?: boolean
 
 	/**
 	 * @deprecated use {@link .addEventListener("pick")} instead
@@ -54,6 +61,7 @@ export interface StandardLayerProps extends LayerProps {
 export const defaultStandardLayerProps: StandardLayerProps = {
 	depthTest: true,
 	renderOrder: 0,
+	pickable: false,
 }
 
 /**
@@ -78,7 +86,7 @@ export class StandardLayer<
 > extends Layer<TProps, TEventTypes> {
 	readonly isStandardLayer = true
 
-	view: { gsi: GSIView; html: HtmlView; [name: string]: View }
+	view: { gsi: GSIView; html: HtmlView }
 
 	constructor(props: TProps) {
 		super(props)
@@ -154,117 +162,117 @@ export class StandardLayer<
 		return this.view.html.element
 	}
 
-	/**
-	 * get world matrix of this layer's 3d wrapper
-	 *
-	 * @note return undefined if not inited
-	 */
-	getWorldMatrix() {
-		if (!this.inited) {
-			console.warn('can not call getWorldMatrix until layer is inited')
-			return
-		}
+	// /**
+	//  * get world matrix of this layer's 3d wrapper
+	//  *
+	//  * @note return undefined if not inited
+	//  */
+	// getWorldMatrix() {
+	// 	if (!this.inited) {
+	// 		console.warn('can not call getWorldMatrix until layer is inited')
+	// 		return
+	// 	}
 
-		return defaultMatProcessor.getCachedWorldMatrix(this.view.gsi.alignmentWrapper)
-	}
+	// 	return defaultMatProcessor.getCachedWorldMatrix(this.view.gsi.alignmentWrapper)
+	// }
 
-	/**
-	 * 获取世界坐标在当前layer的经纬度
-	 *
-	 * @param {number} x
-	 * @param {number} y
-	 * @param {number} z
-	 * @return {*}  {(number[] | undefined)}
-	 * @memberof StandardLayer
-	 * @deprecated @todo 确认命名正确，可能是本地坐标而非世界坐标
-	 *
-	 * @note return undefined if not inited
-	 */
-	toLngLatAlt(x: number, y: number, z: number): number[] | undefined {
-		if (!this.inited) {
-			console.warn('can not call toLngLatAlt until layer is inited')
-			return
-		}
+	// /**
+	//  * 获取世界坐标在当前layer的经纬度
+	//  *
+	//  * @param {number} x
+	//  * @param {number} y
+	//  * @param {number} z
+	//  * @return {*}  {(number[] | undefined)}
+	//  * @memberof StandardLayer
+	//  * @deprecated @todo 确认命名正确，可能是本地坐标而非世界坐标
+	//  *
+	//  * @note return undefined if not inited
+	//  */
+	// toLngLatAlt(x: number, y: number, z: number): number[] | undefined {
+	// 	if (!this.inited) {
+	// 		console.warn('can not call toLngLatAlt until layer is inited')
+	// 		return
+	// 	}
 
-		const projection = this.resolveProjection() as Projection // this won't be null after inited
+	// 	const projection = this.resolveProjection() as Projection // this won't be null after inited
 
-		const worldMatrix = this.getWorldMatrix() as number[]
-		const inverseMat = _mat4.fromArray(worldMatrix).invert()
-		const v = _vec3.set(x, y, z)
-		// Transform to pure world xyz
-		v.applyMatrix4(inverseMat)
-		return projection.unproject(v.x, v.y, v.z)
-	}
+	// 	const worldMatrix = this.getWorldMatrix() as number[]
+	// 	const inverseMat = _mat4.fromArray(worldMatrix).invert()
+	// 	const v = _vec3.set(x, y, z)
+	// 	// Transform to pure world xyz
+	// 	v.applyMatrix4(inverseMat)
+	// 	return projection.unproject(v.x, v.y, v.z)
+	// }
 
-	/**
-	 * 获取经纬度对应的世界坐标
-	 *
-	 * @param {number} lng
-	 * @param {number} lat
-	 * @param {number} [alt=0]
-	 * @return {*}  {(Vector3 | undefined)}
-	 * If the layer has no projection, or a worldMatrix yet, an {undefined} result will be returned.
-	 * @memberof StandardLayer
-	 * @todo 确认命名正确，可能是本地坐标而非世界坐标
-	 *
-	 * @note return undefined if not inited
-	 */
-	toWorldPosition(lng: number, lat: number, alt = 0): Vector3 | undefined {
-		if (!this.inited) {
-			console.warn('can not call toWorldPosition until layer is inited')
-			return
-		}
+	// /**
+	//  * 获取经纬度对应的世界坐标
+	//  *
+	//  * @param {number} lng
+	//  * @param {number} lat
+	//  * @param {number} [alt=0]
+	//  * @return {*}  {(Vector3 | undefined)}
+	//  * If the layer has no projection, or a worldMatrix yet, an {undefined} result will be returned.
+	//  * @memberof StandardLayer
+	//  * @todo 确认命名正确，可能是本地坐标而非世界坐标
+	//  *
+	//  * @note return undefined if not inited
+	//  */
+	// toWorldPosition(lng: number, lat: number, alt = 0): Vector3 | undefined {
+	// 	if (!this.inited) {
+	// 		console.warn('can not call toWorldPosition until layer is inited')
+	// 		return
+	// 	}
 
-		const worldMatrix = this.getWorldMatrix() as number[]
-		const projection = this.resolveProjection() as Projection
-		const matrix4 = _mat4.fromArray(worldMatrix)
-		const pos = _vec3.fromArray(projection.project(lng, lat, alt))
-		pos.applyMatrix4(matrix4)
-		return pos
-	}
+	// 	const worldMatrix = this.getWorldMatrix() as number[]
+	// 	const projection = this.resolveProjection() as Projection
+	// 	const matrix4 = _mat4.fromArray(worldMatrix)
+	// 	const pos = _vec3.fromArray(projection.project(lng, lat, alt))
+	// 	pos.applyMatrix4(matrix4)
+	// 	return pos
+	// }
 
-	/**
-	 * 获取经纬度对应的屏幕坐标
-	 *
-	 * @param {number} lng
-	 * @param {number} lat
-	 * @param {number} [alt=0]
-	 * @return {*}  {(Vector2 | undefined)}
-	 * If the layer has no projection,
-	 * or a worldMatrix, or not added to any Polaris yet,
-	 * an {undefined} result will be returned.
-	 * @memberof StandardLayer
-	 *
-	 * @note return undefined if not inited
-	 */
-	toScreenXY(lng: number, lat: number, alt = 0): Vector2 | undefined {
-		if (!this.inited) {
-			console.warn('can not call toScreenXY until layer is inited')
-			return
-		}
+	// /**
+	//  * 获取经纬度对应的屏幕坐标
+	//  *
+	//  * @param {number} lng
+	//  * @param {number} lat
+	//  * @param {number} [alt=0]
+	//  * @return {*}  {(Vector2 | undefined)}
+	//  * If the layer has no projection,
+	//  * or a worldMatrix, or not added to any Polaris yet,
+	//  * an {undefined} result will be returned.
+	//  * @memberof StandardLayer
+	//  *
+	//  * @note return undefined if not inited
+	//  */
+	// toScreenXY(lng: number, lat: number, alt = 0): Vector2 | undefined {
+	// 	if (!this.inited) {
+	// 		console.warn('can not call toScreenXY until layer is inited')
+	// 		return
+	// 	}
 
-		const polaris = this.root as AbstractPolaris
+	// 	const polaris = this.root as AbstractPolaris
 
-		const worldPos = this.toWorldPosition(lng, lat, alt)
-		if (!worldPos) return
+	// 	const worldPos = this.toWorldPosition(lng, lat, alt)
+	// 	if (!worldPos) return
 
-		const screenXY = polaris.getScreenXY(worldPos.x, worldPos.y, worldPos.z)
-		if (!screenXY) return
+	// 	const screenXY = polaris.getScreenXY(worldPos.x, worldPos.y, worldPos.z)
+	// 	if (!screenXY) return
 
-		const xy = _vec2.fromArray(screenXY)
+	// 	const xy = _vec2.fromArray(screenXY)
 
-		// Align to html dom x/y
-		xy.y = polaris.height - xy.y
+	// 	// Align to html dom x/y
+	// 	xy.y = polaris.height - xy.y
 
-		return xy
-	}
+	// 	return xy
+	// }
 
-	/**
-	 * Highlight API
-	 *
-	 * @memberof StandardLayer
-	 */
-	highlightByIndices: (dataIndexArr: number[], style: { [name: string]: any }) => void
+	// /**
+	//  * Highlight API
+	//  *
+	//  * @memberof StandardLayer
+	//  */
+	// highlightByIndices: (dataIndexArr: number[], style: { [name: string]: any }) => void
 
 	/**
 	 * depthTest的设定函数，可被子类重写
@@ -366,6 +374,21 @@ export class StandardLayer<
 	}
 
 	override dispose(): void {}
+
+	override raycast(
+		polaris: AbstractPolaris,
+		canvasCoord: CoordV2,
+		ndc: CoordV2
+	): PickEvent | undefined {
+		if (!this.inited) {
+			console.warn('raycast: layer not inited')
+			return undefined
+		}
+
+		if (!this.getProp('pickable')) {
+			return undefined
+		}
+	}
 }
 
 /**

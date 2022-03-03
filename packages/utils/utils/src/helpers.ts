@@ -36,7 +36,9 @@ export class PointsMeshPickHelper {
 	}
 
 	pick(polaris: any, pointerCoords: CoordV2): PickEvent | undefined {
-		if (!this.mesh || !this.mesh.geometry || !this._imgAlphaData || !polaris.pick) return
+		// @why polaris.pick?
+		// if (!this.mesh || !this.mesh.geometry || !this._imgAlphaData || !polaris.pick) return
+		if (!this.mesh || !this.mesh.geometry || !this._imgAlphaData) return
 
 		/**
 		 * 1. Transform positions to world coords

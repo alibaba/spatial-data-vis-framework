@@ -179,6 +179,7 @@ export abstract class AbstractLayer<
 	 * @param polaris
 	 * @param canvasCoord
 	 * @param ndc
+	 * @deprecated This design is very scratchy
 	 */
 	raycast?(polaris: AbstractPolaris, canvasCoord: CoordV2, ndc: CoordV2): PickEvent | undefined
 
@@ -382,6 +383,10 @@ export function isAbstractLayer(v: AbstractLayer): v is AbstractLayer {
 export const isLayer = isAbstractLayer
 
 export const Layer = AbstractLayer
+
+export function isInited(v: AbstractLayer): v is AbstractLayer & { inited: true } {
+	return v.inited
+}
 
 //
 
