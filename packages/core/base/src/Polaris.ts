@@ -14,7 +14,7 @@ import { Timeline } from 'ani-timeline'
 import { AnimatedCameraProxy, GeographicStates } from 'camera-proxy'
 import { PolarisProps, defaultProps, STATIC_PROPS } from './props/index'
 import type { AbstractPolarisEvents } from './events'
-import { debug } from './utils'
+import { checkViewChange, debug } from './utils'
 
 export { colorToString } from './props/index'
 export type { PolarisProps } from './props/index'
@@ -41,11 +41,6 @@ export abstract class AbstractPolaris<
 	#width: number
 	#height: number
 	#ratio: number
-
-	/**
-	 * store view states of layers, used to emit viewChange event on layers
-	 */
-	#layerViewStates = new WeakMap<AbstractLayer, ViewStates>()
 
 	#disposed = false
 
@@ -131,7 +126,7 @@ export abstract class AbstractPolaris<
 		const { fov, center, zoom, pitch, rotation } = _props
 		const cameraProxy = new AnimatedCameraProxy({
 			cameraFOV: fov as number,
-			timeline,
+			timeline: timeline as any, // AnimatedCameraProxy use old version of timeline but only unchanged api
 			/** @LIMIT 开启inert会影响的部分：SphereProject同步，Animations的结束时间，暂时关闭inert */
 			inert: false,
 			canvasWidth,
@@ -167,11 +162,6 @@ export abstract class AbstractPolaris<
 
 		// handle projection alignment and ViewChangeEvent, on every frame
 		this.addEventListener('beforeRender', (e) => {
-			const newStatesCode = this.cameraProxy.statesCode
-			const newWidth = this.width
-			const newHeight = this.height
-			const newRatio = this.ratio
-
 			this.traverse((layer) => {
 				// projection alignment
 				// skip root
@@ -188,24 +178,7 @@ export abstract class AbstractPolaris<
 				}
 
 				// ViewChange detection
-				let viewStates = this.#layerViewStates.get(layer)
-				if (!viewStates) {
-					viewStates = {} as ViewStates
-					this.#layerViewStates.set(layer, viewStates)
-				}
-
-				if (
-					viewStates.width !== newWidth ||
-					viewStates.height !== newHeight ||
-					viewStates.ratio !== newRatio ||
-					viewStates.statesCode !== newStatesCode
-				) {
-					viewStates.width = newWidth
-					viewStates.height = newHeight
-					viewStates.ratio = newRatio
-					viewStates.statesCode = newStatesCode
-					layer.dispatchEvent({ type: 'viewChange', cameraProxy: this.cameraProxy, polaris: this })
-				}
+				checkViewChange(this, layer)
 			})
 		})
 
@@ -489,10 +462,11 @@ export abstract class AbstractPolaris<
 		return true
 	}
 
+	// TODO refactor picking
 	// polaris can not be raycast-ed. polaris call raycast on layers
-	override raycast(p: never, c: never, n: never): never {
-		throw new Error('polaris can not be raycast-ed')
-	}
+	// override raycast(p: never, c: never, n: never): never {
+	// 	throw new Error('polaris can not be raycast-ed')
+	// }
 	// polaris is the root of projection tree. no need to updateAlignmentMatrix
 	override updateAlignmentMatrix(m: never): never {
 		throw new Error('polaris do not updateAlignmentMatrix')
@@ -511,14 +485,4 @@ export const Polaris = AbstractPolaris
 
 export function isPolaris(v: any = {}): v is AbstractPolaris {
 	return v.isPolaris && v.isAbstractLayer && v.isAbstractNode && v.isEventDispatcher
-}
-
-/**
- * States related to viewChange event
- */
-type ViewStates = {
-	width: number
-	height: number
-	ratio: number
-	statesCode: string
 }

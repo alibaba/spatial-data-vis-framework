@@ -1,5 +1,5 @@
 import { Vector3, Matrix4, Box2, Vector2 } from '@gs.i/utils-math'
-import { MeshDataType, isDISPOSED } from '@gs.i/schema'
+import { MeshDataType, isDISPOSED } from '@gs.i/schema-scene'
 import { CoordV2, PickEvent } from '@polaris.gl/base'
 
 // const div = document.createElement('div')

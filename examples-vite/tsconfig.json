@@ -9,9 +9,6 @@
 	"exclude": ["node_modules", "*.js"],
 	"references": [
 		{
-			"path": "../packages/polaris/polaris-gsi-gl2"
-		},
-		{
 			"path": "../packages/layers/geojson"
 		},
 		{

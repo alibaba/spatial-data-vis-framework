@@ -5,7 +5,7 @@
 
 import { Mesh } from '@gs.i/frontend-sdk'
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
-import { deepCloneMesh } from '@polaris.gl/utils'
+import { deepCloneMesh } from './utils'
 import { Marker } from './Marker'
 import { PolarisGSI } from '@polaris.gl/gsi'
 import { CoordV2, PickEvent } from '@polaris.gl/base'

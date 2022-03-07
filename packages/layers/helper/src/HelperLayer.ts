@@ -29,17 +29,17 @@ const defaultProps = {
 /**
  * 配置项 interface
  */
-export interface HelperLayerProps extends StandardLayerProps, Partial<typeof defaultProps> {}
+export type HelperLayerProps = StandardLayerProps & typeof defaultProps
 
 /**
  * 辅助Layer，显示坐标轴等
  */
-export class HelperLayer extends StandardLayer {
+export class HelperLayer extends StandardLayer<HelperLayerProps> {
 	axises: Mesh
 	box?: Mesh
 	props: any
 
-	constructor(props: HelperLayerProps = {}) {
+	constructor(props: Partial<HelperLayerProps> = {}) {
 		const _props = {
 			...defaultProps,
 			...props,
@@ -91,16 +91,17 @@ export class HelperLayer extends StandardLayer {
 				},
 			})
 
-			const lineMatr = new MatrUnlit({
-				attributes: {
-					vertexColor: 'vec3',
-				},
-				varyings: {
-					vColor: 'vec3',
-				},
-				vertGeometry: `vColor = vertexColor;`,
-				fragColor: `fragColor = vec4(vColor, 1.0);`,
-			})
+			const lineMatr = new MatrUnlit({})
+
+			lineMatr.vertGlobal = `
+				attribute vec3 vertexColor;
+				varying vec3 vColor;
+			`
+			lineMatr.fragGlobal = `
+				varying vec3 vColor;
+			`
+			lineMatr.vertGeometry = `vColor = vertexColor;`
+			lineMatr.fragOutput = `fragColor = vec4(vColor, 1.0);`
 
 			this.axises = new Mesh({
 				geometry: lineGeom,

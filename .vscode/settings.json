@@ -20,9 +20,9 @@
 		"**/*.old": true,
 		// shared
 		"packages/*/*/tsconfig.*.json": true,
-		"packages/*/*/scripts": true,
+		"packages/*/*/scripts": true
 		// probably useless
-		"packages/**/node_modules": true
+		// "packages/**/node_modules": true
 		// "**/*.tsbuildinfo": true,
 	},
 	"typescript.tsdk": "./node_modules/typescript/lib",

@@ -1,6 +1,6 @@
 import { EventDispatcher } from '../src/EventDispatcher'
-import { AbstractNode } from '../src/AbstractNode'
-import { AbstractLayer } from '../src/AbstractLayer'
+import { Node } from '../src/Node'
+import { AbstractLayer } from '../src/Layer'
 import { Layer, LayerProps } from '../src/Layer'
 import { Projection } from '@polaris.gl/projection'
 import { Timeline } from 'ani-timeline'
@@ -36,7 +36,7 @@ await test(false, 'EventDispatcher', () => {
 })
 
 await test(false, 'AbstractNode', () => {
-	const root = new AbstractNode()
+	const root = new Node()
 
 	console.log('root', root)
 	globalThis.root = root
@@ -54,7 +54,7 @@ await test(false, 'AbstractNode', () => {
 		console.log('root: event rootChange', e)
 	})
 
-	const inode = new AbstractNode()
+	const inode = new Node()
 	inode.addEventListener('add', (e) => {
 		console.log('inode: event add (1/2 listeners)', e)
 	})
@@ -68,7 +68,7 @@ await test(false, 'AbstractNode', () => {
 		console.log('inode: event rootChange', e)
 	})
 
-	const leaf = new AbstractNode()
+	const leaf = new Node()
 	leaf.addEventListener('add', (e) => {
 		console.log('leaf: event add (1/2 listeners)', e)
 	})
@@ -134,6 +134,9 @@ await test(false, 'AbstractLayer', () => {
 			})
 		}
 		dispose() {}
+		updateAlignmentMatrix() {
+			// console.log('updateAlignmentMatrix called')
+		}
 	}
 
 	const root = new L({
@@ -306,6 +309,9 @@ await test(true, 'Polaris+Layer', () => {
 			console.log(`${this.name} init method`, projection, timeline, polaris)
 		}
 		dispose() {}
+		updateAlignmentMatrix() {
+			// console.log('updateAlignmentMatrix called')
+		}
 	}
 	const inode = new L({
 		name: 'inode',

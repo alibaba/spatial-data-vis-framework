@@ -8,9 +8,9 @@ build () {
 	
 	echo building
 
-	# npx tsc --project tsconfig.build.json
+	npx tsc --project tsconfig.build.json
 	# ⬇️ much faster
-	./node_modules/.bin/tsc --project tsconfig.build.json
+	# ./node_modules/.bin/tsc --project tsconfig.build.json
 
 	# tsc output es module codes in .js files
 	# which WILL NOT BREAK in nodejs env

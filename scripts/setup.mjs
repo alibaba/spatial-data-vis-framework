@@ -51,6 +51,23 @@ console.log(useLocalGSI, gsiPath)
 const id = Math.floor(Math.random() * 9999) + ''
 console.log(id)
 
+// process.stdin.resume() //so the program will not close instantly
+function exitHandler() {
+	console.error(
+		`script failed. run 'node ./scripts/packageJsonRestore.mjs --id=${id}' to cleaning up...`
+	)
+
+	process.exit()
+}
+
+// catches ctrl+c event
+process.on('SIGINT', exitHandler)
+// catches "kill pid" (for example: nodemon restart)
+process.on('SIGUSR1', exitHandler)
+process.on('SIGUSR2', exitHandler)
+//catches uncaught exceptions
+process.on('uncaughtException', exitHandler)
+
 execSync(`node ${path.resolve(__dirname, './packageJsonBackup.mjs')} --id=${id}`, {
 	stdio: 'inherit',
 })
@@ -129,11 +146,11 @@ await Promise.all(
 	})
 )
 try {
-	execSync(`lerna bootstrap --force-local`, { stdio: 'inherit' })
+	execSync(`lerna bootstrap`, { stdio: 'inherit' })
 
 	// # https://github.com/lerna/lerna/issues/2352
 	// # lerna link is needed
-	execSync(`lerna link --force-local`, { stdio: 'inherit' })
+	execSync(`lerna link`, { stdio: 'inherit' })
 
 	// # should not hoist local packages
 	execSync(`rm -rf ./node_modules/@polaris.gl`, { stdio: 'inherit' })

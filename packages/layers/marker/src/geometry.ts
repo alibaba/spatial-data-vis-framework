@@ -1,6 +1,6 @@
 import { Projection } from '@polaris.gl/projection'
 import { Vector3, Matrix4 } from '@gs.i/utils-math'
-import { MeshDataType } from '@gs.i/schema'
+import { MeshDataType } from '@gs.i/schema-scene'
 
 const up = new Vector3(0, 1, 0)
 const _v0 = new Vector3()

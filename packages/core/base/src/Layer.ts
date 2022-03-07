@@ -10,7 +10,7 @@ import type { AbstractLayerEvents } from './events'
 
 import { MAX_DEPTH, Node } from './Node'
 import { View } from './View'
-import { AbstractPolaris, isPolaris } from './Polaris'
+import type { AbstractPolaris } from './Polaris'
 import { Callback, ListenerOptions, PropsManager } from '@polaris.gl/utils-props-manager'
 
 export interface LayerProps {
@@ -112,7 +112,8 @@ export abstract class AbstractLayer<
 				return
 			}
 
-			if (isPolaris(e.root)) {
+			// if (isPolaris(e.root)) {
+			if (e.root?.['isPolaris']) {
 				// settle the projection for this layer
 				const projection = resolveProjection(this) as Projection
 				// settle the timeline for this layer
@@ -172,16 +173,17 @@ export abstract class AbstractLayer<
 		return this.#timelineLocal
 	}
 
-	/**
-	 * optional raycast implement.
-	 *
-	 * don't implement this if this layer doesn't support raycast
-	 * @param polaris
-	 * @param canvasCoord
-	 * @param ndc
-	 * @deprecated This design is very scratchy
-	 */
-	raycast?(polaris: AbstractPolaris, canvasCoord: CoordV2, ndc: CoordV2): PickEvent | undefined
+	// TODO refactor picking
+	// /**
+	//  * optional raycast implement.
+	//  *
+	//  * don't implement this if this layer doesn't support raycast
+	//  * @param polaris
+	//  * @param canvasCoord
+	//  * @param ndc
+	//  * @deprecated This design is very scratchy
+	//  */
+	// raycast?(polaris: AbstractPolaris, canvasCoord: CoordV2, ndc: CoordV2): PickEvent | undefined
 
 	// TODO: Is is necessary to dispose propsManager and event Listeners
 	abstract dispose(): void

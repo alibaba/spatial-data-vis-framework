@@ -375,20 +375,21 @@ export class StandardLayer<
 
 	override dispose(): void {}
 
-	override raycast(
-		polaris: AbstractPolaris,
-		canvasCoord: CoordV2,
-		ndc: CoordV2
-	): PickEvent | undefined {
-		if (!this.inited) {
-			console.warn('raycast: layer not inited')
-			return undefined
-		}
+	// TODO refactor picking
+	// override raycast(
+	// 	polaris: AbstractPolaris,
+	// 	canvasCoord: CoordV2,
+	// 	ndc: CoordV2
+	// ): PickEvent | undefined {
+	// 	if (!this.inited) {
+	// 		console.warn('raycast: layer not inited')
+	// 		return undefined
+	// 	}
 
-		if (!this.getProp('pickable')) {
-			return undefined
-		}
-	}
+	// 	if (!this.getProp('pickable')) {
+	// 		return undefined
+	// 	}
+	// }
 }
 
 /**

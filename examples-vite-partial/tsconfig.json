@@ -1,0 +1,30 @@
+{
+	"extends": "./tsconfig.base.json",
+	"compilerOptions": {
+		"rootDir": ".",
+		"composite": true,
+		"incremental": true
+	},
+	"include": [".", "typings"],
+	"exclude": ["node_modules", "*.js"],
+	"references": [
+		{
+			"path": "../packages/core/base"
+		},
+		{
+			"path": "../packages/polaris/polaris-gsi"
+		},
+		{
+			"path": "../packages/layers/standard"
+		},
+		{
+			"path": "../packages/layers/helper"
+		},
+		{
+			"path": "../packages/polaris/polaris-lite"
+		},
+		{
+			"path": "../packages/renderers/renderer-lite"
+		}
+	]
+}

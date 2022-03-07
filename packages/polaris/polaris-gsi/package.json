@@ -10,6 +10,7 @@
         "dist/*"
     ],
     "scripts": {
+        "start": "vite --open /examples/ --cors",
         "build": "./scripts/build.sh",
         "clean": "./scripts/clean.sh",
         "rebuild": "npm run clean && npm run build"

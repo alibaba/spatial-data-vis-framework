@@ -1,6 +1,8 @@
 // utility
 
 import type { EventBase } from './EventDispatcher'
+import type { AbstractLayer } from './Layer'
+import type { AbstractPolaris } from './Polaris'
 
 /**
  * utility type to map event types to event
@@ -36,4 +38,48 @@ export const debug: typeof console.debug = (...args) => {
 	if (DEBUG) {
 		console.debug('debug:', args)
 	}
+}
+
+/**
+ * check view change for a layer (including polaris itself)
+ */
+export function checkViewChange(polaris: AbstractPolaris, layer: AbstractLayer) {
+	const newStatesCode = polaris.cameraProxy.statesCode
+	const newWidth = polaris.width
+	const newHeight = polaris.height
+	const newRatio = polaris.ratio
+
+	let viewStates = layerViewStates.get(layer)
+	if (!viewStates) {
+		viewStates = {} as ViewStates
+		layerViewStates.set(layer, viewStates)
+	}
+
+	if (
+		viewStates.width !== newWidth ||
+		viewStates.height !== newHeight ||
+		viewStates.ratio !== newRatio ||
+		viewStates.statesCode !== newStatesCode
+	) {
+		viewStates.width = newWidth
+		viewStates.height = newHeight
+		viewStates.ratio = newRatio
+		viewStates.statesCode = newStatesCode
+		layer.dispatchEvent({ type: 'viewChange', cameraProxy: polaris.cameraProxy, polaris })
+	}
+}
+
+/**
+ * store view states of layers, used to emit viewChange event on layers
+ */
+export const layerViewStates = new WeakMap<AbstractLayer, ViewStates>()
+
+/**
+ * States related to viewChange event
+ */
+type ViewStates = {
+	width: number
+	height: number
+	ratio: number
+	statesCode: string
 }

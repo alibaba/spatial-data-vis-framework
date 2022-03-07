@@ -16,7 +16,7 @@
         "build:umd": "npx webpack"
     },
     "dependencies": {
-        "@gs.i/frontend-sdk": "^0.0.0-beta",
+        "@gs.i/frontend-sdk": "0.2.1-alpha",
         "@gs.i/schema": "^0.0.0-beta",
         "@gs.i/utils-math": "^0.0.0-beta",
         "@polaris.gl/base": "^0.0.0-alpha.9",

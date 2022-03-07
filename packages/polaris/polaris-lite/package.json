@@ -10,17 +10,21 @@
         "dist/*"
     ],
     "scripts": {
+        "start": "vite --open /examples/ --cors",
         "build": "./scripts/build.sh",
         "clean": "./scripts/clean.sh",
         "rebuild": "npm run clean && npm run build",
         "build:umd": "npx webpack"
     },
     "dependencies": {
-        "@polaris.gl/base": "^0.0.0-alpha.9",
         "@polaris.gl/gsi": "^0.0.0-alpha.9",
         "@polaris.gl/renderer-lite": "^0.0.0-alpha.9"
     },
     "devDependencies": {
+        "@polaris.gl/base": "^0.0.0-alpha.9",
+        "@polaris.gl/layer-std": "^0.0.0-alpha.9",
+        "@gs.i/processor-indicator": "^0.2.0-alpha",
+        "@gs.i/utils-random-scene": "^0.2.0-alpha",
         "@types/offscreencanvas": "latest",
         "@types/webvr-api": "latest",
         "typescript": ">4.4.0"

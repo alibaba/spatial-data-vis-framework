@@ -10,14 +10,13 @@
         "dist/*"
     ],
     "scripts": {
-        "rollup": "npx rollup -c ./rollup.config.js",
         "build": "./scripts/build.sh",
         "clean": "./scripts/clean.sh",
         "rebuild": "npm run clean && npm run build"
     },
     "dependencies": {
         "@gs.i/backend-threelite": "^0.2.0-alpha",
-        "@gs.i/frontend-sdk": "^0.2.0-alpha",
+        "@gs.i/frontend-sdk": "0.2.1-alpha",
         "@gs.i/schema-scene": "^0.2.0-alpha",
         "@gs.i/processor-raycast": "^0.2.0-alpha",
         "@polaris.gl/base": "^0.0.0-alpha.9",

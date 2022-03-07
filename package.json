@@ -4,20 +4,22 @@
   "private": true,
   "workspaces": {
     "packages": [
-      "gsi-packages/**",
       "packages/**",
       "examples",
-      "examples-vite"
+      "examples-vite",
+      "examples-vite-*"
     ],
     "nohoist": [
       "**/@polaris.gl/examples/**",
       "**/@polaris.gl/examples-vite/**",
+      "**/@polaris.gl/examples-vite-*/**",
       "**/@types/**"
     ]
   },
   "scripts": {
     "start": "npx concurrently --kill-others --names \"watch,examples\" \"npm run watch\" \"cd ./examples && npm start\" ",
     "start:vite": "npx concurrently --kill-others --names \"watch,examples\" \"npm run watch\" \"cd ./examples-vite && npm start\" ",
+    "start:vite-partial": "npx concurrently --kill-others --names \"watch,examples\" \"npm run watch\" \"cd ./examples-vite-partial && npm start\" ",
     "setup": "node scripts/setup.mjs",
     "updateStructure": "rm -rf ./yarn.lock && npm run setup && node scripts/copyFiles.mjs && node scripts/fixTsReferences.mjs",
     "clean": "rm -rf ./yarn.lock && rm -rf gsi-packages && rm -rf ./node_modules && lerna clean -y && lerna run --no-private --stream --parallel clean",

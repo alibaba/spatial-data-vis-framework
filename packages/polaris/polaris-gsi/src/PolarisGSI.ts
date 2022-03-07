@@ -28,7 +28,7 @@ export interface PolarisGSIProps extends PolarisProps {
 }
 
 export const DefaultPolarisGSIProps = {
-	...defaultPolarisProps,
+	...(defaultPolarisProps as Required<typeof defaultPolarisProps>),
 	enablePicking: true,
 }
 
@@ -36,13 +36,13 @@ export interface LayerPickEvent extends PickEventResult {
 	layer: AbstractLayer
 }
 
-export class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
+export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 	readonly isPolarisGSI = true
 
 	/**
 	 * @todo should be accessible for polaris user. change this may have no effects.
 	 */
-	props: PolarisGSIProps
+	protected props: PolarisGSIProps & Required<typeof DefaultPolarisGSIProps>
 
 	/**
 	 * top view layer
@@ -71,10 +71,13 @@ export class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 	private _resizeListener: any
 
 	constructor(props: PolarisGSIProps) {
-		super({
+		const mergedProps = {
 			...DefaultPolarisGSIProps,
 			...props,
-		})
+		}
+		super(mergedProps)
+
+		this.props = mergedProps
 
 		this.view = {
 			html: new HtmlView(),
@@ -171,23 +174,23 @@ export class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 		})
 	}
 
-	setRenderer(renderer: Renderer) {
-		if (this.renderer) {
-			throw new Error('PolarisGSI - 目前不支持动态替换 polaris 的 renderer')
-		}
+	// setRenderer(renderer: Renderer) {
+	// 	if (this.renderer) {
+	// 		throw new Error('PolarisGSI - 目前不支持动态替换 polaris 的 renderer')
+	// 	}
 
-		this.renderer = renderer
-		this.cameraProxy.config.onUpdate = (cam) => this.renderer.updateCamera(cam)
-		this.cameraProxy['onUpdate'] = (cam) => this.renderer.updateCamera(cam)
-		// 这里立刻update
-		this.renderer.updateCamera(this.cameraProxy)
-		this.renderer.resize(this.width, this.height, this.ratio)
-		this.view.html.element.appendChild(this.renderer.canvas)
-	}
+	// 	this.renderer = renderer
+	// 	this.cameraProxy.config.onUpdate = (cam) => this.renderer.updateCamera(cam)
+	// 	this.cameraProxy['onUpdate'] = (cam) => this.renderer.updateCamera(cam)
+	// 	// 这里立刻update
+	// 	this.renderer.updateCamera(this.cameraProxy)
+	// 	this.renderer.resize(this.width, this.height, this.ratio)
+	// 	this.view.html.element.appendChild(this.renderer.canvas)
+	// }
 
 	render() {
 		if (!this.renderer) {
-			throw new Error('PolarisGSI - Call .setRenderer() first. ')
+			throw new Error('PolarisGSI - set .renderer first. ')
 		}
 		// TODO 这里 不应该 允许 view 引用变化
 		this.renderer.render(this.view.gsi)
@@ -195,7 +198,7 @@ export class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 
 	capture() {
 		if (!this.renderer) {
-			throw new Error('PolarisGSI - Call .setRenderer() first. ')
+			throw new Error('PolarisGSI - set .renderer first. ')
 		}
 		this.tick()
 		return this.renderer.capture()
@@ -220,15 +223,6 @@ export class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 			this.renderer.resize(width, height, ratio)
 			this.renderer.updateCamera(this.cameraProxy)
 		}
-
-		this.traverse((obj) => {
-			// obj._onViewChange.forEach((f) => f(this.cameraProxy, this))
-			this.dispatchEvent({
-				type: 'viewChange',
-				cameraProxy: this.cameraProxy,
-				polaris: this,
-			})
-		})
 	}
 
 	/**
@@ -258,45 +252,46 @@ export class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 		]
 	}
 
-	/**
-	 * 射线命中测试
-	 */
-	pickObject(
-		object: RenderableNode,
-		ndcCoords: { x: number; y: number },
-		options?: { allInters?: boolean; threshold?: number; backfaceCulling?: boolean }
-	): PickResult {
-		if (!this.renderer) {
-			console.error('PolarisGSI - Call .setRenderer() first. ')
-			return {
-				hit: false,
-			}
-		}
-		if (this.renderer.pick === undefined) {
-			console.error('PolarisGSI - Renderer has no pick method implemented')
-			return {
-				hit: false,
-			}
-		}
-		const geom = object.geometry
-		if (
-			!geom ||
-			!geom.attributes ||
-			!geom.attributes.position ||
-			!geom.attributes.position.array ||
-			isDISPOSED(geom.attributes.position.array) ||
-			geom.attributes.position.count === 0
-		) {
-			// console.warn(
-			// 	'PolarisGSI - Picking is skipped because mesh has no sufficient geometry info',
-			// 	object
-			// )
-			return {
-				hit: false,
-			}
-		}
-		return this.renderer.pick(object, ndcCoords, options)
-	}
+	// TODO refactor picking
+	// /**
+	//  * 射线命中测试
+	//  */
+	// pickObject(
+	// 	object: RenderableNode,
+	// 	ndcCoords: { x: number; y: number },
+	// 	options?: { allInters?: boolean; threshold?: number; backfaceCulling?: boolean }
+	// ): PickResult {
+	// 	if (!this.renderer) {
+	// 		console.error('PolarisGSI - set .renderer first. ')
+	// 		return {
+	// 			hit: false,
+	// 		}
+	// 	}
+	// 	if (this.renderer.pick === undefined) {
+	// 		console.error('PolarisGSI - Renderer has no pick method implemented')
+	// 		return {
+	// 			hit: false,
+	// 		}
+	// 	}
+	// 	const geom = object.geometry
+	// 	if (
+	// 		!geom ||
+	// 		!geom.attributes ||
+	// 		!geom.attributes.position ||
+	// 		!geom.attributes.position.array ||
+	// 		isDISPOSED(geom.attributes.position.array) ||
+	// 		geom.attributes.position.count === 0
+	// 	) {
+	// 		// console.warn(
+	// 		// 	'PolarisGSI - Picking is skipped because mesh has no sufficient geometry info',
+	// 		// 	object
+	// 		// )
+	// 		return {
+	// 			hit: false,
+	// 		}
+	// 	}
+	// 	return this.renderer.pick(object, ndcCoords, options)
+	// }
 
 	dispose() {
 		this.cameraProxy.config.onUpdate = () => {}
@@ -310,15 +305,12 @@ export class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 		this.hammer.off('tap')
 		this.hammer.destroy()
 		const element = this.view.html.element
-		element.removeEventListener('mousemove', this._mouseMoveHandler)
+		// TODO refactor picking
+		// element.removeEventListener('mousemove', this._mouseMoveHandler)
 
 		// Dispose layers
 		this.traverse((base) => {
 			base !== this && base.dispose && base.dispose()
-		})
-
-		this.children.forEach((child) => {
-			this.remove(child)
 		})
 
 		if (this.view.html.element.parentElement) {
@@ -328,63 +320,64 @@ export class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 		super.dispose()
 	}
 
-	/**
-	 * 对pickable并实现picking方法的layers进行pick操作
-	 */
-	pick(
-		canvasCoords: CoordV2,
-		options = { deepPicking: false }
-	): LayerPickEvent | LayerPickEvent[] | undefined {
-		const element = this.view.html.element
-		const bbox = element.getBoundingClientRect()
-		const left = bbox.left
-		const top = bbox.top
-		const width = element.clientWidth
-		const height = element.clientHeight
-		const ndc = {
-			x: (canvasCoords.x / width) * 2 - 1,
-			y: -(canvasCoords.y / height) * 2 + 1,
-		}
+	// TODO refactor picking
+	// /**
+	//  * 对pickable并实现picking方法的layers进行pick操作
+	//  */
+	// pick(
+	// 	canvasCoords: CoordV2,
+	// 	options = { deepPicking: false }
+	// ): LayerPickEvent | LayerPickEvent[] | undefined {
+	// 	const element = this.view.html.element
+	// 	const bbox = element.getBoundingClientRect()
+	// 	const left = bbox.left
+	// 	const top = bbox.top
+	// 	const width = element.clientWidth
+	// 	const height = element.clientHeight
+	// 	const ndc = {
+	// 		x: (canvasCoords.x / width) * 2 - 1,
+	// 		y: -(canvasCoords.y / height) * 2 + 1,
+	// 	}
 
-		if (ndc.x < -1.0 || ndc.x > 1.0 || ndc.y < -1.0 || ndc.y > 1.0) {
-			return
-		}
+	// 	if (ndc.x < -1.0 || ndc.x > 1.0 || ndc.y < -1.0 || ndc.y > 1.0) {
+	// 		return
+	// 	}
 
-		// Collect pick results
-		const candidates: LayerPickEvent[] = []
-		this.traverseVisible((layer) => {
-			// @note check `pickable` inside `.raycast` method. instead of make it a props
-			// since it is not only a prop. but also the type of the layer
-			// if a layer doesn't support raycasting, leave it implemented
-			if (layer.raycast) {
-				const layerRes = layer.raycast(this, canvasCoords, ndc)
-				if (layerRes) {
-					candidates.push({
-						...layerRes,
-						layer: layer,
-						// pointer coords
-						pointerCoords: {
-							screen: { x: canvasCoords.x + left, y: canvasCoords.y + top },
-							canvas: canvasCoords,
-							ndc,
-						},
-					})
-				}
-			}
-		})
+	// 	// Collect pick results
+	// 	const candidates: LayerPickEvent[] = []
+	// 	this.traverseVisible((layer) => {
+	// 		// @note check `pickable` inside `.raycast` method. instead of make it a props
+	// 		// since it is not only a prop. but also the type of the layer
+	// 		// if a layer doesn't support raycasting, leave it implemented
+	// 		if (layer.raycast) {
+	// 			const layerRes = layer.raycast(this, canvasCoords, ndc)
+	// 			if (layerRes) {
+	// 				candidates.push({
+	// 					...layerRes,
+	// 					layer: layer,
+	// 					// pointer coords
+	// 					pointerCoords: {
+	// 						screen: { x: canvasCoords.x + left, y: canvasCoords.y + top },
+	// 						canvas: canvasCoords,
+	// 						ndc,
+	// 					},
+	// 				})
+	// 			}
+	// 		}
+	// 	})
 
-		// Sort and get the closest picked layer
-		if (candidates.length > 0) {
-			candidates.sort(this._pickedLayerSortFn)
-			if (options.deepPicking) {
-				return candidates
-			} else {
-				return candidates[0]
-			}
-		}
+	// 	// Sort and get the closest picked layer
+	// 	if (candidates.length > 0) {
+	// 		candidates.sort(this._pickedLayerSortFn)
+	// 		if (options.deepPicking) {
+	// 			return candidates
+	// 		} else {
+	// 			return candidates[0]
+	// 		}
+	// 	}
 
-		return
-	}
+	// 	return
+	// }
 
 	/**
 	 * 初始化pointer相关事件
@@ -408,15 +401,16 @@ export class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 			taps: 1,
 		})
 		this.hammer.add(tap)
-		this.hammer.on('tap', (e) => {
-			if (this.getProp('enablePicking')) {
-				const bbox = element.getBoundingClientRect()
-				const left = bbox.left
-				const top = bbox.top
-				const canvasCoords = { x: e.center.x - left, y: e.center.y - top }
-				this._handlePointerEvent(canvasCoords, 'pick')
-			}
-		})
+		// TODO refactor picking
+		// this.hammer.on('tap', (e) => {
+		// 	if (this.getProp('enablePicking')) {
+		// 		const bbox = element.getBoundingClientRect()
+		// 		const left = bbox.left
+		// 		const top = bbox.top
+		// 		const canvasCoords = { x: e.center.x - left, y: e.center.y - top }
+		// 		this._handlePointerEvent(canvasCoords, 'pick')
+		// 	}
+		// })
 
 		// Use flag & timer to prevent [touchend, mousemove] linked events triggering
 		let isTouched = false
@@ -438,133 +432,135 @@ export class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 			viewChangeTime = this.timeline.currentTime
 		}
 
-		// Event callback throttling
-		this._mouseMoveHandler = throttle(
-			this.timeline.frametime,
-			(e) => {
-				// Disable hover when:
-				// 1. device has been touched
-				// 2. mouse has been pressed
-				// 3. camera stable frames < N (default 2)
-				// 4. lastTouchedTime < M (default 500ms)
-				if (
-					this.getProp('enablePicking') &&
-					isTouched === false &&
-					isMouseDown === false &&
-					this.timeline.currentTime - viewChangeTime > this.timeline.frametime * 2 &&
-					this.timeline.currentTime - lastTouchedTime > 500 // TODO: remove hardcode
-				) {
-					const bbox = element.getBoundingClientRect()
-					const left = bbox.left
-					const top = bbox.top
-					const canvasCoords = { x: e.x - left, y: e.y - top }
-					this._handlePointerEvent(canvasCoords, 'hover')
-				}
-			},
-			this
-		)
-		element.addEventListener('mousemove', this._mouseMoveHandler)
+		// TODO refactor picking
+		// // Event callback throttling
+		// this._mouseMoveHandler = throttle(
+		// 	this.timeline.frametime,
+		// 	(e) => {
+		// 		// Disable hover when:
+		// 		// 1. device has been touched
+		// 		// 2. mouse has been pressed
+		// 		// 3. camera stable frames < N (default 2)
+		// 		// 4. lastTouchedTime < M (default 500ms)
+		// 		if (
+		// 			this.getProp('enablePicking') &&
+		// 			isTouched === false &&
+		// 			isMouseDown === false &&
+		// 			this.timeline.currentTime - viewChangeTime > this.timeline.frametime * 2 &&
+		// 			this.timeline.currentTime - lastTouchedTime > 500 // TODO: remove hardcode
+		// 		) {
+		// 			const bbox = element.getBoundingClientRect()
+		// 			const left = bbox.left
+		// 			const top = bbox.top
+		// 			const canvasCoords = { x: e.x - left, y: e.y - top }
+		// 			this._handlePointerEvent(canvasCoords, 'hover')
+		// 		}
+		// 	},
+		// 	this
+		// )
+		// element.addEventListener('mousemove', this._mouseMoveHandler)
 	}
 
-	private _mouseMoveHandler: (e: MouseEvent) => any
+	// private _mouseMoveHandler: (e: MouseEvent) => any
 
-	// @TODO why? @浅寻
-	// TODO: explanation needed here
-	private _handlePointerEvent(canvasCoords: CoordV2, triggerEventName: 'pick' | 'hover') {
-		// Collect pick results
-		const opts = { deepPicking: this.props.deepPicking ?? false }
-		const result = this.pick(canvasCoords, opts)
-		if (!result) {
-			this.traverseVisible((obj) => {
-				// @note pickable only exits on StandardLayer
-				// @note do not bypass type check using props manager
-				const layer = obj as StandardLayer
-				// if (layer.isStandardLayer && layer.getProp('pickable')) {
-				// trigger non-picked layer with eventName & no arguments
-				layer.dispatchEvent({ type: triggerEventName })
-				// }
-			})
-			return
-		}
+	// TODO refactor picking
+	// // @TODO why? @浅寻
+	// // TODO: explanation needed here
+	// private _handlePointerEvent(canvasCoords: CoordV2, triggerEventName: 'pick' | 'hover') {
+	// 	// Collect pick results
+	// 	const opts = { deepPicking: this.props.deepPicking ?? false }
+	// 	const result = this.pick(canvasCoords, opts)
+	// 	if (!result) {
+	// 		this.traverseVisible((obj) => {
+	// 			// @note pickable only exits on StandardLayer
+	// 			// @note do not bypass type check using props manager
+	// 			const layer = obj as StandardLayer
+	// 			// if (layer.isStandardLayer && layer.getProp('pickable')) {
+	// 			// trigger non-picked layer with eventName & no arguments
+	// 			layer.dispatchEvent({ type: triggerEventName })
+	// 			// }
+	// 		})
+	// 		return
+	// 	}
 
-		if (Array.isArray(result)) {
-			const resultArr = result
-			const pickedLayers = resultArr.map((e) => e.layer)
-			this.traverseVisible((obj) => {
-				// @note pickable only exits on StandardLayer
-				// @note do not bypass type check using props manager
-				const layer = obj as StandardLayer
-				const index = pickedLayers.indexOf(layer)
-				// if (layer.isStandardLayer && layer.getProp('pickable')) {
-				if (index >= 0) {
-					// trigger picked layer with eventName & result argument
-					layer.dispatchEvent({ type: triggerEventName, result: resultArr[index] })
-				} else {
-					// trigger non-picked layer with eventName & no arguments
-					layer.dispatchEvent({ type: triggerEventName })
-				}
-				// }
-			})
-		} else {
-			const resultEvent = result
-			const pickedLayer = resultEvent.layer
-			this.traverseVisible((obj) => {
-				// @note pickable only exits on StandardLayer
-				// @note do not bypass type check using props manager
-				const layer = obj as StandardLayer
-				// if (layer.isStandardLayer && layer.getProp('pickable')) {
-				if (layer === pickedLayer) {
-					// trigger picked layer with eventName & result argument
-					layer.dispatchEvent({ type: triggerEventName, result: resultEvent })
-				} else {
-					// trigger non-picked layer with eventName & no arguments
-					layer.dispatchEvent({ type: triggerEventName })
-				}
-				// }
-			})
-		}
-	}
+	// 	if (Array.isArray(result)) {
+	// 		const resultArr = result
+	// 		const pickedLayers = resultArr.map((e) => e.layer)
+	// 		this.traverseVisible((obj) => {
+	// 			// @note pickable only exits on StandardLayer
+	// 			// @note do not bypass type check using props manager
+	// 			const layer = obj as StandardLayer
+	// 			const index = pickedLayers.indexOf(layer)
+	// 			// if (layer.isStandardLayer && layer.getProp('pickable')) {
+	// 			if (index >= 0) {
+	// 				// trigger picked layer with eventName & result argument
+	// 				layer.dispatchEvent({ type: triggerEventName, result: resultArr[index] })
+	// 			} else {
+	// 				// trigger non-picked layer with eventName & no arguments
+	// 				layer.dispatchEvent({ type: triggerEventName })
+	// 			}
+	// 			// }
+	// 		})
+	// 	} else {
+	// 		const resultEvent = result
+	// 		const pickedLayer = resultEvent.layer
+	// 		this.traverseVisible((obj) => {
+	// 			// @note pickable only exits on StandardLayer
+	// 			// @note do not bypass type check using props manager
+	// 			const layer = obj as StandardLayer
+	// 			// if (layer.isStandardLayer && layer.getProp('pickable')) {
+	// 			if (layer === pickedLayer) {
+	// 				// trigger picked layer with eventName & result argument
+	// 				layer.dispatchEvent({ type: triggerEventName, result: resultEvent })
+	// 			} else {
+	// 				// trigger non-picked layer with eventName & no arguments
+	// 				layer.dispatchEvent({ type: triggerEventName })
+	// 			}
+	// 			// }
+	// 		})
+	// 	}
+	// }
 
-	/**
-	 * 处理picking事件结果排序
-	 */
-	protected _pickedLayerSortFn(a: LayerPickEvent, b: LayerPickEvent): number {
-		const meshA = a.object
-		const meshB = b.object
+	// /**
+	//  * 处理picking事件结果排序
+	//  */
+	// protected _pickedLayerSortFn(a: LayerPickEvent, b: LayerPickEvent): number {
+	// 	const meshA = a.object
+	// 	const meshB = b.object
 
-		if (meshA === undefined || meshB === undefined) {
-			return a.distance - b.distance
-		}
+	// 	if (meshA === undefined || meshB === undefined) {
+	// 		return a.distance - b.distance
+	// 	}
 
-		if (meshA.material !== undefined && meshB.material !== undefined) {
-			// 1. Compare depthTest
-			// if both are true, compare distance
-			if (meshA.material.depthTest !== undefined && meshB.material.depthTest !== undefined) {
-				if (meshA.material.depthTest === true && meshB.material.depthTest === true) {
-					return a.distance - b.distance
-				}
-			}
-			// 2. Compare transparent
-			// transparent object is always rendered after non-transparent object
-			else if (meshA.material['transparent'] === true && meshB.material['transparent'] === false) {
-				return 1
-			} else if (
-				meshA.material['transparent'] === false &&
-				meshB.material['transparent'] === true
-			) {
-				return -1
-			}
-		}
-		// 3. Compare renderOrder
-		// lower renderOrder => earlier to render => covered by higher renderOrder
-		else if (
-			meshA.renderOrder !== undefined &&
-			meshB.renderOrder !== undefined &&
-			meshA.renderOrder !== meshB.renderOrder
-		) {
-			return meshB.renderOrder - meshA.renderOrder
-		}
+	// 	if (meshA.material !== undefined && meshB.material !== undefined) {
+	// 		// 1. Compare depthTest
+	// 		// if both are true, compare distance
+	// 		if (meshA.material.depthTest !== undefined && meshB.material.depthTest !== undefined) {
+	// 			if (meshA.material.depthTest === true && meshB.material.depthTest === true) {
+	// 				return a.distance - b.distance
+	// 			}
+	// 		}
+	// 		// 2. Compare transparent
+	// 		// transparent object is always rendered after non-transparent object
+	// 		else if (meshA.material['transparent'] === true && meshB.material['transparent'] === false) {
+	// 			return 1
+	// 		} else if (
+	// 			meshA.material['transparent'] === false &&
+	// 			meshB.material['transparent'] === true
+	// 		) {
+	// 			return -1
+	// 		}
+	// 	}
+	// 	// 3. Compare renderOrder
+	// 	// lower renderOrder => earlier to render => covered by higher renderOrder
+	// 	else if (
+	// 		meshA.renderOrder !== undefined &&
+	// 		meshB.renderOrder !== undefined &&
+	// 		meshA.renderOrder !== meshB.renderOrder
+	// 	) {
+	// 		return meshB.renderOrder - meshA.renderOrder
+	// 	}
 
-		return a.distance - b.distance
-	}
+	// 	return a.distance - b.distance
+	// }
 }
