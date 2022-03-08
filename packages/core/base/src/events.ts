@@ -127,7 +127,7 @@ type RootChangeEvent = { type: 'rootChange'; root: AbstractLayer | null }
 /**
  * the event when visibility change
  */
-type VisibilityChangeEvent = { type: 'visibilityChange' }
+type VisibilityChangeEvent = { type: 'visibilityChange'; visible: boolean }
 /**
  * the event when view(canvas) or camera state change
  */

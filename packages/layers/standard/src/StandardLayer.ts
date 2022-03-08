@@ -14,17 +14,17 @@ import {
 	Layer,
 	LayerProps,
 	PickEventResult,
-	LayerEvents,
-	AbstractPolaris,
-	CoordV2,
-	PickEvent,
+	AbstractLayerEvents,
+	// AbstractPolaris,
+	// CoordV2,
+	// PickEvent,
 } from '@polaris.gl/base'
-import { GSIView } from '@polaris.gl/view-gsi'
-import { HtmlView } from '@polaris.gl/view-html'
+import { GSIView } from './view/GsiView'
+import { HtmlView } from './view/HtmlView'
 import { Matrix4, Vector3, Vector2 } from '@gs.i/utils-math'
 import { isRenderable } from '@gs.i/schema-scene'
-import { Projection } from '@polaris.gl/projection'
 import { MatProcessor } from '@gs.i/processor-matrix'
+// import { Projection } from '@polaris.gl/projection'
 // import { Raycaster } from '@gs.i/processor-raycast'
 
 /**
@@ -82,7 +82,7 @@ const defaultMatProcessor = new MatProcessor()
  */
 export class StandardLayer<
 	TProps extends StandardLayerProps = StandardLayerProps,
-	TEventTypes extends LayerEvents = LayerEvents
+	TEventTypes extends AbstractLayerEvents = AbstractLayerEvents
 > extends Layer<TProps, TEventTypes> {
 	readonly isStandardLayer = true
 
@@ -91,17 +91,21 @@ export class StandardLayer<
 	constructor(props: TProps) {
 		super(props)
 
-		if (!this.view) {
-			this.view = {
-				/**
-				 * 挂载 DOM 元素
-				 */
-				html: new HtmlView().init(this),
-				/**
-				 * 挂载 GSI 元素
-				 */
-				gsi: new GSIView().init(this),
-			}
+		// @note
+		// 不应该允许选择 standard layer 的 view
+		// 唯一出现过的需求是：marker layer不需要html，可选view用于性能优化。
+		// 普通layer 如果可以随意删掉view，会导致子layer挂载时出错
+		// 如果需要性能优化，选择其他方案
+
+		this.view = {
+			/**
+			 * 挂载 DOM 元素
+			 */
+			html: new HtmlView().init(this),
+			/**
+			 * 挂载 GSI 元素
+			 */
+			gsi: new GSIView().init(this),
 		}
 
 		// @note

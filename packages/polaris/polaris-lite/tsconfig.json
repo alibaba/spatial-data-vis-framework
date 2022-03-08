@@ -10,10 +10,13 @@
 	"exclude": ["dist"],
 	"references": [
 		{
+			"path": "../../core/base"
+		},
+		{
 			"path": "../polaris-gsi"
 		},
 		{
-			"path": "../../renderers/renderer-lite"
+			"path": "../../layers/standard"
 		}
 	]
 }

@@ -17,12 +17,15 @@
         "build:umd": "npx webpack"
     },
     "dependencies": {
-        "@polaris.gl/gsi": "^0.0.0-alpha.9",
-        "@polaris.gl/renderer-lite": "^0.0.0-alpha.9"
-    },
-    "devDependencies": {
         "@polaris.gl/base": "^0.0.0-alpha.9",
         "@polaris.gl/layer-std": "^0.0.0-alpha.9",
+        "@polaris.gl/gsi": "^0.0.0-alpha.9",
+        "@gs.i/backend-threelite": "^0.2.0-alpha",
+        "@gs.i/frontend-sdk": "0.2.1-alpha",
+        "@gs.i/schema-scene": "^0.2.0-alpha",
+        "@gs.i/processor-raycast": "^0.2.0-alpha"
+    },
+    "devDependencies": {
         "@gs.i/processor-indicator": "^0.2.0-alpha",
         "@gs.i/utils-random-scene": "^0.2.0-alpha",
         "@types/offscreencanvas": "latest",

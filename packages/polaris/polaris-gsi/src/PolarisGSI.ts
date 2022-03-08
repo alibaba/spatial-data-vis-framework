@@ -3,23 +3,19 @@
  * All rights reserved.
  */
 
-import { isDISPOSED, RenderableNode } from '@gs.i/schema-scene'
-// import { OptimizePass, GSIRefiner } from '@gs.i/utils-optimize'
-import { HtmlView } from '@polaris.gl/view-html'
-import { GSIView } from '@polaris.gl/view-gsi'
+import * as IR from '@gs.i/schema-scene'
 import {
 	AbstractPolaris,
 	PolarisProps,
 	defaultProps as defaultPolarisProps,
-	Renderer,
 	AbstractLayer,
 	PickEventResult,
-	PickResult,
 	CoordV2,
 } from '@polaris.gl/base'
+import { Renderer, PickResult } from './Renderer'
 import { PointerControl, TouchControl, Cameraman } from 'camera-proxy'
 import { isTouchDevice } from '@polaris.gl/utils'
-import { StandardLayer } from '@polaris.gl/layer-std'
+import { StandardLayer, HtmlView, GSIView } from '@polaris.gl/layer-std'
 import Hammer from 'hammerjs'
 import { throttle } from './utils'
 
