@@ -251,6 +251,19 @@ export abstract class AbstractPolaris<
 		return this.#ratio
 	}
 
+	/**
+	 * override layer
+	 */
+	override get localTimeline(): Timeline {
+		return this.timeline
+	}
+	/**
+	 * override layer
+	 */
+	override get localProjection(): Projection {
+		return this.projection
+	}
+
 	// #endregion
 
 	pause() {

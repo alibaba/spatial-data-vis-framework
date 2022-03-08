@@ -12,6 +12,9 @@
 			"path": "../packages/core/gsi"
 		},
 		{
+			"path": "../packages/layers/gltf2"
+		},
+		{
 			"path": "../packages/layers/helper"
 		},
 		{

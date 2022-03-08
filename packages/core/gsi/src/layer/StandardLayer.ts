@@ -27,10 +27,25 @@ import { MatProcessor } from '@gs.i/processor-matrix'
 // import { Projection } from '@polaris.gl/projection'
 // import { Raycaster } from '@gs.i/processor-raycast'
 
+import type { PolarisGSI } from '../polaris/index'
+
+// override Node & EventDispatcher interfaces to hide underlying implements.
+export interface StandardLayer {
+	get parent(): StandardLayer | PolarisGSI | null
+	get children(): Set<StandardLayer>
+	get root(): StandardLayer | PolarisGSI | null
+	add(child: StandardLayer): void
+	remove(child: StandardLayer): void
+	traverse(handler: (node: StandardLayer) => void): void
+	set onAdd(f: (parent: any) => void) // workaround ts bug
+	set onRemove(f: (parent: any) => void)
+}
+
 /**
  * 配置项 interface
  */
 export interface StandardLayerProps extends LayerProps {
+	parent?: StandardLayer | PolarisGSI
 	/**
 	 * @deprecated @unreliable may break internal 3d scene
 	 */

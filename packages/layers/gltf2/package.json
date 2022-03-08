@@ -16,12 +16,10 @@
         "build:umd": "npx webpack"
     },
     "dependencies": {
-        "@gs.i/frontend-gltf2": "^0.0.0-beta",
-        "@gs.i/frontend-sdk": "0.2.1-alpha",
-        "@gs.i/schema": "^0.0.0-beta",
-        "@gs.i/utils-gltf2": "^0.0.0-beta",
-        "@polaris.gl/layer-std": "^0.0.0-alpha.9",
-        "@polaris.gl/projection": "^0.0.0-alpha.9"
+        "@gs.i/frontend-gltf2": "0.2.1-alpha",
+        "@gs.i/schema-scene": "0.2.0-alpha",
+        "@gs.i/utils-gltf2": "0.2.0-alpha",
+        "@polaris.gl/base-gsi": "^0.0.0-alpha.9"
     },
     "devDependencies": {
         "typescript": ">4.4.0"

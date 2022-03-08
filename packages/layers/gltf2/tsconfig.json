@@ -10,10 +10,7 @@
 	"exclude": ["dist"],
 	"references": [
 		{
-			"path": "../standard"
-		},
-		{
-			"path": "../../utils/projections"
+			"path": "../../core/gsi"
 		}
 	]
 }

@@ -15,9 +15,18 @@ import {
 import { Renderer, PickResult } from './Renderer'
 import { PointerControl, TouchControl, Cameraman } from 'camera-proxy'
 import { isTouchDevice } from '@polaris.gl/utils'
-import { StandardLayer, HtmlView, GSIView } from '../layer/index'
+import { HtmlView, GSIView } from '../layer/index'
+import type { StandardLayer } from '../layer/index'
 import Hammer from 'hammerjs'
 import { throttle } from './utils'
+
+// override Node & EventDispatcher interfaces to hide underlying implements.
+export interface PolarisGSI {
+	get children(): Set<StandardLayer>
+	add(child: StandardLayer): void
+	remove(child: StandardLayer): void
+	traverse(handler: (node: PolarisGSI | StandardLayer) => void): void
+}
 
 export interface PolarisGSIProps extends PolarisProps {
 	enablePicking?: boolean
