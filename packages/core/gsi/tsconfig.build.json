@@ -1,0 +1,15 @@
+// DO NOT EDIT
+// AUTO COPIED FROM ROOT/shared
+{
+	"extends": "./tsconfig.base.json",
+	"compilerOptions": {
+		"rootDir": "src",
+		"outDir": "dist",
+		// to speed up it a little bit
+		// type check should be done during coding/testing/githooks
+		"skipLibCheck": true,
+		"composite": false
+	},
+	"include": ["src", "typings"],
+	"exclude": ["dist", "**/node_modules", "**/.*/"]
+}
