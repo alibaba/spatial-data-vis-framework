@@ -14,10 +14,10 @@ const testData = {
 		water: 'https://polaris-geo.oss-cn-hangzhou.aliyuncs.com/gltf/hangzhou_water.glb',
 		green: 'https://polaris-geo.oss-cn-hangzhou.aliyuncs.com/gltf/hangzhou_green.glb',
 		road: 'https://polaris-geo.oss-cn-hangzhou.aliyuncs.com/gltf/hangzhou_road.glb',
-		// building_lod1: 'https://polaris-geo.oss-cn-hangzhou.aliyuncs.com/gltf/hangzhou_lod1.glb',
+		building_lod1: 'https://polaris-geo.oss-cn-hangzhou.aliyuncs.com/gltf/hangzhou_lod1.glb',
 		building_lod2: 'https://polaris-geo.oss-cn-hangzhou.aliyuncs.com/gltf/hangzhou_lod2.glb',
 		building_lod3: 'https://polaris-geo.oss-cn-hangzhou.aliyuncs.com/gltf/hangzhou_lod3.glb',
-		// building_lod4: 'https://polaris-geo.oss-cn-hangzhou.aliyuncs.com/gltf/hangzhou_lod4.glb',
+		building_lod4: 'https://polaris-geo.oss-cn-hangzhou.aliyuncs.com/gltf/hangzhou_lod4.glb',
 	},
 }
 

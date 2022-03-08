@@ -17,18 +17,19 @@
     },
     "dependencies": {
         "@gs.i/schema-scene": "0.2.0-alpha",
-        "@gs.i/frontend-sdk": "0.2.1-alpha",
         "@gs.i/processor-raycast": "0.2.0-alpha",
         "@gs.i/processor-bound": "0.2.0-alpha",
         "@gs.i/processor-culling": "0.2.0-alpha",
         "@gs.i/processor-graph": "0.2.0-alpha",
         "@gs.i/processor-indicator": "0.2.0-alpha",
         "@gs.i/processor-matrix": "0.2.0-alpha",
+        "@gs.i/utils-specify": "0.2.0-alpha",
         "@gs.i/utils-math": "^0.0.0-beta",
         "@polaris.gl/base": "^0.0.0-alpha.9",
         "@polaris.gl/projection": "^0.0.0-alpha.9",
         "@polaris.gl/utils-props-manager": "^0.0.0-alpha.9",
         "@polaris.gl/utils": "^0.0.0-alpha.9",
+        "ani-timeline": "alpha",
         "hammerjs": "^2.0.8"
     },
     "devDependencies": {

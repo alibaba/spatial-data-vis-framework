@@ -10,8 +10,8 @@
  */
 import { View } from './View'
 import type { StandardLayer } from '../StandardLayer'
-import { Mesh } from '@gs.i/frontend-sdk'
 import type * as IR from '@gs.i/schema-scene'
+import { specifyNode } from '@gs.i/utils-specify'
 
 export class GSIView extends View {
 	/**
@@ -22,7 +22,7 @@ export class GSIView extends View {
 	/**
 	 * 用户可以直接操作的 group
 	 */
-	readonly group = new Mesh()
+	readonly group: IR.BaseNode = specifyNode({})
 
 	/**
 	 * 系统进行坐标偏移操作的 group

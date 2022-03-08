@@ -9,24 +9,13 @@
  * 因此在这里把constructor里增加的逻辑拆成函数，
  */
 
-import { Mesh } from '@gs.i/frontend-sdk'
-import {
-	Layer,
-	LayerProps,
-	PickEventResult,
-	AbstractLayerEvents,
-	// AbstractPolaris,
-	// CoordV2,
-	// PickEvent,
-} from '@polaris.gl/base'
+import { Timeline } from 'ani-timeline'
+import { Projection } from '@polaris.gl/projection'
+import { Layer, LayerProps, PickEventResult, AbstractLayerEvents } from '@polaris.gl/base'
 import { GSIView } from './view/GsiView'
 import { HtmlView } from './view/HtmlView'
 import { Matrix4, Vector3, Vector2 } from '@gs.i/utils-math'
 import { isRenderable } from '@gs.i/schema-scene'
-import { MatProcessor } from '@gs.i/processor-matrix'
-// import { Projection } from '@polaris.gl/projection'
-// import { Raycaster } from '@gs.i/processor-raycast'
-
 import type { PolarisGSI } from '../polaris/index'
 
 // override Node & EventDispatcher interfaces to hide underlying implements.
@@ -87,11 +76,6 @@ const _vec3 = new Vector3()
 const _vec2 = new Vector2()
 
 /**
- * @todo should use the same one from renderer to share cache
- */
-const defaultMatProcessor = new MatProcessor()
-
-/**
  * Standard Layer
  * 标准 Layer，包含 GSIView 作为 3D 容器，HTMLView 作为 2D 容器
  */
@@ -102,6 +86,19 @@ export class StandardLayer<
 	readonly isStandardLayer = true
 
 	view: { gsi: GSIView; html: HtmlView }
+
+	/**
+	 * only available after init. check .inited first
+	 */
+	protected polaris: PolarisGSI
+	/**
+	 * only available after init. check .inited first
+	 */
+	protected timeline: Timeline
+	/**
+	 * only available after init. check .inited first
+	 */
+	protected projection: Projection
 
 	constructor(props: TProps) {
 		super(props)
@@ -122,6 +119,12 @@ export class StandardLayer<
 			 */
 			gsi: new GSIView().init(this),
 		}
+
+		this.addEventListener('init', (e) => {
+			this.polaris = e.polaris as PolarisGSI
+			this.timeline = e.timeline
+			this.projection = e.projection
+		})
 
 		// @note
 		// Use AfterInit to make sure this happens after scene
@@ -169,7 +172,7 @@ export class StandardLayer<
 	 * root group of GSI objects
 	 * @note all renderable contents shall be put here
 	 */
-	get group(): Mesh {
+	get group() {
 		return this.view.gsi.group
 	}
 
@@ -180,111 +183,6 @@ export class StandardLayer<
 	get element() {
 		return this.view.html.element
 	}
-
-	// /**
-	//  * get world matrix of this layer's 3d wrapper
-	//  *
-	//  * @note return undefined if not inited
-	//  */
-	// getWorldMatrix() {
-	// 	if (!this.inited) {
-	// 		console.warn('can not call getWorldMatrix until layer is inited')
-	// 		return
-	// 	}
-
-	// 	return defaultMatProcessor.getCachedWorldMatrix(this.view.gsi.alignmentWrapper)
-	// }
-
-	// /**
-	//  * 获取世界坐标在当前layer的经纬度
-	//  *
-	//  * @param {number} x
-	//  * @param {number} y
-	//  * @param {number} z
-	//  * @return {*}  {(number[] | undefined)}
-	//  * @memberof StandardLayer
-	//  * @deprecated @todo 确认命名正确，可能是本地坐标而非世界坐标
-	//  *
-	//  * @note return undefined if not inited
-	//  */
-	// toLngLatAlt(x: number, y: number, z: number): number[] | undefined {
-	// 	if (!this.inited) {
-	// 		console.warn('can not call toLngLatAlt until layer is inited')
-	// 		return
-	// 	}
-
-	// 	const projection = this.resolveProjection() as Projection // this won't be null after inited
-
-	// 	const worldMatrix = this.getWorldMatrix() as number[]
-	// 	const inverseMat = _mat4.fromArray(worldMatrix).invert()
-	// 	const v = _vec3.set(x, y, z)
-	// 	// Transform to pure world xyz
-	// 	v.applyMatrix4(inverseMat)
-	// 	return projection.unproject(v.x, v.y, v.z)
-	// }
-
-	// /**
-	//  * 获取经纬度对应的世界坐标
-	//  *
-	//  * @param {number} lng
-	//  * @param {number} lat
-	//  * @param {number} [alt=0]
-	//  * @return {*}  {(Vector3 | undefined)}
-	//  * If the layer has no projection, or a worldMatrix yet, an {undefined} result will be returned.
-	//  * @memberof StandardLayer
-	//  * @todo 确认命名正确，可能是本地坐标而非世界坐标
-	//  *
-	//  * @note return undefined if not inited
-	//  */
-	// toWorldPosition(lng: number, lat: number, alt = 0): Vector3 | undefined {
-	// 	if (!this.inited) {
-	// 		console.warn('can not call toWorldPosition until layer is inited')
-	// 		return
-	// 	}
-
-	// 	const worldMatrix = this.getWorldMatrix() as number[]
-	// 	const projection = this.resolveProjection() as Projection
-	// 	const matrix4 = _mat4.fromArray(worldMatrix)
-	// 	const pos = _vec3.fromArray(projection.project(lng, lat, alt))
-	// 	pos.applyMatrix4(matrix4)
-	// 	return pos
-	// }
-
-	// /**
-	//  * 获取经纬度对应的屏幕坐标
-	//  *
-	//  * @param {number} lng
-	//  * @param {number} lat
-	//  * @param {number} [alt=0]
-	//  * @return {*}  {(Vector2 | undefined)}
-	//  * If the layer has no projection,
-	//  * or a worldMatrix, or not added to any Polaris yet,
-	//  * an {undefined} result will be returned.
-	//  * @memberof StandardLayer
-	//  *
-	//  * @note return undefined if not inited
-	//  */
-	// toScreenXY(lng: number, lat: number, alt = 0): Vector2 | undefined {
-	// 	if (!this.inited) {
-	// 		console.warn('can not call toScreenXY until layer is inited')
-	// 		return
-	// 	}
-
-	// 	const polaris = this.root as AbstractPolaris
-
-	// 	const worldPos = this.toWorldPosition(lng, lat, alt)
-	// 	if (!worldPos) return
-
-	// 	const screenXY = polaris.getScreenXY(worldPos.x, worldPos.y, worldPos.z)
-	// 	if (!screenXY) return
-
-	// 	const xy = _vec2.fromArray(screenXY)
-
-	// 	// Align to html dom x/y
-	// 	xy.y = polaris.height - xy.y
-
-	// 	return xy
-	// }
 
 	// /**
 	//  * Highlight API
@@ -332,45 +230,7 @@ export class StandardLayer<
 		})
 	}
 
-	override setProps(props: Partial<TProps | StandardLayerProps>) {
-		/**
-		 * @note keep in mind that:
-		 * Partial<TProps> is not `assignable` until generic type TProps get settled.
-		 * So if you use Partial<GenericType> as a writeable value or function param.
-		 * Use `.t3` like the following code:
-		 *
-		 * ```
-		 * class A<T extends { s: boolean }> {
-		 * 		t1: T
-		 * 		t2: Partial<T>
-		 * 		t3: Partial<T | { s: boolean }>
-		 *
-		 * 		set() {
-		 * 			// write
-		 * 			this.t1 = { s: true } // ❌ TS Error
-		 * 			this.t2 = { s: true } // ❌ TS Error
-		 * 			this.t3 = { s: true } // ✅ TS Pass
-		 * 			this.t3 = { l: true } // ❌ TS Error
-		 *
-		 * 			// read
-		 *			this.t1.s // boolean
-		 *			this.t2.s // boolean | undefined
-		 *			this.t3.s // boolean | undefined
-		 * 		}
-		 * }
-		 *
-		 * class B extends A<{ l?: boolean; s: boolean }> {
-		 * 		set() {
-		 * 			this.t1 = { s: true } // ✅ TS Pass
-		 * 			this.t2 = { s: true } // ✅ TS Pass
-		 * 			this.t3 = { s: true } // ✅ TS Pass
-		 * 			this.t3 = { l: true } // ✅ TS Pass
-		 * 		}
-		 * }
-		 * ```
-		 */
-		super.setProps(props as any)
-	}
+	setProps: (props: Partial<TProps | StandardLayerProps>) => void
 
 	/**
 	 * 该方法用来被外部使用者调用

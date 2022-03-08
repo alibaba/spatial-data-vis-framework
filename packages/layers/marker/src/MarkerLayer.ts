@@ -4,10 +4,9 @@
  */
 
 import { Mesh } from '@gs.i/frontend-sdk'
-import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
 import { deepCloneMesh } from './utils'
 import { Marker } from './Marker'
-import { PolarisGSI } from '@polaris.gl/gsi'
+import { PolarisGSI, StandardLayer, StandardLayerProps } from '@polaris.gl/base-gsi'
 import { CoordV2, PickEvent } from '@polaris.gl/base'
 
 /**
@@ -52,7 +51,7 @@ export const defaultProps: MarkerLayerProps = {
  *     ...OtherLayerProps都可单独设置
  * }]
  */
-export class MarkerLayer extends StandardLayer {
+export class MarkerLayer extends StandardLayer<MarkerLayerProps> {
 	props: any
 
 	private markers: Marker[]

@@ -19,6 +19,32 @@ import { HtmlView, GSIView } from '../layer/index'
 import type { StandardLayer } from '../layer/index'
 import Hammer from 'hammerjs'
 import { throttle } from './utils'
+import { MatProcessor } from '@gs.i/processor-matrix'
+import { BoundingProcessor } from '@gs.i/processor-bound'
+import { GraphProcessor } from '@gs.i/processor-graph'
+import { CullingProcessor } from '@gs.i/processor-culling'
+
+/**
+ * @note safe to share globally @simon
+ */
+const defaultMatrixProcessor = new MatProcessor()
+/**
+ * @note safe to share globally @simon
+ */
+const defaultBoundingProcessor = new BoundingProcessor({
+	matrixProcessor: defaultMatrixProcessor,
+})
+/**
+ * @note safe to share globally @simon
+ */
+const defaultGraphProcessor = new GraphProcessor()
+/**
+ * @note safe to share globally @simon
+ */
+const defaultCullingProcessor = new CullingProcessor({
+	boundingProcessor: defaultBoundingProcessor,
+	matrixProcessor: defaultMatrixProcessor,
+})
 
 // override Node & EventDispatcher interfaces to hide underlying implements.
 export interface PolarisGSI {
@@ -28,18 +54,33 @@ export interface PolarisGSI {
 	traverse(handler: (node: PolarisGSI | StandardLayer) => void): void
 }
 
-export interface PolarisGSIProps extends PolarisProps {
-	enablePicking?: boolean
-}
-
 export const DefaultPolarisGSIProps = {
 	...(defaultPolarisProps as Required<typeof defaultPolarisProps>),
 	enablePicking: true,
+	/**
+	 * @note safe to share globally @simon
+	 */
+	matrixProcessor: defaultMatrixProcessor,
+	/**
+	 * @note safe to share globally @simon
+	 */
+	boundingProcessor: defaultBoundingProcessor,
+	/**
+	 * @note safe to share globally @simon
+	 */
+	graphProcessor: defaultGraphProcessor,
+	/**
+	 * @note safe to share globally @simon
+	 */
+	cullingProcessor: defaultCullingProcessor,
 }
 
-export interface LayerPickEvent extends PickEventResult {
-	layer: AbstractLayer
-}
+export type PolarisGSIProps = PolarisProps & Partial<typeof DefaultPolarisGSIProps>
+
+// TODO: refactor picking
+// export interface LayerPickEvent extends PickEventResult {
+// 	layer: AbstractLayer
+// }
 
 export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 	readonly isPolarisGSI = true
@@ -65,6 +106,11 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 	readonly cameraControl?: PointerControl | TouchControl
 	readonly cameraman: Cameraman
 
+	readonly matrixProcessor: MatProcessor
+	readonly boundingProcessor: BoundingProcessor
+	readonly graphProcessor: GraphProcessor
+	readonly cullingProcessor: CullingProcessor
+
 	/**
 	 * pointer 事件封装
 	 */
@@ -83,6 +129,11 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 		super(mergedProps)
 
 		this.props = mergedProps
+
+		this.matrixProcessor = mergedProps.matrixProcessor
+		this.boundingProcessor = mergedProps.boundingProcessor
+		this.graphProcessor = mergedProps.graphProcessor
+		this.cullingProcessor = mergedProps.cullingProcessor
 
 		this.view = {
 			html: new HtmlView(),
