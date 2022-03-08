@@ -23,11 +23,10 @@ import {
 	PointLight,
 } from 'three-lite'
 import { colorToString, PolarisProps } from '@polaris.gl/base'
-import { Renderer, PickResult } from '@polaris.gl/gsi'
+import { Renderer, PickResult, GSIView } from '@polaris.gl/base-gsi'
 import { DefaultConfig as ConvConfig, ThreeLiteConverter } from '@gs.i/backend-threelite'
 import { CameraProxy } from 'camera-proxy'
 import * as SDK from '@gs.i/frontend-sdk'
-import { GSIView } from '@polaris.gl/layer-std'
 // import * as postprocessing from 'postprocessing'
 // const { EffectComposer, ShaderPass } = postprocessing
 import { calcCamNearFar } from './utils'

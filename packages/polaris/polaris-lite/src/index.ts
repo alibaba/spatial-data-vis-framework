@@ -4,7 +4,7 @@
  */
 
 // 前端 GSI
-import { PolarisGSI } from '@polaris.gl/gsi'
+import { PolarisGSI } from '@polaris.gl/base-gsi'
 // 后端 GSI-GL2
 import { LiteRenderer } from './renderer/LiteRenderer'
 import type { PolarisProps } from '@polaris.gl/base'

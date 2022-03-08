@@ -1,4 +1,4 @@
-import { StandardLayer } from '@polaris.gl/layer-std'
+import { StandardLayer } from '@polaris.gl/base-gsi'
 import { PolarisLite } from '@polaris.gl/lite'
 
 import { generateScene } from '@gs.i/utils-random-scene'

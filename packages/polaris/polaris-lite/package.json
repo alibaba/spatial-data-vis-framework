@@ -18,8 +18,7 @@
     },
     "dependencies": {
         "@polaris.gl/base": "^0.0.0-alpha.9",
-        "@polaris.gl/layer-std": "^0.0.0-alpha.9",
-        "@polaris.gl/gsi": "^0.0.0-alpha.9",
+        "@polaris.gl/base-gsi": "^0.0.0-alpha.9",
         "@gs.i/backend-threelite": "^0.2.0-alpha",
         "@gs.i/frontend-sdk": "0.2.1-alpha",
         "@gs.i/schema-scene": "^0.2.0-alpha",

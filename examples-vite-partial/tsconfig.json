@@ -9,13 +9,7 @@
 	"exclude": ["node_modules", "*.js"],
 	"references": [
 		{
-			"path": "../packages/core/base"
-		},
-		{
-			"path": "../packages/polaris/polaris-gsi"
-		},
-		{
-			"path": "../packages/layers/standard"
+			"path": "../packages/core/gsi"
 		},
 		{
 			"path": "../packages/layers/helper"

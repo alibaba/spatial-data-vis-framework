@@ -13,10 +13,7 @@
 			"path": "../../core/base"
 		},
 		{
-			"path": "../polaris-gsi"
-		},
-		{
-			"path": "../../layers/standard"
+			"path": "../../core/gsi"
 		}
 	]
 }
