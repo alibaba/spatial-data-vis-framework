@@ -23,9 +23,6 @@
 		},
 		{
 			"path": "../../utils/utils"
-		},
-		{
-			"path": "../../core/view-gsi"
 		}
 	]
 }

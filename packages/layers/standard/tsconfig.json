@@ -17,12 +17,6 @@
 		},
 		{
 			"path": "../../utils/props-manager"
-		},
-		{
-			"path": "../../core/view-gsi"
-		},
-		{
-			"path": "../../core/view-html"
 		}
 	]
 }

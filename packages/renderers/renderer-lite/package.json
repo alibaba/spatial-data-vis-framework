@@ -1,5 +1,5 @@
 {
-    "name": "@polaris.gl/renderer-lite",
+    "name": "@polaris.gl/renderer-lite-abandoned",
     "version": "0.0.0-alpha.9",
     "description": "",
     "main": "dist/index.js",
@@ -19,8 +19,7 @@
         "@gs.i/frontend-sdk": "0.2.1-alpha",
         "@gs.i/schema-scene": "^0.2.0-alpha",
         "@gs.i/processor-raycast": "^0.2.0-alpha",
-        "@polaris.gl/base": "^0.0.0-alpha.9",
-        "@polaris.gl/view-gsi": "^0.0.0-alpha.9"
+        "@polaris.gl/base": "^0.0.0-alpha.9"
     },
     "devDependencies": {
         "@types/offscreencanvas": "latest",

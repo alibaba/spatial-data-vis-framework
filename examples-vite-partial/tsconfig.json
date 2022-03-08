@@ -22,9 +22,6 @@
 		},
 		{
 			"path": "../packages/polaris/polaris-lite"
-		},
-		{
-			"path": "../packages/renderers/renderer-lite"
 		}
 	]
 }

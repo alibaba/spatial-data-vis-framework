@@ -24,8 +24,7 @@
         "@polaris.gl/gsi": "^0.0.0-alpha.9",
         "@polaris.gl/layer-std": "^0.0.0-alpha.9",
         "@polaris.gl/projection": "^0.0.0-alpha.9",
-        "@polaris.gl/utils": "^0.0.0-alpha.9",
-        "@polaris.gl/view-gsi": "^0.0.0-alpha.9"
+        "@polaris.gl/utils": "^0.0.0-alpha.9"
     },
     "devDependencies": {
         "typescript": ">4.4.0"
