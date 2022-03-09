@@ -18,6 +18,9 @@
 			"path": "../packages/layers/helper"
 		},
 		{
+			"path": "../packages/layers/marker"
+		},
+		{
 			"path": "../packages/polaris/polaris-lite"
 		}
 	]

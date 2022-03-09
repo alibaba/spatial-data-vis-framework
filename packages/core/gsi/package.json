@@ -17,6 +17,7 @@
     },
     "dependencies": {
         "@gs.i/schema-scene": "0.2.0-alpha",
+        "@gs.i/frontend-sdk": "0.2.1-alpha",
         "@gs.i/processor-raycast": "0.2.0-alpha",
         "@gs.i/processor-bound": "0.2.0-alpha",
         "@gs.i/processor-culling": "0.2.0-alpha",

@@ -151,60 +151,76 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 		if (this.view.html) {
 			this.element.className = 'marker'
 		}
-	}
 
-	/**
-	 * Implemented
-	 */
-	init(projection, timeline, polaris) {
-		// 地球球心世界位置
-		this.earthCenter.fromArray(projection['_xyz0'] ?? [0, 0, -R]).multiplyScalar(-1)
+		this.addEventListener('init', (e) => {
+			const polaris = e.polaris
+			const projection = e.projection
+			const timeline = e.timeline
+			// 地球球心世界位置
+			this.earthCenter.fromArray(projection['_xyz0'] ?? [0, 0, -R]).multiplyScalar(-1)
 
-		/**
-		 * Update onViewChange
-		 */
-		if (this.getProp('highPerfMode')) {
-			this._initUpdatingLogic(polaris.cameraProxy, projection, true)
-		} else {
-			this._initUpdatingLogic(polaris.cameraProxy, projection, false)
-		}
+			/**
+			 * Update onViewChange
+			 */
+			if (this.getProp('highPerfMode')) {
+				this._initUpdatingLogic(polaris.cameraProxy, projection, true)
+			} else {
+				this._initUpdatingLogic(polaris.cameraProxy, projection, false)
+			}
 
-		/**
-		 * Props listeners
-		 */
-		this.watchProps(['html'], () => {
-			this.initHtml()
+			/**
+			 * Props listeners
+			 */
+			this.watchProps(
+				['html'],
+				() => {
+					this.initHtml()
+					this.resetInitFrames()
+				},
+				{ immediate: true }
+			)
+
+			this.watchProps(
+				['object3d'],
+				() => {
+					this.group.children.forEach((child) => {
+						this.group.children.delete(child)
+					})
+					this.object3d = this.getProp('object3d')
+					this.initObject3d()
+					this.resetInitFrames()
+				},
+				{ immediate: true }
+			)
+
+			this.watchProps(
+				['lng', 'lat', 'alt'],
+				() => {
+					this.lnglatalt = [this.getProp('lng'), this.getProp('lat'), this.getProp('alt')]
+					this.updateLnglatPosition(projection)
+					this.updateWorldPosition()
+					this.updateVisibility(polaris.cameraProxy, projection)
+					this.updateScreenXY()
+					this.updateElement()
+					this.resetInitFrames()
+				},
+				{ immediate: true }
+			)
+
+			this.watchProps(
+				['offsetX', 'offsetY', 'autoHide'],
+				() => {
+					this.updateWorldPosition()
+					this.updateVisibility(polaris.cameraProxy, projection)
+					this.updateScreenXY()
+					this.updateElement()
+					this.resetInitFrames()
+				},
+				{ immediate: true }
+			)
+
 			this.resetInitFrames()
 		})
-
-		this.watchProps(['object3d'], () => {
-			this.group.children.forEach((child) => {
-				this.group.children.delete(child)
-			})
-			this.object3d = this.getProp('object3d')
-			this.initObject3d()
-			this.resetInitFrames()
-		})
-
-		this.watchProps(['lng', 'lat', 'alt'], () => {
-			this.lnglatalt = [this.getProp('lng'), this.getProp('lat'), this.getProp('alt')]
-			this.updateLnglatPosition(projection)
-			this.updateWorldPosition()
-			this.updateVisibility(polaris.cameraProxy, projection)
-			this.updateScreenXY()
-			this.updateElement()
-			this.resetInitFrames()
-		})
-
-		this.watchProps(['offsetX', 'offsetY', 'autoHide'], () => {
-			this.updateWorldPosition()
-			this.updateVisibility(polaris.cameraProxy, projection)
-			this.updateScreenXY()
-			this.updateElement()
-			this.resetInitFrames()
-		})
-
-		this.resetInitFrames()
 	}
 
 	show(duration = 1000) {
@@ -394,7 +410,10 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 			return
 		}
 
-		return this.polaris.matrixProcessor.getCachedWorldMatrix(this.view.gsi.alignmentWrapper)
+		return (
+			this.polaris.matrixProcessor.getCachedWorldMatrix(this.view.gsi.alignmentWrapper) ||
+			this.polaris.matrixProcessor.getWorldMatrix(this.view.gsi.alignmentWrapper)
+		)
 	}
 
 	/**
@@ -607,7 +626,9 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 			.identity()
 			.makeTranslation(this._position.x, this._position.y, this._position.z)
 			.multiply(orientation)
-		this.group.transform.matrix = this._mat4.toArray()
+
+		// @note @todo this is not safe. GSI.SDK should add matrix to transform
+		this.group.transform['matrix'] = this._mat4.toArray()
 
 		// 夹角阈值，用来判断visibility
 		this.altAngleThres = Math.acos(R / (R + this.getProp('alt')))

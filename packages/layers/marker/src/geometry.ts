@@ -1,6 +1,6 @@
 import { Projection } from '@polaris.gl/projection'
 import { Vector3, Matrix4 } from '@gs.i/utils-math'
-import { MeshDataType } from '@gs.i/schema-scene'
+// import { MeshDataType } from '@gs.i/schema-scene'
 
 const up = new Vector3(0, 1, 0)
 const _v0 = new Vector3()
@@ -30,21 +30,21 @@ export function getOrientationMatrix(
 	return new Matrix4().lookAt(outNormal, _v0, up)
 }
 
-const _mat0 = new Matrix4()
-const _mat1 = new Matrix4()
-/**
- * Orient the given mesh to projection (often as SphereProjections)
- * @param mesh
- * @param projection
- * @param lnglatalt
- */
-export function orientMeshToProjection(
-	mesh: MeshDataType,
-	projection: Projection,
-	lnglatalt: number[]
-) {
-	const matrix = getOrientationMatrix(lnglatalt, projection)
-	_mat0.fromArray(mesh.transform.matrix)
-	_mat1.multiplyMatrices(_mat0, matrix)
-	mesh.transform.matrix = _mat1.toArray()
-}
+// const _mat0 = new Matrix4()
+// const _mat1 = new Matrix4()
+// /**
+//  * Orient the given mesh to projection (often as SphereProjections)
+//  * @param mesh
+//  * @param projection
+//  * @param lnglatalt
+//  */
+// export function orientMeshToProjection(
+// 	mesh: MeshDataType,
+// 	projection: Projection,
+// 	lnglatalt: number[]
+// ) {
+// 	const matrix = getOrientationMatrix(lnglatalt, projection)
+// 	_mat0.fromArray(mesh.transform.matrix)
+// 	_mat1.multiplyMatrices(_mat0, matrix)
+// 	mesh.transform.matrix = _mat1.toArray()
+// }

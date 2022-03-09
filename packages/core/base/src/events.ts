@@ -23,8 +23,9 @@ import type { AbstractLayer } from './Layer'
  * 		0. `Layer.constructor`
  * 		1. `AddEvent` (once)
  * 		2. `RootChangeEvent` (at least once)
- * 		3. `Layer.init` and `InitEvent` (once, after the layer is added to a
- * 			polaris scene, so that Polaris/Timeline/Projection can be resolved)
+ * 		3. @deprecated `Layer.init` (once, if implemented)
+ *      3. `InitEvent` (once, after the layer is added to a
+ * 	        polaris scene, so that Polaris/Timeline/Projection can be resolved)
  * 		4. `AfterInitEvent` (once, after InitEvent is triggered)
  *
  * 		@stage_1 render loop
