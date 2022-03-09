@@ -23,17 +23,6 @@ await test(true, 'PolarisLite', () => {
 	globalThis.p = p
 	console.log(p)
 
-	const scene = generateScene({
-		// scale: 1000,
-		count: 10,
-		depth: 10,
-		useAnimation: true,
-		useSprite: true,
-		usePoint: false,
-		resolution: [500, 500],
-	})
-	// console.log(scene)
-
 	const markerLayer = new MarkerLayer()
 	p.add(markerLayer)
 
@@ -43,8 +32,35 @@ await test(true, 'PolarisLite', () => {
 	const marker2 = new Marker({ html: 'hoho', lng: 0.01 })
 	markerLayer.add(marker2)
 
-	const marker3 = new Marker({ object3d: scene, lng: 0.01, lat: 0.01 })
+	const marker3 = new Marker({
+		object3d: generateScene({
+			// scale: 1000,
+			count: 10,
+			depth: 10,
+			useAnimation: true,
+			useSprite: true,
+			usePoint: false,
+			resolution: [500, 500],
+		}),
+		lng: 0.01,
+		lat: 0.01,
+	})
 	markerLayer.add(marker3)
+
+	const marker4 = new Marker({
+		object3d: generateScene({
+			// scale: 1000,
+			count: 10,
+			depth: 10,
+			useAnimation: true,
+			useSprite: true,
+			usePoint: false,
+			resolution: [500, 500],
+		}),
+		lng: -0.01,
+		lat: 0.01,
+	})
+	markerLayer.add(marker4)
 
 	// const indicator = new IndicatorProcessor({
 	// 	// hideOriginal: true,
