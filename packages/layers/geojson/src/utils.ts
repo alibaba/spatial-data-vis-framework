@@ -322,3 +322,9 @@ export function geomToLinePositions(geom, projection, alt = 0): number[][] | und
 
 	return
 }
+
+export type OptionalDefault<TFull extends Record<string, any>, TDefault extends TFull> = Omit<
+	TFull,
+	keyof TDefault
+> &
+	Partial<TDefault>

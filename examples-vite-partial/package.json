@@ -11,10 +11,13 @@
 		"@polaris.gl/layer-std-helper": "^0.0.0-alpha.9",
 		"@polaris.gl/layer-std-gltf2": "^0.0.0-alpha.9",
 		"@polaris.gl/layer-std-marker": "^0.0.0-alpha.9",
+		"@polaris.gl/layer-amap": "^0.0.0-alpha.9",
+		"@polaris.gl/layer-geojson": "^0.0.0-alpha.9",
 		"@polaris.gl/base-gsi": "^0.0.0-alpha.9",
-		"@gs.i/processor-indicator": "^0.2.0-alpha",
-		"@gs.i/utils-random-scene": "^0.2.0-alpha",
-		"@gs.i/utils-specify": "^0.2.0-alpha"
+		"@polaris.gl/projection": "^0.0.0-alpha.9",
+		"@gs.i/processor-indicator": "^0.2.1-alpha.0",
+		"@gs.i/utils-random-scene": "^0.2.1-alpha.0",
+		"@gs.i/utils-specify": "^0.2.1-alpha.0"
 	},
 	"devDependencies": {
 		"typescript": ">4.4.0",

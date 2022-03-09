@@ -3,15 +3,13 @@
  * All rights reserved.
  */
 
-import { PickEvent } from '@polaris.gl/base'
-import { PolarisGSI } from '@polaris.gl/gsi'
 import { Color, Box2 } from '@gs.i/utils-math'
 /**
  * 基类。
  * 可以使用 Layer，自己添加需要的 view；
  * 也可以使用 StandardLayer，添加好 gsiView 和 htmlView 的 Layer，懒人福音。
  */
-import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/base-gsi'
 
 /**
  * 内部逻辑依赖
@@ -19,51 +17,23 @@ import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
 import { FeatureCollection } from '@turf/helpers'
 import { PolygonSideLayer } from './PolygonSideLayer'
 import { PolygonSurfaceLayer } from './PolygonSurfaceLayer'
+import { OptionalDefault } from '../utils'
 
-export interface PolygonLayerProps extends StandardLayerProps {
-	data?: FeatureCollection | string
+export const defaultProps = {
+	name: 'PolygonLayer',
 	/**
 	 * Base options
 	 */
-	getFillColor?: any
-	getFillOpacity?: any
-	getSideColor?: any
-	sideOpacity?: number
-	enableExtrude?: boolean
-	getThickness?: any
-	baseAlt?: number
-	transparent?: boolean
-	doubleSide?: boolean
-	depthTest?: boolean
-	renderOrder?: number
-	/**
-	 * Selection params
-	 */
-	selectColor?: string | false
-	hoverColor?: string | false
-	selectLinesHeight?: number
-	selectLineLevel?: 1 | 2 | 4
-	selectLineWidth?: number
-	selectLineColor?: any
-	hoverLineLevel?: 1 | 2 | 4
-	hoverLineWidth?: number
-	hoverLineColor?: any
-	/**
-	 * Worker params
-	 */
-	workersCount?: number
-}
-
-export const defaultProps: PolygonLayerProps = {
-	/**
-	 * Base options
-	 */
-	getFillColor: '#689826',
-	getFillOpacity: 1.0,
-	getSideColor: '#999999',
+	//
+	useTessellation: true,
+	tessellation: 3,
+	//
+	getFillColor: (feature) => '#689826' as string | number,
+	getFillOpacity: (feature) => 1.0,
+	getSideColor: (feature) => '#999999' as string | number,
 	sideOpacity: 1.0,
 	enableExtrude: true,
-	getThickness: 10000,
+	getThickness: (feature) => 10000,
 	baseAlt: 0,
 	transparent: false,
 	doubleSide: false,
@@ -76,10 +46,10 @@ export const defaultProps: PolygonLayerProps = {
 	selectColor: '#ff0099',
 	hoverColor: '#6600ff',
 	selectLinesHeight: 0,
-	selectLineLevel: 2,
+	selectLineLevel: 2 as 1 | 2 | 4,
 	selectLineWidth: 2,
 	selectLineColor: '#FFAE0F',
-	hoverLineLevel: 2,
+	hoverLineLevel: 2 as 1 | 2 | 4,
 	hoverLineWidth: 1,
 	hoverLineColor: '#262626',
 	/**
@@ -87,13 +57,18 @@ export const defaultProps: PolygonLayerProps = {
 	 */
 	workersCount: 0,
 }
+export type PolygonLayerProps = StandardLayerProps &
+	typeof defaultProps & {
+		data?: FeatureCollection | string
+		getColor?: any
+	}
 
 export interface SelectionDataType {
 	curr: any
 	feature: any
 }
 
-export class PolygonLayer extends StandardLayer {
+export class PolygonLayer extends StandardLayer<PolygonLayerProps> {
 	props: any
 	surfaceLayer: PolygonSurfaceLayer
 	sideLayer: PolygonSideLayer
@@ -107,7 +82,7 @@ export class PolygonLayer extends StandardLayer {
 	// pickedFeatures: Array<any>
 	// hoveredFeature: any
 
-	constructor(props: PolygonLayerProps = {}) {
+	constructor(props: OptionalDefault<PolygonLayerProps, typeof defaultProps> = {}) {
 		const _props: any = {
 			...defaultProps,
 			...props,
@@ -115,21 +90,21 @@ export class PolygonLayer extends StandardLayer {
 		super(_props)
 		this.props = _props
 
-		this.name = this.group.name = 'PolygonLayer'
-
 		// this.pickedFeatures = []
 
 		this.listenProps(['selectColor'], () => {
-			if (this.getProps('selectColor')) {
-				this.selectColor = new Color().set(this.getProps('selectColor'))
+			const c = this.getProp('selectColor')
+			if (c) {
+				this.selectColor = new Color().set(c)
 			} else {
 				this.selectColor = undefined
 			}
 		})
 
 		this.listenProps(['hoverColor'], () => {
-			if (this.getProps('hoverColor')) {
-				this.hoverColor = new Color().set(this.getProps('hoverColor'))
+			const c = this.getProp('hoverColor')
+			if (c) {
+				this.hoverColor = new Color().set(c)
 			} else {
 				this.hoverColor = undefined
 			}
@@ -137,10 +112,19 @@ export class PolygonLayer extends StandardLayer {
 
 		// Calculate feature lnglat bbox and store
 		this.listenProps(['data'], () => {
-			const data = this.getProps('data')
+			let data = this.getProp('data')
 			if (!data) return
-			if (data.type !== 'FeatureCollection' || !data.features || !data.features.length) return
-			data.features.forEach((feature) => {
+
+			if (typeof data === 'string') {
+				data = JSON.parse(data)
+			}
+
+			const geojson = data as Exclude<PolygonLayerProps['data'], undefined | string>
+
+			if (geojson.type !== 'FeatureCollection' || !geojson.features || !geojson.features.length)
+				return
+
+			geojson.features.forEach((feature) => {
 				calcFeatureBounds(feature)
 			})
 		})
@@ -166,25 +150,28 @@ export class PolygonLayer extends StandardLayer {
 				'hoverLineColor',
 			],
 			(e) => {
-				const data = this.getProps('data')
-				const enableExtrude = this.getProps('enableExtrude')
-				const getColor = this.getProps('getFillColor')
-				const getOpacity = this.getProps('getFillOpacity')
-				const getThickness = enableExtrude ? this.getProps('getThickness') : 0
-				const baseAlt = this.getProps('baseAlt')
-				const transparent = this.getProps('transparent')
-				const doubleSide = this.getProps('doubleSide')
-				const useTessellation = this.getProps('useTessellation')
-				const tessellation = this.getProps('tessellation')
-				const genSelectLines = this.getProps('pickable')
-				const selectLinesHeight = this.getProps('selectLinesHeight')
-				const selectLineLevel = this.getProps('selectLineLevel')
-				const selectLineWidth = this.getProps('selectLineWidth')
-				const selectLineColor = this.getProps('selectLineColor')
-				const hoverLineLevel = this.getProps('hoverLineLevel')
-				const hoverLineWidth = this.getProps('hoverLineWidth')
-				const hoverLineColor = this.getProps('hoverLineColor')
-				const workersCount = this.getProps('workersCount')
+				let data = this.getProp('data')
+				if (typeof data === 'string') {
+					data = JSON.parse(data) as FeatureCollection
+				}
+				const enableExtrude = this.getProp('enableExtrude')
+				const getColor = this.getProp('getFillColor')
+				const getOpacity = this.getProp('getFillOpacity')
+				const getThickness = enableExtrude ? this.getProp('getThickness') : () => 0
+				const baseAlt = this.getProp('baseAlt')
+				const transparent = this.getProp('transparent')
+				const doubleSide = this.getProp('doubleSide')
+				const useTessellation = this.getProp('useTessellation')
+				const tessellation = this.getProp('tessellation')
+				const genSelectLines = this.getProp('pickable')
+				const selectLinesHeight = this.getProp('selectLinesHeight')
+				const selectLineLevel = this.getProp('selectLineLevel')
+				const selectLineWidth = this.getProp('selectLineWidth')
+				const selectLineColor = this.getProp('selectLineColor')
+				const hoverLineLevel = this.getProp('hoverLineLevel')
+				const hoverLineWidth = this.getProp('hoverLineWidth')
+				const hoverLineColor = this.getProp('hoverLineColor')
+				const workersCount = this.getProp('workersCount')
 
 				if (!this.surfaceLayer) {
 					const surfaceLayer = new PolygonSurfaceLayer({
@@ -213,7 +200,7 @@ export class PolygonLayer extends StandardLayer {
 				}
 
 				// Update
-				if (e.trigger === 'initialize') {
+				if (e.initial) {
 					// Update all
 					this.surfaceLayer.updateProps({
 						data,
@@ -235,7 +222,7 @@ export class PolygonLayer extends StandardLayer {
 						hoverLineColor,
 						workersCount,
 					})
-				} else if (e.trigger.indexOf('data') >= 0) {
+				} else if (e.changedKeys.includes('data')) {
 					// Update props/data independently
 					this.surfaceLayer.updateProps({
 						data,
@@ -297,14 +284,17 @@ export class PolygonLayer extends StandardLayer {
 				'enableExtrude',
 			],
 			(e) => {
-				const data = this.getProps('data')
-				const enableExtrude = this.getProps('enableExtrude')
-				const getColor = this.getProps('getSideColor')
-				const getThickness = this.getProps('getThickness')
-				const opacity = this.getProps('sideOpacity')
-				const baseAlt = this.getProps('baseAlt')
-				const transparent = this.getProps('transparent')
-				const doubleSide = this.getProps('doubleSide')
+				let data = this.getProp('data')
+				if (typeof data === 'string') {
+					data = JSON.parse(data) as FeatureCollection
+				}
+				const enableExtrude = this.getProp('enableExtrude')
+				const getColor = this.getProp('getSideColor')
+				const getThickness = this.getProp('getThickness')
+				const opacity = this.getProp('sideOpacity')
+				const baseAlt = this.getProp('baseAlt')
+				const transparent = this.getProp('transparent')
+				const doubleSide = this.getProp('doubleSide')
 
 				if (enableExtrude) {
 					// `SideLayer` must be added first before `SurfaceLayer`
@@ -324,7 +314,7 @@ export class PolygonLayer extends StandardLayer {
 						return
 					}
 					// Update
-					if (e.trigger === 'initialize') {
+					if (e.initial) {
 						// Update all
 						this.sideLayer.updateProps({
 							data,
@@ -335,7 +325,7 @@ export class PolygonLayer extends StandardLayer {
 							baseAlt,
 							doubleSide,
 						})
-					} else if (e.trigger.indexOf('data') >= 0) {
+					} else if (e.changedKeys.includes('data')) {
 						// Update props/data independently
 						this.sideLayer.updateProps({
 							getColor,
@@ -363,89 +353,91 @@ export class PolygonLayer extends StandardLayer {
 			}
 		)
 
-		/**
-		 * Highilight api
-		 * @param {number[]} dataIndexArr
-		 * @param {{type: 'none' | 'select' | 'hover' }} style
-		 */
-		this.highlightByIndices = (dataIndexArr, style) => {
-			const data = this.getProps('data')
-			if (!data || !Array.isArray(data.features)) return
-			if (!style || !style.type) return
+		// TODO: refactor highlight
+		// /**
+		//  * Highilight api
+		//  * @param {number[]} dataIndexArr
+		//  * @param {{type: 'none' | 'select' | 'hover' }} style
+		//  */
+		// this.highlightByIndices = (dataIndexArr, style) => {
+		// 	const data = this.getProp('data')
+		// 	if (!data || !Array.isArray(data.features)) return
+		// 	if (!style || !style.type) return
 
-			dataIndexArr.forEach((index) => {
-				const feature = data.features[index]
-				if (!feature) return
+		// 	dataIndexArr.forEach((index) => {
+		// 		const feature = data.features[index]
+		// 		if (!feature) return
 
-				// Restore last highlight styles
-				this._restoreFeatureColor(feature)
-				this._restoreHoverLines(feature)
-				this._restoreSelectLines(feature)
+		// 		// Restore last highlight styles
+		// 		this._restoreFeatureColor(feature)
+		// 		this._restoreHoverLines(feature)
+		// 		this._restoreSelectLines(feature)
 
-				switch (style.type) {
-					case 'none':
-						break
-					case 'select':
-						this._updateSelectLines(feature)
-						if (this.selectColor) {
-							this._updateFeatureColor(feature, this.selectColor)
-						}
-						break
-					case 'hover':
-						this._updateHoverLines(feature)
-						if (this.hoverColor) {
-							this._updateFeatureColor(feature, this.hoverColor)
-						}
-						break
-					default:
-						console.error(`Polaris::PolygonLayer - Invalid style.type param: ${style}`)
-				}
-			})
-		}
+		// 		switch (style.type) {
+		// 			case 'none':
+		// 				break
+		// 			case 'select':
+		// 				this._updateSelectLines(feature)
+		// 				if (this.selectColor) {
+		// 					this._updateFeatureColor(feature, this.selectColor)
+		// 				}
+		// 				break
+		// 			case 'hover':
+		// 				this._updateHoverLines(feature)
+		// 				if (this.hoverColor) {
+		// 					this._updateFeatureColor(feature, this.hoverColor)
+		// 				}
+		// 				break
+		// 			default:
+		// 				console.error(`Polaris::PolygonLayer - Invalid style.type param: ${style}`)
+		// 		}
+		// 	})
+		// }
 	}
 
 	init() {}
 
-	raycast(polaris, canvasCoords, ndc): PickEvent | undefined {
-		if (!this.getProps('pickable')) return
-		if (!this.surfaceLayer || !this.surfaceLayer.geom || !this.surfaceLayer.geom.attributes.color)
-			return
+	// TODO: refactor picking
+	// raycast(polaris, canvasCoords, ndc): PickEvent | undefined {
+	// 	if (!this.getProp('pickable')) return
+	// 	if (!this.surfaceLayer || !this.surfaceLayer.geom || !this.surfaceLayer.geom.attributes.color)
+	// 		return
 
-		const pickResult = (polaris as PolarisGSI).pickObject(this.surfaceLayer.mesh, ndc, {})
-		let event: PickEvent | undefined
-		if (pickResult.hit && pickResult.intersections && pickResult.intersections.length > 0) {
-			const inter0 = pickResult.intersections[0]
-			event = {
-				distance: inter0.distance as number,
-				point: inter0.point as { x: number; y: number; z: number },
-				pointLocal: inter0.pointLocal as { x: number; y: number; z: number },
-				index: -1,
-				object: undefined,
-				data: undefined,
-			}
-			// Find corresponding feature data
-			this.surfaceLayer.featIndexRangeMap.forEach((range, feature) => {
-				if (
-					inter0.index !== undefined &&
-					inter0.index >= range[0] / 3 &&
-					inter0.index <= range[1] / 3
-				) {
-					const data: SelectionDataType = {
-						curr: feature,
-						feature,
-					}
+	// 	const pickResult = (polaris as PolarisGSI).pickObject(this.surfaceLayer.mesh, ndc, {})
+	// 	let event: PickEvent | undefined
+	// 	if (pickResult.hit && pickResult.intersections && pickResult.intersections.length > 0) {
+	// 		const inter0 = pickResult.intersections[0]
+	// 		event = {
+	// 			distance: inter0.distance as number,
+	// 			point: inter0.point as { x: number; y: number; z: number },
+	// 			pointLocal: inter0.pointLocal as { x: number; y: number; z: number },
+	// 			index: -1,
+	// 			object: undefined,
+	// 			data: undefined,
+	// 		}
+	// 		// Find corresponding feature data
+	// 		this.surfaceLayer.featIndexRangeMap.forEach((range, feature) => {
+	// 			if (
+	// 				inter0.index !== undefined &&
+	// 				inter0.index >= range[0] / 3 &&
+	// 				inter0.index <= range[1] / 3
+	// 			) {
+	// 				const data: SelectionDataType = {
+	// 					curr: feature,
+	// 					feature,
+	// 				}
 
-					if (event) {
-						event.object = this.surfaceLayer.mesh
-						event.index = feature.index
-						event.data = data
-					}
-				}
-			})
-		}
+	// 				if (event) {
+	// 					event.object = this.surfaceLayer.mesh
+	// 					event.index = feature.index
+	// 					event.data = data
+	// 				}
+	// 			}
+	// 		})
+	// 	}
 
-		return event
-	}
+	// 	return event
+	// }
 
 	private _updateSelectLines(feature) {
 		if (this.surfaceLayer) {
@@ -530,7 +522,12 @@ export class PolygonLayer extends StandardLayer {
 	/**
 	 * @FIXME show/hide is not working with attribute colors
 	 */
-	async show(duration = 1000) {
+	show(duration = 1000) {
+		if (!this.inited) {
+			console.warn('can not call .show until layer is inited')
+			return
+		}
+
 		if (this.surfaceLayer) {
 			this.surfaceLayer.matr.alphaMode = 'BLEND'
 			this.surfaceLayer.matr.opacity = 0.0
@@ -541,7 +538,7 @@ export class PolygonLayer extends StandardLayer {
 		}
 		this.group.visible = true
 
-		const timeline = await this.getTimeline()
+		const timeline = this.timeline
 		timeline.addTrack({
 			id: 'PolygonLayer Show',
 			startTime: timeline.currentTime,
@@ -549,11 +546,11 @@ export class PolygonLayer extends StandardLayer {
 			onStart: () => {},
 			onEnd: () => {
 				if (this.surfaceLayer) {
-					this.surfaceLayer.matr.alphaMode = this.getProps('transparent') ? 'BLEND' : 'OPAQUE'
+					this.surfaceLayer.matr.alphaMode = this.getProp('transparent') ? 'BLEND' : 'OPAQUE'
 					this.surfaceLayer.matr.opacity = 1.0
 				}
 				if (this.sideLayer) {
-					this.sideLayer.matr.alphaMode = this.getProps('transparent') ? 'BLEND' : 'OPAQUE'
+					this.sideLayer.matr.alphaMode = this.getProp('transparent') ? 'BLEND' : 'OPAQUE'
 					this.sideLayer.matr.opacity = 1.0
 				}
 				this.group.visible = true
@@ -569,7 +566,12 @@ export class PolygonLayer extends StandardLayer {
 		})
 	}
 
-	async hide(duration = 1000) {
+	hide(duration = 1000) {
+		if (!this.inited) {
+			console.warn('can not call .hide until layer is inited')
+			return
+		}
+
 		if (this.surfaceLayer) {
 			this.surfaceLayer.matr.alphaMode = 'BLEND'
 			this.surfaceLayer.matr.opacity = 1.0
@@ -578,7 +580,7 @@ export class PolygonLayer extends StandardLayer {
 			this.sideLayer.matr.alphaMode = 'BLEND'
 			this.sideLayer.matr.opacity = 1.0
 		}
-		const timeline = await this.getTimeline()
+		const timeline = this.timeline
 		timeline.addTrack({
 			id: 'PolygonLayer Hide',
 			startTime: timeline.currentTime,
@@ -586,11 +588,11 @@ export class PolygonLayer extends StandardLayer {
 			onStart: () => {},
 			onEnd: () => {
 				if (this.surfaceLayer) {
-					this.surfaceLayer.matr.alphaMode = this.getProps('transparent') ? 'BLEND' : 'OPAQUE'
+					this.surfaceLayer.matr.alphaMode = this.getProp('transparent') ? 'BLEND' : 'OPAQUE'
 					this.surfaceLayer.matr.opacity = 0.0
 				}
 				if (this.sideLayer) {
-					this.sideLayer.matr.alphaMode = this.getProps('transparent') ? 'BLEND' : 'OPAQUE'
+					this.sideLayer.matr.alphaMode = this.getProp('transparent') ? 'BLEND' : 'OPAQUE'
 					this.sideLayer.matr.opacity = 0.0
 				}
 				this.group.visible = false

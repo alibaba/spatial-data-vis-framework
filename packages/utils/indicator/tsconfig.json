@@ -10,7 +10,7 @@
 	"exclude": ["dist"],
 	"references": [
 		{
-			"path": "../../layers/standard"
+			"path": "../../core/gsi"
 		}
 	]
 }

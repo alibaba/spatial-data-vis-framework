@@ -14,7 +14,7 @@ import { Callback, ListenerOptions, PropsManager } from '@polaris.gl/utils-props
 
 export interface LayerProps {
 	name?: string
-	parent?: AbstractLayer<any>
+	parent?: AbstractLayer
 	timeline?: Timeline
 	projection?: Projection
 }
@@ -297,7 +297,7 @@ export abstract class AbstractLayer<
 	/**
 	 * @deprecated use {@link watchProps} instead. with `{immediate: true}` as options
 	 */
-	protected listenProps<TKeys extends Array<keyof TProps>>(
+	protected listenProps<TKeys extends ReadonlyArray<keyof TProps>>(
 		keys: TKeys,
 		callback: Callback<TProps, TKeys[number]>
 	): void {

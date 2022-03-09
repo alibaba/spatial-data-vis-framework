@@ -18,7 +18,7 @@
         "bundleWorker": "npx rollup ./dist/workers/GeomWorker.js --file ./dist/workers/GeomWorker.js -c rollup.config.js"
     },
     "dependencies": {
-        "@gs.i/frontend-sdk": "0.2.1-alpha",
+        "@gs.i/frontend-sdk": "0.2.1-alpha.0",
         "@gs.i/schema": "^0.0.0-beta",
         "@gs.i/utils-geometry": "^0.0.0-beta",
         "@gs.i/utils-math": "^0.0.0-beta",

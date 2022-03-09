@@ -80,16 +80,20 @@ export class MarkerLayer extends StandardLayer<MarkerLayerProps> {
 			'autoHide',
 			'highPerfMode',
 		] as const
-		this.watchProps(watchProps, (event) => {
-			const updateProps = {}
-			event.changedKeys.forEach((key) => {
-				updateProps[key] = this.getProp(key)
-			})
+		this.watchProps(
+			watchProps,
+			(event) => {
+				const updateProps = {}
+				event.changedKeys.forEach((key) => {
+					updateProps[key] = this.getProp(key)
+				})
 
-			this.markers.forEach((marker) => {
-				if (marker) marker.updateProps(updateProps)
-			})
-		})
+				this.markers.forEach((marker) => {
+					if (marker) marker.updateProps(updateProps)
+				})
+			},
+			{ immediate: true }
+		)
 
 		/**
 		 * 数据结构
@@ -98,11 +102,15 @@ export class MarkerLayer extends StandardLayer<MarkerLayerProps> {
 		 *     ...Other MarkerLayerProps 都可单独设置
 		 * }]
 		 */
-		this.watchProp('data', () => {
-			const data = this.getProp('data')
-			if (!data) return
-			this.updateMarkers(data)
-		})
+		this.watchProp(
+			'data',
+			() => {
+				const data = this.getProp('data')
+				if (!data) return
+				this.updateMarkers(data)
+			},
+			{ immediate: true }
+		)
 	}
 
 	raycast(polaris, canvasCoord, ndc) {

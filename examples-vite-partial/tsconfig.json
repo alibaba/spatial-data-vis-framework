@@ -12,6 +12,12 @@
 			"path": "../packages/core/gsi"
 		},
 		{
+			"path": "../packages/layers/amap"
+		},
+		{
+			"path": "../packages/layers/geojson"
+		},
+		{
 			"path": "../packages/layers/gltf2"
 		},
 		{
@@ -22,6 +28,9 @@
 		},
 		{
 			"path": "../packages/polaris/polaris-lite"
+		},
+		{
+			"path": "../packages/utils/projections"
 		}
 	]
 }

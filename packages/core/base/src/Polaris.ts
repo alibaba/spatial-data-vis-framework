@@ -392,21 +392,25 @@ export abstract class AbstractPolaris<
 	}
 
 	tick() {
-		if (this.#disposed) {
-			throw new Error('Polaris - This instance is disposed. Create a new one if needed.')
+		try {
+			if (this.#disposed) {
+				throw new Error('Polaris - This instance is disposed. Create a new one if needed.')
+			}
+
+			// onBeforeRender
+			this.traverseVisible((obj) => {
+				obj.dispatchEvent({ type: 'beforeRender', polaris: this })
+			})
+
+			this.render()
+
+			// onAfterRender
+			this.traverseVisible((obj) => {
+				obj.dispatchEvent({ type: 'afterRender', polaris: this })
+			})
+		} catch (error) {
+			this.dispatchEvent({ type: 'tickError', error: error })
 		}
-
-		// onBeforeRender
-		this.traverseVisible((obj) => {
-			obj.dispatchEvent({ type: 'beforeRender', polaris: this })
-		})
-
-		this.render()
-
-		// onAfterRender
-		this.traverseVisible((obj) => {
-			obj.dispatchEvent({ type: 'afterRender', polaris: this })
-		})
 	}
 
 	/**

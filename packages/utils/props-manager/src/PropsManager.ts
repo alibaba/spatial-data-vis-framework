@@ -317,3 +317,21 @@ export function disposePropsManager(obj: object) {
 // 	event.trigger
 // })
 // a.listen(['cc', 'hh'], async (event) => {})
+
+// private as interface
+
+// class A {
+// 	#s: number
+// 	pub: string
+// }
+
+// class B extends A {
+// 	#s: boolean
+// 	pub: string
+// }
+
+// function hh(v: A) {}
+
+// const b = new B()
+
+// hh(b)

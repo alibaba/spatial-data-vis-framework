@@ -215,4 +215,10 @@ export type AbstractPolarisEvents = AbstractLayerEvents & {
 	hover: never
 	init: never
 	afterInit: never
+
+	// experiment
+	tickError: {
+		type: 'tickError'
+		error: Error
+	}
 }

@@ -80,7 +80,7 @@ const _vec2 = new Vector2()
  * 标准 Layer，包含 GSIView 作为 3D 容器，HTMLView 作为 2D 容器
  */
 export class StandardLayer<
-	TProps extends StandardLayerProps = StandardLayerProps,
+	TProps extends StandardLayerProps = any,
 	TEventTypes extends AbstractLayerEvents = AbstractLayerEvents
 > extends Layer<TProps, TEventTypes> {
 	readonly isStandardLayer = true
