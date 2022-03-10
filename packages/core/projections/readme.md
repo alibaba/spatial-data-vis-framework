@@ -1,6 +1,6 @@
-# Polaris 的 投影模块
+# Polaris 地理投影
 
-## useage
+## usage
 
 #### js/ts
 
