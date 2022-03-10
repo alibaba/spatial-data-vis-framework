@@ -6,7 +6,7 @@
 
 分层空间数据可视化框架，或简称 Polaris.gl
 
-## Inro
+## Introduction
 
 Polaris.gl is a meta-framework for spatial data visualization on general 3D engines.
 

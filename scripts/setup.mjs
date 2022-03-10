@@ -1,9 +1,10 @@
+/*eslint-env node*/
+
 import { argv } from 'process'
-import { constants, fstat } from 'fs'
-import { readFile, writeFile, copyFile, access, rename, unlink, symlink } from 'fs/promises'
+import { readFile, writeFile, access, unlink, symlink } from 'fs/promises'
 import path from 'path'
 
-import { execSync, spawn, exec, execFileSync } from 'child_process'
+import { execSync } from 'child_process'
 
 console.log(argv)
 console.log(process.env.PWD)
@@ -36,7 +37,9 @@ console.log(useLocalGSI, gsiPath)
 		try {
 			await access(path.resolve(process.env.PWD, './gsi-packages'))
 			await unlink(path.resolve(process.env.PWD, './gsi-packages'))
-		} catch (error) {}
+		} catch (error) {
+			// ignore
+		}
 
 		await symlink(
 			path.resolve(process.env.PWD, gsiPath, './packages'),
@@ -143,11 +146,11 @@ await Promise.all(
 	})
 )
 try {
-	execSync(`lerna bootstrap --force-local`, { stdio: 'inherit' })
+	execSync(`lerna bootstrap`, { stdio: 'inherit' })
 
 	// # https://github.com/lerna/lerna/issues/2352
 	// # lerna link is needed
-	execSync(`lerna link --force-local`, { stdio: 'inherit' })
+	execSync(`lerna link`, { stdio: 'inherit' })
 
 	// # should not hoist local packages
 	execSync(`rm -rf ./node_modules/@polaris.gl`, { stdio: 'inherit' })
@@ -170,4 +173,4 @@ if (useLocalGSI) {
 }
 
 console.log('本次安装不会安装以下package的依赖，如果需要，可以自行到文件夹中安装')
-console.log(packageBlacklist)
+console.log(ignoredPackages)
