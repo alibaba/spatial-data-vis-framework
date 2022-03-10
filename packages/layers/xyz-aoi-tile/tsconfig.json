@@ -13,10 +13,10 @@
 			"path": "../../core/base"
 		},
 		{
-			"path": "../../polaris/polaris-gsi"
+			"path": "../../core/gsi"
 		},
 		{
-			"path": "../standard"
+			"path": "../../polaris/polaris-gsi"
 		},
 		{
 			"path": "../../utils/projections"

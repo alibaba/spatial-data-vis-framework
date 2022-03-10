@@ -1,5 +1,5 @@
 import { Timeline } from 'ani-timeline'
-import { StandardLayer } from '@polaris.gl/layer-std'
+import { StandardLayer } from '@polaris.gl/base-gsi'
 import { Polaris } from '@polaris.gl/base'
 import { Projection } from '@polaris.gl/projection'
 import {
@@ -184,15 +184,18 @@ export class CommonTileManager implements TileManager {
 
 	async start() {
 		const layer = this.config.layer
+		if (!layer.inited) {
+			console.warn('can not start tileManager before layer inited')
+		}
 
 		if (!this._timeline) {
-			this._timeline = await layer.getTimeline()
+			this._timeline = layer['timeline']
 		}
 		if (!this._projection) {
-			this._projection = await layer.getProjection()
+			this._projection = layer['projection']
 		}
 		if (!this._polaris) {
-			this._polaris = await layer.getPolaris()
+			this._polaris = layer['polaris']
 		}
 
 		this.stop()

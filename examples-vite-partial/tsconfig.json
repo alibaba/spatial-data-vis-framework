@@ -33,6 +33,9 @@
 			"path": "../packages/layers/marker"
 		},
 		{
+			"path": "../packages/layers/xyz-aoi-tile"
+		},
+		{
 			"path": "../packages/polaris/polaris-lite"
 		},
 		{

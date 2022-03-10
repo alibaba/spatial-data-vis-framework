@@ -13,7 +13,7 @@
 			"path": "../../core/base"
 		},
 		{
-			"path": "../../layers/standard"
+			"path": "../../core/gsi"
 		},
 		{
 			"path": "../projections"

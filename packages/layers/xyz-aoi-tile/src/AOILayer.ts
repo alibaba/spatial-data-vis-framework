@@ -1,22 +1,23 @@
-import { MeshDataType } from '@gs.i/schema'
-import {
-	computeBBox,
-	computeBSphere,
-	genBBoxWireframe,
-	genBSphereWireframe,
-} from '@gs.i/utils-geometry'
+import { MeshDataType } from '@gs.i/schema-scene'
+import { computeBBox, computeBSphere } from '@gs.i/utils-geometry'
 import { XYZTileManager, TileRenderables, TileToken } from '@polaris.gl/utils-tile-manager'
 import { RequestPending, XYZTileRequestManager } from '@polaris.gl/utils-request-manager'
-import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
-import { Mesh, MatrUnlit, Geom, Attr } from '@gs.i/frontend-sdk'
+import { PolarisGSI, StandardLayer, StandardLayerProps } from '@polaris.gl/base-gsi'
+import { Mesh, UnlitMaterial, Geom, Attr } from '@gs.i/frontend-sdk'
 import { AbstractPolaris, CoordV2, CoordV3, PickEvent } from '@polaris.gl/base'
 import Pbf from 'pbf'
 import { decode } from 'geobuf'
 import { Projection } from '@polaris.gl/projection'
 import { colorToUint8Array } from '@polaris.gl/utils'
-import { PolarisGSI } from '@polaris.gl/gsi'
-import { Box3, Color, Sphere, Vector3 } from '@gs.i/utils-math'
-import { featureToLinePositions, createRangeArray, getFeatureTriangles } from './utils'
+
+import { Color } from '@gs.i/utils-math'
+import {
+	featureToLinePositions,
+	createRangeArray,
+	getFeatureTriangles,
+	RequireDefault,
+	functionlize,
+} from './utils'
 import { LineIndicator } from '@polaris.gl/utils-indicator'
 import { WorkerManager } from '@polaris.gl/utils-worker-manager'
 import { createWorkers } from './workers/createWorkers'
@@ -88,7 +89,7 @@ export interface AOILayerProps extends StandardLayerProps {
 	/**
 	 * Hover LineIndicator level
 	 */
-	hoverLineLevel: number
+	hoverLineLevel: 0 | 1 | 2 | 4
 
 	/**
 	 *
@@ -103,7 +104,7 @@ export interface AOILayerProps extends StandardLayerProps {
 	/**
 	 * Select LineIndicator level
 	 */
-	selectLineLevel: number
+	selectLineLevel: 0 | 1 | 2 | 4
 
 	/**
 	 *
@@ -175,23 +176,24 @@ export interface AOILayerProps extends StandardLayerProps {
 /**
  * 配置项 默认值
  */
-const defaultProps: AOILayerProps = {
-	dataType: 'auto',
+const defaultProps = {
+	name: 'AOILayer',
+	dataType: 'auto' as const,
 	getUrl: (x, y, z) => {
 		throw new Error('getUrl prop is not defined')
 	},
 	minZoom: 3,
 	maxZoom: 20,
-	featureIdKey: 'id',
+	featureIdKey: 'id' as const,
 	baseAlt: 0,
 	getColor: '#ffffff',
 	getOpacity: 1.0,
 	transparent: false,
 	indicatorLinesHeight: 0,
-	hoverLineLevel: 2,
+	hoverLineLevel: 2 as const,
 	hoverLineWidth: 1,
 	hoverLineColor: '#333333',
-	selectLineLevel: 2,
+	selectLineLevel: 2 as const,
 	selectLineWidth: 2,
 	selectLineColor: '#00ffff',
 	framesBeforeRequest: 10,
@@ -202,14 +204,16 @@ const defaultProps: AOILayerProps = {
 	debug: false,
 }
 
+defaultProps as AOILayerProps // this check the type but do not assign AOILayerProps to defaultProps
+
 type IndicatorRangeInfo = {
 	hoverIndicator: LineIndicator
 	selectIndicator: LineIndicator
 	ranges: { offset: number; count: number }[]
 }
 
-export class AOILayer extends StandardLayer {
-	matr: MatrUnlit
+export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof defaultProps>> {
+	matr: UnlitMaterial
 
 	requestManager: XYZTileRequestManager
 
@@ -266,7 +270,10 @@ export class AOILayer extends StandardLayer {
 			...props,
 		}
 		super(_props)
-		this.name = this.group.name = 'AOILayer'
+
+		this.addEventListener('init', (e) => {
+			this._init(e.projection, e.timeline, e.polaris)
+		})
 	}
 
 	/**
@@ -274,7 +281,7 @@ export class AOILayer extends StandardLayer {
 	 */
 	highlightByIds: (idsArr: number[], style: { [name: string]: any }) => void
 
-	init(projection, timeline, polaris) {
+	private _init(projection, timeline, polaris) {
 		const p = polaris as AbstractPolaris
 
 		if (!projection.isPlaneProjection) {
@@ -285,8 +292,8 @@ export class AOILayer extends StandardLayer {
 			if (this._workerManager) {
 				throw new Error('can not change props.workersNum')
 			} else {
-				const workersNum = this.getProps('workersNum')
-				if (workersNum > 0) {
+				const workersNum = this.getProp('workersNum')
+				if (workersNum && workersNum > 0) {
 					const workers: Worker[] = createWorkers(workersNum)
 					this._workerManager = new WorkerManager(workers)
 				}
@@ -342,7 +349,7 @@ export class AOILayer extends StandardLayer {
 
 				this.matr = this._createPolygonMatr()
 
-				const dtConfig = this.getProps('dataType')
+				const dtConfig = this.getProp('dataType')
 				let dataType
 				switch (dtConfig) {
 					case 'pbf': {
@@ -366,16 +373,16 @@ export class AOILayer extends StandardLayer {
 					this.requestManager.dispose()
 				}
 
-				const customFetcher = this.getProps('customFetcher')
-				const customTileKeyGen = this.getProps('customTileKeyGen')
+				const customFetcher = this.getProp('customFetcher')
+				const customTileKeyGen = this.getProp('customTileKeyGen')
 				this.requestManager =
-					this.getProps('requestManager') ??
+					this.getProp('requestManager') ??
 					new XYZTileRequestManager({
 						dataType,
 						fetcher: customFetcher ? ({ x, y, z }) => customFetcher(x, y, z) : undefined,
 						getCacheKey: customTileKeyGen ? ({ x, y, z }) => customTileKeyGen(x, y, z) : undefined,
 						getUrl: (requestArgs) => {
-							return this.getProps('getUrl')(requestArgs.x, requestArgs.y, requestArgs.z)
+							return this.getProp('getUrl')(requestArgs.x, requestArgs.y, requestArgs.z)
 						},
 					})
 
@@ -385,19 +392,19 @@ export class AOILayer extends StandardLayer {
 
 				this.tileManager = new XYZTileManager({
 					layer: this,
-					minZoom: this.getProps('minZoom'),
-					maxZoom: this.getProps('maxZoom'),
-					cacheSize: this.getProps('cacheSize'),
-					framesBeforeUpdate: this.getProps('framesBeforeRequest'),
-					viewZoomReduction: this.getProps('viewZoomReduction'),
-					useParentReplaceUpdate: this.getProps('useParentReplaceUpdate'),
+					minZoom: this.getProp('minZoom'),
+					maxZoom: this.getProp('maxZoom'),
+					cacheSize: this.getProp('cacheSize'),
+					framesBeforeUpdate: this.getProp('framesBeforeRequest'),
+					viewZoomReduction: this.getProp('viewZoomReduction'),
+					useParentReplaceUpdate: this.getProp('useParentReplaceUpdate'),
 					getTileRenderables: (tileToken) => {
 						return this._createTileRenderables(tileToken, projection, polaris)
 					},
 					onTileRelease: (tile, token) => {
 						this._releaseTile(tile, token)
 					},
-					printErrors: this.getProps('debug'),
+					printErrors: this.getProp('debug'),
 				})
 
 				this.tileManager.start()
@@ -457,8 +464,8 @@ export class AOILayer extends StandardLayer {
 	}
 
 	private _createTileRenderables(token, projection, polaris) {
-		const dataType = this.getProps('dataType')
-		const geojsonFilter = this.getProps('geojsonFilter')
+		const dataType = this.getProp('dataType')
+		const geojsonFilter = this.getProp('geojsonFilter')
 		const x = token[0],
 			y = token[1],
 			z = token[2]
@@ -551,25 +558,17 @@ export class AOILayer extends StandardLayer {
 	}
 
 	private _createPolygonMatr() {
-		const transparent = this.getProps('transparent')
-		const matr = new MatrUnlit({
+		const transparent = this.getProp('transparent')
+		const matr = new UnlitMaterial({
 			alphaMode: transparent ? 'BLEND' : 'OPAQUE',
-			depthTest: this.getProps('depthTest'),
 			baseColorFactor: { r: 1, g: 1, b: 1 },
-			uniforms: {},
-			attributes: {
-				aColor: 'vec4',
-			},
-			varyings: {
-				vColor: 'vec4',
-			},
-			vertOutput: `
-				vColor = aColor / 255.0;
-			`,
-			fragColor: `
-				fragColor = vColor;
-			`,
 		})
+
+		matr.depthTest = this.getProp('depthTest')
+		matr.vertGlobal = `attribute vec4 aColor;`
+		matr.global = `varying vec4 vColor;`
+		matr.vertOutput = `vColor = aColor / 255.0;`
+		matr.fragOutput = `fragColor = vColor;`
 		return matr
 	}
 
@@ -585,18 +584,18 @@ export class AOILayer extends StandardLayer {
 
 		const mesh = new Mesh({
 			name: key ? key : 'aois',
-			renderOrder: this.getProps('renderOrder'),
 			extras: { isAOI: true },
 		})
+		mesh.renderOrder = this.getProp('renderOrder')
 
 		// styles
-		const featureIdKey = this.getProps('featureIdKey')
-		const baseAlt = this.getProps('baseAlt')
-		const featureFilter = this.getProps('featureFilter')
-		const getColor = this.getProps('getColor')
-		const getOpacity = this.getProps('getOpacity')
-		const lineHeight = this.getProps('indicatorLinesHeight')
-		const pickable = this.getProps('pickable')
+		const featureIdKey = this.getProp('featureIdKey')
+		const baseAlt = this.getProp('baseAlt')
+		const featureFilter = this.getProp('featureFilter')
+		const getColor = functionlize(this.getProp('getColor'))
+		const getOpacity = functionlize(this.getProp('getOpacity'))
+		const lineHeight = this.getProp('indicatorLinesHeight')
+		const pickable = this.getProp('pickable')
 
 		// caches
 		const meshFeatures: any[] = []
@@ -770,14 +769,17 @@ export class AOILayer extends StandardLayer {
 		// 	new Vector3(Infinity, Infinity, Infinity)
 		// )
 
-		if (this.getProps('debug') && geom.boundingSphere) {
-			const wireframe = new Mesh({
-				name: 'bsphere-wireframe',
-				geometry: genBSphereWireframe(geom.boundingSphere),
-				// geometry: genBBoxWireframe(geom.boundingBox),
-				material: new MatrUnlit({ baseColorFactor: { r: 1, g: 0, b: 1 } }),
-			})
-			mesh.add(wireframe)
+		if (this.getProp('debug') && geom.boundingSphere) {
+			console.warn('debug unimplemented')
+
+			// TODO: gen wire frame is a GSI processor now
+			// const wireframe = new Mesh({
+			// 	name: 'bsphere-wireframe',
+			// 	geometry: genBSphereWireframe(geom.boundingSphere),
+			// 	// geometry: genBBoxWireframe(geom.boundingBox),
+			// 	material: new UnlitMaterial({ baseColorFactor: { r: 1, g: 0, b: 1 } }),
+			// })
+			// mesh.add(wireframe)
 		}
 
 		this._renderableFeatureMap.set(mesh, meshFeatures)
@@ -802,9 +804,9 @@ export class AOILayer extends StandardLayer {
 
 	private _genLineIndicators(polaris, selectPosArr: number[][]) {
 		// Hover indicator
-		const hoverLineWidth = this.getProps('hoverLineWidth') as number
-		const hoverLineColor = this.getProps('hoverLineColor')
-		const hoverLineLevel = this.getProps('hoverLineLevel')
+		const hoverLineWidth = this.getProp('hoverLineWidth') as number
+		const hoverLineColor = this.getProp('hoverLineColor')
+		const hoverLineLevel = this.getProp('hoverLineLevel')
 		let hoverLevel = hoverLineLevel
 		if (hoverLineWidth > 1 && hoverLineLevel === 1) {
 			hoverLevel = 2
@@ -822,7 +824,7 @@ export class AOILayer extends StandardLayer {
 			dynamic: true,
 			u: false,
 			texture: undefined,
-			renderOrder: this.getProps('renderOrder'),
+			renderOrder: this.getProp('renderOrder'),
 			depthTest: true,
 			transparent: true,
 		}
@@ -835,9 +837,9 @@ export class AOILayer extends StandardLayer {
 		hoverIndicator.gline.extras.isHoverIndicator = true
 
 		// Select indicator
-		const selectLineWidth = this.getProps('selectLineWidth') as number
-		const selectLineColor = this.getProps('selectLineColor')
-		const selectLineLevel = this.getProps('selectLineLevel')
+		const selectLineWidth = this.getProp('selectLineWidth') as number
+		const selectLineColor = this.getProp('selectLineColor')
+		const selectLineLevel = this.getProp('selectLineLevel')
 		let selectLevel = selectLineLevel
 		if (selectLineWidth > 1 && selectLineLevel === 1) {
 			selectLevel = 2
@@ -855,7 +857,7 @@ export class AOILayer extends StandardLayer {
 			dynamic: true,
 			u: false,
 			texture: undefined,
-			renderOrder: this.getProps('renderOrder'),
+			renderOrder: this.getProp('renderOrder'),
 			depthTest: true,
 			transparent: true,
 		}
@@ -877,54 +879,54 @@ export class AOILayer extends StandardLayer {
 		return `${x}|${y}|${z}`
 	}
 
-	raycast(polaris: AbstractPolaris, canvasCoords: CoordV2, ndc: CoordV2): PickEvent | undefined {
-		if (!this.tileManager || !(polaris instanceof PolarisGSI)) return
-		const tiles = this.tileManager.getVisibleTiles()
-		for (let i = 0; i < tiles.length; i++) {
-			const tile = tiles[i]
-			const meshes = tile.meshes
+	// raycast(polaris: AbstractPolaris, canvasCoords: CoordV2, ndc: CoordV2): PickEvent | undefined {
+	// 	if (!this.tileManager || !(polaris instanceof PolarisGSI)) return
+	// 	const tiles = this.tileManager.getVisibleTiles()
+	// 	for (let i = 0; i < tiles.length; i++) {
+	// 		const tile = tiles[i]
+	// 		const meshes = tile.meshes
 
-			const mesh = meshes.find((mesh) => mesh.extras && mesh.extras.isAOI)
-			if (!mesh) continue
+	// 		const mesh = meshes.find((mesh) => mesh.extras && mesh.extras.isAOI)
+	// 		if (!mesh) continue
 
-			const pickResult = polaris.pickObject(mesh, ndc)
-			if (pickResult.hit && pickResult.intersections && pickResult.intersections.length > 0) {
-				const intersection = pickResult.intersections[0]
-				const index = intersection.index
-				const features = this._renderableFeatureMap.get(mesh)
-				if (index === undefined || !features) return
+	// 		const pickResult = polaris.pickObject(mesh, ndc)
+	// 		if (pickResult.hit && pickResult.intersections && pickResult.intersections.length > 0) {
+	// 			const intersection = pickResult.intersections[0]
+	// 			const index = intersection.index
+	// 			const features = this._renderableFeatureMap.get(mesh)
+	// 			if (index === undefined || !features) return
 
-				// find the hit feature by feature indexRange
-				let hitFeature
-				const indexTri = index * 3
-				for (let j = 0; j < features.length; j++) {
-					const feature = features[j]
-					const indexRange = this._featureIndexRangeMap.get(feature)
-					if (indexRange && indexTri >= indexRange[0] && indexTri <= indexRange[1]) {
-						hitFeature = feature
-						break
-					}
-				}
+	// 			// find the hit feature by feature indexRange
+	// 			let hitFeature
+	// 			const indexTri = index * 3
+	// 			for (let j = 0; j < features.length; j++) {
+	// 				const feature = features[j]
+	// 				const indexRange = this._featureIndexRangeMap.get(feature)
+	// 				if (indexRange && indexTri >= indexRange[0] && indexTri <= indexRange[1]) {
+	// 					hitFeature = feature
+	// 					break
+	// 				}
+	// 			}
 
-				if (!hitFeature) return
+	// 			if (!hitFeature) return
 
-				const event: PickEvent = {
-					distance: intersection.distance ?? 0,
-					index: hitFeature.index,
-					point: intersection.point as CoordV3,
-					pointLocal: intersection.pointLocal as CoordV3,
-					object: mesh,
-					data: {
-						feature: hitFeature,
-						curr: hitFeature, // backward compatibility
-					},
-				}
-				return event
-			}
-		}
+	// 			const event: PickEvent = {
+	// 				distance: intersection.distance ?? 0,
+	// 				index: hitFeature.index,
+	// 				point: intersection.point as CoordV3,
+	// 				pointLocal: intersection.pointLocal as CoordV3,
+	// 				object: mesh,
+	// 				data: {
+	// 					feature: hitFeature,
+	// 					curr: hitFeature, // backward compatibility
+	// 				},
+	// 			}
+	// 			return event
+	// 		}
+	// 	}
 
-		return
-	}
+	// 	return
+	// }
 
 	private _cacheIndicatorRanges(
 		idRangeMap: Map<number | string, { offset: number; count: number }[]>,
@@ -986,7 +988,7 @@ export class AOILayer extends StandardLayer {
 	}
 
 	private _releaseTile(tile: TileRenderables, token: TileToken) {
-		const featureIdKey = this.getProps('featureIdKey')
+		const featureIdKey = this.getProp('featureIdKey')
 		tile.meshes.forEach((mesh) => {
 			const meshFeatures = this._renderableFeatureMap.get(mesh)
 			if (!meshFeatures) return
