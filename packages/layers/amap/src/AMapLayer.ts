@@ -245,16 +245,19 @@ export class AMapLayer extends StandardLayer<AMapLayerProps> {
 			this.map.setFeatures(featuresArr)
 
 			// 是否显示高德logo和copyright
-			const showLogo = this.getProp('showLogo')
-			const logoElement = document.getElementsByClassName('amap-logo')[0]
-			const colpyRightElement = document.getElementsByClassName('amap-copyright')[0]
-			if (!showLogo && logoElement && colpyRightElement) {
-				logoElement['style'].visibility = 'hidden'
-				colpyRightElement['style'].opacity = 0
-			} else {
-				logoElement['style'].visibility = 'inherit'
-				colpyRightElement['style'].opacity = 1
-			}
+			// TODO: all these elements can be undefined
+			// {
+			// 	const showLogo = this.getProp('showLogo')
+			// 	const logoElement = document.getElementsByClassName('amap-logo')[0]
+			// 	const colpyRightElement = document.getElementsByClassName('amap-copyright')[0]
+			// 	if (!showLogo && logoElement && colpyRightElement) {
+			// 		logoElement['style'].visibility = 'hidden'
+			// 		colpyRightElement['style'].opacity = 0
+			// 	} else {
+			// 		logoElement['style'].visibility = 'inherit'
+			// 		colpyRightElement['style'].opacity = 1
+			// 	}
+			// }
 		}
 	}
 
