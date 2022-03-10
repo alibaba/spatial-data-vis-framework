@@ -395,8 +395,6 @@ export class PolygonLayer extends StandardLayer<PolygonLayerProps> {
 		// }
 	}
 
-	init() {}
-
 	// TODO: refactor picking
 	// raycast(polaris, canvasCoords, ndc): PickEvent | undefined {
 	// 	if (!this.getProp('pickable')) return

@@ -16,7 +16,7 @@ export class PolygonMatr extends PbrMaterial {
 		uniform float uHeightScale;
 		varying vec4 vColor;
 	`
-	vertGlobal? = `
+	vertGlobal = `
 		attribute vec4 color;
 	`
 	vertGeometry = `

@@ -107,6 +107,7 @@ export class PolygonSideLayer extends StandardLayer<PolygonSideLayerProps> {
 				// const vertRange = [positions.length, 0]
 				let count = 0
 				flattenEach(feature, (f) => {
+					if (!f.geometry) return
 					const rings: any[] = getCoords(f as any) // @note looks fine
 					for (let k = 0; k < rings.length; k++) {
 						const coordinates: number[][] = rings[k]
