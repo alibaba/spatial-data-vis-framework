@@ -363,3 +363,9 @@ export function transToVector3(input): Vector3 {
 	}
 	return v
 }
+
+export type OptionalDefault<TFull extends Record<string, any>, TDefault extends TFull> = Omit<
+	TFull,
+	keyof TDefault
+> &
+	Partial<TDefault>

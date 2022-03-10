@@ -5,10 +5,11 @@
 
 import { Timeline, Track } from 'ani-timeline'
 import { Color } from '@gs.i/utils-math'
-import { GLine, GLineMatr, GLinePointMatr } from '@gs.i/utils-gline'
+import { GLine, GLineMatr, GLinePointMatr } from '@gs.i/frontend-gline'
 import { colorLerp, concatTypedArray, dimReduce } from './util'
 import { Grid } from './Grid'
-import { TextureType } from '@gs.i/schema'
+import IR, { Texture } from '@gs.i/schema-scene'
+import { specifyTexture } from '@gs.i/utils-specify'
 
 export interface FlyLineProps {
 	// GLine api
@@ -21,7 +22,7 @@ export interface FlyLineProps {
 	opacity: number
 	image?: string
 	flipY?: boolean
-	texture?: TextureType
+	texture?: IR.Texture
 	useColors: boolean
 	usePerspective: boolean
 	usePoint: boolean
@@ -79,7 +80,7 @@ export const DefaultFlyLineProps: FlyLineProps = {
 export class FlyLine {
 	props: FlyLineProps
 
-	sampler: any
+	sampler: IR.LooseSampler
 	mesh: GLine
 	gline: GLine
 	matr: GLineMatr | GLinePointMatr
@@ -138,18 +139,22 @@ export class FlyLine {
 
 		// 优先使用image属性
 		if (this.props.image) {
-			this.props.texture = {
+			this.props.texture = specifyTexture({
 				image: {
 					uri: this.props.image,
-					flipY: !!this.props.flipY,
+					extensions: {
+						EXT_image: {
+							flipY: !!this.props.flipY,
+						},
+					},
 				},
 				sampler: this.sampler,
-			}
+			})
 		} else if (this.props.texture && this.props.texture.image && this.props.texture.image.uri) {
-			this.props.texture = {
+			this.props.texture = specifyTexture({
 				image: this.props.texture.image,
 				sampler: this.sampler,
-			}
+			})
 		}
 
 		const glineConfig = {

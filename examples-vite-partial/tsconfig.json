@@ -15,6 +15,9 @@
 			"path": "../packages/layers/amap"
 		},
 		{
+			"path": "../packages/layers/flyline"
+		},
+		{
 			"path": "../packages/layers/geojson"
 		},
 		{
