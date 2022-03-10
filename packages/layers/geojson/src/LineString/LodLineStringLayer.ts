@@ -3,10 +3,9 @@
  * All rights reserved.
  */
 
-import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
-import { GLine } from '@gs.i/utils-gline'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/base-gsi'
+import { GLine, GLineMatrConfig } from '@gs.i/frontend-gline'
 import { Color } from '@gs.i/utils-math'
-import { Polaris } from '@polaris.gl/base'
 
 /**
  * 内部逻辑依赖
@@ -18,6 +17,8 @@ import polygonToLine from '@turf/polygon-to-line'
 import { WorkerManager } from '@polaris.gl/utils-worker-manager'
 import { createWorkers } from '../workers/LineGeomWorker'
 import { LineLodGroup } from './LineLodGroup'
+import { specifyTexture } from '@gs.i/utils-specify'
+import { OptionalDefault } from '../utils'
 
 /**
  * 配置项 interface
@@ -35,31 +36,10 @@ export type LodInfo = {
 	percentage: number
 }
 
-export interface LodLineStringProps extends StandardLayerProps {
-	data?: FeatureCollection
-	level?: number
-	color?: any
-	opacity?: number
-	lineWidth?: number
-	pointSize?: number
-	texture?: string
-	baseAlt?: number
-	dynamic?: boolean
-	usePerspective?: boolean
-	useColors?: boolean
-	/**
-	 * 生成lods所需信息
-	 */
-	lods?: LodInfo[]
-	/**
-	 * Open debug mode
-	 */
-	debug?: boolean
-}
-
-const defaultProps: LodLineStringProps = {
+const defaultProps = {
+	name: 'LodLineStringLayer',
 	// GLine api
-	level: 2,
+	level: 2 as GLineMatrConfig['level'],
 	color: '#03A9F4',
 	opacity: 1.0,
 	lineWidth: 10,
@@ -68,14 +48,26 @@ const defaultProps: LodLineStringProps = {
 	useColors: false,
 	dynamic: false,
 	baseAlt: 0,
+	/**
+	 * 生成lods所需信息
+	 */
 	lods: [
 		{
 			zoom: 100,
 			percentage: 1.0,
 		},
-	],
+	] as LodInfo[],
+	/**
+	 * Open debug mode
+	 */
 	debug: false,
 }
+
+export type LodLineStringProps = StandardLayerProps &
+	typeof defaultProps & {
+		data?: FeatureCollection
+		texture?: string
+	}
 
 const textDecoder = new TextDecoder('utf-8')
 
@@ -88,27 +80,24 @@ const textDecoder = new TextDecoder('utf-8')
  * @class LodLineStringLayer
  * @extends {StandardLayer}
  */
-export class LodLineStringLayer extends StandardLayer {
+export class LodLineStringLayer extends StandardLayer<LodLineStringProps> {
 	glineGroup: LineLodGroup
 
 	private _workerManager: WorkerManager
 
-	constructor(props) {
-		super(props)
-
-		this.setProps({
+	constructor(props: OptionalDefault<LodLineStringProps, typeof defaultProps> = {}) {
+		const _props = {
 			...defaultProps,
 			...props,
-		})
-
-		this.name = this.group.name = 'LodLineStringLayer'
+		}
+		super(_props)
 
 		this.glineGroup = new LineLodGroup()
 
-		this.onViewChange = (cam, polaris) => {
+		this.addEventListener('viewChange', (e) => {
 			if (this.glineGroup) {
 				// Update resolution
-				const p = polaris as Polaris
+				const p = e.polaris
 				const w = p.canvasWidth
 				const h = p.canvasHeight
 				this.glineGroup.forEach((mesh) => {
@@ -122,151 +111,163 @@ export class LodLineStringLayer extends StandardLayer {
 					}
 				})
 				// Update lods
-				this.glineGroup.update(cam)
+				this.glineGroup.update(e.cameraProxy)
 			}
-		}
-	}
+		})
 
-	init(projection, timeline, polaris) {
-		this._workerManager = new WorkerManager(createWorkers(1))
+		this.addEventListener('init', (e) => {
+			const polaris = e.polaris
+			const projection = e.projection
+			const timeline = e.timeline
 
-		this.listenProps(
-			[
-				'level',
-				'lineWidth',
-				'pointSize',
-				'color',
-				'opacity',
-				'texture',
-				'usePerspective',
-				'useColors',
-				'dynamic',
-				'lods',
-			],
-			() => {
-				if (this.glineGroup) {
-					this.glineGroup.forEach((gline) => this.group.remove(gline))
-					this.glineGroup.clear()
-				}
-				const lodInfos = this.getProps('lods') as LodInfo[]
-				for (let i = 0; i < lodInfos.length; i++) {
-					const color = this._getLineColor()
-					const gline = new GLine({
-						level: this.getProps('level'),
-						lineWidth: this.getProps('lineWidth'),
-						pointSize: this.getProps('pointSize'),
-						color: color,
-						opacity: this.getProps('opacity'),
-						texture: this.getProps('texture'),
-						usePerspective: this.getProps('usePerspective'),
-						useColors: this.getProps('useColors'),
-						dynamic: this.getProps('dynamic'),
-						resolution: {
-							x: polaris.canvasWidth ?? polaris.width,
-							y: polaris.canvasHeight ?? polaris.height,
-						},
-					})
-					this.group.add(gline)
-					this.glineGroup.add(gline, lodInfos[i].zoom)
-				}
-			}
-		)
+			this._workerManager = new WorkerManager(createWorkers(1))
 
-		this.listenProps(
-			[
-				'data',
-				'baseAlt',
-				'level',
-				'pointSize',
-				'texture',
-				'usePerspective',
-				'useColors',
-				'dynamic',
-				'lods',
-			],
-			async () => {
-				const data: FeatureCollection<any> = this.getProps('data')
-				const baseAlt = this.getProps('baseAlt')
-				if (!(data && Array.isArray(data.features))) {
-					return
-				}
-
-				/**
-				 * Building geojson lods:
-				 * 1. Transfer to worker
-				 * 2. Get generated geojsons back (might be arraybuffer)
-				 * 3. Build lod meshes
-				 */
-				const lodInfos = this.getProps('lods') as LodInfo[]
-				const percentages = lodInfos.map((info) => info.percentage)
-				const res = await this._workerManager.execute({
-					data: {
-						task: 'lods',
-						geojson: data,
-						percentages: percentages,
-					},
-					transferables: undefined,
-				})
-
-				res.results.forEach((lod, i) => {
-					const content = lod
-					if (!content) return
-					let geojson
-					if (content.buffer !== undefined) {
-						geojson = JSON.parse(textDecoder.decode(content))
-					} else {
-						geojson = content
+			this.listenProps(
+				[
+					'level',
+					'lineWidth',
+					'pointSize',
+					'color',
+					'opacity',
+					'texture',
+					'usePerspective',
+					'useColors',
+					'dynamic',
+					'lods',
+				],
+				() => {
+					if (this.glineGroup) {
+						this.glineGroup.forEach((gline) => this.group.remove(gline))
+						this.glineGroup.clear()
 					}
+					const textureURL = this.getProp('texture')
+					const texture = textureURL
+						? specifyTexture({
+								image: { uri: textureURL },
+								sampler: undefined,
+						  })
+						: undefined
+					const lodInfos = this.getProp('lods') as LodInfo[]
+					for (let i = 0; i < lodInfos.length; i++) {
+						const color = this._getLineColor()
+						const gline = new GLine({
+							level: this.getProp('level'),
+							lineWidth: this.getProp('lineWidth'),
+							pointSize: this.getProp('pointSize'),
+							color: color,
+							opacity: this.getProp('opacity'),
+							texture,
+							usePerspective: this.getProp('usePerspective'),
+							useColors: this.getProp('useColors'),
+							dynamic: this.getProp('dynamic'),
+							resolution: {
+								x: polaris.canvasWidth ?? polaris.width,
+								y: polaris.canvasHeight ?? polaris.height,
+							},
+						})
+						this.group.add(gline)
+						this.glineGroup.add(gline, lodInfos[i].zoom)
+					}
+				}
+			)
 
-					// Data prep
-					const positions: number[][] = []
-					// 拍平得到lineString的数组
-					const flattened = flatten(geojson)
-					// 删除空geometry
-					flattened.features = flattened.features.filter((i) => {
-						return i.geometry
+			this.listenProps(
+				[
+					'data',
+					'baseAlt',
+					'level',
+					'pointSize',
+					'texture',
+					'usePerspective',
+					'useColors',
+					'dynamic',
+					'lods',
+				],
+				// TODO: not safe, props may change during this async calling
+				async () => {
+					const data: FeatureCollection<any> | undefined = this.getProp('data')
+					if (!(data && Array.isArray(data.features))) {
+						return
+					}
+					const baseAlt = this.getProp('baseAlt')
+
+					/**
+					 * Building geojson lods:
+					 * 1. Transfer to worker
+					 * 2. Get generated geojsons back (might be arraybuffer)
+					 * 3. Build lod meshes
+					 */
+					const lodInfos = this.getProp('lods') as LodInfo[]
+					const percentages = lodInfos.map((info) => info.percentage)
+					const res = await this._workerManager.execute({
+						data: {
+							task: 'lods',
+							geojson: data,
+							percentages: percentages,
+						},
+						transferables: undefined,
 					})
-					flattened.features.forEach((feature: any) => {
-						let geom: any = getGeom(feature)
-						if (geom) {
-							// 如果Geojson数据是Polygon类型，需要先转换为LineString
-							if (geom.type === 'Polygon') {
-								const line: any = polygonToLine(feature)
-								geom = getGeom(line)
-							} else if (geom.type === 'MultiPolygon') {
-								const line: any = polygonToLine(feature)
-								geom = line.features[0].geometry
-							}
-							const positionsSub: number[] = []
-							const coords = getCoords(geom)
-							coords.forEach((coord) => {
-								const xyz = projection.project(coord[0], coord[1], baseAlt)
-								positionsSub.push(...xyz)
-							})
-							positions.push(positionsSub)
+
+					res.results.forEach((lod, i) => {
+						const content = lod
+						if (!content) return
+						let geojson
+						if (content.buffer !== undefined) {
+							geojson = JSON.parse(textDecoder.decode(content))
+						} else {
+							geojson = content
 						}
+
+						// Data prep
+						const positions: number[][] = []
+						// 拍平得到lineString的数组
+						const flattened = flatten(geojson)
+						// 删除空geometry
+						flattened.features = flattened.features.filter((i) => {
+							return i.geometry
+						})
+						flattened.features.forEach((feature: any) => {
+							let geom: any = getGeom(feature)
+							if (geom) {
+								// 如果Geojson数据是Polygon类型，需要先转换为LineString
+								if (geom.type === 'Polygon') {
+									const line: any = polygonToLine(feature)
+									geom = getGeom(line)
+								} else if (geom.type === 'MultiPolygon') {
+									const line: any = polygonToLine(feature)
+									geom = line.features[0].geometry
+								}
+								const positionsSub: number[] = []
+								const coords = getCoords(geom)
+								coords.forEach((coord) => {
+									const xyz = projection.project(coord[0], coord[1], baseAlt)
+									positionsSub.push(...xyz)
+								})
+								positions.push(positionsSub)
+							}
+						})
+
+						const gline = this.glineGroup.get(i).mesh as GLine
+						gline.geometry.updateData({
+							positions: positions,
+						})
 					})
 
-					const gline = this.glineGroup.get(i).mesh as GLine
-					gline.geometry.updateData({
-						positions: positions,
-					})
-				})
-
-				// Update first frame
-				this.glineGroup.update(polaris.cameraProxy)
-			}
-		)
+					// Update first frame
+					this.glineGroup.update(polaris.cameraProxy)
+				}
+			)
+		})
 	}
 
 	_getLineColor() {
-		if (this.getProps('debug')) {
+		if (this.getProp('debug')) {
 			const r = Math.round(0x88 + Math.random() * 0x77).toString(16)
 			const g = Math.round(0x88 + Math.random() * 0x77).toString(16)
 			const b = Math.round(0x88 + Math.random() * 0x77).toString(16)
 			return new Color(`#${r}${g}${b}`)
 		} else {
-			return new Color(this.getProps('color'))
+			return new Color(this.getProp('color'))
 		}
 	}
 
@@ -284,18 +285,18 @@ export class LodLineStringLayer extends StandardLayer {
 	// 		onStart: () => {},
 	// 		onEnd: () => {
 	// 			this.gline.material.alphaMode = transparent ? 'BLEND' : 'OPAQUE'
-	// 			this.gline.material.opacity = this.getProps('opacity')
+	// 			this.gline.material.opacity = this.getProp('opacity')
 	// 			this.group.visible = true
 	// 		},
 	// 		onUpdate: (t, p) => {
-	// 			this.gline.material.opacity = this.getProps('opacity') * p
+	// 			this.gline.material.opacity = this.getProp('opacity') * p
 	// 		},
 	// 	})
 	// }
 
 	// async hide(duration = 1000) {
 	// 	this.gline.material.alphaMode = 'BLEND'
-	// 	this.gline.material.opacity = this.getProps('opacity')
+	// 	this.gline.material.opacity = this.getProp('opacity')
 
 	// 	const timeline = await this.getTimeline()
 	// 	timeline.addTrack({
@@ -304,12 +305,12 @@ export class LodLineStringLayer extends StandardLayer {
 	// 		duration: duration,
 	// 		onStart: () => {},
 	// 		onEnd: () => {
-	// 			this.gline.material.alphaMode = this.getProps('transparent') ? 'BLEND' : 'OPAQUE'
-	// 			this.gline.material.opacity = this.getProps('opacity')
+	// 			this.gline.material.alphaMode = this.getProp('transparent') ? 'BLEND' : 'OPAQUE'
+	// 			this.gline.material.opacity = this.getProp('opacity')
 	// 			this.group.visible = false
 	// 		},
 	// 		onUpdate: (t, p) => {
-	// 			this.gline.material.opacity = this.getProps('opacity') * (1 - p)
+	// 			this.gline.material.opacity = this.getProp('opacity') * (1 - p)
 	// 		},
 	// 	})
 	// }

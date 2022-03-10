@@ -3,21 +3,22 @@
  * All rights reserved.
  */
 
-import { MatrPbr } from '@gs.i/frontend-sdk'
+import { PbrMaterial } from '@gs.i/frontend-sdk'
 
-export class PolygonMatr extends MatrPbr {
+export class PolygonMatr extends PbrMaterial {
 	metallicFactor = 0.1
 	roughnessFactor = 1.0
 	opacity = 1
 	uniforms = {
-		uHeightScale: { value: 1, type: 'float' },
+		uHeightScale: { value: 1 },
 	}
-	attributes = {
-		color: 'vec4',
-	}
-	varyings = {
-		vColor: 'vec4',
-	}
+	global = `
+		uniform float uHeightScale;
+		varying vec4 vColor;
+	`
+	vertGlobal? = `
+		attribute vec4 color;
+	`
 	vertGeometry = `
         position = vec3(position.x, position.y, position.z * uHeightScale);
     `
@@ -41,7 +42,9 @@ export class PolygonMatr extends MatrPbr {
 	}
 
 	setProps(props) {
-		const uniforms = this.uniforms
+		// this is a setter. do not get uniforms from proxy
+		// const uniforms = this.uniforms
+		const uniforms = this.extensions.EXT_matr_programmable.uniforms as PolygonMatr['uniforms']
 		uniforms.uHeightScale.value = props.heightScale ?? uniforms.uHeightScale.value
 	}
 }
