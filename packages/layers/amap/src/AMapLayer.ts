@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import { StandardLayer, StandardLayerProps } from '@polaris.gl/base-gsi'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 declare let window: any
 
 export interface AMapLayerProps extends StandardLayerProps {

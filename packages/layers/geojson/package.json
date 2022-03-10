@@ -28,7 +28,7 @@
         "@gs.i/frontend-gline": "0.2.1-alpha.3",
         "@gs.i/utils-math": "^0.0.0-beta",
         "@polaris.gl/base": "^0.0.0-alpha.9",
-        "@polaris.gl/base-gsi": "^0.0.0-alpha.9",
+        "@polaris.gl/gsi": "^0.0.0-alpha.9",
         "@polaris.gl/utils-indicator": "^0.0.0-alpha.9",
         "@polaris.gl/utils-worker-manager": "^0.0.0-alpha.9",
         "@turf/bbox": "^6.3.0",

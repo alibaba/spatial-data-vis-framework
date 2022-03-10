@@ -17,7 +17,7 @@
     },
     "dependencies": {
         "@gs.i/utils-math": "^0.0.0-beta",
-        "@polaris.gl/base-gsi": "^0.0.0-alpha.9",
+        "@polaris.gl/gsi": "^0.0.0-alpha.9",
         "@polaris.gl/layer-std-marker": "^0.0.0-alpha.9"
     },
     "devDependencies": {

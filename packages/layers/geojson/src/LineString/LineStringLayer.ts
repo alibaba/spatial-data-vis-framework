@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import { StandardLayer, StandardLayerProps } from '@polaris.gl/base-gsi'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 import { GLine, GLineMatrConfig } from '@gs.i/frontend-gline'
 import { Color } from '@gs.i/utils-math'
 

@@ -1,5 +1,5 @@
 {
-    "name": "@polaris.gl/base-gsi",
+    "name": "@polaris.gl/gsi",
     "version": "0.0.0-alpha.9",
     "description": "",
     "main": "dist/index.js",

@@ -6,7 +6,7 @@
 import { computeBBox, computeBSphere } from '@gs.i/utils-geometry'
 import { ScatterMatr } from './ScatterMatr'
 import { Mesh, Geom, Attr } from '@gs.i/frontend-sdk'
-import { StandardLayer, StandardLayerProps } from '@polaris.gl/base-gsi'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 
 type DataType = {
 	lng?: number | string

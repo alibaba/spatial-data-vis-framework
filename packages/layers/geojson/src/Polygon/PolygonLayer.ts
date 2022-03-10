@@ -9,7 +9,7 @@ import { Color, Box2 } from '@gs.i/utils-math'
  * 可以使用 Layer，自己添加需要的 view；
  * 也可以使用 StandardLayer，添加好 gsiView 和 htmlView 的 Layer，懒人福音。
  */
-import { StandardLayer, StandardLayerProps } from '@polaris.gl/base-gsi'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 
 /**
  * 内部逻辑依赖
