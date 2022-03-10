@@ -4,10 +4,9 @@
  */
 
 import { Mesh } from '@gs.i/frontend-sdk'
-import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
-import { deepCloneMesh } from '@polaris.gl/utils'
+import { deepCloneMesh } from './utils'
 import { Marker } from './Marker'
-import { PolarisGSI } from '@polaris.gl/gsi'
+import { PolarisGSI, StandardLayer, StandardLayerProps } from '@polaris.gl/base-gsi'
 import { CoordV2, PickEvent } from '@polaris.gl/base'
 
 /**
@@ -35,6 +34,7 @@ export interface MarkerLayerProps extends StandardLayerProps {
  * 配置项 默认值
  */
 export const defaultProps: MarkerLayerProps = {
+	name: 'MakerLayer',
 	alt: 0,
 	html: null,
 	offsetX: 0,
@@ -52,7 +52,7 @@ export const defaultProps: MarkerLayerProps = {
  *     ...OtherLayerProps都可单独设置
  * }]
  */
-export class MarkerLayer extends StandardLayer {
+export class MarkerLayer extends StandardLayer<MarkerLayerProps> {
 	props: any
 
 	private markers: Marker[]
@@ -67,22 +67,33 @@ export class MarkerLayer extends StandardLayer {
 		this.props = config
 		this.markers = []
 
-		this.name = this.group.name = 'MakerLayer'
 		this.element.className = 'maker-layer'
 	}
 
 	init(projection) {
-		const listenProps = Object.keys(defaultProps).filter((k) => k !== 'data')
-		this.listenProps(listenProps, (event) => {
-			const updateProps = {}
-			event.type.split(',').forEach((key) => {
-				updateProps[key] = this.getProps(key)
-			})
+		const watchProps = [
+			'alt',
+			'html',
+			'offsetX',
+			'offsetY',
+			'object3d',
+			'autoHide',
+			'highPerfMode',
+		] as const
+		this.watchProps(
+			watchProps,
+			(event) => {
+				const updateProps = {}
+				event.changedKeys.forEach((key) => {
+					updateProps[key] = this.getProp(key)
+				})
 
-			this.markers.forEach((marker) => {
-				if (marker) marker.updateProps(updateProps)
-			})
-		})
+				this.markers.forEach((marker) => {
+					if (marker) marker.updateProps(updateProps)
+				})
+			},
+			{ immediate: true }
+		)
 
 		/**
 		 * 数据结构
@@ -91,16 +102,20 @@ export class MarkerLayer extends StandardLayer {
 		 *     ...Other MarkerLayerProps 都可单独设置
 		 * }]
 		 */
-		this.listenProps('data', () => {
-			const data = this.getProps('data')
-			if (!data) return
-			this.updateMarkers(data)
-		})
+		this.watchProp(
+			'data',
+			() => {
+				const data = this.getProp('data')
+				if (!data) return
+				this.updateMarkers(data)
+			},
+			{ immediate: true }
+		)
 	}
 
 	raycast(polaris, canvasCoord, ndc) {
-		if (!this.getProps('pickable')) return
-		const data = this.getProps('data')
+		if (!this.getProp('pickable')) return
+		const data = this.getProp('data')
 		const results: PickEvent[] = []
 		for (let i = 0; i < this.markers.length; i++) {
 			const marker = this.markers[i]
@@ -121,7 +136,7 @@ export class MarkerLayer extends StandardLayer {
 	updateMarkers(data: any[]) {
 		// Remove old markers
 		this.markers.forEach((marker) => {
-			this.remove(marker)
+			this.remove(marker as any) // todo: marker should not be layer
 		})
 		this.markers.length = 0
 
@@ -134,27 +149,29 @@ export class MarkerLayer extends StandardLayer {
 			delete markerProps.lnglat
 
 			// Handle html & object3d props
-			if (!markerProps.html && this.getProps('html')) {
-				if (this.getProps('html') instanceof HTMLElement) {
-					markerProps.html = this.getProps('html').cloneNode()
+			const html = this.getProp('html')
+			if (!markerProps.html && html) {
+				if (html instanceof HTMLElement) {
+					markerProps.html = html.cloneNode()
 				} else {
-					markerProps.html = this.getProps('html')
+					markerProps.html = html
 				}
 			}
-			if (!markerProps.style && this.getProps('style')) {
-				markerProps.style = this.getProps('style')
+			if (!markerProps.style && this.getProp('style')) {
+				markerProps.style = this.getProp('style')
 			}
-			if (!markerProps.object3d && this.getProps('object3d')) {
-				markerProps.object3d = deepCloneMesh(this.getProps('object3d'))
+			const object3d = this.getProp('object3d')
+			if (!markerProps.object3d && object3d) {
+				markerProps.object3d = deepCloneMesh(object3d)
 			}
 
 			const marker = new Marker({
 				...this.props,
 				...markerProps,
-				pickable: this.getProps('pickable'),
+				pickable: this.getProp('pickable'),
 			})
 
-			this.add(marker)
+			this.add(marker as any) // todo: marker should not be layer
 			this.markers.push(marker)
 		}
 	}
@@ -178,7 +195,7 @@ export class MarkerLayer extends StandardLayer {
 		marker: Marker,
 		dataIndex: number
 	): PickEvent | undefined {
-		const data = this.getProps('data')
+		const data = this.getProp('data')
 		if (!data || data.length === 0) return
 
 		const pickResult = marker.pick(polaris, canvasCoords, ndc)
