@@ -9,8 +9,8 @@ import { computeBBox, computeBSphere } from '@gs.i/utils-geometry'
  * 可以使用 Layer，自己添加需要的 view；
  * 也可以使用 StandardLayer，添加好 threeView 和 htmlView 的 Layer，懒人福音。
  */
-import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
-import { Mesh, Geom, Attr, MatrPbr } from '@gs.i/frontend-sdk'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/base-gsi'
+import { Mesh, Geom, Attr, PbrMaterial } from '@gs.i/frontend-sdk'
 import { Color } from '@gs.i/utils-math'
 import { LineIndicator } from '@polaris.gl/utils-indicator'
 
@@ -24,94 +24,73 @@ import {
 	getColorUint,
 	getFeatureStringKey,
 	featureToLinePositions,
+	OptionalDefault,
 } from '../utils'
 import { PolygonMatr } from './PolygonMatr'
 import { Polaris } from '@polaris.gl/base'
-import { isDISPOSED } from '@gs.i/schema'
+import { isDISPOSED } from '@gs.i/schema-scene'
 import { WorkerManager } from '@polaris.gl/utils-worker-manager'
 import { createWorkers } from '../workers/PolygonGeomWorker'
 
 /**
  * 配置项 interface
  */
-export interface PolygonSurfaceLayerProps extends StandardLayerProps {
-	/**
-	 * Data
-	 */
-	data?: FeatureCollection
-	/**
-	 * Style related
-	 */
-	useTessellation?: boolean
-	tessellation?: number
-	getColor?: any
-	getOpacity?: any
-	getThickness?: any
-	baseAlt?: number
-	transparent?: boolean
-	doubleSide?: boolean
-	metallic?: number
-	roughness?: number
-	/**
-	 * Selection related
-	 */
-	genSelectLines?: boolean
-	selectLinesHeight?: number
-	hoverLineLevel?: 1 | 2 | 4
-	hoverLineWidth?: number
-	hoverLineColor?: any
-	selectLineLevel?: 1 | 2 | 4
-	selectLineWidth?: number
-	selectLineColor?: any
-	/**
-	 * Local storage/cache related
-	 */
-	// storeGeomToLocalDB?: boolean
-	// clearStorage?: boolean
-	// maxMemCacheCount?: number
-	// featureStorageKey?: string
-	/**
-	 * Worker params
-	 */
-	workersCount?: number
-}
+export type PolygonSurfaceLayerProps = StandardLayerProps &
+	typeof defaultProps & {
+		/**
+		 * Data
+		 */
+		data?: FeatureCollection
+	}
 
 /**
  * 配置项 默认值
  */
-const defaultProps: PolygonSurfaceLayerProps = {
+const defaultProps = {
+	/**
+	 * Style related
+	 */
 	useTessellation: false,
 	tessellation: 3,
-	getColor: '#689826',
-	getOpacity: 1,
-	getThickness: 0,
+	getColor: (feature) => '#689826' as string | number,
+	getOpacity: (feature) => 1,
+	getThickness: (feature) => 0,
 	baseAlt: 0,
 	transparent: false,
 	doubleSide: false,
 	metallic: 0.1,
 	roughness: 1.0,
+	/**
+	 * Selection related
+	 */
 	genSelectLines: false,
 	selectLinesHeight: 0,
-	hoverLineLevel: 2,
+	hoverLineLevel: 2 as 1 | 2 | 4,
 	hoverLineWidth: 1,
 	hoverLineColor: '#262626',
-	selectLineLevel: 2,
+	selectLineLevel: 2 as 1 | 2 | 4,
 	selectLineWidth: 2,
 	selectLineColor: '#FFAE0F',
+	/**
+	 * Local storage/cache related
+	 */
 	// storeGeomToLocalDB: true,
 	// clearStorage: false,
 	// maxMemCacheCount: 0,
 	// featureStorageKey: 'properties.adcode',
+	/**
+	 * Worker params
+	 */
 	workersCount: 0,
 }
 
 /**
  * 类
  */
-export class PolygonSurfaceLayer extends StandardLayer {
+export class PolygonSurfaceLayer extends StandardLayer<PolygonSurfaceLayerProps> {
 	props: any
 	geom: Geom
-	matr: MatrPbr
+	matr: PbrMaterial
 	mesh: Mesh
 
 	/**
@@ -145,7 +124,7 @@ export class PolygonSurfaceLayer extends StandardLayer {
 
 	private _tessellation: number
 
-	constructor(props: PolygonSurfaceLayerProps = {}) {
+	constructor(props: OptionalDefault<PolygonSurfaceLayerProps, typeof defaultProps> = {}) {
 		const _props = {
 			...defaultProps,
 			...props,
@@ -157,19 +136,17 @@ export class PolygonSurfaceLayer extends StandardLayer {
 		this._storeName = 'Polaris_PolygonSurfaceLayer'
 		this._geomCache = new Map()
 
-		this.listenProps(['tessellation'], (e, done) => {
+		this.listenProps(['tessellation'], (e) => {
 			this._tessellation = this.getProps('tessellation') ?? 0
-			done()
 		})
 
 		this.matr = new PolygonMatr()
 
-		this.listenProps(['transparent', 'doubleSide', 'metallic', 'roughness'], (e, done) => {
+		this.listenProps(['transparent', 'doubleSide', 'metallic', 'roughness'], (e) => {
 			this.matr.metallicFactor = this.getProps('metallic')
 			this.matr.roughnessFactor = this.getProps('roughness')
 			this.matr.alphaMode = this.getProps('transparent') ? 'BLEND' : 'OPAQUE'
 			this.matr.side = this.getProps('doubleSide') ? 'double' : 'front'
-			done()
 		})
 
 		this.onRenderOrderChange = (renderOrder) => {
@@ -194,78 +171,81 @@ export class PolygonSurfaceLayer extends StandardLayer {
 				this.hoverIndicator.updateResolution(p.canvasWidth, p.canvasHeight)
 			}
 		}
-	}
 
-	init(projection, timeline, polaris) {
-		// Init WorkerManager
+		this.addEventListener('init', (e) => {
+			const polaris = e.polaris
+			const projection = e.projection
 
-		this.listenProps(['workers'], (e, done) => {
-			if (this._workerManager) {
-				throw new Error('can not change props.workersCount')
-			} else {
-				const count = this.getProps('workersCount')
-				if (count > 0) {
-					const workers: Worker[] = createWorkers(count)
-					this._workerManager = new WorkerManager(workers)
+			// Init WorkerManager
+
+			// @TODO: what is 'workers' ? @qianxun
+			// this.listenProps(['workers'], (e, done) => {
+			this.listenProps(['workersCount'], (e) => {
+				if (this._workerManager) {
+					throw new Error('can not change props.workersCount')
+				} else {
+					const count = this.getProps('workersCount')
+					if (count > 0) {
+						const workers: Worker[] = createWorkers(count)
+						this._workerManager = new WorkerManager(workers)
+					}
 				}
-			}
-		})
-		// this.listenProps(['workersCount'], (e, done) => {
+			})
+			// this.listenProps(['workersCount'], (e, done) => {
 
-		// 	const count = this.getProps('workersCount')
-		// 	if (count > 0) {
-		// 		const workers: Worker[] = []
-		// 		for (let i = 0; i < count; i++) {
-		// 			workers.push(new GeomWorker())
-		// 		}
-		// 		this._workerManager = new WorkerManager(workers)
-		// 	}
-		// 	done()
-		// })
+			// 	const count = this.getProps('workersCount')
+			// 	if (count > 0) {
+			// 		const workers: Worker[] = []
+			// 		for (let i = 0; i < count; i++) {
+			// 			workers.push(new GeomWorker())
+			// 		}
+			// 		this._workerManager = new WorkerManager(workers)
+			// 	}
+			// 	done()
+			// })
 
-		// 3D 内容
-		this.mesh = new Mesh({ name: 'PolygonSurface', material: this.matr })
-		this.group.add(this.mesh)
+			// 3D 内容
+			this.mesh = new Mesh({ name: 'PolygonSurface', material: this.matr })
+			this.group.add(this.mesh)
 
-		// 数据与配置的应用（包括reaction）
-		this.listenProps(
-			[
-				'data',
-				'getThickness',
-				'baseAlt',
-				'useTessellation',
-				'genSelectLines',
-				'selectLinesHeight',
-				'selectLineWidth',
-				'selectLineLevel',
-				'selectLineColor',
-			],
-			(e, done) => {
-				const data = this.getProps('data')
-				if (!(data && Array.isArray(data.features))) {
-					done()
-					return
+			// 数据与配置的应用（包括reaction）
+			this.listenProps(
+				[
+					'data',
+					'getThickness',
+					'baseAlt',
+					'useTessellation',
+					'genSelectLines',
+					'selectLinesHeight',
+					'selectLineWidth',
+					'selectLineLevel',
+					'selectLineColor',
+				],
+				(e) => {
+					const data = this.getProps('data')
+					if (!(data && Array.isArray(data.features))) {
+						return
+					}
+					this.createGeom(data, projection, polaris)
+					// const cached = undefined
+					// if (cached) {
+					// 	this.mesh.geometry = cached.geom
+					// 	if (this.getProps('genSelectLines')) {
+					// 		this.selectIndicator = cached.selectIndicator
+					// 		this.hoverIndicator = cached.hoverIndicator
+					// 		this.selectIndicator.addToLayer(this)
+					// 		this.hoverIndicator.addToLayer(this)
+					// 	}
+					// } else {
+					// 	this.createGeom(data, projection, polaris)
+					// }
 				}
-				this.createGeom(data, projection, polaris).then(() => done())
-				// const cached = undefined
-				// if (cached) {
-				// 	this.mesh.geometry = cached.geom
-				// 	if (this.getProps('genSelectLines')) {
-				// 		this.selectIndicator = cached.selectIndicator
-				// 		this.hoverIndicator = cached.hoverIndicator
-				// 		this.selectIndicator.addToLayer(this)
-				// 		this.hoverIndicator.addToLayer(this)
-				// 	}
-				// } else {
-				// 	this.createGeom(data, projection, polaris)
-				// }
-			}
-		)
+			)
 
-		// Only update color attributes
-		this.listenProps(['getColor', 'getOpacity'], (e, done) => {
-			this._updateColorsAttr()
-			done()
+			// Only update color attributes
+			this.listenProps(['getColor', 'getOpacity'], (e) => {
+				this._updateColorsAttr()
+			})
 		})
 	}
 
@@ -552,7 +532,7 @@ export class PolygonSurfaceLayer extends StandardLayer {
 		const attr = this.geom.attributes.color
 		if (!attr) return
 
-		const array = this.geom.attributes.color.array
+		const array = attr.array
 		if (isDISPOSED(array)) return
 
 		let needsUpdate = false
@@ -573,8 +553,13 @@ export class PolygonSurfaceLayer extends StandardLayer {
 		}
 
 		if (needsUpdate) {
-			attr.updateRanges = attr.updateRanges ?? []
-			attr.updateRanges.push({
+			!attr.extensions && (attr.extensions = {})
+			!attr.extensions.EXT_buffer_partial_update &&
+				(attr.extensions.EXT_buffer_partial_update = { updateRanges: [] })
+
+			const updateRanges = attr.extensions.EXT_buffer_partial_update.updateRanges
+
+			updateRanges.push({
 				start: range[0],
 				count: range[1] - range[0],
 			})
@@ -590,7 +575,8 @@ export class PolygonSurfaceLayer extends StandardLayer {
 		if (!this.geom) return
 
 		const attr = this.geom.attributes.color
-		const array = this.geom.attributes.color.array
+		if (!attr) return
+		const array = attr.array
 		if (isDISPOSED(array)) return
 
 		const colorUint = this.getFeatureColor(feature)
@@ -616,8 +602,13 @@ export class PolygonSurfaceLayer extends StandardLayer {
 		}
 
 		if (needsUpdate) {
-			attr.updateRanges = attr.updateRanges ?? []
-			attr.updateRanges.push({
+			!attr.extensions && (attr.extensions = {})
+			!attr.extensions.EXT_buffer_partial_update &&
+				(attr.extensions.EXT_buffer_partial_update = { updateRanges: [] })
+
+			const updateRanges = attr.extensions.EXT_buffer_partial_update.updateRanges
+
+			updateRanges.push({
 				start: range[0],
 				count: range[1] - range[0],
 			})
@@ -751,34 +742,13 @@ export class PolygonSurfaceLayer extends StandardLayer {
 				return
 		}
 		if (indicator) {
-			indicator.clearUpdateRanges()
+			// TODD: why? @qianxun
+			// indicator.clearUpdateRanges()
 		}
 	}
 
 	private _removeIndicator(indicator: LineIndicator) {
 		indicator && indicator.removeFromLayer()
-	}
-
-	private _getCachedGeom(features: any[]): GeomCacheType | undefined {
-		const cacheCount = this.getProps('maxMemCacheCount')
-		if (cacheCount <= 0) return
-		/**
-		 * 1. Get data cache key
-		 * 2. Find geom from mem cache
-		 * 3. return
-		 */
-		let cacheKey = ''
-		features.forEach((feature) => {
-			const str = getFeatureStringKey(feature, this.getProps('featureStorageKey'))
-			if (str) {
-				cacheKey += str + '|'
-			} else {
-				console.error(
-					'Polaris::PolygonLayer - Feature key is undefined, check cache key props plz. '
-				)
-			}
-		})
-		return this._geomCache.get(cacheKey)
 	}
 
 	private _updateColorsAttr() {

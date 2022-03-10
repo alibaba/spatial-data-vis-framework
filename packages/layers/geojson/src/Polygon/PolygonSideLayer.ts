@@ -9,8 +9,8 @@ import { computeBBox, computeBSphere } from '@gs.i/utils-geometry'
  * 可以使用 Layer，自己添加需要的 view；
  * 也可以使用 StandardLayer，添加好 threeView 和 htmlView 的 Layer，懒人福音。
  */
-import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
-import { Mesh, Geom, Attr, MatrPbr } from '@gs.i/frontend-sdk'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/base-gsi'
+import { Mesh, Geom, Attr, PbrMaterial } from '@gs.i/frontend-sdk'
 import { Color } from '@gs.i/utils-math'
 import { PolygonMatr } from './PolygonMatr'
 
@@ -20,51 +20,43 @@ import { PolygonMatr } from './PolygonMatr'
 import { flattenEach } from '@turf/meta'
 import { getCoords } from '@turf/invariant'
 import { FeatureCollection } from '@turf/helpers'
-import { getColorUint } from '../utils'
+import { getColorUint, OptionalDefault } from '../utils'
 
 /**
  * 配置项 interface
  */
 // import { THREE } from '@ali/GL2'
-export interface PolygonSideLayerProps extends StandardLayerProps {
-	getColor?: any
-	getThickness?: any
-	baseAlt?: number
-	opacity?: number
-	transparent?: boolean
-	doubleSide?: boolean
-	metallic?: number
-	roughness?: number
-	data?: FeatureCollection
-}
+export type PolygonSideLayerProps = StandardLayerProps &
+	typeof defaultProps & {
+		data?: FeatureCollection
+	}
 
 /**
  * 配置项 默认值
  */
 const defaultProps = {
-	getColor: '#689826',
-	getThickness: 0,
+	getColor: (feature) => '#689826' as string | number,
+	getThickness: (feature) => 0,
 	baseAlt: 0,
 	opacity: 1,
 	transparent: false,
 	doubleSide: false,
 	metallic: 0.1,
 	roughness: 1.0,
-	data: null,
 }
 
 /**
  * 类
  */
-export class PolygonSideLayer extends StandardLayer {
+export class PolygonSideLayer extends StandardLayer<PolygonSideLayerProps> {
 	props: any
 	geom: Geom
-	matr: MatrPbr
+	matr: PbrMaterial
 	mesh: Mesh
 	// featIndexRangeMap: Map<any, number[]>
 	// featVertRangeMap: Map<any, number[]>
 
-	constructor(props: PolygonSideLayerProps = {}) {
+	constructor(props: OptionalDefault<PolygonSideLayerProps, typeof defaultProps> = {}) {
 		const _props = {
 			...defaultProps,
 			...props,
@@ -78,11 +70,11 @@ export class PolygonSideLayer extends StandardLayer {
 		this.matr = new PolygonMatr()
 
 		this.listenProps(['opacity', 'transparent', 'doubleSide', 'metallic', 'roughness'], () => {
-			this.matr.opacity = this.getProps('opacity')
-			this.matr.metallicFactor = this.getProps('metallic')
-			this.matr.roughnessFactor = this.getProps('roughness')
-			this.matr.alphaMode = this.getProps('transparent') ? 'BLEND' : 'OPAQUE'
-			this.matr.side = this.getProps('doubleSide') ? 'double' : 'front'
+			this.matr.opacity = this.getProp('opacity')
+			this.matr.metallicFactor = this.getProp('metallic')
+			this.matr.roughnessFactor = this.getProp('roughness')
+			this.matr.alphaMode = this.getProp('transparent') ? 'BLEND' : 'OPAQUE'
+			this.matr.side = this.getProp('doubleSide') ? 'double' : 'front'
 		})
 	}
 
@@ -92,13 +84,13 @@ export class PolygonSideLayer extends StandardLayer {
 		this.group.add(this.mesh)
 
 		// 数据与配置的应用（包括 reaction）
-		this.listenProps(['data', 'getColor', 'getThickness', 'baseAlt'], async () => {
+		this.listenProps(['data', 'getColor', 'getThickness', 'baseAlt'], () => {
 			this.geom = new Geom()
 
-			const data = this.getProps('data')
-			const getThickness = this.getProps('getThickness')
-			const getColor = this.getProps('getColor')
-			const baseAlt = this.getProps('baseAlt')
+			const data = this.getProp('data')
+			const getThickness = this.getProp('getThickness')
+			const getColor = this.getProp('getColor')
+			const baseAlt = this.getProp('baseAlt')
 
 			const positions = [] as Array<number>
 			const colors = [] as Array<number>
@@ -115,7 +107,7 @@ export class PolygonSideLayer extends StandardLayer {
 				// const vertRange = [positions.length, 0]
 				let count = 0
 				flattenEach(feature, (f) => {
-					const rings: any[] = getCoords(f)
+					const rings: any[] = getCoords(f as any) // @note looks fine
 					for (let k = 0; k < rings.length; k++) {
 						const coordinates: number[][] = rings[k]
 						let canConnect = false
