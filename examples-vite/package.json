@@ -1,6 +1,6 @@
 {
-	"name": "@polaris.gl/examples-vite-partial",
-	"_name": "@polaris.gl/examples-vite-partial",
+	"name": "@polaris.gl/examples-vite",
+	"_name": "@polaris.gl/examples-vite",
 	"version": "0.0.0-alpha.9",
 	"private": true,
 	"scripts": {
