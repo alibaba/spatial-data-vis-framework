@@ -28,6 +28,7 @@ await test(true, 'PolarisLite', () => {
 
 	const marker = new Marker({ html: 'hahaha' })
 	markerLayer.add(marker)
+	console.log(marker)
 
 	const marker2 = new Marker({ html: 'hoho', lng: 0.01 })
 	markerLayer.add(marker2)
