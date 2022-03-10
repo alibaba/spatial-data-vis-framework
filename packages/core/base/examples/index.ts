@@ -256,7 +256,7 @@ await test(false, 'AbstractPolaris', () => {
 	setTimeout(() => p.setProps({ width: 300 })) // viewChange & props listener
 })
 
-await test(true, 'Polaris+Layer', () => {
+await test(false, 'Polaris+Layer', () => {
 	type Props = LayerProps & {
 		aa: number
 		bb?: boolean
@@ -376,6 +376,44 @@ await test(true, 'Polaris+Layer', () => {
 	p.timeline.updateMaxFPS(1)
 
 	p.add(inode)
+})
+
+await test(true, 'RootChange', () => {
+	class L extends AbstractLayer {
+		constructor(props) {
+			super(props)
+
+			this.addEventListener('rootChange', (e) => {
+				console.log(`${this.getProp('name')} rootChange ${e.root?.name}`)
+			})
+		}
+		dispose() {}
+		updateAlignmentMatrix() {}
+	}
+
+	const root = new L({
+		name: 'root',
+	})
+	const inode = new L({
+		name: 'inode',
+	})
+
+	inode.addEventListener('rootChange', (e) => {
+		const leaf1 = new L({
+			name: 'leaf1',
+		})
+		inode.add(leaf1)
+		const leaf2 = new L({
+			name: 'leaf2',
+		})
+		inode.add(leaf2)
+		const leaf3 = new L({
+			name: 'leaf3',
+		})
+		inode.add(leaf3)
+	})
+
+	root.add(inode)
 })
 
 // ===

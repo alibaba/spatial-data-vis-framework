@@ -130,12 +130,31 @@ export class Node<TEventMap extends NodeEvents = NodeEvents> extends EventDispat
 		// emit `add` before `rootChange`
 		child.dispatchEvent({ type: 'add', parent: this })
 
-		// update root and emit `rootChange`
-		// @note only this child and its sub-tree are affected.
+		/**
+		 * update root and emit `rootChange`
+		 * @note only this child and its sub-tree are affected.
+		 * @note this will alow changing the tree during traversal
+		 *
+		 * @note Set.forEach follow the order of adding. inserting a child is an option.
+		 *
+		 * Newly added node during a traverse(A) may be visited or not:
+		 * 1. if node add child to self or parent. new node will be visited by traverse(A)
+		 * 2. if node add child to a finished subtree, like, the left sibling. new node won't be.
+		 *
+		 * In both scenarios, the child's adding will trigger a new traversal (B) for it's subtree.
+		 * witch will trigger rootChangeEvent for the new child.
+		 *
+		 * That is to sat, one event can be triggered twice on a node, if the node is added during
+		 * a event that is dispatched with a traversal.
+		 *
+		 * It is necessary to prevent this behavior carefully. Or just do not dispatch events in traversal.
+		 */
 		const root = this.root || this // @careful
 		child.traverse((node) => {
-			node.#root = root
-			node.dispatchEvent({ type: 'rootChange', root })
+			if (node.#root !== root) {
+				node.#root = root
+				node.dispatchEvent({ type: 'rootChange', root })
+			}
 		})
 	}
 
@@ -155,8 +174,10 @@ export class Node<TEventMap extends NodeEvents = NodeEvents> extends EventDispat
 		// @note only this child and its sub-tree are affected.
 		const root = child // @careful
 		child.traverse((node) => {
-			node.#root = root
-			node.dispatchEvent({ type: 'rootChange', root })
+			if (node.#root !== root) {
+				node.#root = root
+				node.dispatchEvent({ type: 'rootChange', root })
+			}
 		})
 	}
 
