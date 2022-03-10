@@ -65,7 +65,7 @@ export const defaultProps: ScatterLayerProps = {
 	data: [],
 }
 
-export class ScatterLayer extends StandardLayer {
+export class ScatterLayer extends StandardLayer<ScatterLayerProps> {
 	props: any
 
 	mesh: Mesh
