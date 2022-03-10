@@ -46,6 +46,9 @@
 		},
 		{
 			"path": "../packages/utils/projections"
+		},
+		{
+			"path": "../packages/polaris/polaris-react"
 		}
 	]
 }

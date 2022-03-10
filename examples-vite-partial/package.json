@@ -8,6 +8,7 @@
 	},
 	"dependencies": {
 		"@polaris.gl/lite": "^0.0.0-alpha.9",
+		"@polaris.gl/react": "^0.0.0-alpha.9",
 		"@polaris.gl/layer-label": "^0.0.0-alpha.9",
 		"@polaris.gl/layer-xyz-aoi-tile": "^0.0.0-alpha.9",
 		"@polaris.gl/layer-xyz-poi-tile": "^0.0.0-alpha.9",
@@ -22,7 +23,9 @@
 		"@polaris.gl/projection": "^0.0.0-alpha.9",
 		"@gs.i/processor-indicator": "^0.2.1-alpha.3",
 		"@gs.i/utils-random-scene": "^0.2.1-alpha.3",
-		"@gs.i/utils-specify": "^0.2.1-alpha.3"
+		"@gs.i/utils-specify": "^0.2.1-alpha.3",
+		"react": "^16.13.0",
+		"react-dom": "^16.13.0"
 	},
 	"devDependencies": {
 		"typescript": ">4.4.0",

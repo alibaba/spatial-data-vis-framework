@@ -11,7 +11,7 @@ function App() {
 	const height = 500
 
 	return (
-		<PolarisReact PolarisClass={PolarisLite} width={width} height={height} autoResize={false}>
+		<PolarisReact PolarisClass={PolarisLite} width={width} height={height} /*autoResize={false}*/>
 			<LayerReact LayerClass={HelperLayer}></LayerReact>
 		</PolarisReact>
 	)
