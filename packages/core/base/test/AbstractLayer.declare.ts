@@ -15,7 +15,7 @@
 import { AbstractNode } from './AbstractNode'
 import type { CameraProxy } from 'camera-proxy'
 import type { AbstractPolaris } from './Polaris'
-import { PropsManager, ListenerOptions, Callback } from '@polaris.gl/utils-props-manager'
+import { PropsManager, ListenerOptions, Callback } from '@polaris.gl/props-manager'
 
 type Events = {
 	visibilityChange: {}

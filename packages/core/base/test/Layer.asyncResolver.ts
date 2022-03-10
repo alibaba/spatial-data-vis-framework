@@ -11,7 +11,7 @@ import type { AbstractLayerEvents } from './events'
 import { Node } from './Node'
 import { View } from './View'
 import { AbstractPolaris, isPolaris } from './Polaris'
-import { Callback, ListenerOptions, PropsManager } from '@polaris.gl/utils-props-manager'
+import { Callback, ListenerOptions, PropsManager } from '@polaris.gl/props-manager'
 
 export interface LayerProps {
 	name?: string

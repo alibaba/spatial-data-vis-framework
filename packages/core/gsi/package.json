@@ -28,7 +28,6 @@
         "@gs.i/utils-math": "^0.0.0-beta",
         "@polaris.gl/base": "^0.0.0-alpha.9",
         "@polaris.gl/projection": "^0.0.0-alpha.9",
-        "@polaris.gl/utils-props-manager": "^0.0.0-alpha.9",
         "@polaris.gl/utils": "^0.0.0-alpha.9",
         "ani-timeline": "alpha",
         "hammerjs": "^2.0.8"
