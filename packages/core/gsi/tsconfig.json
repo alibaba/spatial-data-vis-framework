@@ -13,13 +13,10 @@
 			"path": "../base"
 		},
 		{
-			"path": "../../utils/projections"
+			"path": "../projections"
 		},
 		{
 			"path": "../../utils/utils"
-		},
-		{
-			"path": "../../utils/props-manager"
 		}
 	]
 }

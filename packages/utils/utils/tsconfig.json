@@ -13,7 +13,7 @@
 			"path": "../../core/base"
 		},
 		{
-			"path": "../projections"
+			"path": "../../core/projections"
 		}
 	]
 }

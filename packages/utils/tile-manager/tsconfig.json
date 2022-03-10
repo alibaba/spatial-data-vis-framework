@@ -16,7 +16,7 @@
 			"path": "../../core/gsi"
 		},
 		{
-			"path": "../projections"
+			"path": "../../core/projections"
 		}
 	]
 }
