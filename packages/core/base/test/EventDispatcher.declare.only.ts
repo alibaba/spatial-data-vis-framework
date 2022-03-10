@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-types */
 /**
  * Copyright (C) 2022 Alibaba Group Holding Limited
  * All rights reserved.
@@ -6,13 +7,6 @@
  * @description A fully-typed, extendable event dispatcher with similar api of DOM:EventTarget.
  * @author Simon
  */
-
-export interface EventBase {
-	type: string
-}
-
-export type EventMapBase = Record<string, EventBase>
-export type DefaultEventMap = Record<string, never>
 
 /**
  * An object that dispatches events.
@@ -25,14 +19,20 @@ export type DefaultEventMap = Record<string, never>
  * @note inspired by {@link [three.js](https://github.com/mrdoob/eventdispatcher.js/)}
  *
  */
-export class EventDispatcher<TEventTypes extends EventMapBase = any> {
+export class EventDispatcher {
+	/**
+	 * used to indicate the event names and their callback types
+	 */
+	declare readonly EventTypes: Record<string, unknown>
+
+	// #listeners = {} as Record<keyof this['EventTypes'], ListenerCbk<this, any>[]>
 	#listeners = {} as any
-	// eslint-disable-next-line @typescript-eslint/ban-types
-	#options = new WeakMap<Function, ListenerOptions>()
+	// #options = new WeakMap<ListenerCbk<this, any>, ListenerOptions>()
+	#options = new WeakMap<any, ListenerOptions>()
 
 	readonly isEventDispatcher = true
 
-	addEventListener<TEventTypeName extends keyof TEventTypes>(
+	addEventListener<TEventTypeName extends keyof this['EventTypes']>(
 		/**
 		 * type of the event
 		 */
@@ -40,7 +40,7 @@ export class EventDispatcher<TEventTypes extends EventMapBase = any> {
 		/**
 		 * callback function for the event
 		 */
-		listener: ListenerCbk<TEventTypes, TEventTypeName>,
+		listener: ListenerCbk<this, TEventTypeName>,
 		/**
 		 * An object that specifies characteristics about the event listener
 		 */
@@ -60,7 +60,7 @@ export class EventDispatcher<TEventTypes extends EventMapBase = any> {
 		}
 	}
 
-	removeEventListener<TEventTypeName extends keyof TEventTypes>(
+	removeEventListener<TEventTypeName extends keyof this['EventTypes']>(
 		/**
 		 * type of the event
 		 */
@@ -68,7 +68,7 @@ export class EventDispatcher<TEventTypes extends EventMapBase = any> {
 		/**
 		 * callback function for the event
 		 */
-		listener: ListenerCbk<TEventTypes, TEventTypeName>
+		listener: ListenerCbk<this, TEventTypeName>
 	): void {
 		const listeners = this.#listeners
 		const listenerArray = listeners[type]
@@ -84,8 +84,8 @@ export class EventDispatcher<TEventTypes extends EventMapBase = any> {
 		}
 	}
 
-	dispatchEvent<TEventTypeName extends keyof TEventTypes>(
-		event: Record<string, any> & {
+	dispatchEvent<TEventTypeName extends keyof this['EventTypes']>(
+		event: this['EventTypes'][TEventTypeName] & {
 			/**
 			 * assign the event type
 			 */
@@ -100,7 +100,7 @@ export class EventDispatcher<TEventTypes extends EventMapBase = any> {
 		const listenerArray = listeners[event.type]
 
 		if (listenerArray !== undefined) {
-			const eventOut = event as any
+			const eventOut = event as CbkEvent<this, TEventTypeName>
 
 			eventOut.target = this
 
@@ -122,7 +122,7 @@ export class EventDispatcher<TEventTypes extends EventMapBase = any> {
 		}
 	}
 
-	removeAllEventListeners<TEventTypeName extends keyof TEventTypes>(type: TEventTypeName): void {
+	removeAllEventListeners<TEventTypeName extends keyof this['EventTypes']>(type: TEventTypeName) {
 		const listeners = this.#listeners
 
 		if (listeners[type] !== undefined) {
@@ -135,20 +135,20 @@ export class EventDispatcher<TEventTypes extends EventMapBase = any> {
 	 * @node use this only if you know what you're doing
 	 * @deprecated may be removed in future versions
 	 */
-	protected dispatchAnEvent<TEventTypeName extends string>(
-		event: {
+	protected dispatchAnEvent<TEventTypeName extends keyof this['EventTypes']>(
+		event: this['EventTypes'][TEventTypeName] & {
 			/**
 			 * assign the event type
 			 */
 			type: TEventTypeName
 		},
-		listener: ListenerCbk<TEventTypes, TEventTypeName>
+		listener: ListenerCbk<this, TEventTypeName>
 	): void {
 		if (!event.type) {
 			throw new Error('event.type is required')
 		}
 
-		const eventOut = event as any
+		const eventOut = event as CbkEvent<this, TEventTypeName>
 
 		eventOut.target = this
 
@@ -162,11 +162,12 @@ export class EventDispatcher<TEventTypes extends EventMapBase = any> {
 		}
 	}
 }
+
 /**
  * options
  * @note drop DOM related options
  */
-interface ListenerOptions {
+export interface ListenerOptions {
 	/**
 	 * A boolean value indicating that the listener should be invoked at most once after
 	 * being added. If true, the listener would be automatically removed when invoked.
@@ -179,27 +180,41 @@ interface ListenerOptions {
 /**
  * type of listener callback function
  */
-type ListenerCbk<
-	TEventTypes extends Record<string, Record<string, any>>,
-	TName extends keyof TEventTypes
+export type ListenerCbk<
+	TTarget extends EventDispatcher,
+	TName extends keyof TTarget['EventTypes']
 > = (
 	/**
 	 * emitted event.
 	 */
-	// event: TEventTypes[TName] & {
-	// 	target: EventDispatcher<TEventTypes> // self
-	// 	type: TName
-	// }
-	event: TEventTypes[TName]
+	event: TTarget['EventTypes'][TName] & {
+		target: TTarget // self
+		type: TName
+	}
 ) => void
 
+/**
+ * event object passed to a callback
+ */
+export type CbkEvent<
+	TTarget extends EventDispatcher,
+	TName extends keyof TTarget['EventTypes']
+> = TTarget['EventTypes'][TName] & {
+	target: TTarget // self
+	type: TName
+}
+
+export function isEventDispatcher(v: any): v is EventDispatcher {
+	return v.isEventDispatcher === true
+}
+
+// export function addEvents<TEvents extends Record<string, Record<string, any>>>(events: TEvents) {
+// 	return function (constructor: Function)
+// }
+
 // type test code
-// const e = new EventDispatcher<{
-// 	aaa: { type: 'aaa'; data: any }
-// 	add: { type: 'add'; parent: any }
-// }>()
-// const e = new EventDispatcher()
-// e.addEventListener('aaa', (event) => {event})
+// const e = new EventDispatcher<{ aaa: { data: any }; add: { parent: any } }>()
+// e.addEventListener('aaa', (event) => {})
 // e.addEventListener('add', (event) => {})
 // e.addEventListener('ccc', (event) => {})
 // e.removeEventListener('aaa', (event) => {})
@@ -208,9 +223,3 @@ type ListenerCbk<
 // e.dispatchEvent({ type: 'add', parent: {} })
 // e.dispatchEvent({ type: 'bbb', parent: {} })
 // e.dispatchEvent({ type: 'aaa', parent: {} })
-
-// const a : Record<string, any> & {'bb': number} = {bb:2}
-
-// a.cc
-
-// type a = keyof Record<string, any>

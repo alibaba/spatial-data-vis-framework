@@ -9,10 +9,21 @@ import { SceneProps, defaultSceneProps, colorToString } from './SceneProps'
 
 export interface PolarisProps extends BasicProps, CameraProps, SceneProps {}
 
-export const defaultProps: PolarisProps = {
+export const defaultProps = {
 	...defaultBasicProps,
 	...defaultCameraProps,
 	...defaultSceneProps,
 }
 
 export { colorToString }
+
+export const STATIC_PROPS = [
+	'autoResize' as const,
+	'renderToFBO' as const,
+	'frustumCulling' as const,
+	'deepPicking' as const,
+	'asyncRendering' as const,
+	'container' as const,
+	'timeline' as const,
+	'projection' as const,
+]

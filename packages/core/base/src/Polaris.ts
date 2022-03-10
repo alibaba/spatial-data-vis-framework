@@ -7,57 +7,225 @@
  * Polaris 入口类 基类
  */
 
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import { Layer } from './Layer'
+import { AbstractLayer, resolveProjection } from './Layer'
 import { Projection, MercatorProjection } from '@polaris.gl/projection'
+import { Coordinator } from '@polaris.gl/coordinator'
 import { Timeline } from 'ani-timeline'
-import {
-	PointerControl,
-	AnimatedCameraProxy,
-	TouchControl,
-	Cameraman,
-	GeographicStates,
-} from 'camera-proxy'
-import { EventCallBack, PropsManager } from '@polaris.gl/utils-props-manager'
-import { PolarisProps, defaultProps } from './props/index'
+import { AnimatedCameraProxy, GeographicStates } from 'camera-proxy'
+import { PolarisProps, defaultProps, STATIC_PROPS } from './props/index'
+import type { AbstractPolarisEvents } from './events'
+import { checkViewChange, debug } from './utils'
 
 export { colorToString } from './props/index'
 export type { PolarisProps } from './props/index'
 
 /**
- * 根节点
+ * AbstractPolaris
  */
-export type RootLayer = Omit<Layer, 'parent' | 'level' | 'init' | 'afterInit' | 'updateData'>
+export abstract class AbstractPolaris<
+	TProps extends PolarisProps = any,
+	TEvents extends AbstractPolarisEvents = AbstractPolarisEvents
+> extends AbstractLayer<TProps, TEvents> {
+	readonly isAbstractPolaris = true
+	readonly isPolaris = true
 
-/**
- * Polaris 根节点 基类
- */
-export abstract class AbstractPolaris extends Layer implements RootLayer {
-	readonly isPolaris: boolean
+	/**
+	 * @todo readonly props should use getter
+	 */
 
-	// canvas: HTMLCanvasElement
+	readonly cameraProxy: AnimatedCameraProxy
 
-	cameraProxy: AnimatedCameraProxy
-	cameraControl?: PointerControl | TouchControl
-	cameraman: Cameraman
+	readonly timeline: Timeline
+	readonly projection: Projection
 
-	timeline: Timeline
-	projection: Projection
+	#width: number
+	#height: number
+	#ratio: number
+
+	#disposed = false
+
+	constructor(props: PolarisProps) {
+		// @note do not pass props into AbstractLayer constructor
+		super()
+
+		const _props = {
+			...defaultProps,
+			...props,
+		}
+
+		this.setProps(_props)
+
+		this.#width = _props.width
+		this.#height = _props.height
+		this.#ratio = _props.ratio
+
+		this.watchProps(['width', 'height', 'ratio'], (e) => {
+			this.resize(
+				this.getProp('width') ?? this.#width,
+				this.getProp('height') ?? this.#height,
+				this.getProp('ratio') ?? this.#ratio
+			)
+		})
+
+		/**
+		 * init timeline
+		 */
+		const timeline =
+			_props.timeline ||
+			new Timeline({
+				duration: Infinity,
+				// pauseWhenInvisible: false, // 检测标签页是否隐藏，已知在一些环境中不可用，建议关闭
+				openStats: false,
+				autoRelease: true, // 自动回收过期的track
+				maxStep: 100, // 最大帧长
+				maxFPS: 30, // 最大帧率
+				// ignoreErrors: true, // 出错后是否停止
+			})
+
+		/**
+		 * 等到全部初始化完成后再开始计时运行
+		 * @TODO not safe for input timeline
+		 */
+		_props.autoplay &&
+			setTimeout(() => {
+				if (this.timeline.playing)
+					throw new Error('Polaris:: Timeline is already playing. Autoplay may restart timeline.')
+
+				this.timeline.play()
+			})
+
+		/**
+		 * init projection
+		 */
+		const projection =
+			_props.projection ||
+			new MercatorProjection({
+				center: [0, 0],
+			})
+
+		this.timeline = timeline
+		this.projection = projection
+
+		// this._props = props
+
+		// const [changeableProps, staticKeys] = propsFilter(_props, changeableKeys)
+		// this.updateProps(changeableProps)
+
+		/**
+		 * init html / canvas
+		 */
+
+		// 物理像素
+		const canvasWidth = this.canvasWidth
+		const canvasHeight = this.canvasWidth
+
+		/**
+		 * init CameraProxy
+		 * proxy Renderer.camera
+		 */
+		const { fov, center, zoom, pitch, rotation } = _props
+		const cameraProxy = new AnimatedCameraProxy({
+			cameraFOV: fov as number,
+			timeline: timeline as any, // AnimatedCameraProxy use old version of timeline but only unchanged api
+			/** @LIMIT 开启inert会影响的部分：SphereProject同步，Animations的结束时间，暂时关闭inert */
+			inert: false,
+			canvasWidth,
+			canvasHeight,
+			onUpdate: () => {},
+		})
+
+		// @todo not a good practice, order dependent
+		// cameraProxy config props listener
+		this.watchProps(
+			['zoomLimit', 'pitchLimit'],
+			() => {
+				cameraProxy['limit'].zoom = this.getProp('zoomLimit')
+				cameraProxy['limit'].pitch = this.getProp('pitchLimit')
+			},
+			true
+		)
+
+		// 更新相机初始状态
+		const geo = this.projection.project(...(center as [number, number, number]))
+		const states: GeographicStates = {
+			center: geo,
+			pitch: pitch || 0 - 0,
+			rotation: rotation || 0 - 0,
+			zoom: zoom || 0 - 0,
+		}
+		// 使用无缓动的setStates方法，因为此时timeline可能还未start
+		cameraProxy.setGeographicStates(states)
+
+		// this.cameraman = new Cameraman({ camera: cameraProxy })
+
+		this.cameraProxy = cameraProxy
+
+		// handle projection alignment and ViewChangeEvent, on every frame
+		this.addEventListener('beforeRender', (e) => {
+			this.traverse((layer) => {
+				// projection alignment
+				// skip root
+				if (layer.parent) {
+					const parentProjection = resolveProjection(layer.parent) as Projection
+					const projection = resolveProjection(layer) as Projection
+
+					const visualCenter = this.getGeoCenter()
+					const alignmentMatrix = Coordinator.getRelativeMatrix(parentProjection, projection, [
+						visualCenter[0],
+						visualCenter[1],
+					])
+					layer.updateAlignmentMatrix(alignmentMatrix)
+				}
+
+				// ViewChange detection
+				checkViewChange(this, layer)
+			})
+		})
+
+		// 基本绘制循环
+		this.timeline.addTrack({
+			id: 'polaris_render_loop',
+			duration: Infinity,
+			loop: false,
+			onUpdate: () => {
+				if (_props.asyncRendering) {
+					setTimeout(() => {
+						this.tick()
+					})
+				} else {
+					this.tick()
+				}
+			},
+		})
+
+		// static props(change these props will not be reacted or even cause problems)
+		this.watchProps(STATIC_PROPS, (e) => {
+			const msg = `Do not modify static props: [${e.changedKeys.join(',')}]`
+			this.dispatchEvent({ type: 'error', error: new Error(msg) })
+			console.error(msg)
+		})
+	}
+
+	// #region width and height
 
 	/**
 	 * with of content @pixel
 	 * @note change this by calling resize
-	 * @default 1
+	 * @default 500
 	 * @readonly
 	 */
-	width: number
+	get width() {
+		return this.#width
+	}
 	/**
 	 * height of content @pixel
 	 * @note change this by calling resize
-	 * @default 1
+	 * @default 500
 	 * @readonly
 	 */
-	height: number
+	get height() {
+		return this.#height
+	}
 	/**
 	 * actual width of the canvas @pixel
 	 * - canvasWidth = width * ratio
@@ -79,172 +247,24 @@ export abstract class AbstractPolaris extends Layer implements RootLayer {
 	 * @default 1
 	 * @readonly
 	 */
-	ratio: number
+	get ratio() {
+		return this.#ratio
+	}
 
 	/**
-	 * scale of this canvas, scale the canvas with css.
-	 * @note change this by calling resize or setExternalScale
-	 * @default 1
-	 * @readonly
+	 * override layer
 	 */
-	scale: number
-
-	protected props: PolarisProps
-
-	protected _disposed: boolean
-
-	constructor(props: PolarisProps) {
-		const _props = {
-			...defaultProps,
-			...props,
-		}
-
-		/**
-		 * init timeline
-		 */
-		const timeline =
-			_props.timeline ||
-			new Timeline({
-				duration: Infinity,
-				// pauseWhenInvisible: false, // 检测标签页是否隐藏，已知在一些环境中不可用，建议关闭
-				openStats: false,
-				autoRelease: true, // 自动回收过期的track
-				maxStep: 100, // 最大帧长
-				maxFPS: 30, // 最大帧率
-				// ignoreErrors: true, // 出错后是否停止
-			})
-
-		/**
-		 * 等到全部初始化完成后再开始计时运行
-		 * @TODO 应该允许更精确的控制
-		 */
-		setTimeout(() => {
-			this.timeline.play()
-		})
-
-		/**
-		 * init projection
-		 */
-		const projection =
-			_props.projection ||
-			new MercatorProjection({
-				center: [0, 0],
-			})
-
-		/**
-		 * Polaris self is also an Layer, do Layer initialization
-		 */
-		super({ ..._props, timeline, projection })
-		this.isPolaris = true
-		this._disposed = false
-		this.name = 'Polaris'
-		this.timeline = timeline
-		this.projection = projection
-
-		this._propsManager = new PropsManager()
-		this.setProps(props)
-
-		// qianxun: 封装props的values到propsManager接口
-		this.props = {} as any
-		for (const key in _props) {
-			Object.defineProperty(this.props, key, {
-				enumerable: true,
-				configurable: false,
-				get: () => this.getProps(key),
-				set: (val) => this.updateProps({ [key]: val }),
-			})
-		}
-
-		/**
-		 * init html / canvas
-		 */
-
-		// 逻辑像素
-		this.width = _props.width || /* props.container.offsetWidth || */ 1024
-		this.height = _props.height || /* props.container.offsetHeight || */ 760
-		this.ratio = _props.ratio || 1.0
-		this.scale = 1.0
-
-		// 物理像素
-		const canvasWidth = this.canvasWidth
-		const canvasHeight = this.canvasWidth
-
-		/**
-		 * init CameraProxy
-		 * proxy Renderer.camera
-		 */
-		const { fov, center, zoom, pitch, rotation } = _props
-		const cameraProxy = new AnimatedCameraProxy({
-			cameraFOV: fov as number,
-			timeline,
-			/** @LIMIT 开启inert会影响的部分：SphereProject同步，Animations的结束时间，暂时关闭inert */
-			inert: false,
-			// TODO 可控制
-			limit: {
-				pitch: _props.pitchLimit,
-				zoom: _props.zoomLimit,
-			},
-			canvasWidth,
-			canvasHeight,
-			onUpdate: () => {},
-		})
-
-		// @todo not a good practice, order dependent
-		// cameraProxy config props listener
-		this.listenProps(['zoomLimit', 'pitchLimit'], () => {
-			cameraProxy['limit'].zoom = this.getProps('zoomLimit')
-			cameraProxy['limit'].pitch = this.getProps('pitchLimit')
-		})
-
-		// 更新相机初始状态
-		const geo = this.projection.project(...(center as [number, number, number]))
-		const states: GeographicStates = {
-			center: geo,
-			pitch: pitch || 0 - 0,
-			rotation: rotation || 0 - 0,
-			zoom: zoom || 0 - 0,
-		}
-		// 使用无缓动的setStates方法，因为此时timeline可能还未start
-		cameraProxy.setGeographicStates(states)
-
-		// this.cameraman = new Cameraman({ camera: cameraProxy })
-
-		this.cameraProxy = cameraProxy
-
-		this.onBeforeRender = () => {
-			const newStatesCode = this.cameraProxy.statesCode
-			this.traverse((obj) => {
-				if (obj.statesCode !== newStatesCode) {
-					obj.statesCode = newStatesCode
-					// obj._onViewChange.forEach((f) => f(this.cameraProxy, this))
-					obj.dispatchEvent({ type: 'viewChange', cameraProxy: this.cameraProxy, polaris: this })
-				}
-			})
-		}
-
-		// 基本绘制循环
-		this.timeline.addTrack({
-			id: '绘制循环',
-			duration: Infinity,
-			loop: false,
-			onUpdate: () => {
-				if (_props.asyncRendering) {
-					setTimeout(() => {
-						this.tick()
-					})
-				} else {
-					this.tick()
-				}
-			},
-		})
+	override get localTimeline(): Timeline {
+		return this.timeline
+	}
+	/**
+	 * override layer
+	 */
+	override get localProjection(): Projection {
+		return this.projection
 	}
 
-	// Implement Layer: 将polaris实例传递给children
-	getPolaris(): Promise<AbstractPolaris> {
-		return new Promise((resolve) => {
-			resolve(this)
-		})
-	}
+	// #endregion
 
 	pause() {
 		this.timeline.pause()
@@ -342,12 +362,17 @@ export abstract class AbstractPolaris extends Layer implements RootLayer {
 		return viewCoords.map((coords) => this.projection.unproject(coords.x, coords.y, coords.z))
 	}
 
-	resize(width, height, ratio = 1.0, externalScale = 1.0) {
+	resize(width: number, height: number, ratio = this.#ratio) {
+		// break loop
+		if (width === this.#width && height === this.#height && ratio === this.#ratio) return
+
+		debug(`Polaris:: .resize(${width}, ${height}, ${ratio})`)
+
 		// TODO 重建PointerControl
 
-		this.width = width
-		this.height = height
-		this.ratio = ratio || this.ratio
+		this.#width = width
+		this.#height = height
+		this.#ratio = ratio
 
 		this.cameraProxy.canvasWidth = this.canvasWidth
 		this.cameraProxy.canvasHeight = this.canvasHeight
@@ -355,51 +380,37 @@ export abstract class AbstractPolaris extends Layer implements RootLayer {
 		this.cameraProxy.config.canvasHeight = this.canvasHeight
 		this.cameraProxy.ratio = this.ratio // -> this.cam.update()
 
-		this.props.width = width
-		this.props.height = height
+		// sync back
+		// @note needs to break loop
+		this.setProps({
+			width,
+			height,
+			ratio,
+		} as any) // ridiculous https://github.com/microsoft/TypeScript/issues/19388
 
-		this.setExternalScale(externalScale)
-	}
-
-	setRatio(ratio = 1.0) {
-		this.resize(this.width, this.height, ratio)
-	}
-
-	/**
-	 * 设置外部画布缩放比例
-	 * @NOTE 调用此接口时，需要确认是否画布或容器已从外部设置了额外scale，如: style.transform
-	 * @param {number} [scale=1.0] 对应外部设置的画布缩放值
-	 * @memberof Polaris
-	 */
-	setExternalScale(scale = 1.0) {
-		this.scale = scale || this.scale
-		if (this.cameraControl) {
-			this.cameraControl.scale = this.scale
-		}
+		// this.setExternalScale(externalScale)
 	}
 
 	tick() {
-		if (this._disposed) {
-			throw new Error('Polaris - This instance is disposed. Create a new one if needed.')
-		}
+		try {
+			if (this.#disposed) {
+				throw new Error('Polaris - This instance is disposed. Create a new one if needed.')
+			}
 
-		// onBeforeRender
-		this.traverse((obj) => {
-			if (obj.visible) {
-				// obj._onBeforeRender.forEach((cbk) => cbk(this, this.cameraProxy))
+			// onBeforeRender
+			this.traverseVisible((obj) => {
 				obj.dispatchEvent({ type: 'beforeRender', polaris: this })
-			}
-		})
+			})
 
-		this.render()
+			this.render()
 
-		// onAfterRender
-		this.traverse((obj) => {
-			if (obj.visible) {
-				// obj._onAfterRender.forEach((cbk) => cbk(this, this.cameraProxy))
+			// onAfterRender
+			this.traverseVisible((obj) => {
 				obj.dispatchEvent({ type: 'afterRender', polaris: this })
-			}
-		})
+			})
+		} catch (error) {
+			this.dispatchEvent({ type: 'tickError', error: error })
+		}
 	}
 
 	/**
@@ -408,10 +419,8 @@ export abstract class AbstractPolaris extends Layer implements RootLayer {
 	 * 销毁，尽可能多的释放资源
 	 */
 	dispose() {
-		super.dispose()
 		this.timeline.dispose()
 		this.cameraProxy.dispose()
-		this.cameraControl && this.cameraControl.dispose()
 	}
 
 	/**
@@ -442,36 +451,43 @@ export abstract class AbstractPolaris extends Layer implements RootLayer {
 	 */
 	abstract getScreenXY(x: number, y: number, z: number): number[] | undefined
 
-	// #region reactive props update
-
-	/**
-	 * Init propsManager
-	 */
-	protected _propsManager: PropsManager
-
-	/**
-	 * 该方法用来被外部使用者调用
-	 *
-	 * @param {*} props
-	 * @return {*}  {Promise<void>}
-	 * @memberof Layer
-	 */
-	updateProps(props: any): Promise<void> {
-		return this.setProps(props)
+	// #region override AbstractLayer
+	// polaris is always the root
+	override get parent(): null {
+		return null
+	}
+	override get root(): this {
+		return this
 	}
 
-	getProps(key: string) {
-		return this._propsManager.get(key)
+	// polaris is always visible
+	override get visible(): true {
+		return true
+	}
+	override set visible(v: any) {
+		throw new Error('do not set visibility on polaris')
+	}
+	override show(): never {
+		throw new Error('do not set visibility on polaris')
+	}
+	override hide(): never {
+		throw new Error('do not set visibility on polaris')
 	}
 
-	protected setProps(newProps: any): Promise<void> {
-		return this._propsManager.set(newProps)
+	// polaris is always inited
+	override get inited(): true {
+		return true
 	}
 
-	protected listenProps(propsName: string | Array<string>, callback: EventCallBack) {
-		this._propsManager.listen(propsName, callback)
+	// TODO refactor picking
+	// polaris can not be raycast-ed. polaris call raycast on layers
+	// override raycast(p: never, c: never, n: never): never {
+	// 	throw new Error('polaris can not be raycast-ed')
+	// }
+	// polaris is the root of projection tree. no need to updateAlignmentMatrix
+	override updateAlignmentMatrix(m: never): never {
+		throw new Error('polaris do not updateAlignmentMatrix')
 	}
-
 	// #endregion
 }
 
@@ -483,3 +499,7 @@ export type Polaris = AbstractPolaris
  * @deprecated renamed as {@link AbstractPolaris} for clarity
  */
 export const Polaris = AbstractPolaris
+
+export function isPolaris(v: any = {}): v is AbstractPolaris {
+	return v.isPolaris && v.isAbstractLayer && v.isAbstractNode && v.isEventDispatcher
+}

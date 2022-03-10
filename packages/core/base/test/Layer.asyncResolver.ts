@@ -8,15 +8,17 @@ import type { Timeline } from 'ani-timeline'
 import type { CameraProxy } from 'camera-proxy'
 import type { AbstractLayerEvents } from './events'
 
-import { MAX_DEPTH, Node } from './Node'
-import type { AbstractPolaris } from './Polaris'
+import { Node } from './Node'
+import { View } from './View'
+import { AbstractPolaris, isPolaris } from './Polaris'
 import { Callback, ListenerOptions, PropsManager } from '@polaris.gl/utils-props-manager'
 
 export interface LayerProps {
 	name?: string
-	parent?: AbstractLayer
+	parent?: AbstractLayer<any>
 	timeline?: Timeline
 	projection?: Projection
+	views?: { [key: string]: new () => View }
 }
 
 // override Node & EventDispatcher interfaces to hide underlying implements.
@@ -46,6 +48,17 @@ export abstract class AbstractLayer<
 	 * readable name of this layer
 	 */
 	readonly name: string
+	/**
+	 * #### The actual renderable contents.
+	 * A layer can have multi views, e.g. gsiView + htmlView
+	 *
+	 * 🚧 @note
+	 * - kind of over-design. name and interface may change into future.
+	 * - this is for framework developers to add third-party renderers.
+	 * - should not be exposed to client developers.
+	 * - **only use this if you know what you are doing.**
+	 */
+	readonly view: { [key: string]: View }
 
 	#inited = false
 	#visible = true
@@ -54,6 +67,15 @@ export abstract class AbstractLayer<
 	// 本地传入
 	#timelineLocal?: Timeline
 	#projectionLocal?: Projection
+
+	// 从 parent tree 上回溯到的，本地缓存（避免每次都回溯）
+	#timelineResolved?: Timeline
+	#projectionResolved?: Projection
+
+	/**
+	 * if this layer has been added to a polaris instance, this will be set.
+	 */
+	#polarisResolved?: AbstractPolaris
 
 	/**
 	 * @constructor
@@ -68,18 +90,24 @@ export abstract class AbstractLayer<
 		this.#projectionLocal = props?.projection
 		this.#timelineLocal = props?.timeline
 
+		// initialize views by props.views
+		if (props?.views) {
+			this.view = {}
+			for (const key in props.views) {
+				const ViewClass = props.views[key]
+				const view = new ViewClass()
+				view.init(this)
+				this.view[key] = view
+			}
+		}
+
 		if (props?.parent) {
 			props.parent.add(this)
 		}
 
 		this.setProps(props || {})
 
-		/**
-		 * InitEvent
-		 *
-		 * Emit when this layer is added to a polaris tree (a layer tree whose root is a polaris instance)
-		 * Once inited, the parent-chain of this layer won't change again.
-		 */
+		// init event
 		this.addEventListener('rootChange', async (e) => {
 			if (this.#inited) {
 				const msg = 'InternalError: This layer has already been inited. cannot move a layer'
@@ -88,18 +116,10 @@ export abstract class AbstractLayer<
 				return
 			}
 
-			// if (isPolaris(e.root)) {
-			if (e.root?.['isPolaris']) {
-				// settle the projection for this layer
-				const projection = resolveProjection(this) as Projection
-				// settle the timeline for this layer
-				const timeline = resolveTimeline(this) as Timeline
-				// settle the polaris for this layer
+			if (isPolaris(e.root)) {
+				const projection = await this.getProjection()
+				const timeline = await this.getTimeline()
 				const polaris = e.root as AbstractPolaris
-
-				// set this before trigger event.
-				// because this may be used in InitEvent listeners
-				this.#inited = true
 
 				this.init && this.init(projection, timeline, polaris)
 
@@ -109,6 +129,8 @@ export abstract class AbstractLayer<
 					timeline,
 					polaris,
 				})
+
+				this.#inited = true
 
 				this.dispatchEvent({
 					type: 'afterInit',
@@ -137,29 +159,15 @@ export abstract class AbstractLayer<
 	set visible(v: boolean) {
 		if (this.#visible !== v) {
 			this.#visible = v
-			this.dispatchEvent({ type: 'visibilityChange', visible: v })
+			this.dispatchEvent({ type: 'visibilityChange' })
 		}
 	}
 
-	get localProjection(): Projection | undefined {
-		return this.#projectionLocal
-	}
-
-	get localTimeline(): Timeline | undefined {
-		return this.#timelineLocal
-	}
-
-	// TODO refactor picking
-	// /**
-	//  * optional raycast implement.
-	//  *
-	//  * don't implement this if this layer doesn't support raycast
-	//  * @param polaris
-	//  * @param canvasCoord
-	//  * @param ndc
-	//  * @deprecated This design is very scratchy
-	//  */
-	// raycast?(polaris: AbstractPolaris, canvasCoord: CoordV2, ndc: CoordV2): PickEvent | undefined
+	abstract raycast(
+		polaris: AbstractPolaris,
+		canvasCoord: CoordV2,
+		ndc: CoordV2
+	): PickEvent | undefined
 
 	// TODO: Is is necessary to dispose propsManager and event Listeners
 	abstract dispose(): void
@@ -186,7 +194,7 @@ export abstract class AbstractLayer<
 	 * listen to changes of a series of props.
 	 * @note callback will be fired if any of these keys changed
 	 */
-	watchProps<TKeys extends ReadonlyArray<keyof TProps>>(
+	watchProps<TKeys extends Array<keyof TProps>>(
 		keys: TKeys,
 		callback: Callback<TProps, TKeys[number]>,
 		options?: ListenerOptions
@@ -211,15 +219,233 @@ export abstract class AbstractLayer<
 
 		handler(this)
 		this.children.forEach((child) => {
-			child.traverseVisible(handler)
+			if (isAbstractLayer(child)) {
+				child.traverseVisible(handler)
+			}
 		})
 	}
 
-	resolveTimeline() {
-		return resolveTimeline(this)
+	// #region resolver
+
+	/**
+	 * 获取该Layer的投影模块
+	 *
+	 * Resolve the Projection instance for this layer.
+	 * - if projection is input as initial props, always use that one
+	 * - if not, will search parent tree until find the nearest projection instance
+	 * - if still not, will wait until current root is added to another tree
+	 */
+	getProjection(): Promise<Projection> {
+		return new Promise((resolve) => {
+			// 	请求本地
+			if (this.#projectionLocal) {
+				resolve(this.#projectionLocal)
+				return
+			}
+			// parent tree 回溯结果的本地缓存
+			if (this.#projectionResolved) {
+				resolve(this.#projectionResolved)
+				return
+			}
+
+			// 请求 parent tree
+			if (this.parent) {
+				if (isPolaris(this.parent)) {
+					this.#projectionResolved = this.parent.projection
+					resolve(this.parent.projection)
+				} else if (isAbstractLayer(this.parent)) {
+					// 把任务迭代地交给上级，而非自己去一层层遍历上级
+					this.parent.getProjection().then((projection) => {
+						this.#projectionResolved = projection
+						resolve(projection)
+					})
+				} else {
+					throw new Error(
+						'Can not resolve projection from parent because parent is not a Layer or Polaris.'
+					)
+				}
+
+				return
+			}
+
+			// else: 等待获得 parent 之后再请求 parent tree
+			this.addEventListener('add', (e) => {
+				const parent = e.parent
+				if (isPolaris(parent)) {
+					this.#projectionResolved = parent.projection
+					resolve(parent.projection)
+				} else if (isAbstractLayer(parent)) {
+					// 把任务迭代地交给上级，而非自己去一层层遍历上级
+					parent.getProjection().then((projection) => {
+						this.#projectionResolved = projection
+						resolve(projection)
+					})
+				} else {
+					throw new Error(
+						'Can not resolve projection from parent because parent is not a Layer or Polaris.'
+					)
+				}
+			})
+		})
 	}
-	resolveProjection() {
-		return resolveProjection(this)
+
+	/**
+	 * 获取该Layer的时间线模块
+	 *
+	 * Resolve the Timeline instance for this layer.
+	 * - if timeline is input as initial props, always use that one
+	 * - if not, will search parent tree until find the nearest timeline instance
+	 * - if still not, will wait until current root is added to another tree
+	 */
+	getTimeline(): Promise<Timeline> {
+		return new Promise((resolve) => {
+			// 	请求本地
+			if (this.#timelineLocal) {
+				resolve(this.#timelineLocal)
+				return
+			}
+			// parent tree 回溯结果的本地缓存
+			if (this.#timelineResolved) {
+				resolve(this.#timelineResolved)
+				return
+			}
+
+			// 请求 parent tree
+			if (this.parent) {
+				if (isPolaris(this.parent)) {
+					this.#timelineResolved = this.parent.timeline
+					resolve(this.parent.timeline)
+				} else if (isAbstractLayer(this.parent)) {
+					// 把任务迭代地交给上级，而非自己去一层层遍历上级
+					this.parent.getTimeline().then((timeline) => {
+						this.#timelineResolved = timeline
+						resolve(timeline)
+					})
+				} else {
+					throw new Error(
+						'Can not resolve timeline from parent because parent is not a Layer or Polaris.'
+					)
+				}
+
+				return
+			}
+
+			// else: 等待获得 parent 之后再请求 parent tree
+			this.addEventListener('add', (e) => {
+				const parent = e.parent
+				if (isPolaris(parent)) {
+					this.#timelineResolved = parent.timeline
+					resolve(parent.timeline)
+				} else if (isAbstractLayer(parent)) {
+					// 把任务迭代地交给上级，而非自己去一层层遍历上级
+					parent.getTimeline().then((timeline) => {
+						this.#timelineResolved = timeline
+						resolve(timeline)
+					})
+				} else {
+					throw new Error(
+						'Can not resolve timeline from parent because parent is not a Layer or Polaris.'
+					)
+				}
+			})
+		})
+	}
+
+	/**
+	 * 获取该Layer的Polaris实例
+	 *
+	 * Resolve the Polaris instance for this layer.
+	 * - will search parent tree until find the root Polaris instance
+	 * - if still not, will wait until current root is added to another tree
+	 */
+	getPolaris(): Promise<AbstractPolaris> {
+		return new Promise((resolve) => {
+			// 	请求本地
+			if (this.#polarisResolved) {
+				resolve(this.#polarisResolved)
+				return
+			}
+
+			// @todo @optimize use .root instead of .parent
+
+			// 请求 parent tree
+			if (this.parent) {
+				if (isPolaris(this.parent)) {
+					this.#polarisResolved = this.parent
+					resolve(this.parent)
+				} else if (isAbstractLayer(this.parent)) {
+					// 把任务迭代地交给上级，而非自己去一层层遍历上级
+					this.parent.getPolaris().then((polaris) => {
+						this.#polarisResolved = polaris
+						resolve(polaris)
+					})
+				} else {
+					throw new Error(
+						'Can not resolve polaris from parent because parent is not a Layer or Polaris.'
+					)
+				}
+
+				return
+			}
+
+			// else: 等待获得 parent 之后再请求 parent tree
+			this.addEventListener('add', (e) => {
+				const parent = e.parent
+				if (isPolaris(parent)) {
+					this.#polarisResolved = parent
+					resolve(parent)
+				} else if (isAbstractLayer(parent)) {
+					// 把任务迭代地交给上级，而非自己去一层层遍历上级
+					parent.getPolaris().then((polaris) => {
+						this.#polarisResolved = polaris
+						resolve(polaris)
+					})
+				} else {
+					throw new Error(
+						'Can not resolve polaris from parent because parent is not a Layer or Polaris.'
+					)
+				}
+			})
+		})
+	}
+
+	// #endregion
+
+	/**
+	 * sync interface. legacy only. not recommended.
+	 * @deprecated
+	 */
+	get localProjection(): Projection | undefined {
+		return this.#projectionLocal
+	}
+	/**
+	 * sync interface. legacy only. not recommended.
+	 * @deprecated
+	 */
+	get resolvedProjection(): Projection | undefined {
+		return this.#projectionResolved
+	}
+
+	/**
+	 * sync interface. legacy only. not recommended.
+	 * @deprecated
+	 */
+	get localTimeline(): Timeline | undefined {
+		return this.#timelineLocal
+	}
+	/**
+	 * sync interface. legacy only. not recommended.
+	 * @deprecated
+	 */
+	get resolvedTimeline(): Timeline | undefined {
+		return this.#timelineResolved
+	}
+	/**
+	 * sync interface. legacy only. not recommended.
+	 * @deprecated
+	 */
+	get resolvedPolaris(): AbstractPolaris | undefined {
+		return this.#polarisResolved
 	}
 
 	// #region legacy apis
@@ -237,9 +463,9 @@ export abstract class AbstractLayer<
 	 * @deprecated use {@link .addEventListener} instead
 	 * callback when object/layer
 	 */
-	set onVisibilityChange(f: (visible: boolean) => void) {
-		this.addEventListener('visibilityChange', (e) => {
-			f(e.visible)
+	set onVisibilityChange(f: () => void) {
+		this.addEventListener('visibilityChange', () => {
+			f()
 		})
 	}
 
@@ -297,7 +523,7 @@ export abstract class AbstractLayer<
 	/**
 	 * @deprecated use {@link watchProps} instead. with `{immediate: true}` as options
 	 */
-	protected listenProps<TKeys extends ReadonlyArray<keyof TProps>>(
+	protected listenProps<TKeys extends Array<keyof TProps>>(
 		keys: TKeys,
 		callback: Callback<TProps, TKeys[number]>
 	): void {
@@ -356,15 +582,11 @@ export abstract class AbstractLayer<
 
 export function isAbstractLayer(v: any): v is AbstractLayer
 export function isAbstractLayer(v: AbstractLayer): v is AbstractLayer {
-	return v.isAbstractLayer && v.isNode && v.isEventDispatcher
+	return v.isAbstractLayer && v.isAbstractNode && v.isEventDispatcher
 }
 export const isLayer = isAbstractLayer
 
 export const Layer = AbstractLayer
-
-export function isInited(v: AbstractLayer): v is AbstractLayer & { inited: true } {
-	return v.inited
-}
 
 //
 
@@ -417,69 +639,6 @@ export interface PickEventResult extends PickEvent {
 		ndc: CoordV2
 		screen: CoordV2
 	}
-}
-
-const resolvedTimeline = new WeakMap<AbstractLayer, Timeline | null>()
-const resolvedProjection = new WeakMap<AbstractLayer, Projection | null>()
-
-/**
- * resolve timeline for a layer
- *
- * search the parent-chain all the way up to root, until find a timeline instance
- */
-export function resolveTimeline(layer: AbstractLayer) {
-	const cached = resolvedTimeline.get(layer)
-	if (cached) return cached
-
-	let depth = 0
-	let currentLayer: AbstractLayer | null = layer
-	while (depth < MAX_DEPTH) {
-		if (currentLayer) {
-			const t = currentLayer.localTimeline
-			if (t) {
-				resolvedTimeline.set(layer, t)
-				return t
-			} else {
-				currentLayer = currentLayer.parent
-				depth++
-			}
-		} else {
-			resolvedTimeline.set(layer, null)
-			return null
-			// throw new Error('resolveTimeline: cannot find timeline in the whole parent tree.')
-		}
-	}
-	throw new Error('resolveTimeline: MAX_DEPTH exceeded')
-}
-
-/**
- * resolve projection for a layer
- *
- * search the parent-chain all the way up to root, until find a projection instance
- */
-export function resolveProjection(layer: AbstractLayer) {
-	const cached = resolvedProjection.get(layer)
-	if (cached) return cached
-
-	let depth = 0
-	let currentLayer: AbstractLayer | null = layer
-	while (depth < MAX_DEPTH) {
-		if (currentLayer) {
-			const p = currentLayer.localProjection
-			if (p) {
-				resolvedProjection.set(layer, p)
-				return p
-			} else {
-				currentLayer = currentLayer.parent
-				depth++
-			}
-		} else {
-			resolvedProjection.set(layer, null)
-			return null
-			// throw new Error('resolveProjection: cannot find projection in the whole parent tree.')
-		}
-	}
-	throw new Error('resolveProjection: MAX_DEPTH exceeded')
 }
 
 // test code
