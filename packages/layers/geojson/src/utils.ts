@@ -328,3 +328,13 @@ export type OptionalDefault<TFull extends Record<string, any>, TDefault extends 
 	keyof TDefault
 > &
 	Partial<TDefault>
+
+export function functionlize<T extends string | number | boolean, A extends any[]>(
+	v: ((...args: A) => T) | T
+) {
+	if (typeof v === 'function') {
+		return v
+	} else {
+		return () => v
+	}
+}

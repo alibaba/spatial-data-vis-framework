@@ -17,7 +17,7 @@ import { StandardLayer, StandardLayerProps } from '@polaris.gl/base-gsi'
 import { FeatureCollection } from '@turf/helpers'
 import { PolygonSideLayer } from './PolygonSideLayer'
 import { PolygonSurfaceLayer } from './PolygonSurfaceLayer'
-import { OptionalDefault } from '../utils'
+import { functionlize, OptionalDefault } from '../utils'
 
 export const defaultProps = {
 	name: 'PolygonLayer',
@@ -28,12 +28,12 @@ export const defaultProps = {
 	useTessellation: true,
 	tessellation: 3,
 	//
-	getFillColor: (feature) => '#689826' as string | number,
-	getFillOpacity: (feature) => 1.0,
-	getSideColor: (feature) => '#999999' as string | number,
+	getFillColor: ((feature) => '#689826') as (string | number) | ((feature) => string | number),
+	getFillOpacity: ((feature) => 1.0) as number | ((feature) => number),
+	getSideColor: ((feature) => '#999999') as (string | number) | ((feature) => string | number),
 	sideOpacity: 1.0,
 	enableExtrude: true,
-	getThickness: (feature) => 10000,
+	getThickness: ((feature) => 10000) as number | ((feature) => number),
 	baseAlt: 0,
 	transparent: false,
 	doubleSide: false,
@@ -155,9 +155,9 @@ export class PolygonLayer extends StandardLayer<PolygonLayerProps> {
 					data = JSON.parse(data) as FeatureCollection
 				}
 				const enableExtrude = this.getProp('enableExtrude')
-				const getColor = this.getProp('getFillColor')
-				const getOpacity = this.getProp('getFillOpacity')
-				const getThickness = enableExtrude ? this.getProp('getThickness') : () => 0
+				const getColor = functionlize(this.getProp('getFillColor'))
+				const getOpacity = functionlize(this.getProp('getFillOpacity'))
+				const getThickness = enableExtrude ? functionlize(this.getProp('getThickness')) : () => 0
 				const baseAlt = this.getProp('baseAlt')
 				const transparent = this.getProp('transparent')
 				const doubleSide = this.getProp('doubleSide')
@@ -289,8 +289,8 @@ export class PolygonLayer extends StandardLayer<PolygonLayerProps> {
 					data = JSON.parse(data) as FeatureCollection
 				}
 				const enableExtrude = this.getProp('enableExtrude')
-				const getColor = this.getProp('getSideColor')
-				const getThickness = this.getProp('getThickness')
+				const getColor = functionlize(this.getProp('getSideColor'))
+				const getThickness = functionlize(this.getProp('getThickness'))
 				const opacity = this.getProp('sideOpacity')
 				const baseAlt = this.getProp('baseAlt')
 				const transparent = this.getProp('transparent')
