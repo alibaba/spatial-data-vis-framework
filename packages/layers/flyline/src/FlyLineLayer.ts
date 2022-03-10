@@ -7,21 +7,13 @@ import { Vector3 } from '@gs.i/utils-math'
 import { Timeline } from 'ani-timeline'
 import { Projection, GeocentricProjection } from '@polaris.gl/projection'
 import { FlyLineProps, FlyLine, DefaultFlyLineProps } from './FlyLine'
-import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/base-gsi'
 import { Grid } from './Grid'
+import { OptionalDefault } from './util'
 
-export interface FlyLineLayerProps extends Partial<FlyLineProps>, Partial<StandardLayerProps> {
-	duration?: number
-	delay?: number
-	repeat?: boolean
-	minHeight?: number
-	maxHeight?: number
-	renderOrder?: number
-	depthTest?: boolean
-	data?: any[]
-}
+export type FlyLineLayerProps = StandardLayerProps & FlyLineProps & typeof defaultLayerProps
 
-export const DefaultLayerProps: FlyLineLayerProps = {
+export const defaultLayerProps = {
 	...DefaultFlyLineProps,
 	duration: 5000,
 	delay: 1000,
@@ -30,7 +22,7 @@ export const DefaultLayerProps: FlyLineLayerProps = {
 	maxHeight: 2,
 	renderOrder: 0,
 	depthTest: true,
-	data: [],
+	data: [] as any[],
 }
 
 /**
@@ -45,7 +37,7 @@ export const DefaultLayerProps: FlyLineLayerProps = {
  *      repeat
  *  }... ]
  */
-export class FlyLineLayer extends StandardLayer {
+export class FlyLineLayer extends StandardLayer<FlyLineLayerProps> {
 	props: FlyLineLayerProps
 
 	flyline: FlyLine
@@ -57,9 +49,9 @@ export class FlyLineLayer extends StandardLayer {
 	grids: FlyInfo[]
 	data: any[]
 
-	constructor(props: FlyLineLayerProps = {}) {
-		const _props: FlyLineLayerProps = {
-			...DefaultLayerProps,
+	constructor(props: OptionalDefault<FlyLineLayerProps, typeof defaultLayerProps> = {}) {
+		const _props = {
+			...defaultLayerProps,
 			...props,
 		}
 		super(_props)
@@ -68,22 +60,22 @@ export class FlyLineLayer extends StandardLayer {
 		this.grids = []
 
 		this.listenProps(['renderOrder'], () => {
-			this.flyline && (this.flyline.mesh.renderOrder = this.getProps('renderOrder'))
+			this.flyline && (this.flyline.mesh.renderOrder = this.getProp('renderOrder') ?? 0)
 		})
 
 		this.listenProps(['depthTest'], () => {
-			this.flyline && (this.flyline.mesh.material.depthTest = this.getProps('depthTest'))
+			this.flyline && (this.flyline.mesh.material.depthTest = this.getProp('depthTest') ?? true)
 		})
 
 		this.listenProps(['duration', 'delay', 'repeat', 'minHeight', 'maxHeight', 'data'], () => {
-			this.props['duration'] = this.getProps('duration')
-			this.props['delay'] = this.getProps('delay')
-			this.props['repeat'] = this.getProps('repeat')
-			this.props['minHeight'] = this.getProps('minHeight')
-			this.props['maxHeight'] = this.getProps('maxHeight')
-			const data = this.getProps('data')
+			this.props['duration'] = this.getProp('duration')
+			this.props['delay'] = this.getProp('delay')
+			this.props['repeat'] = this.getProp('repeat')
+			this.props['minHeight'] = this.getProp('minHeight')
+			this.props['maxHeight'] = this.getProp('maxHeight')
+			const data = this.getProp('data')
 			if (!data || !data.length) return
-			this.updateFlylinesData(this.getProps('data'))
+			this.updateFlylinesData(this.getProp('data'))
 		})
 
 		this.onViewChange = (cameraProxy) => {
@@ -125,15 +117,16 @@ export class FlyLineLayer extends StandardLayer {
 			'frameDropping',
 			'useColors',
 			'colors',
-		]
+		] as const
 		this.listenProps(listeningFlylineProps, () => {
 			listeningFlylineProps.forEach((key) => {
-				this.props[key] = this.getProps(key)
+				// @note this is a problem of ts, key became a union type and props[key] collapsed into `never`
+				;(this.props[key] as any) = this.getProp(key)
 			})
-			const data = this.getProps('data')
+			const data = this.getProp('data')
 			if (!data || !data.length) return
 
-			this.props.pool = Math.max(data.length, this.getProps('pool'))
+			this.props.pool = Math.max(data.length, this.getProp('pool') ?? 1)
 			// Re-create flyline instance
 			this.createFlyline(timeline, polaris)
 			this.updateFlylinesData(data)
@@ -214,22 +207,22 @@ export class FlyLineLayer extends StandardLayer {
 				posEnd = xyzEnd
 			}
 
-			const segment = this.getProps('lineSegments') as number
-			const padding = segment * (this.getProps('flyPercent') as number)
+			const segment = this.getProp('lineSegments') as number
+			const padding = segment * (this.getProp('flyPercent') as number)
 			const grid = new Grid({
 				pointStart: new Vector3().fromArray(posStart),
 				pointEnd: new Vector3().fromArray(posEnd),
 				segment: segment,
 				padding: padding,
-				maxHeight: maxHeight ?? this.getProps('maxHeight'),
-				minHeight: minHeight ?? this.getProps('minHeight'),
+				maxHeight: maxHeight ?? this.getProp('maxHeight'),
+				minHeight: minHeight ?? this.getProp('minHeight'),
 				type: this.geoWrapProjection.isPlaneProjection ? 'onPlane' : 'onSphere',
 			})
 			grids.push({
 				grid: grid,
-				duration: duration || (this.getProps('duration') as number),
-				delay: delay || (this.getProps('delay') as number) * i,
-				repeat: repeat === undefined ? this.getProps('repeat') : repeat,
+				duration: duration || (this.getProp('duration') as number),
+				delay: delay || (this.getProp('delay') as number) * i,
+				repeat: repeat === undefined ? this.getProp('repeat') : repeat,
 			})
 		}
 
@@ -254,45 +247,55 @@ export class FlyLineLayer extends StandardLayer {
 		})
 	}
 
-	async show(duration = 1000) {
+	show(duration = 1000) {
+		if (!this.inited) {
+			console.warn('can not call .show until layer is inited')
+			return
+		}
+
 		this.flyline.matr.alphaMode = 'BLEND'
 		this.flyline.matr.opacity = 0.0
 		this.group.visible = true
 
-		const timeline = await this.getTimeline()
+		const timeline = this.timeline
 		timeline.addTrack({
 			id: 'FlylineLayer Show',
 			startTime: timeline.currentTime,
 			duration: duration,
 			onStart: () => {},
 			onEnd: () => {
-				this.flyline.matr.alphaMode = this.getProps('transparent') ? 'BLEND' : 'OPAQUE'
-				this.flyline.matr.opacity = this.getProps('opacity')
+				this.flyline.matr.alphaMode = this.getProp('transparent') ? 'BLEND' : 'OPAQUE'
+				this.flyline.matr.opacity = this.getProp('opacity') ?? 1
 				this.group.visible = true
 			},
 			onUpdate: (t, p) => {
-				this.flyline.matr.opacity = this.getProps('opacity') * p
+				this.flyline.matr.opacity = (this.getProp('opacity') ?? 1) * p
 			},
 		})
 	}
 
-	async hide(duration = 1000) {
-		this.flyline.matr.alphaMode = 'BLEND'
-		this.flyline.matr.opacity = this.getProps('opacity')
+	hide(duration = 1000) {
+		if (!this.inited) {
+			console.warn('can not call .hide until layer is inited')
+			return
+		}
 
-		const timeline = await this.getTimeline()
+		this.flyline.matr.alphaMode = 'BLEND'
+		this.flyline.matr.opacity = this.getProp('opacity') ?? 1
+
+		const timeline = this.timeline
 		timeline.addTrack({
 			id: 'FlylineLayer Hide',
 			startTime: timeline.currentTime,
 			duration: duration,
 			onStart: () => {},
 			onEnd: () => {
-				this.flyline.matr.alphaMode = this.getProps('transparent') ? 'BLEND' : 'OPAQUE'
-				this.flyline.matr.opacity = this.getProps('opacity')
+				this.flyline.matr.alphaMode = this.getProp('transparent') ? 'BLEND' : 'OPAQUE'
+				this.flyline.matr.opacity = this.getProp('opacity') ?? 1
 				this.group.visible = false
 			},
 			onUpdate: (t, p) => {
-				this.flyline.matr.opacity = this.getProps('opacity') * (1 - p)
+				this.flyline.matr.opacity = (this.getProp('opacity') ?? 1) * (1 - p)
 			},
 		})
 	}
