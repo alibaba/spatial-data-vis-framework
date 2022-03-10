@@ -20,7 +20,7 @@ import { PolygonMatr } from './PolygonMatr'
 import { flattenEach } from '@turf/meta'
 import { getCoords } from '@turf/invariant'
 import { FeatureCollection } from '@turf/helpers'
-import { getColorUint, OptionalDefault } from '../utils'
+import { functionlize, getColorUint, OptionalDefault } from '../utils'
 
 /**
  * 配置项 interface
@@ -35,8 +35,8 @@ export type PolygonSideLayerProps = StandardLayerProps &
  * 配置项 默认值
  */
 const defaultProps = {
-	getColor: (feature) => '#689826' as string | number,
-	getThickness: (feature) => 0,
+	getColor: ((feature) => '#689826') as (string | number) | ((feature) => string | number),
+	getThickness: ((feature) => 0) as number | ((feature) => number),
 	baseAlt: 0,
 	opacity: 1,
 	transparent: false,
@@ -88,8 +88,8 @@ export class PolygonSideLayer extends StandardLayer<PolygonSideLayerProps> {
 			this.geom = new Geom()
 
 			const data = this.getProp('data')
-			const getThickness = this.getProp('getThickness')
-			const getColor = this.getProp('getColor')
+			const getThickness = functionlize(this.getProp('getThickness'))
+			const getColor = functionlize(this.getProp('getColor'))
 			const baseAlt = this.getProp('baseAlt')
 
 			const positions = [] as Array<number>
