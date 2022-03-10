@@ -1,5 +1,6 @@
-import { isDISPOSED } from '@gs.i/schema'
-import { Mesh, MatrPoint, Geom, Attr } from '@gs.i/frontend-sdk'
+import { specifyTexture } from '@gs.i/utils-specify'
+import { isDISPOSED } from '@gs.i/schema-scene'
+import { Mesh, PointMaterial, Geom, Attr } from '@gs.i/frontend-sdk'
 import { Color } from '@gs.i/utils-math'
 import {
 	XYZTileManager,
@@ -9,13 +10,14 @@ import {
 } from '@polaris.gl/utils-tile-manager'
 import { Marker } from '@polaris.gl/layer-std-marker'
 import { RequestPending, XYZTileRequestManager } from '@polaris.gl/utils-request-manager'
-import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
-import { AbstractPolaris, Base, CoordV2, PickEvent, Polaris } from '@polaris.gl/base'
+import { AbstractPolaris, CoordV2, PickEvent } from '@polaris.gl/base'
 import { Projection } from '@polaris.gl/projection'
-import { colorToUint8Array, PointsMeshPickHelper, brushColorToImage } from '@polaris.gl/utils'
-import { PolarisGSI } from '@polaris.gl/gsi'
+import { colorToUint8Array, brushColorToImage } from '@polaris.gl/utils'
+import { PointsMeshPickHelper } from './helpers'
+import { PolarisGSI, StandardLayer, StandardLayerProps } from '@polaris.gl/base-gsi'
 import Pbf from 'pbf'
 import { decode } from 'geobuf'
+import { functionlize, RequireDefault } from './utils'
 
 /**
  * 配置项 interface
@@ -103,7 +105,7 @@ export interface POILayerProps extends StandardLayerProps {
 	 * usually both numbers are between [-1.0, 1.0], but not necessary.
 	 * @NOTE bottom/left values should be < 0, top/right values should be > 0.
 	 */
-	pointOffset: [number, number]
+	pointOffset: readonly [number, number]
 
 	/**
 	 * cluster size (px)
@@ -126,6 +128,11 @@ export interface POILayerProps extends StandardLayerProps {
 	clusterColorBlend: 'replace' | 'multiply' | 'add'
 
 	/**
+	 * TODO: @qianxun describe this
+	 */
+	clusterStyle?
+
+	/**
 	 * Get cluster feature text string
 	 * @return => {string} to set this feature as a cluster, the content will be rendered onto marker
 	 * @return => {undefined} to set this feature as non-clustered point, it will be rendered as normal point
@@ -135,7 +142,7 @@ export interface POILayerProps extends StandardLayerProps {
 	/**
 	 * cluster dom style
 	 */
-	getClusterDOMStyle?: { [key: string]: any } | ((feature: any) => any)
+	getClusterDOMStyle?: { [key: string]: any } | ((feature: any) => { [key: string]: any })
 
 	/**
 	 * Custom geojson filter
@@ -187,8 +194,9 @@ export interface POILayerProps extends StandardLayerProps {
 /**
  * 配置项 默认值
  */
-export const defaultProps: POILayerProps = {
-	dataType: 'auto',
+export const defaultProps = {
+	name: 'POILayer',
+	dataType: 'auto' as const,
 	getUrl: (x, y, z) => {
 		throw new Error('getUrl prop is not defined')
 	},
@@ -199,14 +207,14 @@ export const defaultProps: POILayerProps = {
 	pointImage:
 		'https://img.alicdn.com/imgextra/i3/O1CN01naDbsE1HeeoOqvic6_!!6000000000783-2-tps-256-256.png',
 	getPointColor: '#ffafff',
-	pointColorBlend: 'replace',
+	pointColorBlend: 'replace' as const,
 	pointSize: 16,
 	pointHoverSize: 32,
-	pointOffset: [0.0, 0.0],
+	pointOffset: [0.0, 0.0] as const,
 	clusterImage:
 		'https://img.alicdn.com/imgextra/i2/O1CN016yGVRh1Tdzf8SkuLn_!!6000000002406-2-tps-60-60.png',
 	clusterColor: '#00afff',
-	clusterColorBlend: 'replace',
+	clusterColorBlend: 'replace' as const,
 	clusterSize: 64,
 	getClusterDOMStyle: {},
 	getClusterContent: (feature) => undefined,
@@ -216,8 +224,10 @@ export const defaultProps: POILayerProps = {
 	useParentReplaceUpdate: true,
 }
 
-export class POILayer extends StandardLayer {
-	matr: MatrPoint
+defaultProps as POILayerProps
+
+export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof defaultProps>> {
+	matr: PointMaterial
 
 	requestManager: XYZTileRequestManager
 
@@ -269,8 +279,11 @@ export class POILayer extends StandardLayer {
 			...props,
 		}
 		super(_props)
-		this.name = this.group.name = 'POILayer'
 		this._ratio = 1.0
+
+		this.addEventListener('init', (e) => {
+			this._init(e.projection, e.timeline, e.polaris)
+		})
 	}
 
 	/**
@@ -278,7 +291,7 @@ export class POILayer extends StandardLayer {
 	 */
 	highlightByIds: (idsArr: number[], style: { [name: string]: any }) => void
 
-	init(projection, timeline, polaris) {
+	_init(projection, timeline, polaris) {
 		const p = polaris as PolarisGSI
 
 		if (!projection.isPlaneProjection) {
@@ -400,7 +413,8 @@ export class POILayer extends StandardLayer {
 			const polaris = p as AbstractPolaris
 			this._ratio = polaris.ratio ?? 1.0
 			if (this.matr) {
-				this.matr.uniforms.uResolution.value = { x: polaris.canvasWidth, y: polaris.canvasHeight }
+				// @note matr.uniform is currently a setter. can not read from it
+				// this.matr.uniforms.uResolution.value = { x: polaris.canvasWidth, y: polaris.canvasHeight }
 			}
 			// if (Math.abs(cam.pitch) > 0.0001) {
 			// 	console.warn('POILayer - POILayer under 3D view mode is currently not supported')
@@ -577,40 +591,41 @@ export class POILayer extends StandardLayer {
 				break
 		}
 
-		const matr = new MatrPoint({
+		const matr = new PointMaterial({
 			alphaMode: 'BLEND',
 			depthTest: this.getProps('depthTest'),
 			baseColorFactor: { r: 1, g: 1, b: 1 },
-			baseColorTexture: {
-				image: { uri: this.getProps('pointImage'), flipY: true },
+			baseColorTexture: specifyTexture({
+				image: { uri: this.getProps('pointImage'), extensions: { EXT_image: { flipY: true } } },
 				sampler: {
 					minFilter: 'LINEAR_MIPMAP_LINEAR',
 					magFilter: 'LINEAR',
 					wrapS: 'CLAMP_TO_EDGE',
 					wrapT: 'CLAMP_TO_EDGE',
 				},
-			},
+			}),
 			defines: {
 				P_COLOR_MODE,
 			},
 			uniforms: {
 				uOffset: {
-					type: 'vec2',
 					value: { x: pointOffset[0], y: pointOffset[1] },
 				},
 				uResolution: {
-					type: 'vec2',
 					value: { x: polaris.canvasWidth, y: polaris.canvasHeight },
 				},
 			},
-			attributes: {
-				aSize: 'float',
-				aColor: 'vec3',
-			},
-			varyings: {
-				vColor: 'vec3',
-			},
-			vertPointSize: `
+			global: `
+				uniform vec2 uOffset;
+				uniform vec2 uResolution;
+
+				varying vec3 vColor;
+			`,
+			vertGlobal: `
+				attribute float aSize;
+				attribute vec3 aColor;
+			`,
+			vertPointGeometry: `
 				pointSize = aSize;
 			`,
 			vertOutput: `
@@ -623,7 +638,7 @@ export class POILayer extends StandardLayer {
 				vec2 offset = uOffset;
 				glPosition.xy += offset * pxRange;
 			`,
-			fragColor: `
+			fragOutput: `
 			#if P_COLOR_MODE == 0          // replace
 				fragColor.rgb = vColor;
 			#elif P_COLOR_MODE == 1        // multiply
@@ -652,14 +667,15 @@ export class POILayer extends StandardLayer {
 		const featureFilter = this.getProps('featureFilter')
 		const getClusterContent = this.getProps('getClusterContent')
 		const clusterSize = this.getProps('clusterSize')
-		const getPointColor = this.getProps('getPointColor')
+		const getPointColor = functionlize(this.getProps('getPointColor'))
 		const pointOffset = this.getProps('pointOffset')
 		const renderOrder = this.getProps('renderOrder')
 
 		const mesh = new Mesh({
 			name: key ? key : 'pois',
-			renderOrder,
 		})
+
+		mesh.renderOrder = renderOrder
 
 		const layers: Marker[] = []
 		const meshes: Mesh[] = []
@@ -781,17 +797,24 @@ export class POILayer extends StandardLayer {
 
 	private _createClusterDiv(text: string, clusterImage: string, feature: any) {
 		const clusterSize = this.getProps('clusterSize')
-		const getClusterDOMStyle = this.getProps('getClusterDOMStyle')
 
 		const div = document.createElement('div')
 		div.innerText = text
 
 		const style = div.style as any
-		const customStyle = getClusterDOMStyle(feature)
-		for (const key in customStyle) {
-			if (Object.prototype.hasOwnProperty.call(customStyle, key)) {
-				const value = customStyle[key]
-				style[key] = value
+		const getClusterDOMStyle = this.getProps('getClusterDOMStyle')
+		if (getClusterDOMStyle) {
+			let customStyle: { [key: string]: any }
+			if (typeof getClusterDOMStyle === 'function') {
+				customStyle = getClusterDOMStyle(feature)
+			} else {
+				customStyle = getClusterDOMStyle
+			}
+			for (const key in customStyle) {
+				if (Object.prototype.hasOwnProperty.call(customStyle, key)) {
+					const value = customStyle[key]
+					style[key] = value
+				}
 			}
 		}
 
@@ -811,53 +834,54 @@ export class POILayer extends StandardLayer {
 		return `${x}|${y}|${z}`
 	}
 
-	raycast(polaris: AbstractPolaris, canvasCoords: CoordV2, ndc: CoordV2): PickEvent | undefined {
-		if (!this.tileManager || !(polaris instanceof PolarisGSI)) return
+	// TODO: refactor picking
+	// raycast(polaris: AbstractPolaris, canvasCoords: CoordV2, ndc: CoordV2): PickEvent | undefined {
+	// 	if (!this.tileManager || !(polaris instanceof PolarisGSI)) return
 
-		const markers: Marker[] = []
-		const meshes: Mesh[] = []
+	// 	const markers: Marker[] = []
+	// 	const meshes: Mesh[] = []
 
-		const renderableList = this.tileManager.getVisibleTiles()
-		renderableList.forEach((r) => markers.push(...(r.layers as Marker[])))
-		renderableList.forEach((r) => meshes.push(...(r.meshes as Mesh[])))
+	// 	const renderableList = this.tileManager.getVisibleTiles()
+	// 	renderableList.forEach((r) => markers.push(...(r.layers as Marker[])))
+	// 	renderableList.forEach((r) => meshes.push(...(r.meshes as Mesh[])))
 
-		// pick markers
-		for (let i = 0; i < markers.length; i++) {
-			const marker = markers[i]
-			const pickResult = marker.pick(polaris, canvasCoords, ndc)
-			if (pickResult) {
-				const feature = this._renderableFeatureMap.get(marker)
-				pickResult.index = feature.index
-				pickResult.data = {
-					type: 'cluster',
-					feature,
-					curr: feature,
-				}
-				return pickResult
-			}
-		}
+	// 	// pick markers
+	// 	for (let i = 0; i < markers.length; i++) {
+	// 		const marker = markers[i]
+	// 		const pickResult = marker.pick(polaris, canvasCoords, ndc)
+	// 		if (pickResult) {
+	// 			const feature = this._renderableFeatureMap.get(marker)
+	// 			pickResult.index = feature.index
+	// 			pickResult.data = {
+	// 				type: 'cluster',
+	// 				feature,
+	// 				curr: feature,
+	// 			}
+	// 			return pickResult
+	// 		}
+	// 	}
 
-		// pick points
-		for (let i = 0; i < meshes.length; i++) {
-			const mesh = meshes[i]
-			if (!mesh.extras) continue
-			const pickHelper = mesh.extras.pickHelper as PointsMeshPickHelper
-			const pickResult = pickHelper.pick(polaris, canvasCoords)
-			if (pickResult) {
-				const features = this._renderableFeatureMap.get(mesh)
-				const feature = features[pickResult.index]
-				pickResult.index = feature.index
-				pickResult.data = {
-					type: 'point',
-					feature,
-					curr: feature, // backward compatibility
-				}
-				return pickResult
-			}
-		}
+	// 	// pick points
+	// 	for (let i = 0; i < meshes.length; i++) {
+	// 		const mesh = meshes[i]
+	// 		if (!mesh.extras) continue
+	// 		const pickHelper = mesh.extras.pickHelper as PointsMeshPickHelper
+	// 		const pickResult = pickHelper.pick(polaris, canvasCoords)
+	// 		if (pickResult) {
+	// 			const features = this._renderableFeatureMap.get(mesh)
+	// 			const feature = features[pickResult.index]
+	// 			pickResult.index = feature.index
+	// 			pickResult.data = {
+	// 				type: 'point',
+	// 				feature,
+	// 				curr: feature, // backward compatibility
+	// 			}
+	// 			return pickResult
+	// 		}
+	// 	}
 
-		return
-	}
+	// 	return
+	// }
 
 	private _updatePointSizeByIndex(mesh: Mesh, index: number, size: number) {
 		const attr = mesh.geometry?.attributes.aSize
@@ -865,8 +889,12 @@ export class POILayer extends StandardLayer {
 		const array = attr.array
 		if (isDISPOSED(array)) return
 		array[index] = size
-		attr.updateRanges = attr.updateRanges || []
-		attr.updateRanges.push({
+
+		if (!attr.extensions) attr.extensions = {}
+		if (!attr.extensions.EXT_buffer_partial_update)
+			attr.extensions.EXT_buffer_partial_update = { updateRanges: [] }
+
+		attr.extensions.EXT_buffer_partial_update.updateRanges.push({
 			start: index,
 			count: 1,
 		})

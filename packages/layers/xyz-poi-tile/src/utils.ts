@@ -113,3 +113,27 @@ export function createRangeArray(start: number, end: number) {
 		return new Uint32Array([start, end])
 	}
 }
+
+export type RequireDefault<TFull extends Record<string, any>, TDefault extends TFull> = {
+	[K in keyof TFull]: K extends keyof TDefault ? Exclude<TFull[K], undefined> : TFull[K]
+}
+
+// export function functionlize<T extends string | number | boolean | Record<string, any>>(
+// 	v: ((...args) => T) | T
+// ) {
+// 	if (typeof v === 'function') {
+// 		return v
+// 	} else {
+// 		return () => v
+// 	}
+// }
+
+export function functionlize<T extends string | number | boolean | null | undefined>(
+	v: T | ((...args: any[]) => T)
+) {
+	if (typeof v === 'function') {
+		return v
+	} else {
+		return (...args: any[]) => v
+	}
+}
