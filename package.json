@@ -6,12 +6,10 @@
     "packages": [
       "packages-gsi/**",
       "packages/**",
-      "examples",
       "examples-vite",
       "examples-vite-*"
     ],
     "nohoist": [
-      "**/@polaris.gl/examples/**",
       "**/@polaris.gl/examples-vite/**",
       "**/@polaris.gl/examples-vite-*/**",
       "**/@types/**"
