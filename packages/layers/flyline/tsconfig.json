@@ -13,7 +13,7 @@
 			"path": "../../core/gsi"
 		},
 		{
-			"path": "../../utils/projections"
+			"path": "../../core/projections"
 		}
 	]
 }

@@ -19,7 +19,7 @@
 			"path": "../marker"
 		},
 		{
-			"path": "../../utils/projections"
+			"path": "../../core/projections"
 		},
 		{
 			"path": "../../utils/utils"

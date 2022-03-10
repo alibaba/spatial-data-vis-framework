@@ -45,7 +45,7 @@
 			"path": "../packages/polaris/polaris-lite"
 		},
 		{
-			"path": "../packages/utils/projections"
+			"path": "../packages/core/projections"
 		},
 		{
 			"path": "../packages/polaris/polaris-react"
