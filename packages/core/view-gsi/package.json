@@ -1,5 +1,5 @@
 {
-    "name": "@polaris.gl/view-gsi",
+    "name": "@polaris.gl/view-gsi-abandoned",
     "version": "0.0.0-alpha.9",
     "description": "",
     "main": "dist/index.js",
@@ -15,7 +15,8 @@
         "rebuild": "npm run clean && npm run build"
     },
     "dependencies": {
-        "@gs.i/frontend-sdk": "^0.0.0-beta",
+        "@gs.i/schema-scene": "0.2.1-alpha.0",
+        "@gs.i/frontend-sdk": "0.2.1-alpha.0",
         "@polaris.gl/base": "^0.0.0-alpha.9"
     },
     "devDependencies": {
