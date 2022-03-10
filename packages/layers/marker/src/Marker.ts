@@ -5,15 +5,14 @@
 
 import { Projection } from '@polaris.gl/projection'
 import { CameraProxy } from 'camera-proxy'
-import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
 import { Vector2, Vector3, Matrix4, Euler } from '@gs.i/utils-math'
 import { Mesh } from '@gs.i/frontend-sdk'
-import { MatrBaseDataType, MeshDataType } from '@gs.i/schema'
-import { deepCloneMesh, traverseMesh, getOrientationMatrix } from '@polaris.gl/utils'
-import { computeBBox, computeBSphere } from '@gs.i/utils-geometry'
-import { PolarisGSI } from '@polaris.gl/gsi'
+import { IR, MeshDataType } from '@gs.i/schema-scene'
+import { deepCloneMesh, traverse } from './utils'
+import { getOrientationMatrix } from './geometry'
+// import { computeBBox, computeBSphere } from '@gs.i/utils-geometry'
 import { CoordV2, PickEvent } from '@polaris.gl/base'
-import { GSIView } from '@polaris.gl/view-gsi'
+import { GSIView, PolarisGSI, StandardLayer, StandardLayerProps } from '@polaris.gl/base-gsi'
 
 const R = 6378137 // 常量 - 地球半径
 
@@ -40,14 +39,15 @@ export interface MarkerProps extends StandardLayerProps {
 /**
  * 配置项 默认值
  */
-export const defaultMarkerProps: MarkerProps = {
+export const defaultMarkerProps = {
+	name: 'marker',
 	lng: 0,
 	lat: 0,
 	alt: 0,
-	html: undefined,
+	// html: undefined,
 	offsetX: 0,
 	offsetY: 0,
-	object3d: undefined,
+	// object3d: undefined,
 	autoHide: false,
 	highPerfMode: false,
 }
@@ -55,7 +55,7 @@ export const defaultMarkerProps: MarkerProps = {
 /**
  * 单一的Marker，实现在地图上放置三维和二维Marker，可单独使用，一般推荐使用MarkerLayer组件批量生成
  */
-export class Marker extends StandardLayer {
+export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProps> {
 	lnglatalt: [number, number, number]
 	html?: HTMLElement
 	object3d?: MeshDataType
@@ -95,8 +95,8 @@ export class Marker extends StandardLayer {
 	framesAfterInit: number
 
 	// Animation
-	private _meshAlphaModes: Map<Mesh, string>
-	private _matrOpMap: Map<MatrBaseDataType, number>
+	private _meshAlphaModes = new Map<IR.RenderableNode, IR.Material['alphaMode']>()
+	private _matrOpMap = new Map<IR.MaterialBase, number>()
 
 	private _disposed: boolean
 	get disposed() {
@@ -106,10 +106,10 @@ export class Marker extends StandardLayer {
 	/**
 	 * Temp vars
 	 */
-	private _v1: Vector3
-	private _v2: Vector3
-	private _v3: Vector3
-	private _mat4: Matrix4
+	private _v1 = new Vector3()
+	private _v2 = new Vector3()
+	private _v3 = new Vector3()
+	private _mat4 = new Matrix4()
 
 	constructor(props: MarkerProps = {}) {
 		const _props = {
@@ -117,12 +117,20 @@ export class Marker extends StandardLayer {
 			...props,
 		}
 
-		// only initialize GSIView if no html info is provided
-		if (_props.html === undefined || _props.html === null) {
-			_props.views = {
-				gsi: GSIView,
-			}
-		}
+		/**
+		 * @note it's not safe to make html view optional
+		 * @todo smarter approach needed for perf opt
+		 *
+		 * marker 的性能问题来自于继承了 StandardLayer，却什么功能都没用到。
+		 * 其性能优化应该使用更轻的对象，在 Marker Layer上用事件管理Marker，
+		 * 而非增加 StandardLayer 的复杂度。
+		 */
+		// // only initialize GSIView if no html info is provided
+		// if (_props.html === undefined || _props.html === null) {
+		// 	_props.views = {
+		// 		gsi: GSIView,
+		// 	}
+		// }
 
 		super(_props)
 
@@ -137,82 +145,94 @@ export class Marker extends StandardLayer {
 		this.inScreen = true
 		this.onEarthFrontSide = true
 
-		// caches
-		this._meshAlphaModes = new Map()
-		this._matrOpMap = new Map()
-		this._v1 = new Vector3()
-		this._v2 = new Vector3()
-		this._v3 = new Vector3()
-		this._mat4 = new Matrix4()
-
 		//
 		this._disposed = false
 
-		// group
-		this.name = this.group.name = 'marker'
 		if (this.view.html) {
 			this.element.className = 'marker'
 		}
+
+		this.addEventListener('init', (e) => {
+			const polaris = e.polaris
+			const projection = e.projection
+			const timeline = e.timeline
+			// 地球球心世界位置
+			this.earthCenter.fromArray(projection['_xyz0'] ?? [0, 0, -R]).multiplyScalar(-1)
+
+			/**
+			 * Update onViewChange
+			 */
+			if (this.getProp('highPerfMode')) {
+				this._initUpdatingLogic(polaris.cameraProxy, projection, true)
+			} else {
+				this._initUpdatingLogic(polaris.cameraProxy, projection, false)
+			}
+
+			/**
+			 * Props listeners
+			 */
+			this.watchProps(
+				['html'],
+				() => {
+					this.initHtml()
+					this.resetInitFrames()
+				},
+				{ immediate: true }
+			)
+
+			this.watchProps(
+				['object3d'],
+				() => {
+					this.group.children.forEach((child) => {
+						this.group.children.delete(child)
+					})
+					this.object3d = this.getProp('object3d')
+					this.initObject3d()
+					this.resetInitFrames()
+				},
+				{ immediate: true }
+			)
+
+			this.watchProps(
+				['lng', 'lat', 'alt'],
+				() => {
+					this.lnglatalt = [this.getProp('lng'), this.getProp('lat'), this.getProp('alt')]
+					this.updateLnglatPosition(projection)
+					this.updateWorldPosition()
+					this.updateVisibility(polaris.cameraProxy, projection)
+					this.updateScreenXY()
+					this.updateElement()
+					this.resetInitFrames()
+				},
+				{ immediate: true }
+			)
+
+			this.watchProps(
+				['offsetX', 'offsetY', 'autoHide'],
+				() => {
+					this.updateWorldPosition()
+					this.updateVisibility(polaris.cameraProxy, projection)
+					this.updateScreenXY()
+					this.updateElement()
+					this.resetInitFrames()
+				},
+				{ immediate: true }
+			)
+
+			this.resetInitFrames()
+		})
 	}
 
-	/**
-	 * Implemented
-	 */
-	init(projection, timeline, polaris) {
-		// 地球球心世界位置
-		this.earthCenter.fromArray(projection['_xyz0'] ?? [0, 0, -R]).multiplyScalar(-1)
-
-		/**
-		 * Update onViewChange
-		 */
-		if (this.getProps('highPerfMode')) {
-			this._initUpdatingLogic(polaris.cameraProxy, projection, true)
-		} else {
-			this._initUpdatingLogic(polaris.cameraProxy, projection, false)
+	show(duration = 1000) {
+		const timeline = this.timeline
+		if (!timeline) {
+			console.warn('timeline not ready')
+			return
 		}
 
-		/**
-		 * Props listeners
-		 */
-		this.listenProps(['html'], () => {
-			this.initHtml()
-			this.resetInitFrames()
-		})
-
-		this.listenProps(['object3d'], () => {
-			this.group.children.forEach((child) => {
-				this.group.remove(child)
-			})
-			this.object3d = this.getProps('object3d')
-			this.initObject3d()
-			this.resetInitFrames()
-		})
-
-		this.listenProps(['lng', 'lat', 'alt'], () => {
-			this.lnglatalt = [this.getProps('lng'), this.getProps('lat'), this.getProps('alt')]
-			this.updateLnglatPosition(projection)
-			this.updateWorldPosition()
-			this.updateVisibility(polaris.cameraProxy, projection)
-			this.updateScreenXY()
-			this.updateElement()
-			this.resetInitFrames()
-		})
-
-		this.listenProps(['offsetX', 'offsetY', 'autoHide'], () => {
-			this.updateWorldPosition()
-			this.updateVisibility(polaris.cameraProxy, projection)
-			this.updateScreenXY()
-			this.updateElement()
-			this.resetInitFrames()
-		})
-
-		this.resetInitFrames()
-	}
-
-	async show(duration = 1000) {
 		if (this.object3d) {
-			traverseMesh(this.object3d, (mesh) => {
-				if (mesh.material) {
+			traverse(this.object3d, (mesh) => {
+				if (IR.isRenderable(mesh)) {
 					mesh.material.opacity = 0.0
 					mesh.material.alphaMode = 'BLEND'
 				}
@@ -223,7 +243,6 @@ export class Marker extends StandardLayer {
 		}
 		this.visible = true
 
-		const timeline = await this.getTimeline()
 		timeline.addTrack({
 			id: 'Marker Show',
 			startTime: timeline.currentTime,
@@ -231,10 +250,10 @@ export class Marker extends StandardLayer {
 			onStart: () => {},
 			onEnd: () => {
 				if (this.object3d) {
-					traverseMesh(this.object3d, (mesh) => {
-						if (mesh.material) {
+					traverse(this.object3d, (mesh) => {
+						if (IR.isRenderable(mesh)) {
 							mesh.material.opacity = this._matrOpMap.get(mesh.material) ?? 1.0
-							mesh.material.alphaMode = this._meshAlphaModes.get(mesh) || 'OPAQUE'
+							mesh.material.alphaMode = this._meshAlphaModes.get(mesh) || ('OPAQUE' as const)
 						}
 					})
 				}
@@ -246,8 +265,8 @@ export class Marker extends StandardLayer {
 			},
 			onUpdate: (t, p) => {
 				if (this.object3d) {
-					traverseMesh(this.object3d, (mesh) => {
-						if (mesh.material) {
+					traverse(this.object3d, (mesh) => {
+						if (IR.isRenderable(mesh)) {
 							mesh.material.opacity = (this._matrOpMap.get(mesh.material) ?? 1.0) * p
 						}
 					})
@@ -259,10 +278,16 @@ export class Marker extends StandardLayer {
 		})
 	}
 
-	async hide(duration = 1000) {
+	hide(duration = 1000) {
+		const timeline = this.timeline
+		if (!timeline) {
+			console.warn('timeline not ready')
+			return
+		}
+
 		if (this.object3d) {
-			traverseMesh(this.object3d, (mesh) => {
-				if (mesh.material) {
+			traverse(this.object3d, (mesh) => {
+				if (IR.isRenderable(mesh)) {
 					mesh.material.alphaMode = 'BLEND'
 				}
 			})
@@ -271,7 +296,6 @@ export class Marker extends StandardLayer {
 			this.element.style.opacity = '1.0'
 		}
 
-		const timeline = await this.getTimeline()
 		timeline.addTrack({
 			id: 'Marker Hide',
 			startTime: timeline.currentTime,
@@ -279,8 +303,8 @@ export class Marker extends StandardLayer {
 			onStart: () => {},
 			onEnd: () => {
 				if (this.object3d) {
-					traverseMesh(this.object3d, (mesh) => {
-						if (mesh.material) {
+					traverse(this.object3d, (mesh) => {
+						if (IR.isRenderable(mesh)) {
 							mesh.material.opacity = 0.0
 						}
 					})
@@ -292,8 +316,8 @@ export class Marker extends StandardLayer {
 			},
 			onUpdate: (t, p) => {
 				if (this.object3d) {
-					traverseMesh(this.object3d, (mesh) => {
-						if (mesh.material) {
+					traverse(this.object3d, (mesh) => {
+						if (IR.isRenderable(mesh)) {
 							mesh.material.opacity = (this._matrOpMap.get(mesh.material) ?? 1.0) * (1 - p)
 						}
 					})
@@ -335,35 +359,36 @@ export class Marker extends StandardLayer {
 			}
 		}
 
+		// TODO: refactor picking
 		// 3D object picking
-		if (polaris.pickObject === undefined) return
+		// if (polaris.pickObject === undefined) return
 
-		if (this.object3d && this.object3d.geometry) {
-			const result = polaris.pickObject(this.object3d, ndc, {
-				backfaceCulling: true,
-				allInters: false, // The pick process can return as soon as it hits the first triangle
-				threshold: 10, // In case the object3d is a line mesh
-			})
-			if (result.hit && result.intersections) {
-				// object3d has been picked
-				const inter0 = result.intersections[0]
-				return {
-					distance: inter0.distance as number,
-					point: inter0.point as { x: number; y: number; z: number },
-					pointLocal: inter0.pointLocal as { x: number; y: number; z: number },
-					object: this,
-					index: 0,
-					data: undefined,
-				}
-			}
-		}
+		// if (this.object3d && this.object3d.geometry) {
+		// 	const result = polaris.pickObject(this.object3d, ndc, {
+		// 		backfaceCulling: true,
+		// 		allInters: false, // The pick process can return as soon as it hits the first triangle
+		// 		threshold: 10, // In case the object3d is a line mesh
+		// 	})
+		// 	if (result.hit && result.intersections) {
+		// 		// object3d has been picked
+		// 		const inter0 = result.intersections[0]
+		// 		return {
+		// 			distance: inter0.distance as number,
+		// 			point: inter0.point as { x: number; y: number; z: number },
+		// 			pointLocal: inter0.pointLocal as { x: number; y: number; z: number },
+		// 			object: this,
+		// 			index: 0,
+		// 			data: undefined,
+		// 		}
+		// 	}
+		// }
 
 		return
 	}
 
 	dispose(): void {
 		this.group.children.forEach((child) => {
-			this.group.remove(child)
+			this.group.children.delete(child)
 		})
 		if (this.html && this.view.html) {
 			while (this.element.lastChild) {
@@ -372,6 +397,114 @@ export class Marker extends StandardLayer {
 			this.element.innerHTML = ''
 		}
 		this._disposed = true
+	}
+
+	/**
+	 * get world matrix of this layer's 3d wrapper
+	 *
+	 * @note return undefined if not inited
+	 */
+	getWorldMatrix() {
+		if (!this.inited) {
+			console.warn('can not call getWorldMatrix until layer is inited')
+			return
+		}
+
+		return (
+			this.polaris.matrixProcessor.getCachedWorldMatrix(this.view.gsi.alignmentWrapper) ||
+			this.polaris.matrixProcessor.getWorldMatrix(this.view.gsi.alignmentWrapper)
+		)
+	}
+
+	/**
+	 * 获取世界坐标在当前layer的经纬度
+	 *
+	 * @param {number} x
+	 * @param {number} y
+	 * @param {number} z
+	 * @return {*}  {(number[] | undefined)}
+	 * @memberof StandardLayer
+	 * @deprecated @todo 确认命名正确，可能是本地坐标而非世界坐标
+	 *
+	 * @note return undefined if not inited
+	 */
+	toLngLatAlt(x: number, y: number, z: number): number[] | undefined {
+		if (!this.inited) {
+			console.warn('can not call toLngLatAlt until layer is inited')
+			return
+		}
+
+		const projection = this.resolveProjection() as Projection // this won't be null after inited
+
+		const worldMatrix = this.getWorldMatrix() as number[]
+		const inverseMat = _mat4.fromArray(worldMatrix).invert()
+		const v = _vec3.set(x, y, z)
+		// Transform to pure world xyz
+		v.applyMatrix4(inverseMat)
+		return projection.unproject(v.x, v.y, v.z)
+	}
+
+	/**
+	 * 获取经纬度对应的世界坐标
+	 *
+	 * @param {number} lng
+	 * @param {number} lat
+	 * @param {number} [alt=0]
+	 * @return {*}  {(Vector3 | undefined)}
+	 * If the layer has no projection, or a worldMatrix yet, an {undefined} result will be returned.
+	 * @memberof StandardLayer
+	 * @todo 确认命名正确，可能是本地坐标而非世界坐标
+	 *
+	 * @note return undefined if not inited
+	 */
+	toWorldPosition(lng: number, lat: number, alt = 0): Vector3 | undefined {
+		if (!this.inited) {
+			console.warn('can not call toWorldPosition until layer is inited')
+			return
+		}
+
+		const worldMatrix = this.getWorldMatrix() as number[]
+		const projection = this.resolveProjection() as Projection
+		const matrix4 = _mat4.fromArray(worldMatrix)
+		const pos = _vec3.fromArray(projection.project(lng, lat, alt))
+		pos.applyMatrix4(matrix4)
+		return pos
+	}
+
+	/**
+	 * 获取经纬度对应的屏幕坐标
+	 *
+	 * @param {number} lng
+	 * @param {number} lat
+	 * @param {number} [alt=0]
+	 * @return {*}  {(Vector2 | undefined)}
+	 * If the layer has no projection,
+	 * or a worldMatrix, or not added to any Polaris yet,
+	 * an {undefined} result will be returned.
+	 * @memberof StandardLayer
+	 *
+	 * @note return undefined if not inited
+	 */
+	toScreenXY(lng: number, lat: number, alt = 0): Vector2 | undefined {
+		if (!this.inited) {
+			console.warn('can not call toScreenXY until layer is inited')
+			return
+		}
+
+		const polaris = this.polaris
+
+		const worldPos = this.toWorldPosition(lng, lat, alt)
+		if (!worldPos) return
+
+		const screenXY = polaris.getScreenXY(worldPos.x, worldPos.y, worldPos.z)
+		if (!screenXY) return
+
+		const xy = _vec2.fromArray(screenXY)
+
+		// Align to html dom x/y
+		xy.y = polaris.height - xy.y
+
+		return xy
 	}
 
 	private _initUpdatingLogic(cam, projection, perfMode) {
@@ -418,9 +551,9 @@ export class Marker extends StandardLayer {
 	}
 
 	private initHtml() {
-		this.html = this.getProps('html')
+		const html = this.getProp('html')
 
-		if (!this.html || !this.view.html) return
+		if (!html || !this.view.html) return
 
 		this.element.style.position = 'absolute'
 		this.element.style.visibility = 'hidden'
@@ -428,17 +561,18 @@ export class Marker extends StandardLayer {
 		this.element.style.userSelect = 'none'
 
 		// 允许使用文本作为HTML
-		if (this.html instanceof HTMLElement) {
+		if (html instanceof HTMLElement) {
+			this.html = html
 			this.html.style.position = 'absolute'
 			this.element.appendChild(this.html)
 		} else {
-			this.element.innerHTML = this.html
+			this.element.innerHTML = html
 			this.html = this.element
 		}
 
 		// Set styles
-		if (this.getProps('style')) {
-			const style = this.getProps('style')
+		if (this.getProp('style')) {
+			const style = this.getProp('style')
 			for (const key in style) {
 				if (style[key] !== undefined) {
 					this.element.style[key] = style[key]
@@ -451,17 +585,17 @@ export class Marker extends StandardLayer {
 		if (!this.object3d) return
 
 		if (!this.object3d.parent) {
-			this.group.add(this.object3d)
+			this.group.children.add(this.object3d)
 		} else {
 			// 防御式编程，如果被之前的Marker共用了，就克隆一个（克隆的mesh不会有parent）
 			this.object3d = deepCloneMesh(this.object3d)
-			this.group.add(this.object3d)
+			this.group.children.add(this.object3d)
 		}
 
-		this.preparePicking()
+		// this.preparePicking()
 
-		traverseMesh(this.object3d, (mesh) => {
-			if (mesh.material) {
+		traverse(this.object3d, (mesh) => {
+			if (IR.isRenderable(mesh)) {
 				// 保存mesh的原始alphaMode，show和hide结束时还原
 				this._meshAlphaModes.set(mesh, mesh.material.alphaMode)
 				this._matrOpMap.set(mesh.material, mesh.material.opacity)
@@ -470,9 +604,9 @@ export class Marker extends StandardLayer {
 	}
 
 	private updateLnglatPosition(projection) {
-		this.lnglatalt[0] = this.getProps('lng')
-		this.lnglatalt[1] = this.getProps('lat')
-		this.lnglatalt[2] = this.getProps('alt')
+		this.lnglatalt[0] = this.getProp('lng')
+		this.lnglatalt[1] = this.getProp('lat')
+		this.lnglatalt[2] = this.getProp('alt')
 
 		// position
 		this._position.fromArray(
@@ -492,29 +626,34 @@ export class Marker extends StandardLayer {
 			.identity()
 			.makeTranslation(this._position.x, this._position.y, this._position.z)
 			.multiply(orientation)
-		this.group.transform.matrix = this._mat4.toArray()
+
+		// @note @todo this is not safe. GSI.SDK should add matrix to transform
+		this.group.transform['matrix'] = this._mat4.toArray()
 
 		// 夹角阈值，用来判断visibility
-		this.altAngleThres = Math.acos(R / (R + this.getProps('alt')))
+		this.altAngleThres = Math.acos(R / (R + this.getProp('alt')))
 	}
 
 	/**
 	 * @QianXun FIX & Improve：在marker具有alt属性的情况下，三维坐标的visibility判断更准确（原先只基于地球表面的三维坐标来判断）
 	 */
 	private updateWorldPosition(forceRecalculate = true) {
-		/**
-		 * force calculation of worldMatrix
-		 * @TODO potential performance issue here
-		 */
-		let worldMatrix
+		if (!this.inited) {
+			console.warn('can not call updateWorldPosition until layer is inited')
+			return
+		}
+
+		const matPro = this.polaris.matrixProcessor
+
+		let worldMatrix: number[]
+
 		if (forceRecalculate) {
 			// Recalculate worldMatrix to get accurate value
-			worldMatrix = this.group.getWorldMatrix(true)
+			worldMatrix = matPro.getWorldMatrix(this.group)
 		} else {
-			// Use worldMatrix directly from last frame
-			worldMatrix = this.group.transform.worldMatrix
+			// Use worldMatrix directly from last frame (unless this is the first frame)
+			worldMatrix = matPro.getCachedWorldMatrix(this.group) || matPro.getWorldMatrix(this.group)
 		}
-		if (!worldMatrix) return
 
 		// Extract world position
 		if (
@@ -529,7 +668,7 @@ export class Marker extends StandardLayer {
 	}
 
 	private updateVisibility(cam: CameraProxy, projection: Projection) {
-		if (this.getProps('autoHide')) {
+		if (this.getProp('autoHide')) {
 			if (projection.isSphereProjection) {
 				// 球面投影下使用球面切点判断可见性
 				const camStates = cam.getCartesianStates()
@@ -601,8 +740,8 @@ export class Marker extends StandardLayer {
 			// }px)`
 
 			// Use left/top positioning rather than transform
-			const left = this._screenXY.x + this.getProps('offsetX')
-			const top = this._screenXY.y + this.getProps('offsetY')
+			const left = this._screenXY.x + this.getProp('offsetX')
+			const top = this._screenXY.y + this.getProp('offsetY')
 
 			// FIX: performance issues to get offsetLeft/offsetTop each frame
 			el.style.left = `${left}px`
@@ -620,12 +759,20 @@ export class Marker extends StandardLayer {
 		this.framesAfterInit = 0
 	}
 
-	private preparePicking() {
-		if (this.object3d && this.object3d.geometry) {
-			// Compute BBox & BSphere
-			const geom = this.object3d.geometry
-			if (!geom.boundingBox) computeBBox(geom)
-			if (!geom.boundingSphere) computeBSphere(geom)
-		}
-	}
+	// seems unnecessary
+	// private preparePicking() {
+	// 	if (this.object3d && this.object3d.geometry) {
+	// 		// Compute BBox & BSphere
+	// 		const geom = this.object3d.geometry
+	// 		if (!geom.boundingBox) computeBBox(geom)
+	// 		if (!geom.boundingSphere) computeBSphere(geom)
+	// 	}
+	// }
 }
+
+/**
+ * Temp vars
+ */
+const _mat4 = new Matrix4()
+const _vec3 = new Vector3()
+const _vec2 = new Vector2()
