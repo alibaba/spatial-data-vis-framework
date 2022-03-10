@@ -1,6 +1,6 @@
 # 分层空间数据可视化框架
 
-**>>This Project Is Still In Uploading Process.<<**
+**🚧This Project Is Still In Uploading Process.施工🚧**
 
 **Layered Spatial Data Vis Framework**, or Polaris.gl in short.
 
@@ -14,7 +14,7 @@ With a layered structure and supercharged toolkit to:
 
 - Make 3d engines and map libraries cooperate in your application
 - Build full-featured spatial visualization or map apps based on any 3D engines
-- Compose your own visualization framework easily with all the tools you love
+- Compose your own visualization framework easily with all the tools you already love
 
 Out-of-box Polaris.gl implements are provided for common scenarios:
 
@@ -49,7 +49,7 @@ Officially maintained layers:
 
 ---
 
-Polaris.gl 是基于通用 3D 渲染引擎的空间数据可视化框架，在 通用 3D 渲染能力的基础上增加 地理信息标准、组件封装与组合标准、与地图库的联动机制，并在这些标准上积累了一大批开箱即用的 可视化组件、视觉组件、定制框架等。
+Polaris.gl 是基于通用 3D 渲染引擎的空间数据可视化*元*框架，在 通用 3D 渲染能力的基础上增加 地理信息标准、组件封装与组合标准、与地图库的联动机制，并在这些标准上积累了一大批开箱即用的 可视化组件、视觉组件、定制框架等。
 
 Polaris.gl 并不是一个地图库，没有内置或绑定的地图服务，但是提供和众多公开地图库、地理可视化工具（包括 Mapbox、高德地图、百度地图、cesium、L7 等）的协同工作方案。
 
@@ -63,8 +63,6 @@ Make sure you have `nodejs`, `yarn` and `lerna` installed.
 
 ```sh
 node -v # v14 or higher
-
-npx yarn -v # v1.x
 
 npx lerna -v # v4.x recommended
 ```
