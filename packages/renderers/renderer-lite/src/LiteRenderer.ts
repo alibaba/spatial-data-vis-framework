@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import { MeshDataType } from '@gs.i/schema'
+import * as IR from '@gs.i/schema-scene'
 import {
 	Object3D,
 	Vector3,
@@ -21,20 +21,16 @@ import {
 	AmbientLight,
 	DirectionalLight,
 	PointLight,
-} from '@gs.i/three-lite-renderer'
+} from 'three-lite'
 import { Renderer, colorToString, PolarisProps, PickResult } from '@polaris.gl/base'
-import {
-	DefaultConfig as ConvConfig,
-	ThreeLiteConverter,
-	RenderableObject3D,
-} from '@gs.i/backend-threelite'
+import { DefaultConfig as ConvConfig, ThreeLiteConverter } from '@gs.i/backend-threelite'
 import { CameraProxy } from 'camera-proxy'
 import * as SDK from '@gs.i/frontend-sdk'
 import { GSIView } from '@polaris.gl/view-gsi'
 // import * as postprocessing from 'postprocessing'
 // const { EffectComposer, ShaderPass } = postprocessing
-import { calcCamNearFar } from './Utils'
-import { Raycaster, RaycastInfo } from '@gs.i/utils-raycast'
+import { calcCamNearFar } from './utils'
+import { Raycaster, RaycastInfo } from '@gs.i/processor-raycast'
 
 /**
  *
@@ -43,7 +39,24 @@ import { Raycaster, RaycastInfo } from '@gs.i/utils-raycast'
  * @interface RendererProps
  * @extends {PolarisProps}
  */
-export interface RendererProps extends PolarisProps {
+export interface RendererProps
+	extends Required<
+		Pick<
+			PolarisProps,
+			| 'width'
+			| 'ratio'
+			| 'height'
+			| 'antialias'
+			| 'background'
+			| 'fov'
+			| 'viewOffset'
+			| 'renderToFBO'
+			| 'lights'
+			| 'cameraNear'
+			| 'cameraFar'
+			| 'postprocessing'
+		>
+	> {
 	enableReflection?: boolean
 	reflectionRatio?: number
 	castShadow?: boolean
@@ -89,13 +102,21 @@ export class LiteRenderer extends Renderer {
 	 */
 	frame: WebGLRenderTarget
 
-	private _clock: Clock
-
 	/**
 	 * GSI - Scene 保留引用，应当不允许更改
 	 * 每帧根据cameraProxy修改scene的偏移
 	 */
-	private gsiScene: SDK.Mesh
+	private polarisViewWrapper: IR.BaseNode
+
+	/**
+	 * 转换后的  group
+	 */
+	private threeRoot: Object3D
+
+	/**
+	 * used to do camera transformation for whole scene
+	 */
+	private rootWrapper: SDK.Mesh
 
 	/**
 	 * 顶层 scene，由 scene props 生成，在 polaris-renderer 中管理
@@ -111,11 +132,6 @@ export class LiteRenderer extends Renderer {
 	 * 场景相机
 	 */
 	private camera: PerspectiveCamera
-
-	/**
-	 * 转换后的 GL2 group
-	 */
-	private _group: RenderableObject3D
 
 	/**
 	 * Postprocessing
@@ -224,9 +240,17 @@ export class LiteRenderer extends Renderer {
 		} else {
 			this.scene.background = new Color(this.props.background as string)
 		}
-		// 在scene optimize pass中主动计算matrix，不需要three的计算了
+
+		/**
+		 * gsi three conv 不开启 decomposeMatrix ，不然性能很差。
+		 * 这样做的问题是，conv 得到的 object3d 无法再 transform，即使加在 three.group 中，
+		 * 也不会被父的 transform 影响。
+		 */
 		this.scene.autoUpdate = false
 		this.scene.matrixAutoUpdate = false
+
+		this.rootWrapper = new SDK.Mesh()
+		this.rootWrapper.name = 'rootWrapper'
 
 		/**
 		 * init lights
@@ -275,7 +299,10 @@ export class LiteRenderer extends Renderer {
 		 * 		WebGL2
 		 * 			使用一个独立的 color buffer，同步绘制
 		 */
-		this.raycaster = new Raycaster()
+		this.raycaster = new Raycaster({
+			boundingProcessor: ConvConfig.boundingProcessor,
+			matrixProcessor: ConvConfig.matrixProcessor,
+		})
 		this._internalThreeRaycaster = new ThreeRaycaster()
 
 		/**
@@ -300,26 +327,24 @@ export class LiteRenderer extends Renderer {
 	}
 
 	render(view: GSIView) {
-		if (!this._group) {
-			this._group = this.conv.convert(view.groupWrapper)
-			this.scene.add(this._group)
-		} else {
-			this.conv.convert(view.groupWrapper)
+		if (this.polarisViewWrapper === undefined) {
+			this.polarisViewWrapper = view.alignmentWrapper
+			this.rootWrapper.add(this.polarisViewWrapper)
+		} else if (this.polarisViewWrapper !== view.alignmentWrapper) {
+			throw new Error('Lite Renderer: Sharing renderer between polaris instances is not supported')
 		}
 
-		// 缓存
-		if (this.gsiScene !== view.groupWrapper) {
-			this.gsiScene = view.groupWrapper
+		if (!this.threeRoot) {
+			this.threeRoot = this.conv.convert(this.rootWrapper)
+			this.scene.add(this.threeRoot)
+		} else {
+			this.conv.convert(this.rootWrapper)
 		}
 
 		if (this.props.renderToFBO) {
 			// Postprocessing rendering
 			this.renderer.setRenderTarget(this.frame)
 			this.renderer.render(this.scene, this.camera)
-			if (!this._clock) {
-				this._clock = new Clock()
-				this._clock.start()
-			}
 			// this.effectComposer.render(this._clock.getDelta())
 		} else {
 			// Normal rendering
@@ -382,9 +407,7 @@ export class LiteRenderer extends Renderer {
 		this.camera.updateMatrix()
 		this.camera.updateMatrixWorld(true)
 
-		if (this.gsiScene) {
-			this.gsiScene.transform.position.set(-cam.center[0], -cam.center[1], -cam.center[2])
-		}
+		this.rootWrapper.transform.position.set(-cam.center[0], -cam.center[1], -cam.center[2])
 
 		// Update point lights position
 		const pLights = this.props.lights?.pointLights
@@ -498,6 +521,7 @@ export class LiteRenderer extends Renderer {
 		return _vec3.toArray()
 	}
 
+	// TODO refactor picking
 	/**
 	 *
 	 *
@@ -507,66 +531,36 @@ export class LiteRenderer extends Renderer {
 	 * @return {*}  {PickResult}
 	 * @memberof GSIGL2Renderer
 	 */
-	pick(
-		object: MeshDataType,
-		ndcCoords: { x: number; y: number },
-		options: { allInters?: boolean; threshold?: number; backfaceCulling?: boolean }
-	): PickResult {
-		const result: PickResult = {
-			hit: false,
-			intersections: [],
-		}
+	// pick(
+	// 	object: RenderableNode,
+	// 	ndcCoords: { x: number; y: number },
+	// 	options: { allInters?: boolean; threshold?: number; backfaceCulling?: boolean }
+	// ): PickResult {
+	// 	const result: PickResult = {
+	// 		hit: false,
+	// 		intersections: [],
+	// 	}
 
-		this._internalThreeRaycaster.setFromCamera(ndcCoords, this.camera)
-		this.raycaster.set(
-			this._internalThreeRaycaster.ray.origin.toArray(),
-			this._internalThreeRaycaster.ray.direction.toArray()
-		)
-		this.raycaster.near = this.camera.near
-		this.raycaster.far = Infinity
+	// 	this._internalThreeRaycaster.setFromCamera(ndcCoords, this.camera)
+	// 	this.raycaster.set(
+	// 		this._internalThreeRaycaster.ray.origin.clone(),
+	// 		this._internalThreeRaycaster.ray.direction.clone()
+	// 	)
+	// 	this.raycaster.near = this.camera.near
+	// 	this.raycaster.far = Infinity
 
-		if (!object.geometry) {
-			return result
-		}
+	// 	if (!object.geometry) {
+	// 		return result
+	// 	}
 
-		let info: RaycastInfo
-		options = options ?? {}
-		if (object.geometry.mode === 'TRIANGLES') {
-			let backfaceCulling = options.backfaceCulling
-			if (backfaceCulling === undefined) {
-				backfaceCulling = object.material ? object.material.side === 'front' : false
-			}
-			info = this.raycaster.intersectTriangleMesh(
-				object,
-				backfaceCulling,
-				options.allInters ?? false
-			)
-		} else if (object.geometry.mode === 'LINES') {
-			if (!options.threshold) {
-				console.error('Polaris::GSIGL2Renderer - Invalid picking parameter: options.threshold. ')
-				return result
-			}
-			info = this.raycaster.intersectLineMesh(object, options.threshold, options.allInters ?? false)
-		} else if (object.geometry.mode === 'SPRITE') {
-			info = this.raycaster.intersectSpriteMesh(
-				object,
-				this.camera.position,
-				this.camera.rotation,
-				true,
-				options.allInters ?? true // Sprites intersection needs all inters
-			)
-		} else {
-			console.warn(
-				`Polaris::GSIGL2Renderer - Geometry mode '${object.geometry.mode}' not supported for picking yet. `
-			)
-			return result
-		}
+	// 	options = options ?? {}
+	// 	const info = this.raycaster.raycast(object, options.allInters ?? false)
 
-		if (info.hit) {
-			return info
-		}
-		return result
-	}
+	// 	if (info.hit) {
+	// 		return info
+	// 	}
+	// 	return result
+	// }
 
 	getCapabilities(): {
 		pointSizeRange: [number, number]
