@@ -1,13 +1,12 @@
 {
 	"extends": "./tsconfig.base.json",
 	"compilerOptions": {
-		"rootDir": "src",
-		"outDir": "dist",
+		"rootDir": ".",
 		"composite": true,
 		"incremental": true
 	},
-	"include": ["src", "typings"],
-	"exclude": ["dist"],
+	"include": [".", "typings"],
+	"exclude": ["node_modules", "*.js"],
 	"references": [
 		{
 			"path": "../packages/core/base"
@@ -61,9 +60,6 @@
 			"path": "../packages/renderers/renderer-gsi-gl2"
 		},
 		{
-			"path": "../packages/renderers/renderer-lite"
-		},
-		{
 			"path": "../packages/utils/utils"
 		},
 		{
@@ -80,12 +76,6 @@
 		},
 		{
 			"path": "../packages/utils/worker-manager"
-		},
-		{
-			"path": "../packages/core/view-gsi"
-		},
-		{
-			"path": "../packages/core/view-html"
 		}
 	]
 }

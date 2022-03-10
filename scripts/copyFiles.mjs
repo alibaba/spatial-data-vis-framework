@@ -28,6 +28,10 @@ const packages = execSync('npx lerna ls -p')
 			inBL = inBL || line.includes(rule)
 		})
 
+		if (inBL) {
+			console.log('copyFiles::ignore package:', line)
+		}
+
 		// lerna notice 不会被返回掉
 		// return !line.startsWith('lerna ') && line.trim() !== '' && !inBL
 		return line.trim() !== '' && !inBL
