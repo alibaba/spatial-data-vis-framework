@@ -3,8 +3,6 @@
  * All rights reserved.
  */
 
-import { ColorLike } from '@gs.i/schema'
-
 export function clamp(x, minVal, maxVal) {
 	return Math.min(Math.max(x, minVal), maxVal)
 }
@@ -45,7 +43,10 @@ export const EasingFunction = {
 }
 
 const colorEpsilon = 1 / 256
-export function colorEquals(color: ColorLike, another: ColorLike) {
+export function colorEquals(
+	color: { r: number; g: number; b: number },
+	another: { r: number; g: number; b: number }
+) {
 	if (
 		Math.abs(color.r - another.r) < colorEpsilon &&
 		Math.abs(color.g - another.g) < colorEpsilon &&
