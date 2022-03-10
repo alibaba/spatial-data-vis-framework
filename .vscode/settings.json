@@ -16,8 +16,8 @@
 	},
 	"editor.formatOnPaste": false,
 	"files.exclude": {
-		"**/*.back": true,
-		"**/*.old": true,
+		// "**/*.back": true,
+		// "**/*.old": true,
 		// shared
 		"packages/*/*/tsconfig.*.json": true,
 		"packages/*/*/scripts": true
