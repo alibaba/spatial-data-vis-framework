@@ -24,13 +24,17 @@ import {
 } from 'three-lite'
 import { colorToString, PolarisProps } from '@polaris.gl/base'
 import { Renderer, PickResult, GSIView } from '@polaris.gl/base-gsi'
-import { DefaultConfig as ConvConfig, ThreeLiteConverter } from '@gs.i/backend-threelite'
+import { ThreeLiteConverter } from '@gs.i/backend-threelite'
 import { CameraProxy } from 'camera-proxy'
 import * as SDK from '@gs.i/frontend-sdk'
 // import * as postprocessing from 'postprocessing'
 // const { EffectComposer, ShaderPass } = postprocessing
 import { calcCamNearFar } from './utils'
 import { Raycaster, RaycastInfo } from '@gs.i/processor-raycast'
+import type { MatProcessor } from '@gs.i/processor-matrix'
+import type { BoundingProcessor } from '@gs.i/processor-bound'
+import type { GraphProcessor } from '@gs.i/processor-graph'
+import type { CullingProcessor } from '@gs.i/processor-culling'
 
 /**
  *
@@ -60,6 +64,11 @@ export interface RendererProps
 	enableReflection?: boolean
 	reflectionRatio?: number
 	castShadow?: boolean
+
+	matrixProcessor: MatProcessor
+	boundingProcessor: BoundingProcessor
+	graphProcessor: GraphProcessor
+	cullingProcessor: CullingProcessor
 }
 
 export const defaultProps = {
@@ -192,7 +201,12 @@ export class LiteRenderer extends Renderer {
 		this.canvas = canvas
 
 		// Converter
-		this.conv = new ThreeLiteConverter(ConvConfig)
+		this.conv = new ThreeLiteConverter({
+			matrixProcessor: this.props.matrixProcessor,
+			boundingProcessor: this.props.boundingProcessor,
+			graphProcessor: this.props.graphProcessor,
+			cullingProcessor: this.props.cullingProcessor,
+		})
 
 		/**
 		 * init renderer
@@ -300,8 +314,8 @@ export class LiteRenderer extends Renderer {
 		 * 			使用一个独立的 color buffer，同步绘制
 		 */
 		this.raycaster = new Raycaster({
-			boundingProcessor: ConvConfig.boundingProcessor,
-			matrixProcessor: ConvConfig.matrixProcessor,
+			boundingProcessor: this.props.boundingProcessor,
+			matrixProcessor: this.props.matrixProcessor,
 		})
 		this._internalThreeRaycaster = new ThreeRaycaster()
 
@@ -397,17 +411,22 @@ export class LiteRenderer extends Renderer {
 	}
 
 	updateCamera(cam: CameraProxy): void {
+		/**
+		 * @strategy
+		 *
+		 * Move cam.center to 0,0,0
+		 */
+
+		this.rootWrapper.transform.position.set(-cam.center[0], -cam.center[1], -cam.center[2])
 		this.camera.position.set(
 			cam.position[0] - cam.center[0],
 			cam.position[1] - cam.center[1],
 			cam.position[2] - cam.center[2]
 		)
-
 		this.camera.rotation.fromArray(cam.rotationEuler)
+
 		this.camera.updateMatrix()
 		this.camera.updateMatrixWorld(true)
-
-		this.rootWrapper.transform.position.set(-cam.center[0], -cam.center[1], -cam.center[2])
 
 		// Update point lights position
 		const pLights = this.props.lights?.pointLights
