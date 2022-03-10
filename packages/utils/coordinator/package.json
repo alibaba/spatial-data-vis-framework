@@ -1,0 +1,28 @@
+{
+    "name": "@polaris.gl/coordinator",
+    "version": "0.0.0-alpha.9",
+    "description": "",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "license": "MIT",
+    "files": [
+        "README.md",
+        "dist/*"
+    ],
+    "publishConfig": {
+        "access": "public"
+    },
+    "scripts": {
+        "start": "vite --open /examples/ --cors",
+        "build": "./scripts/build.sh",
+        "clean": "./scripts/clean.sh",
+        "rebuild": "npm run clean && npm run build"
+    },
+    "dependencies": {
+        "@gs.i/utils-math": "^0.0.0-beta",
+        "@polaris.gl/projection": "^0.0.0-alpha.9"
+    },
+    "devDependencies": {
+        "typescript": ">4.4.0"
+    }
+}
