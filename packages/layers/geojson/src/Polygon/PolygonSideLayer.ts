@@ -9,7 +9,7 @@ import { computeBBox, computeBSphere } from '@gs.i/utils-geometry'
  * 可以使用 Layer，自己添加需要的 view；
  * 也可以使用 StandardLayer，添加好 threeView 和 htmlView 的 Layer，懒人福音。
  */
-import { StandardLayer, StandardLayerProps } from '@polaris.gl/base-gsi'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 import { Mesh, Geom, Attr, PbrMaterial } from '@gs.i/frontend-sdk'
 import { Color } from '@gs.i/utils-math'
 import { PolygonMatr } from './PolygonMatr'

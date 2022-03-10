@@ -1,4 +1,4 @@
-import { StandardLayer } from '@polaris.gl/base-gsi'
+import { StandardLayer } from '@polaris.gl/gsi'
 import { PolarisLite } from '@polaris.gl/lite'
 
 import { IndicatorProcessor } from '@gs.i/processor-indicator'

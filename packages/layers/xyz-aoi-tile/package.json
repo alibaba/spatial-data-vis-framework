@@ -24,7 +24,7 @@
         "@gs.i/utils-math": "^0.0.0-beta",
         "@polaris.gl/base": "^0.0.0-alpha.9",
         "@polaris.gl/gsi": "^0.0.0-alpha.9",
-        "@polaris.gl/base-gsi": "^0.0.0-alpha.9",
+        "@polaris.gl/gsi": "^0.0.0-alpha.9",
         "@polaris.gl/projection": "^0.0.0-alpha.9",
         "@polaris.gl/utils": "^0.0.0-alpha.9",
         "@polaris.gl/utils-request-manager": "^0.0.0-alpha.9",

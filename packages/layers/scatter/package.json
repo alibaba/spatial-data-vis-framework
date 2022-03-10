@@ -20,7 +20,7 @@
         "@gs.i/utils-geometry": "0.2.1-alpha.3",
         "@gs.i/utils-specify": "0.2.1-alpha.3",
         "@gs.i/utils-math": "^0.0.0-beta",
-        "@polaris.gl/base-gsi": "^0.0.0-alpha.9"
+        "@polaris.gl/gsi": "^0.0.0-alpha.9"
     },
     "devDependencies": {
         "typescript": ">4.4.0"

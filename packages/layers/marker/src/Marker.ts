@@ -12,7 +12,7 @@ import { deepCloneMesh, traverse } from './utils'
 import { getOrientationMatrix } from './geometry'
 // import { computeBBox, computeBSphere } from '@gs.i/utils-geometry'
 import { CoordV2, PickEvent } from '@polaris.gl/base'
-import { GSIView, PolarisGSI, StandardLayer, StandardLayerProps } from '@polaris.gl/base-gsi'
+import { GSIView, PolarisGSI, StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 
 const R = 6378137 // 常量 - 地球半径
 

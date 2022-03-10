@@ -1,4 +1,4 @@
-import { PolarisGSI, StandardLayer, StandardLayerProps } from '@polaris.gl/base-gsi'
+import { PolarisGSI, StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 import { Color, Vector2 } from '@gs.i/utils-math'
 /**
  * Copyright (C) 2021 Alibaba Group Holding Limited

@@ -1,10 +1,5 @@
 import { PickEventResult } from '@polaris.gl/base'
-import {
-	PolarisGSI,
-	PolarisGSIProps,
-	StandardLayer,
-	StandardLayerProps,
-} from '@polaris.gl/base-gsi'
+import { PolarisGSI, PolarisGSIProps, StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 
 type PolarisGSICtor = new (opts: PolarisGSIProps) => PolarisGSI
 

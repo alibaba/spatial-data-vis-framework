@@ -1,5 +1,5 @@
 import { Timeline } from 'ani-timeline'
-import { StandardLayer } from '@polaris.gl/base-gsi'
+import { StandardLayer } from '@polaris.gl/gsi'
 import { Polaris } from '@polaris.gl/base'
 import { Projection } from '@polaris.gl/projection'
 import {

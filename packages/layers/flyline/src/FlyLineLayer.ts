@@ -7,7 +7,7 @@ import { Vector3 } from '@gs.i/utils-math'
 import { Timeline } from 'ani-timeline'
 import { Projection, GeocentricProjection } from '@polaris.gl/projection'
 import { FlyLineProps, FlyLine, DefaultFlyLineProps } from './FlyLine'
-import { StandardLayer, StandardLayerProps } from '@polaris.gl/base-gsi'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 import { Grid } from './Grid'
 import { OptionalDefault } from './util'
 

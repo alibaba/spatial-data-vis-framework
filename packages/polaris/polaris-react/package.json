@@ -19,7 +19,7 @@
     },
     "dependencies": {
         "@polaris.gl/base": "^0.0.0-alpha.9",
-        "@polaris.gl/base-gsi": "^0.0.0-alpha.9",
+        "@polaris.gl/gsi": "^0.0.0-alpha.9",
         "@types/react": "^17.0.38"
     },
     "peerDependencies": {
