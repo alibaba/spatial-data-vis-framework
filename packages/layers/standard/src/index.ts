@@ -4,3 +4,5 @@
  */
 
 export * from './StandardLayer'
+export * from './view/GsiView'
+export * from './view/HtmlView'
