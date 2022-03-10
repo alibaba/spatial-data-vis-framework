@@ -24,7 +24,7 @@ import type { AbstractLayer } from './Layer'
  * 		1. `AddEvent` (once)
  * 		2. `RootChangeEvent` (at least once)
  * 		3. @deprecated `Layer.init` (once, if implemented)
- *      3. `InitEvent` (once, after the layer is added to a
+ * 		3. `InitEvent` (once, after the layer is added to a
  * 	        polaris scene, so that Polaris/Timeline/Projection can be resolved)
  * 		4. `AfterInitEvent` (once, after InitEvent is triggered)
  *
@@ -38,7 +38,7 @@ import type { AbstractLayer } from './Layer'
  * 			on both layer and polaris instance)
  *
  * 		@stage_2 deconstruction
- * 		1. `RemoveEvent` (only happen once if you implicitly remove a layer)
+ * 		1. `RemoveEvent` (once, only if you implicitly remove a layer from its parent)
  * 		2. `Layer.dispose`
  *
  * A Polaris instance, as a special kind of Layer, is the root of the layer tree.
