@@ -6,26 +6,19 @@
 import { Timeline } from 'ani-timeline'
 import { Projection } from '@polaris.gl/projection'
 
-export interface BasicProps {
+export const defaultBasicProps = {
 	/**
-	 * container DOM for mounting everything
+	 * specific width @pixel
 	 */
-	container?: HTMLDivElement
-
+	width: 500,
 	/**
-	 * specific width, use css style width if not given
+	 * specific height @pixel
 	 */
-	width: number
-
-	/**
-	 * specific height, use css style height if not given
-	 */
-	height: number
-
+	height: 500,
 	/**
 	 * Resize polaris elements & canvas responsively
 	 */
-	autoResize?: boolean
+	autoResize: true,
 
 	/**
 	 * pixel ratio, this affect the actual rendering resolution.
@@ -33,7 +26,52 @@ export interface BasicProps {
 	 * @note use 2 for HDPI,
 	 * @default 1
 	 */
-	ratio?: number
+	ratio: 1,
+
+	/**
+	 * render to frame buffer object
+	 */
+	renderToFBO: false,
+
+	/**
+	 * enable frustumCulling feature
+	 */
+	frustumCulling: true,
+
+	/**
+	 * enable pointer(mouser/touch) events
+	 */
+	enablePointer: true,
+
+	/**
+	 * whether to enable penetrating picking
+	 * default is false
+	 */
+	deepPicking: false,
+
+	/**
+	 * enable async rendering (use setTimeout internally)
+	 * specifically for syncing with AMap render process
+	 */
+	asyncRendering: false,
+
+	/**
+	 * enable debug mode or not
+	 */
+	debug: false,
+
+	/**
+	 * whether to start play automatically after construction
+	 * @note DO NOT ENABLE THIS IF YOU REUSE THE TIMELINE
+	 */
+	autoplay: true,
+}
+
+export type BasicProps = Partial<typeof defaultBasicProps> & {
+	/**
+	 * container DOM for mounting everything
+	 */
+	container: HTMLDivElement
 
 	/**
 	 * timeline
@@ -44,45 +82,4 @@ export interface BasicProps {
 	 * projection
 	 */
 	projection?: Projection
-
-	renderToFBO?: boolean
-
-	/**
-	 * enable pointer(mouser/touch) events
-	 */
-	enablePointer?: boolean
-
-	/**
-	 * whether to enable penetrating picking
-	 * default is false
-	 */
-	deepPicking?: boolean
-
-	/**
-	 * enable frustumCulling feature
-	 */
-	frustumCulling?: boolean
-
-	/**
-	 * enable async rendering (use setTimeout internally)
-	 * specifically for syncing with AMap render process
-	 */
-	asyncRendering?: boolean
-
-	/**
-	 * enable debug mode or not
-	 */
-	debug?: boolean
-}
-
-export const defaultBasicProps: BasicProps = {
-	width: 500,
-	height: 500,
-	autoResize: true,
-	renderToFBO: false,
-	frustumCulling: true,
-	enablePointer: true,
-	deepPicking: false,
-	asyncRendering: false,
-	debug: false,
 }

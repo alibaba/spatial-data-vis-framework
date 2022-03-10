@@ -4,10 +4,9 @@
  */
 
 export * from './EventDispatcher'
-export * from './AbstractNode'
-export * from './AbstractLayer'
+export * from './Node'
 export * from './Layer'
 export * from './Polaris'
-export * from './Renderer'
-export * from './View'
 export * from './props/index'
+export * from './events'
+export * from './utils'

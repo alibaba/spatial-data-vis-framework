@@ -3,74 +3,54 @@
  * All rights reserved.
  */
 
-export interface CameraProps {
+export const defaultCameraProps = {
 	/**
 	 * camera fov
 	 */
-	fov?: number
-
+	fov: 20,
 	/**
 	 * camera zoom
 	 */
-	zoom?: number
-
+	zoom: 14,
 	/**
 	 * custom camera zoom range in [0, 23]
 	 */
-	zoomLimit?: Array<number>
-
+	zoomLimit: [1, 23],
 	/**
 	 * camera pitch
 	 */
-	pitch?: number
-
+	pitch: Math.PI * 0.25,
 	/**
 	 * custom camera pitch range [0, Math.PI * 0.5]
 	 */
-	pitchLimit?: Array<number>
+	pitchLimit: [0, (Math.PI * 83) / 180], // 高德地图pitchLimit
 
 	/**
 	 * camera rotation
 	 */
-	rotation?: number
-
+	rotation: 0,
 	/**
 	 * camera lookat center [lng, lat]
 	 */
-	center?: Array<number>
-
+	center: [0, 0],
 	/**
 	 * camera view offset
 	 * see https://threejs.org/docs/#api/en/cameras/PerspectiveCamera.setViewOffset
 	 */
-	viewOffset?: Array<number>
-
-	cameraNear?: number
-	cameraFar?: number
-
+	viewOffset: [0, 0],
+	cameraNear: 100,
+	cameraFar: 10000000000,
 	/**
 	 * 相机运动惰性
+	 *
+	 * @todo inert会导致projection在每帧绘制前同步不及时，画面会抖动
 	 */
-	cameraInert?: number
+	cameraInert: 1.0,
 
 	/**
 	 * 鼠标/触控
 	 */
-	cameraControl?: boolean
-}
-
-export const defaultCameraProps = {
-	fov: 20,
-	zoom: 14,
-	zoomLimit: [1, 23],
-	pitch: Math.PI * 0.25,
-	pitchLimit: [0, (Math.PI * 83) / 180], // 高德地图pitchLimit
-	rotation: 0,
-	center: [0, 0],
-	viewOffset: [0, 0],
-	cameraNear: 100,
-	cameraFar: 10000000000,
-	/** @todo inert会导致projection在每帧绘制前同步不及时，画面会抖动 */
-	cameraInert: 1.0,
 	cameraControl: true,
 }
+
+export type CameraProps = Partial<typeof defaultCameraProps>

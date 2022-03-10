@@ -9,14 +9,16 @@ import type { CameraProxy } from 'camera-proxy'
 import type { AbstractLayerEvents } from './events'
 
 import { MAX_DEPTH, Node } from './Node'
+import { View } from './View'
 import type { AbstractPolaris } from './Polaris'
 import { Callback, ListenerOptions, PropsManager } from '@polaris.gl/utils-props-manager'
 
 export interface LayerProps {
 	name?: string
-	parent?: AbstractLayer
+	parent?: AbstractLayer<any>
 	timeline?: Timeline
 	projection?: Projection
+	views?: { [key: string]: new () => View }
 }
 
 // override Node & EventDispatcher interfaces to hide underlying implements.
@@ -46,6 +48,17 @@ export abstract class AbstractLayer<
 	 * readable name of this layer
 	 */
 	readonly name: string
+	/**
+	 * #### The actual renderable contents.
+	 * A layer can have multi views, e.g. gsiView + htmlView
+	 *
+	 * 🚧 @note
+	 * - kind of over-design. name and interface may change into future.
+	 * - this is for framework developers to add third-party renderers.
+	 * - should not be exposed to client developers.
+	 * - **only use this if you know what you are doing.**
+	 */
+	readonly view: { [key: string]: View }
 
 	#inited = false
 	#visible = true
@@ -67,6 +80,17 @@ export abstract class AbstractLayer<
 		// 本地投影和时间线
 		this.#projectionLocal = props?.projection
 		this.#timelineLocal = props?.timeline
+
+		// initialize views by props.views
+		if (props?.views) {
+			this.view = {}
+			for (const key in props.views) {
+				const ViewClass = props.views[key]
+				const view = new ViewClass()
+				view.init(this)
+				this.view[key] = view
+			}
+		}
 
 		if (props?.parent) {
 			props.parent.add(this)
@@ -137,7 +161,7 @@ export abstract class AbstractLayer<
 	set visible(v: boolean) {
 		if (this.#visible !== v) {
 			this.#visible = v
-			this.dispatchEvent({ type: 'visibilityChange', visible: v })
+			this.dispatchEvent({ type: 'visibilityChange' })
 		}
 	}
 
@@ -237,9 +261,9 @@ export abstract class AbstractLayer<
 	 * @deprecated use {@link .addEventListener} instead
 	 * callback when object/layer
 	 */
-	set onVisibilityChange(f: (visible: boolean) => void) {
-		this.addEventListener('visibilityChange', (e) => {
-			f(e.visible)
+	set onVisibilityChange(f: () => void) {
+		this.addEventListener('visibilityChange', () => {
+			f()
 		})
 	}
 
@@ -297,7 +321,7 @@ export abstract class AbstractLayer<
 	/**
 	 * @deprecated use {@link watchProps} instead. with `{immediate: true}` as options
 	 */
-	protected listenProps<TKeys extends ReadonlyArray<keyof TProps>>(
+	protected listenProps<TKeys extends Array<keyof TProps>>(
 		keys: TKeys,
 		callback: Callback<TProps, TKeys[number]>
 	): void {
