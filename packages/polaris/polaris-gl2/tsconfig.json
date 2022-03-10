@@ -17,12 +17,6 @@
 		},
 		{
 			"path": "../../utils/utils"
-		},
-		{
-			"path": "../../core/view-html"
-		},
-		{
-			"path": "../../core/view-three"
 		}
 	]
 }
