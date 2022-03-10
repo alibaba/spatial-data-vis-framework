@@ -20,12 +20,6 @@
 		},
 		{
 			"path": "../../utils/utils"
-		},
-		{
-			"path": "../../core/view-gsi"
-		},
-		{
-			"path": "../../core/view-html"
 		}
 	]
 }
