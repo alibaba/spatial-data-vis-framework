@@ -3,247 +3,335 @@
  * All rights reserved.
  */
 
-import { default as minBy } from 'lodash/minBy'
-import { default as maxBy } from 'lodash/maxBy'
-import { default as isEqual } from 'lodash/isEqual'
-import { default as getByPath } from 'lodash/get'
-import { default as partition } from 'lodash/partition'
-import { default as isEmpty } from 'lodash/isEmpty'
-
-export type EventCallBack = { (event: Event, done: () => void): void }
-
-const REGX_HTTP_HTTPS = /^(https:\/\/|http:\/\/)\.*/
-const REGX_GLB_GLTF = /\.(glb|gltf)$/
-
-export interface Event {
-	type: string
-	trigger: string | string[]
-	[property: string]: any
-}
-
-class EventEmitter {
-	listeners: Map<string, EventCallBack> = new Map()
-
-	on(type: string, callback: EventCallBack) {
-		this.listeners.set(type, callback)
-	}
-
-	emit(event: Event): Promise<void> {
-		const callback = this.listeners.get(event.type)
-		return new Promise<void>((resolve) => {
-			callback?.apply(this, [event, resolve])
-		})
-	}
-
-	getCallback(type: string) {
-		return this.listeners.get(type)
-	}
-}
-
-function shallowDiffProps(newProps, oldProps) {
-	const diffProps: Array<string> = []
-	for (const key in newProps) {
-		if (!isEqual(newProps[key], oldProps[key])) {
-			diffProps.push(key)
-		}
-	}
-	return diffProps
-}
-
-function needsUpdate(key: string, diffProps: Array<string>) {
-	for (let i = 0; i < diffProps.length; i++) {
-		if (key.indexOf(diffProps[i]) > -1) {
-			return diffProps[i]
-		}
-	}
-	return false
-}
+import { deepDiffProps, pick } from './utils'
 
 /**
- * 属性管理 - 协助 Layer 管理 props
- * 1. 修改、监听、获取 props 值
- * 2. 缓存 transform 后的数据
- * 3. 将 'getXXX' 以 get 开头的 sacle 属性转换为 data mapping 回调函数
+ * Props Manager.
+ *
+ * @compare_logic
+ *
+ * Props are shallow-copied but deep-compared.
+ * That means:
+ * - Changing an array or object "in position" will not be detected.
+ * - Using deep objects as props is OK. But changing them will cause performance issue.
+ *
+ * @note this is sync version. do not use async functions as listeners.
  */
-export class PropsManager extends EventEmitter {
-	// 当前的 props 属性
-	props: any = {}
-
-	// transform 后的数据
-	cacheData: any = null
+export class PropsManager<
+	TProps extends Record<string, any>,
+	TModifiableKeys extends keyof TProps = keyof TProps
+> {
+	/**
+	 * current props
+	 */
+	private _props: TProps = {} as TProps // init, safe here
+	/**
+	 * prop keys and their listeners
+	 */
+	private _listeners = new Map<keyof TProps, Set<Callback<TProps>>>()
 
 	/**
+	 * 获取属性对应的值
+	 * @deprecated if you need to use a property, add a listener to it.
+	 */
+	get<TKey extends keyof TProps>(key: TKey): TProps[TKey] {
+		return this._props[key]
+	}
+
+	/**
+	 * Partially update props. Only input changed or added properties.
+	 *
 	 * 初始化/更新属性，可以是增量更新
-	 * @param {*} newProps
-	 * @param {() => void} [callback]
-	 * @memberof PropsManager
+	 *
+	 * @note removed properties will be ignored.
+	 *
+	 * @changed 移除 callback 的 done 参数，和 promise.then 实质上重复
+	 * @changed callback 接受的参数中，changedKeys 只会包含自己 listen 的，而不是全部变化的key
+	 * @changed callback 调用顺序会变化
 	 */
-	set(newProps: any, callback?: () => void): Promise<void> {
-		// 获取新旧 Props 的差异
-		const diffProps = shallowDiffProps(newProps, this.props)
-		const partitionDiffProps = partition(
-			diffProps,
-			(props) => props === 'data' || props === 'dataTransform'
-		)
-		const diffDataProps = partitionDiffProps[0]
-		const diffOtherProps = partitionDiffProps[1]
-		// 更新旧 Props
-		this.props = {
-			...this.props,
-			...newProps,
+	set(props: Partial<Pick<TProps, TModifiableKeys>>): void {
+		// @optimize: only check *passed* and *listened* keys
+		const _props = {} as Partial<typeof props>
+		const propsKeys = Object.keys(props) as Array<keyof typeof props>
+		for (let i = 0; i < propsKeys.length; i++) {
+			const key = propsKeys[i]
+			if (this._listeners.has(key)) {
+				_props[key] = props[key]
+			}
 		}
 
-		return new Promise<void>((resolve) => {
-			if (!isEmpty(diffDataProps)) {
-				_getCacheData(this.props['data']).then((cacheData) => {
-					this.cacheData = cacheData
-					// 数据相关属性有变化
-					// 非数据相关属性有变化
-					this.trigger(diffOtherProps, diffDataProps).then(() => {
-						if (callback) callback()
-						resolve()
-					})
-				})
-			} else {
-				// 非数据相关属性有变化
-				this.trigger(diffOtherProps).then(() => {
-					if (callback) callback()
-					resolve()
-				})
-			}
-		})
-	}
+		const changedKeys = deepDiffProps(_props, this._props)
 
-	/**
-	 * @fixed 若dataProps和normalProps存在共享同一个callback, 则只触发一次
-	 * @param normalProps
-	 * @param dataProps
-	 */
-	trigger(normalProps: string[], dataProps?: string[]): Promise<void> {
-		const keyMap = new Map<string, string[]>()
+		this._props = {
+			...this._props,
+			...props,
+		}
 
-		// Find and set normalProps callback
-		for (const key of this.listeners.keys()) {
-			const trigger = needsUpdate(key, normalProps)
-			if (trigger !== false) {
-				const triggerProps = keyMap.get(key)
-				if (triggerProps === undefined) {
-					// Add normalProps keys into triggers arr
-					keyMap.set(key, Array.from(normalProps))
-				} else {
-					// Add normalProps keys into triggers arr
-					normalProps.forEach((prop) => {
-						triggerProps.push(prop)
-					})
+		if (changedKeys.length === 0) return
+
+		// @note key 与 callback 是多对多的，这里需要整理出 那些 key 触发了 哪些 callback
+
+		// callback -> changed keys that this callback is listening
+		const callbackKeys = new Map<Callback<TProps>, Array<keyof TProps>>()
+
+		for (let i = 0; i < changedKeys.length; i++) {
+			const key = changedKeys[i]
+			const listeners = this._listeners.get(key)
+			if (!listeners) continue
+			listeners.forEach((listener) => {
+				let listenedChangedKeys = callbackKeys.get(listener)
+				if (listenedChangedKeys === undefined) {
+					listenedChangedKeys = [] as Array<keyof TProps>
+					callbackKeys.set(listener, listenedChangedKeys)
 				}
-			}
+				listenedChangedKeys.push(key)
+			})
 		}
 
-		// Find and set data callback
-		if (dataProps) {
-			for (const key of this.listeners.keys()) {
-				const trigger = needsUpdate(key, dataProps)
-				if (trigger !== false) {
-					const triggerProps = keyMap.get(key)
-					if (triggerProps === undefined) {
-						keyMap.set(key, [trigger])
-					} else {
-						triggerProps.push(trigger)
-					}
-				}
-			}
-		}
-
-		const emitPromises: Promise<any>[] = []
-		keyMap.forEach((triggerProps, key) => {
-			emitPromises.push(
-				this.emit({
-					type: key,
-					trigger: triggerProps,
-				})
-			)
+		callbackKeys.forEach((listenedChangedKeys, callback) => {
+			callback({
+				changedKeys: listenedChangedKeys,
+				props: pick(this._props, listenedChangedKeys),
+				initial: false,
+			})
 		})
 
-		return new Promise<void>((resolve) => {
-			Promise.all(emitPromises).then(() => resolve())
-		})
-	}
-
-	/**
-	 * 获取属性对应的值，对 data 以及数据图形映射属性有特殊处理
-	 * @fixed 将所有getter functions缓存起来，每次取值即可取到相同的function，避免diff时产生false positive。
-	 * @param key
-	 */
-	get(key: string) {
-		// 返回缓存后的数据
-		if (key === 'data') {
-			return this.cacheData
-		}
-
-		const value = this.props[key]
-
-		// 处理 get 开头的数据图形映射属性，返回一个 mapping 函数，每个数据 item，可以映射为一个图形属性
-		if (key.startsWith('get')) {
-			if (typeof value === 'function') return value
-			const getter = () => value
-			return getter
-		}
-
-		return value
+		return
 	}
 
 	/**
 	 * 注册属性变化监听器
-	 * @param propsName
-	 * @param callback
+	 *
+	 * If any of these keys changed. callback will be called.
+	 * Actual changed keys (in this listening list) will be passed to the callback.
+	 *
+	 * @note set `options` to be true if you want a callback immediately after listen
+	 * @note
+	 * **async functions as callback is not thread safe!**
+	 *
+	 * if you intend to do so, either:
+	 * 	- use `version` to check if props changed again
+	 * 	- or just make sure `.set` won't be called again until last return promise fulfilled
 	 */
-	listen(propsName: string | Array<string>, callback: EventCallBack) {
-		if (!Array.isArray(propsName)) {
-			propsName = [propsName]
+	addListener<TKeys extends ReadonlyArray<TModifiableKeys>>(
+		keys: TKeys,
+		callback: Callback<TProps, TKeys[number]>,
+		options?: ListenerOptions
+	): void {
+		for (let i = 0; i < keys.length; i++) {
+			const key = keys[i]
+			let listeners = this._listeners.get(key)
+			if (!listeners) {
+				listeners = new Set()
+				this._listeners.set(key, listeners)
+			}
+
+			listeners.add(callback as any)
 		}
-		const type = propsName.join(',')
-		this.on(type, callback)
 
-		// 注册完后，主动触发一次回调，方便 Layer 做初始化
-		this.emit({
-			type,
-			trigger: 'initialize',
-		})
+		const immediate = options === true ? true : options && options.immediate
+		// const once = typeof options === 'boolean' ? false : options && options.once
+		if (immediate) {
+			callback({
+				changedKeys: keys,
+				props: pick(this._props, keys),
+				initial: true,
+			})
+		}
 	}
 
-	private _getDataDomain(field) {
-		const data = this.get('data')
-		const minObj = minBy(data, (d) => d[field])
-		const maxObj = maxBy(data, (d) => d[field])
-		return [minObj?.[field], maxObj?.[field]]
-	}
-}
-/** 获取缓存数据
- * 如果 data 是 url，协助请求并缓存，否则直接缓存
- * @param data GLB/GLTF | FeatureCollection | Array | url
- */
-const _getCacheData = async (data) => {
 	/**
-	 * _data: GLB/GLTF、FeatureCollection、Array
+	 * stop listening for certain keys
+	 * @note will not cancel fired callbacks
 	 */
-	let cacheData = data
-	if (REGX_HTTP_HTTPS.test(data)) {
-		cacheData = await _fetchData(data)
-	} else {
-		cacheData = data
+	removeListeners<TKeys extends Array<TModifiableKeys>>(
+		keys: TKeys,
+		callback: Callback<TProps, TKeys[number]>
+	): void {
+		for (let i = 0; i < keys.length; i++) {
+			const key = keys[i]
+			const listeners = this._listeners.get(key)
+			if (!listeners) continue
+			listeners.delete(callback as any)
+		}
 	}
 
-	return cacheData
-}
-/** 获取资源
- * @param url 资源地址
- */
-const _fetchData = async (url) => {
-	const resp = await fetch(url)
-	if (REGX_GLB_GLTF.test(url)) {
-		const result = await resp.arrayBuffer()
-		return result
+	dispose(): void {
+		this._props = {} as TProps
+		this._listeners.clear()
 	}
-	const result = await resp.json()
-	return result
+
+	// legacy
+
+	/**
+	 * @alias use {@link addListener} instead
+	 * @note safe to write like this. @simon
+	 */
+	listen = this.addListener
+
+	// experimental
+
+	/**
+	 * update props directly without trigger dirty-checking
+	 * @deprecated @experimental may change in future
+	 * @deprecated it's the same to save an editable copy outside of the propsManager
+	 *
+	 * @note use this only if you handled props change manually.
+	 * @note only affect one calling.
+	 *
+	 * @problems
+	 * 如果未来增加 “延迟回调” 或者 “合并藏检查”，该设计能否兼容
+	 *
+	 * @case_0
+	 *
+	 * { // batch dirty check
+	 * 	a.setProps({k: 0})
+	 * }
+	 *
+	 * { // batch dirty check
+	 * 	a.setProps({k: 2})
+	 * 	a.setProps({k: 3}, true)
+	 * 	a.setProps({k: 0})
+	 * }
+	 *
+	 * * won't trigger, but ok
+	 *
+	 * @case_1
+	 *
+	 * { // batch dirty check
+	 * 	a.setProps({k: 0})
+	 * }
+	 *
+	 * { // batch dirty check
+	 * 	a.setProps({k: 2})
+	 * 	a.setProps({k: 3})
+	 * 	a.setProps({k: 4}, true)
+	 * }
+	 *
+	 * * won't trigger, can be problematic
+	 *
+	 * @case_2
+	 *
+	 * { // batch dirty check
+	 * 	a.setProps({k: 0})
+	 * 	a.setProps({k: 1}, true)
+	 * }
+	 *
+	 * { // batch dirty check
+	 * 	a.setProps({k: 0})
+	 * }
+	 *
+	 * * trigger
+	 *
+	 * @case_3
+	 *
+	 * { // batch dirty check
+	 * 	a.setProps({k: 0})
+	 * }
+	 *
+	 * { // batch dirty check
+	 * 	a.setProps({k: 1}, true)
+	 * 	a.setProps({k: 0})
+	 * }
+	 *
+	 * * won't trigger, difference between case_2 is definitely problematic
+	 *
+	 * @potential_solve
+	 * Make `direct .setProps` and `.getProps` work like `async fence`,
+	 * always `finalize` dirty-check when calling?
+	 */
+	bypass(props: Partial<Pick<TProps, TModifiableKeys>>): void {
+		this._props = {
+			...this._props,
+			...props,
+		}
+	}
 }
+
+/**
+ * whether trigger this initial event immediately after listen.
+ *
+ * or detailed options
+ */
+export type ListenerOptions =
+	| boolean
+	| {
+			/**
+			 * whether trigger this initial event immediately after listen.
+			 */
+			immediate?: boolean
+			/**
+			 * whether this callback should only be called once
+			 */
+			// once?: boolean
+	  }
+
+/**
+ * listener callback type
+ */
+export type Callback<TProps, TKey extends keyof TProps = keyof TProps> = (event: {
+	/**
+	 * actually changed keys.
+	 */
+	changedKeys: readonly TKey[]
+	/**
+	 * an object including actually changed props.
+	 * @note a property may be undefined if this is the initial event
+	 */
+	props: Pick<TProps, TKey>
+	/**
+	 * Indicate that this is the initial event triggered immediately after listen.
+	 */
+	initial: boolean
+}) => void
+
+/**
+ * hosted instances
+ *
+ * for situations where it's not allowed to use `.propsManager` as a class member
+ *
+ * also an excellent way to hide private stuff
+ */
+
+const managerInstances = new Map<any, PropsManager<any>>()
+export function getPropsManager<TProps, TKey extends keyof TProps = keyof TProps>(obj: object) {
+	let manager = managerInstances.get(obj)
+	if (!manager) {
+		manager = new PropsManager()
+		managerInstances.set(obj, manager)
+	}
+
+	return manager as PropsManager<TProps, TKey>
+}
+export function disposePropsManager(obj: object) {
+	const manager = managerInstances.get(obj)
+	if (manager) {
+		manager.dispose()
+	}
+}
+
+// test
+// const a = new PropsManager<{ cc: 'dd' | 'ee'; ff: 'gg' | 'kk' }>()
+// a.listen(['cc'], async (event) => {})
+// a.listen(['cc', 'ff'], async (event) => {
+// 	event.trigger
+// })
+// a.listen(['cc', 'hh'], async (event) => {})
+
+// private as interface
+
+// class A {
+// 	#s: number
+// 	pub: string
+// }
+
+// class B extends A {
+// 	#s: boolean
+// 	pub: string
+// }
+
+// function hh(v: A) {}
+
+// const b = new B()
+
+// hh(b)
