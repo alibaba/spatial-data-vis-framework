@@ -4,10 +4,10 @@
  */
 
 // 前端 GSI
-import { PolarisGSI } from '@polaris.gl/gsi'
+import { PolarisGSI } from '@polaris.gl/base-gsi'
 // 后端 GSI-GL2
-import { LiteRenderer } from '@polaris.gl/renderer-lite'
-import { PolarisProps } from '@polaris.gl/base'
+import { LiteRenderer } from './renderer/LiteRenderer'
+import type { PolarisProps } from '@polaris.gl/base'
 
 export interface PolarisLiteProps extends PolarisProps {}
 
@@ -17,8 +17,13 @@ export class PolarisLite extends PolarisGSI {
 
 	constructor(props: PolarisLiteProps) {
 		super(props)
-		this.name = 'PolarisLite'
-		const renderer = new LiteRenderer(this.props)
-		this.setRenderer(renderer)
+		this.renderer = new LiteRenderer(this.props)
+
+		this.cameraProxy.config.onUpdate = (cam) => this.renderer.updateCamera(cam)
+		this.cameraProxy['onUpdate'] = (cam) => this.renderer.updateCamera(cam)
+		// 这里立刻update
+		this.renderer.updateCamera(this.cameraProxy)
+		this.renderer.resize(this.width, this.height, this.ratio)
+		this.view.html.element.appendChild(this.renderer.canvas)
 	}
 }
