@@ -1,0 +1,36 @@
+{
+	"extends": "./tsconfig.base.json",
+	"compilerOptions": {
+		"rootDir": ".",
+		"composite": true,
+		"incremental": true
+	},
+	"include": [".", "typings"],
+	"exclude": ["node_modules", "*.js"],
+	"references": [
+		{
+			"path": "../packages/core/gsi"
+		},
+		{
+			"path": "../packages/layers/amap"
+		},
+		{
+			"path": "../packages/layers/geojson"
+		},
+		{
+			"path": "../packages/layers/gltf2"
+		},
+		{
+			"path": "../packages/layers/helper"
+		},
+		{
+			"path": "../packages/layers/marker"
+		},
+		{
+			"path": "../packages/polaris/polaris-lite"
+		},
+		{
+			"path": "../packages/utils/projections"
+		}
+	]
+}
