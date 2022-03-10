@@ -123,8 +123,36 @@ const flyline = new FlyLineLayer({
 flyline.updateData(data)
 
 //
+const polygonLayer = new PolygonLayer({
+	getFillColor: (feature) => {
+		const r = Math.floor(100 + Math.random() * 155).toString(16)
+		const color = `#${r}aa${r}`
+		return color
+	},
+	getSideColor: () => '#999999',
+	getFillOpacity: () => 1.0,
+	transparent: false,
+	getThickness: () => 100000,
+	enableExtrude: true,
+	baseAlt: 0,
+	depthTest: true,
+	pickable: false,
+	// hoverColor: false,
+	// selectColor: false,
+	hoverLineWidth: 1,
+	selectLineWidth: 4,
+	selectLinesHeight: 0,
+	workersCount: 4,
+})
+fetch('https://polaris-geo.oss-cn-hangzhou.aliyuncs.com/simple/amap/China_Fill_25.json')
+	.then((r) => r.json())
+	.then((geojson) => {
+		polygonLayer.updateData(geojson)
+		p.setStatesCode('1|104.962825|35.065100|0.000000|0.66540|0.09000|3.53000')
+	})
 
 p.add(flyline)
+p.add(polygonLayer)
 
 window['p'] = p
 window['layer'] = flyline
