@@ -1,10 +1,14 @@
 import { PickEventResult } from '@polaris.gl/base'
-import { PolarisGSI, PolarisGSIProps } from '@polaris.gl/gsi'
-import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
+import {
+	PolarisGSI,
+	PolarisGSIProps,
+	StandardLayer,
+	StandardLayerProps,
+} from '@polaris.gl/base-gsi'
 
 type PolarisGSICtor = new (opts: PolarisGSIProps) => PolarisGSI
 
-export class PolarisProps implements PolarisGSIProps {
+export class PolarisProps implements Partial<PolarisGSIProps> {
 	/**
 	 * Any subclass' constructor of PolarisGSI
 	 */
