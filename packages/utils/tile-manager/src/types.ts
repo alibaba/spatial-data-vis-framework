@@ -1,5 +1,5 @@
-import { StandardLayer } from '@polaris.gl/layer-std'
-import { MeshDataType } from '@gs.i/schema'
+import { StandardLayer } from '@polaris.gl/base-gsi'
+import { MeshDataType } from '@gs.i/schema-scene'
 
 export type TileToken = (number | string)[]
 
