@@ -9,6 +9,7 @@
 	"dependencies": {
 		"@polaris.gl/lite": "^0.0.0-alpha.9",
 		"@polaris.gl/layer-flyline": "^0.0.0-alpha.9",
+		"@polaris.gl/layer-scatter": "^0.0.0-alpha.9",
 		"@polaris.gl/layer-std-helper": "^0.0.0-alpha.9",
 		"@polaris.gl/layer-std-gltf2": "^0.0.0-alpha.9",
 		"@polaris.gl/layer-std-marker": "^0.0.0-alpha.9",

@@ -5,9 +5,8 @@
 
 import { computeBBox, computeBSphere } from '@gs.i/utils-geometry'
 import { ScatterMatr } from './ScatterMatr'
-import { Mesh, Geom, MatrPoint, Attr } from '@gs.i/frontend-sdk'
-import { Color } from '@gs.i/utils-math'
-import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
+import { Mesh, Geom, Attr } from '@gs.i/frontend-sdk'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/base-gsi'
 
 type DataType = {
 	lng?: number | string
@@ -124,32 +123,37 @@ export class ScatterLayer extends StandardLayer {
 				this.matr.setProps(_props)
 			}
 		)
+
+		this.addEventListener('init', (e) => {
+			this.resetShining(e.timeline)
+
+			this.listenProps(['enableShining', 'baseAlt', 'data'], () => {
+				this.createScattersGeom(this.getProps('data'))
+				this.resetShining(e.timeline)
+				// this.show()
+			})
+
+			this.listenProps(['renderOrder'], () => {
+				this.group.renderOrder = this.mesh.renderOrder = this.getProps('renderOrder')
+			})
+
+			this.listenProps(['depthTest'], () => {
+				this.matr.depthTest = this.getProps('depthTest')
+			})
+		})
 	}
 
-	init(projection, timeline) {
-		this.resetShining(timeline)
+	show(duration = 1000) {
+		if (!this.inited) {
+			console.warn('can not call .show until layer is inited')
+			return
+		}
 
-		this.listenProps(['enableShining', 'baseAlt', 'data'], () => {
-			this.createScattersGeom(this.getProps('data'))
-			this.resetShining(timeline)
-			// this.show()
-		})
-
-		this.listenProps(['renderOrder'], () => {
-			this.group.renderOrder = this.mesh.renderOrder = this.getProps('renderOrder')
-		})
-
-		this.listenProps(['depthTest'], () => {
-			this.matr.depthTest = this.getProps('depthTest')
-		})
-	}
-
-	async show(duration = 1000) {
 		this.matr.alphaMode = 'BLEND'
 		this.matr.opacity = 0.0
 		this.visible = true
 
-		const timeline = await this.getTimeline()
+		const timeline = this.timeline
 		timeline.addTrack({
 			id: 'ScatterLayer Show',
 			startTime: timeline.currentTime,
@@ -173,10 +177,15 @@ export class ScatterLayer extends StandardLayer {
 		})
 	}
 
-	async hide(duration = 1000) {
+	hide(duration = 1000) {
+		if (!this.inited) {
+			console.warn('can not call .hide until layer is inited')
+			return
+		}
+
 		this.matr.alphaMode = 'BLEND'
 		this.matr.opacity = this.getProps('opacity')
-		const timeline = await this.getTimeline()
+		const timeline = this.timeline
 		timeline.addTrack({
 			id: 'ScatterLayer Hide',
 			startTime: timeline.currentTime,
@@ -192,10 +201,15 @@ export class ScatterLayer extends StandardLayer {
 		})
 	}
 
-	private async createScattersGeom(data: any[] = []) {
+	private createScattersGeom(data: any[] = []) {
+		if (!this.inited) {
+			console.warn('can not call .createScattersGeom until layer is inited')
+			return
+		}
+
 		this.props.data = data
 
-		const projection = await this.getProjection()
+		const projection = this.projection
 		const baseAlt = this.getProps('baseAlt')
 
 		const positions: number[] = []
@@ -248,7 +262,13 @@ export class ScatterLayer extends StandardLayer {
 				startTime: timeline.currentTime,
 				duration: Infinity,
 				onUpdate: (t) => {
-					this.matr.uniforms['time'].value = t * speed
+					// this.matr.uniforms['time'].value = t * speed
+					/**
+					 * @note this.uniform and this.defines are SETTERS. DO NOT READ FROM THEM.
+					 */
+					const uniforms = this.matr.extensions.EXT_matr_programmable
+						.uniforms as ScatterMatr['uniforms']
+					uniforms['time'].value = t * speed
 				},
 			})
 		}

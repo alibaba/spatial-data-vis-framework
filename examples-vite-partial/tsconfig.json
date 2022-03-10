@@ -21,6 +21,9 @@
 			"path": "../packages/layers/geojson"
 		},
 		{
+			"path": "../packages/layers/scatter"
+		},
+		{
 			"path": "../packages/layers/gltf2"
 		},
 		{
