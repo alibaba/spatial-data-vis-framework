@@ -3,14 +3,12 @@
  * All rights reserved.
  */
 
-import { Projection } from '@polaris.gl/projection'
-import { Mesh, Geom, Attr, MatrUnlit } from '@gs.i/frontend-sdk'
 /**
  * 基类。
  * 可以使用 Layer，自己添加需要的 view；
  * 也可以使用 StandardLayer，添加好的 gsiView 和 HtmlView 的 Layer，懒人福音。
  */
-import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/base-gsi'
 
 /**
  * 内部逻辑依赖.
@@ -19,7 +17,7 @@ import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
  */
 
 import { GLTF2Loader } from '@gs.i/frontend-gltf2'
-import { MeshDataType } from '@gs.i/schema'
+import { BaseNode } from '@gs.i/schema-scene'
 import { GLM } from '@gs.i/utils-gltf2'
 
 /**
@@ -32,6 +30,7 @@ const defaultProps = {
 	 */
 	rotateX: true,
 	center: [120, 20], // 中心经纬度
+	name: 'GLTFLayer',
 }
 
 /**
@@ -41,7 +40,6 @@ export interface GLTF2LayerProps extends StandardLayerProps, Partial<typeof defa
 
 export class GLTF2Layer extends StandardLayer {
 	props: GLTF2LayerProps
-	projection: any
 
 	/**
 	 * @todo 这个可以放在全局公用
@@ -57,8 +55,6 @@ export class GLTF2Layer extends StandardLayer {
 
 		this.props = props
 
-		this.name = this.group.name = 'GLTFLayer'
-
 		if (this.props.rotateX) {
 			this.view.gsi.group.transform.rotation.x = Math.PI / 2
 		}
@@ -66,15 +62,11 @@ export class GLTF2Layer extends StandardLayer {
 		this.loader = new GLTF2Loader()
 	}
 
-	init(projection, timeline, polaris) {
-		this.projection = projection
-	}
-
 	/**
 	 * 将 arraybuffer 格式 的 GLB 转换为 Mesh
 	 * @param glb gltf2 的 binary 形式
 	 */
-	parseGLB(glb: ArrayBuffer): MeshDataType {
+	parseGLB(glb: ArrayBuffer): BaseNode {
 		const glm = this.loader.glbToGLM(glb)
 		const mesh = this.loader.parse(glm)
 		return mesh
@@ -84,7 +76,7 @@ export class GLTF2Layer extends StandardLayer {
 	 * 将 js对象 格式 的 gltf2 转换为 Mesh
 	 * @param glm gltf2 的 memory 形式
 	 */
-	parseGLM(glm: GLM): MeshDataType {
+	parseGLM(glm: GLM): BaseNode {
 		const mesh = this.loader.parse(glm)
 		return mesh
 	}
@@ -101,7 +93,7 @@ export class GLTF2Layer extends StandardLayer {
 	 * 下载并解析 gltf2 binary （glb），放入场景中
 	 * @param url
 	 */
-	async loadGLB(url: string): Promise<MeshDataType> {
+	async loadGLB(url: string): Promise<BaseNode> {
 		const res = await fetch(url)
 		const glb = await res.arrayBuffer()
 		const meshes = this.parseGLB(glb)
