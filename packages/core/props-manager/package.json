@@ -1,5 +1,5 @@
 {
-    "name": "@polaris.gl/utils-props-manager",
+    "name": "@polaris.gl/props-manager",
     "version": "0.0.0-alpha.9",
     "description": "",
     "main": "dist/index.js",

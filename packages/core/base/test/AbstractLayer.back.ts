@@ -14,7 +14,7 @@
 
 import { Node } from './Node'
 import type { CameraProxy } from 'camera-proxy'
-import { PropsManager, ListenerOptions, Callback } from '@polaris.gl/utils-props-manager'
+import { PropsManager, ListenerOptions, Callback } from '@polaris.gl/props-manager'
 import type { AbstractLayerEvents } from './events'
 
 /**

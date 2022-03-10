@@ -10,7 +10,7 @@ import type { AbstractLayerEvents } from './events'
 
 import { MAX_DEPTH, Node } from './Node'
 import type { AbstractPolaris } from './Polaris'
-import { Callback, ListenerOptions, PropsManager } from '@polaris.gl/utils-props-manager'
+import { Callback, ListenerOptions, PropsManager } from '@polaris.gl/props-manager'
 
 export interface LayerProps {
 	name?: string
