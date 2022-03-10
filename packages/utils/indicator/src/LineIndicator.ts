@@ -3,10 +3,10 @@
  * All rights reserved.
  */
 
-import { StandardLayer } from '@polaris.gl/layer-std'
+import { StandardLayer } from '@polaris.gl/base-gsi'
 import { Color } from '@gs.i/utils-math'
-import { GLine, DefaultGLineConfig } from '@gs.i/utils-gline'
-import { isDISPOSED } from '@gs.i/schema'
+import { GLine, DefaultGLineConfig } from '@gs.i/frontend-gline'
+import { isDISPOSED } from '@gs.i/schema-scene'
 
 export const defaultGLineConfig = {
 	level: 2,
@@ -71,20 +71,22 @@ export class LineIndicator {
 			colors: colorsArr,
 		})
 
+		// TODO: @qianxun why? 这个本来就不会生成
 		// Delete u attr which is unnecessary in this class
-		delete this.gline.geometry.attributes.u
+		// delete this.gline.geometry.attributes.u
 	}
 
 	updateResolution(width, height) {
 		this.gline.material.config.resolution = { x: width, y: height }
 	}
 
-	clearUpdateRanges() {
-		const lineColorAttr = this.gline.geometry.attributes.color
-		if (lineColorAttr.commitedVersion === lineColorAttr.version) {
-			lineColorAttr.updateRanges = []
-		}
-	}
+	// TODO: Why, why check commitedVersion @qianxun
+	// clearUpdateRanges() {
+	// 	const lineColorAttr = this.gline.geometry.attributes.color
+	// 	if (lineColorAttr.commitedVersion === lineColorAttr.version) {
+	// 		lineColorAttr.updateRanges = []
+	// 	}
+	// }
 
 	updateHighlightByOffsetCount(offset: number, count: number) {
 		const colors: number[] = []
@@ -150,8 +152,9 @@ export class LineIndicator {
 
 		if (isDISPOSED(colors)) return
 
+		// TODO: Why? @qianxun
 		// updateRanges restoring
-		this.clearUpdateRanges()
+		// this.clearUpdateRanges()
 
 		// Color buffer restoring
 		const r = this.config.defaultColor.r
