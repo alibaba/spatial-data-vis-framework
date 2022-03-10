@@ -3,25 +3,25 @@
  * All rights reserved.
  */
 
-import { MatrPoint } from '@gs.i/frontend-sdk'
+import { PointMaterial } from '@gs.i/frontend-sdk'
 import { Color } from '@gs.i/utils-math'
+import { specifyTexture } from '@gs.i/utils-specify'
 
 export const defaultProps = {}
 
-export class ScatterMatr extends MatrPoint {
+export class ScatterMatr extends PointMaterial {
 	props: any
 
 	size = 1
 	sizeAttenuation = true
 	opacity = 1.0
-	depthTest = true
 	defines = {
 		// USE_COLORS: false,
 		// COLOR_STEPS: 0,
 	}
 	uniforms = {
-		time: { value: 0, type: 'float' },
-		color: { value: { r: 1.0, g: 1.0, b: 1.0 }, type: 'vec3' },
+		time: { value: 0 },
+		color: { value: { r: 1.0, g: 1.0, b: 1.0 } },
 		// colors: {
 		// 	value: [],
 		// 	type: 'vec3',
@@ -30,25 +30,34 @@ export class ScatterMatr extends MatrPoint {
 		// 	value: [],
 		// 	type: 'float',
 		// },
-		colNumber: { value: 1.0, type: 'float' },
-		rowNumber: { value: 1.0, type: 'float' },
+		colNumber: { value: 1.0 },
+		rowNumber: { value: 1.0 },
 		TEX: {
-			value: {
+			value: specifyTexture({
 				image: { uri: 'https://img.alicdn.com/tfs/TB1X4pmgAyWBuNjy0FpXXassXXa-64-64.png' },
-				sampler: {},
-			},
-			type: 'sampler2D',
+			}),
 		},
 	}
-	attributes = {
-		colrow: 'vec2',
-		ratio: 'float',
-		delay: 'float',
-	}
-	varyings = {
-		vColRow: 'vec2',
-		vColor: 'vec3',
-	}
+
+	global = `
+		uniform float time;
+		uniform float colNumber;
+		uniform float rowNumber;
+		uniform vec3 color;
+		uniform sampler2D TEX;
+		uniform float thresholds[COLOR_STEPS];
+		uniform vec3 colors[COLOR_STEPS];
+
+		varying vec2 vColRow;
+		varying vec3 vColor;
+	`
+
+	vertGlobal = `
+		attribute vec2 colrow;
+		attribute float ratio;
+		attribute float delay;
+	`
+
 	vertPointSize = `
         float shiningScale = sin(time + delay) * 0.5 + 0.8;
         pointSize *= size * ratio * shiningScale * 10000000.0;
@@ -82,10 +91,15 @@ export class ScatterMatr extends MatrPoint {
 		}
 		this.props = _props
 
+		/**
+		 * @note this.uniform and this.defines are SETTERS. DO NOT READ FROM THEM.
+		 */
+		const uniforms = this.extensions.EXT_matr_programmable.uniforms as ScatterMatr['uniforms']
+
 		this.size = this.getProps('size') / 1000
 		this.sizeAttenuation = this.getProps('sizeAttenuation')
 		this.opacity = this.getProps('opacity')
-		this.depthTest = this.getProps('depthTest')
+		this.depthTest = this.getProps('depthTest') ?? true
 		if (this.getProps('opacity') < 1.0) {
 			if (this.getProps('enableBlending')) {
 				this.alphaMode = 'BLEND_ADD'
@@ -108,18 +122,17 @@ export class ScatterMatr extends MatrPoint {
 			colors = arr.map((a) => new Color(a.color))
 			thresholds = arr.map((a) => a.value)
 		}
-		this.uniforms.color = { value: new Color(this.getProps('color')), type: 'vec3' }
-		this.uniforms.colNumber = { value: this.getProps('colNumber'), type: 'float' }
-		this.uniforms.rowNumber = { value: this.getProps('rowNumber'), type: 'float' }
-		this.uniforms.TEX = {
-			value: {
+		uniforms.color = { value: new Color(this.getProps('color')) }
+		uniforms.colNumber = { value: this.getProps('colNumber') }
+		uniforms.rowNumber = { value: this.getProps('rowNumber') }
+		uniforms.TEX = {
+			value: specifyTexture({
 				image: { uri: this.getProps('map') },
 				sampler: {
 					minFilter: 'LINEAR_MIPMAP_NEAREST',
 					anisotropy: 8,
 				},
-			},
-			type: 'sampler2D',
+			}),
 		}
 
 		if (this.getProps('useColors') && this.getProps('colors').length > 0) {
@@ -127,13 +140,11 @@ export class ScatterMatr extends MatrPoint {
 				USE_COLORS: !!this.getProps('useColors'),
 				COLOR_STEPS: this.getProps('useColors') ? this.getProps('colors').length : 0,
 			}
-			this.uniforms['colors'] = {
+			uniforms['colors'] = {
 				value: this.getProps('useColors') ? colors : [],
-				type: 'vec3',
 			}
-			this.uniforms['thresholds'] = {
+			uniforms['thresholds'] = {
 				value: this.getProps('useColors') ? thresholds : [],
-				type: 'float',
 			}
 		}
 	}
