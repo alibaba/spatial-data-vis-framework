@@ -16,9 +16,6 @@
 			"path": "../../core/gsi"
 		},
 		{
-			"path": "../../polaris/polaris-gsi"
-		},
-		{
 			"path": "../../utils/projections"
 		},
 		{
