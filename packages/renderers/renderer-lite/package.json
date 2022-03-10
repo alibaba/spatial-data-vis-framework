@@ -1,5 +1,5 @@
 {
-    "name": "@polaris.gl/renderer-lite",
+    "name": "@polaris.gl/renderer-lite-abandoned",
     "version": "0.0.0-alpha.9",
     "description": "",
     "main": "dist/index.js",
@@ -10,18 +10,16 @@
         "dist/*"
     ],
     "scripts": {
-        "rollup": "npx rollup -c ./rollup.config.js",
         "build": "./scripts/build.sh",
         "clean": "./scripts/clean.sh",
         "rebuild": "npm run clean && npm run build"
     },
     "dependencies": {
-        "@gs.i/backend-threelite": "^0.0.0-beta",
-        "@gs.i/frontend-sdk": "^0.0.0-beta",
-        "@gs.i/schema": "^0.0.0-beta",
-        "@gs.i/utils-raycast": "^0.0.0-beta",
-        "@polaris.gl/base": "^0.0.0-alpha.9",
-        "@polaris.gl/view-gsi": "^0.0.0-alpha.9"
+        "@gs.i/backend-threelite": "^0.2.1-alpha.0",
+        "@gs.i/frontend-sdk": "0.2.1-alpha.0",
+        "@gs.i/schema-scene": "^0.2.1-alpha.0",
+        "@gs.i/processor-raycast": "^0.2.1-alpha.0",
+        "@polaris.gl/base": "^0.0.0-alpha.9"
     },
     "devDependencies": {
         "@types/offscreencanvas": "latest",
