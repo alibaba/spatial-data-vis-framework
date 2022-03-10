@@ -80,7 +80,6 @@ export default class SphereProjection extends Projection {
 
 // console.log('test', new SphereProjection().project([1,0]));
 
-// Mercator公式
 function projRaw(lnglatalt, R) {
 	const phi = lnglatalt[0]
 	const theta = lnglatalt[1]
