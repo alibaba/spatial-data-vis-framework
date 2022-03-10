@@ -1,12 +1,12 @@
-import { PolarisGSI } from '@polaris.gl/gsi'
+import { PolarisGSI, StandardLayer, StandardLayerProps } from '@polaris.gl/base-gsi'
 import { Color, Vector2 } from '@gs.i/utils-math'
 /**
  * Copyright (C) 2021 Alibaba Group Holding Limited
  * All rights reserved.
  */
 
-import { StandardLayer, StandardLayerProps } from '@polaris.gl/layer-std'
 import { SimplifiedMarker } from './SimplifiedMarker'
+import { OptionalDefault } from './utils'
 
 export interface LabelLayerProps extends StandardLayerProps {
 	baseAlt: number
@@ -19,7 +19,7 @@ export interface LabelLayerProps extends StandardLayerProps {
 	/**
 	 * 开启自动反色后，需要输入获取背景色方法
 	 */
-	getBgColor?: (feature: any) => number | string
+	getBgColor?: (number | string) | ((feature: any) => number | string)
 	/**
 	 * 反白双色设置
 	 */
@@ -48,6 +48,12 @@ export interface LabelLayerProps extends StandardLayerProps {
 	text_translate_y: number // -1 ~ 1
 	text_shadow_px: number
 	text_shadow_color: string
+
+	// TODO: @qianxun type these
+	text_background?
+	text_marginLeft?
+	text_marginTop?
+
 	/**
 	 * 自定义text style方法
 	 * eg. (dataItem) => { return { styleA: '', styleB: '', ... } }
@@ -65,7 +71,7 @@ export interface LabelLayerProps extends StandardLayerProps {
 	data?: any
 }
 
-export const defaultProps: LabelLayerProps = {
+export const defaultProps = {
 	baseAlt: 0,
 	zIndex: 0,
 	inverseByBgColor: false,
@@ -89,6 +95,8 @@ export const defaultProps: LabelLayerProps = {
 	debug: false,
 }
 
+defaultProps as LabelLayerProps // type check only
+
 export type TextColor = {
 	from: number
 	to: number
@@ -98,7 +106,7 @@ export type TextColor = {
 
 const ChineseCharPattern = new RegExp('[\u4E00-\u9FA5]+')
 
-export class LabelLayer extends StandardLayer {
+export class LabelLayer extends StandardLayer<LabelLayerProps> {
 	greyToTextColor: [TextColor, TextColor]
 
 	/**
@@ -158,9 +166,13 @@ export class LabelLayer extends StandardLayer {
 				shadow: 'rgba(242, 244, 247, 0.95)',
 			},
 		]
+
+		this.addEventListener('init', (e) => {
+			this._init(e.projection, e.timeline, e.polaris)
+		})
 	}
 
-	init(projection, timeline, polaris) {
+	private _init(projection, timeline, polaris) {
 		const p = polaris as PolarisGSI
 
 		let viewChangedFrames = 0
@@ -268,7 +280,7 @@ export class LabelLayer extends StandardLayer {
 		this.canvas.style.width = polaris.width + 'px'
 		this.canvas.style.height = polaris.height + 'px'
 		this.canvas.style.position = 'absolute'
-		this.canvas.style.zIndex = this.getProps('zIndex') ?? 0
+		this.canvas.style.zIndex = `${this.getProps('zIndex') ?? 0}`
 		this.canvas.style.pointerEvents = 'none'
 		const ctx = this.canvas.getContext('2d')
 		if (!ctx) {

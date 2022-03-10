@@ -10,10 +10,7 @@
 	"exclude": ["dist"],
 	"references": [
 		{
-			"path": "../../polaris/polaris-gsi"
-		},
-		{
-			"path": "../standard"
+			"path": "../../core/gsi"
 		},
 		{
 			"path": "../marker"
