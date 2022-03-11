@@ -14,7 +14,6 @@ import { Projection } from '@polaris.gl/projection'
 import { Layer, LayerProps, PickEventResult, AbstractLayerEvents } from '@polaris.gl/base'
 import { GSIView } from './view/GsiView'
 import { HtmlView } from './view/HtmlView'
-import { Matrix4, Vector3, Vector2 } from '@gs.i/utils-math'
 import { isRenderable } from '@gs.i/schema-scene'
 import type { PolarisGSI } from '../polaris/index'
 
@@ -70,13 +69,6 @@ export const defaultStandardLayerProps: StandardLayerProps = {
 	renderOrder: 0,
 	pickable: false,
 }
-
-/**
- * Temp vars
- */
-const _mat4 = new Matrix4()
-const _vec3 = new Vector3()
-const _vec2 = new Vector2()
 
 /**
  * Standard Layer
