@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/coordinator",
-    "version": "0.1.0-alpha.0",
+    "version": "0.1.0-alpha.1",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -20,7 +20,7 @@
     },
     "dependencies": {
         "@gs.i/utils-math": "^0.0.0-beta",
-        "@polaris.gl/projection": "^0.1.0-alpha.0"
+        "@polaris.gl/projection": "^0.1.0-alpha.1"
     },
     "devDependencies": {
         "typescript": ">4.4.0"
