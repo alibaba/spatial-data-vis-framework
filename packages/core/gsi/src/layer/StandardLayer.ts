@@ -18,6 +18,9 @@ import { Matrix4, Vector3, Vector2 } from '@gs.i/utils-math'
 import { isRenderable } from '@gs.i/schema-scene'
 import type { PolarisGSI } from '../polaris/index'
 
+// experimental methods
+export * from './utils'
+
 // override Node & EventDispatcher interfaces to hide underlying implements.
 export interface StandardLayer {
 	get parent(): StandardLayer | PolarisGSI | null

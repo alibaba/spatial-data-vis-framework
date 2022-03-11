@@ -12,7 +12,15 @@ import { deepCloneMesh, traverse } from './utils'
 import { getOrientationMatrix } from './geometry'
 // import { computeBBox, computeBSphere } from '@gs.i/utils-geometry'
 import { CoordV2, PickEvent } from '@polaris.gl/base'
-import { GSIView, PolarisGSI, StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
+import {
+	getWorldMatrix,
+	toLngLatAlt,
+	toWorldPosition,
+	toScreenXY,
+	PolarisGSI,
+	StandardLayer,
+	StandardLayerProps,
+} from '@polaris.gl/gsi'
 
 const R = 6378137 // 常量 - 地球半径
 
@@ -399,114 +407,6 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 		this._disposed = true
 	}
 
-	/**
-	 * get world matrix of this layer's 3d wrapper
-	 *
-	 * @note return undefined if not inited
-	 */
-	getWorldMatrix() {
-		if (!this.inited) {
-			console.warn('can not call getWorldMatrix until layer is inited')
-			return
-		}
-
-		return (
-			this.polaris.matrixProcessor.getCachedWorldMatrix(this.view.gsi.alignmentWrapper) ||
-			this.polaris.matrixProcessor.getWorldMatrix(this.view.gsi.alignmentWrapper)
-		)
-	}
-
-	/**
-	 * 获取世界坐标在当前layer的经纬度
-	 *
-	 * @param {number} x
-	 * @param {number} y
-	 * @param {number} z
-	 * @return {*}  {(number[] | undefined)}
-	 * @memberof StandardLayer
-	 * @deprecated @todo 确认命名正确，可能是本地坐标而非世界坐标
-	 *
-	 * @note return undefined if not inited
-	 */
-	toLngLatAlt(x: number, y: number, z: number): number[] | undefined {
-		if (!this.inited) {
-			console.warn('can not call toLngLatAlt until layer is inited')
-			return
-		}
-
-		const projection = this.resolveProjection() as Projection // this won't be null after inited
-
-		const worldMatrix = this.getWorldMatrix() as number[]
-		const inverseMat = _mat4.fromArray(worldMatrix).invert()
-		const v = _vec3.set(x, y, z)
-		// Transform to pure world xyz
-		v.applyMatrix4(inverseMat)
-		return projection.unproject(v.x, v.y, v.z)
-	}
-
-	/**
-	 * 获取经纬度对应的世界坐标
-	 *
-	 * @param {number} lng
-	 * @param {number} lat
-	 * @param {number} [alt=0]
-	 * @return {*}  {(Vector3 | undefined)}
-	 * If the layer has no projection, or a worldMatrix yet, an {undefined} result will be returned.
-	 * @memberof StandardLayer
-	 * @todo 确认命名正确，可能是本地坐标而非世界坐标
-	 *
-	 * @note return undefined if not inited
-	 */
-	toWorldPosition(lng: number, lat: number, alt = 0): Vector3 | undefined {
-		if (!this.inited) {
-			console.warn('can not call toWorldPosition until layer is inited')
-			return
-		}
-
-		const worldMatrix = this.getWorldMatrix() as number[]
-		const projection = this.resolveProjection() as Projection
-		const matrix4 = _mat4.fromArray(worldMatrix)
-		const pos = _vec3.fromArray(projection.project(lng, lat, alt))
-		pos.applyMatrix4(matrix4)
-		return pos
-	}
-
-	/**
-	 * 获取经纬度对应的屏幕坐标
-	 *
-	 * @param {number} lng
-	 * @param {number} lat
-	 * @param {number} [alt=0]
-	 * @return {*}  {(Vector2 | undefined)}
-	 * If the layer has no projection,
-	 * or a worldMatrix, or not added to any Polaris yet,
-	 * an {undefined} result will be returned.
-	 * @memberof StandardLayer
-	 *
-	 * @note return undefined if not inited
-	 */
-	toScreenXY(lng: number, lat: number, alt = 0): Vector2 | undefined {
-		if (!this.inited) {
-			console.warn('can not call toScreenXY until layer is inited')
-			return
-		}
-
-		const polaris = this.polaris
-
-		const worldPos = this.toWorldPosition(lng, lat, alt)
-		if (!worldPos) return
-
-		const screenXY = polaris.getScreenXY(worldPos.x, worldPos.y, worldPos.z)
-		if (!screenXY) return
-
-		const xy = _vec2.fromArray(screenXY)
-
-		// Align to html dom x/y
-		xy.y = polaris.height - xy.y
-
-		return xy
-	}
-
 	private _initUpdatingLogic(cam, projection, perfMode) {
 		if (perfMode) {
 			this.onViewChange = (cam, polaris) => {
@@ -710,7 +610,7 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 
 	private updateScreenXY() {
 		// update screenXY
-		const xy = this.toScreenXY(this.lnglatalt[0], this.lnglatalt[1], this.lnglatalt[2])
+		const xy = toScreenXY(this, this.lnglatalt[0], this.lnglatalt[1], this.lnglatalt[2])
 		if (xy) {
 			this._screenXY.copy(xy)
 		}
