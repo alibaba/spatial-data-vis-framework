@@ -66,10 +66,10 @@ packages.forEach(async (pkg) => {
 	pjson.scripts = scripts
 	pjson.dependencies = dependencies
 	pjson.devDependencies = devDependencies
-	pjson.type = type
+	// pjson.type = type
 
 	// delete pjson.type
-	delete pjson.gitHead
+	// delete pjson.gitHead
 
 	/**
 	 * edit #end
