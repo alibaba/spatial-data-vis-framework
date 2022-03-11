@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/layer-geojson",
-    "version": "0.0.0-alpha.9",
+    "version": "0.1.0-alpha.0",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -21,16 +21,16 @@
         "bundleWorker": "npx rollup ./dist/workers/LineGeom.js --file ./dist/workers/LineGeom.js -c rollup.config.js && npx rollup ./dist/workers/PolygonGeom.js --file ./dist/workers/PolygonGeom.js -c rollup.config.js"
     },
     "dependencies": {
+        "@gs.i/frontend-gline": "0.2.1-alpha.3",
         "@gs.i/frontend-sdk": "0.2.1-alpha.3",
         "@gs.i/schema-scene": "0.2.1-alpha.3",
         "@gs.i/utils-geometry": "0.2.1-alpha.3",
-        "@gs.i/utils-specify": "0.2.1-alpha.3",
-        "@gs.i/frontend-gline": "0.2.1-alpha.3",
         "@gs.i/utils-math": "^0.0.0-beta",
-        "@polaris.gl/base": "^0.0.0-alpha.9",
-        "@polaris.gl/gsi": "^0.0.0-alpha.9",
-        "@polaris.gl/utils-indicator": "^0.0.0-alpha.9",
-        "@polaris.gl/utils-worker-manager": "^0.0.0-alpha.9",
+        "@gs.i/utils-specify": "0.2.1-alpha.3",
+        "@polaris.gl/base": "^0.1.0-alpha.0",
+        "@polaris.gl/gsi": "^0.1.0-alpha.0",
+        "@polaris.gl/utils-indicator": "^0.1.0-alpha.0",
+        "@polaris.gl/utils-worker-manager": "^0.1.0-alpha.0",
         "@turf/bbox": "^6.3.0",
         "@turf/flatten": "^6.3.0",
         "@turf/invariant": "^5.1.6",
@@ -42,11 +42,11 @@
         "point-in-polygon": "^1.0.1"
     },
     "devDependencies": {
+        "@rollup/plugin-commonjs": "^21.0.1",
+        "@rollup/plugin-node-resolve": "^13.1.3",
         "rollup": "^2.66.0",
         "rollup-plugin-sourcemaps": "^0.6.3",
         "rollup-plugin-web-worker-loader": "1.6.1",
-        "@rollup/plugin-node-resolve": "^13.1.3",
-        "@rollup/plugin-commonjs": "^21.0.1",
         "typescript": ">4.4.0"
     }
 }
