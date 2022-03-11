@@ -1,43 +1,44 @@
 {
-    "name": "@polaris.gl/layer-xyz-poi-tile",
-    "version": "0.1.0-alpha.1",
-    "description": "",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "license": "MIT",
-    "files": [
-        "README.md",
-        "dist/*"
-    ],
-    "scripts": {
-        "build": "./scripts/build.sh",
-        "clean": "./scripts/clean.sh",
-        "rebuild": "npm run clean && npm run build",
-        "build:umd": "npx webpack"
-    },
-    "dependencies": {
-        "@gs.i/frontend-sdk": "0.2.1-alpha.3",
-        "@gs.i/schema-scene": "0.2.1-alpha.3",
-        "@gs.i/utils-math": "^0.0.0-beta",
-        "@gs.i/utils-specify": "0.2.1-alpha.3",
-        "@polaris.gl/base": "^0.1.0-alpha.1",
-        "@polaris.gl/gsi": "^0.1.0-alpha.1",
-        "@polaris.gl/layer-std-marker": "^0.1.0-alpha.1",
-        "@polaris.gl/projection": "^0.1.0-alpha.1",
-        "@polaris.gl/utils": "^0.1.0-alpha.1",
-        "@polaris.gl/utils-request-manager": "^0.1.0-alpha.1",
-        "@polaris.gl/utils-tile-manager": "^0.1.0-alpha.1",
-        "@turf/invariant": "^5.1.6",
-        "@turf/meta": "^6.0.2",
-        "@turf/polygon-to-line": "^6.3.0",
-        "earcut": "^2.2.2",
-        "geobuf": "^3.0.2",
-        "pbf": "^3.2.1"
-    },
-    "devDependencies": {
-        "typescript": ">4.4.0"
-    },
-    "publishConfig": {
-        "access": "public"
-    }
+	"name": "@polaris.gl/layer-xyz-poi-tile",
+	"version": "0.1.0-alpha.2",
+	"description": "",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"type": "module",
+	"license": "MIT",
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"README.md",
+		"dist/*"
+	],
+	"scripts": {
+		"build": "./scripts/build.sh",
+		"clean": "./scripts/clean.sh",
+		"rebuild": "npm run clean && npm run build",
+		"build:umd": "npx webpack"
+	},
+	"dependencies": {
+		"@gs.i/frontend-sdk": "0.2.1-alpha.3",
+		"@gs.i/schema-scene": "0.2.1-alpha.3",
+		"@gs.i/utils-math": "^0.0.0-beta",
+		"@gs.i/utils-specify": "0.2.1-alpha.3",
+		"@polaris.gl/base": "^0.1.0-alpha.2",
+		"@polaris.gl/gsi": "^0.1.0-alpha.2",
+		"@polaris.gl/layer-std-marker": "^0.1.0-alpha.2",
+		"@polaris.gl/projection": "^0.1.0-alpha.2",
+		"@polaris.gl/utils": "^0.1.0-alpha.2",
+		"@polaris.gl/utils-request-manager": "^0.1.0-alpha.2",
+		"@polaris.gl/utils-tile-manager": "^0.1.0-alpha.2",
+		"@turf/invariant": "^5.1.6",
+		"@turf/meta": "^6.0.2",
+		"@turf/polygon-to-line": "^6.3.0",
+		"earcut": "^2.2.2",
+		"geobuf": "^3.0.2",
+		"pbf": "^3.2.1"
+	},
+	"devDependencies": {
+		"typescript": ">4.4.0"
+	}
 }

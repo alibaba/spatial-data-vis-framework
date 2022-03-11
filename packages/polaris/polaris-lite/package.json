@@ -1,42 +1,43 @@
 {
-    "name": "@polaris.gl/lite",
-    "version": "0.1.0-alpha.1",
-    "description": "",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "license": "MIT",
-    "files": [
-        "README.md",
-        "dist/*"
-    ],
-    "scripts": {
-        "start": "vite --open /examples/ --cors",
-        "build": "./scripts/build.sh",
-        "clean": "./scripts/clean.sh",
-        "rebuild": "npm run clean && npm run build",
-        "build:umd": "npx webpack"
-    },
-    "dependencies": {
-        "@gs.i/backend-threelite": "^0.2.1-alpha.3",
-        "@gs.i/frontend-sdk": "0.2.1-alpha.3",
-        "@gs.i/processor-bound": "0.2.1-alpha.3",
-        "@gs.i/processor-culling": "0.2.1-alpha.3",
-        "@gs.i/processor-graph": "0.2.1-alpha.3",
-        "@gs.i/processor-indicator": "0.2.1-alpha.3",
-        "@gs.i/processor-matrix": "0.2.1-alpha.3",
-        "@gs.i/processor-raycast": "^0.2.1-alpha.3",
-        "@gs.i/schema-scene": "^0.2.1-alpha.3",
-        "@polaris.gl/base": "^0.1.0-alpha.1",
-        "@polaris.gl/gsi": "^0.1.0-alpha.1"
-    },
-    "devDependencies": {
-        "@gs.i/processor-indicator": "^0.2.1-alpha.3",
-        "@gs.i/utils-random-scene": "^0.2.1-alpha.3",
-        "@types/offscreencanvas": "latest",
-        "@types/webvr-api": "latest",
-        "typescript": ">4.4.0"
-    },
-    "publishConfig": {
-        "access": "public"
-    }
+	"name": "@polaris.gl/lite",
+	"version": "0.1.0-alpha.2",
+	"description": "",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"type": "module",
+	"license": "MIT",
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"README.md",
+		"dist/*"
+	],
+	"scripts": {
+		"start": "vite --open /examples/ --cors",
+		"build": "./scripts/build.sh",
+		"clean": "./scripts/clean.sh",
+		"rebuild": "npm run clean && npm run build",
+		"build:umd": "npx webpack"
+	},
+	"dependencies": {
+		"@gs.i/backend-threelite": "^0.2.1-alpha.3",
+		"@gs.i/frontend-sdk": "0.2.1-alpha.3",
+		"@gs.i/processor-bound": "0.2.1-alpha.3",
+		"@gs.i/processor-culling": "0.2.1-alpha.3",
+		"@gs.i/processor-graph": "0.2.1-alpha.3",
+		"@gs.i/processor-indicator": "0.2.1-alpha.3",
+		"@gs.i/processor-matrix": "0.2.1-alpha.3",
+		"@gs.i/processor-raycast": "^0.2.1-alpha.3",
+		"@gs.i/schema-scene": "^0.2.1-alpha.3",
+		"@polaris.gl/base": "^0.1.0-alpha.2",
+		"@polaris.gl/gsi": "^0.1.0-alpha.2"
+	},
+	"devDependencies": {
+		"@gs.i/processor-indicator": "^0.2.1-alpha.3",
+		"@gs.i/utils-random-scene": "^0.2.1-alpha.3",
+		"@types/offscreencanvas": "latest",
+		"@types/webvr-api": "latest",
+		"typescript": ">4.4.0"
+	}
 }

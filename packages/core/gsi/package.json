@@ -1,41 +1,42 @@
 {
-    "name": "@polaris.gl/gsi",
-    "version": "0.1.0-alpha.1",
-    "description": "",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "license": "MIT",
-    "files": [
-        "README.md",
-        "dist/*"
-    ],
-    "scripts": {
-        "start": "vite --open /examples/ --cors",
-        "build": "./scripts/build.sh",
-        "clean": "./scripts/clean.sh",
-        "rebuild": "npm run clean && npm run build"
-    },
-    "dependencies": {
-        "@gs.i/frontend-sdk": "0.2.1-alpha.3",
-        "@gs.i/processor-bound": "0.2.1-alpha.3",
-        "@gs.i/processor-culling": "0.2.1-alpha.3",
-        "@gs.i/processor-graph": "0.2.1-alpha.3",
-        "@gs.i/processor-indicator": "0.2.1-alpha.3",
-        "@gs.i/processor-matrix": "0.2.1-alpha.3",
-        "@gs.i/processor-raycast": "0.2.1-alpha.3",
-        "@gs.i/schema-scene": "0.2.1-alpha.3",
-        "@gs.i/utils-math": "^0.0.0-beta",
-        "@gs.i/utils-specify": "0.2.1-alpha.3",
-        "@polaris.gl/base": "^0.1.0-alpha.1",
-        "@polaris.gl/projection": "^0.1.0-alpha.1",
-        "@polaris.gl/utils": "^0.1.0-alpha.1",
-        "ani-timeline": "alpha",
-        "hammerjs": "^2.0.8"
-    },
-    "devDependencies": {
-        "typescript": ">4.4.0"
-    },
-    "publishConfig": {
-        "access": "public"
-    }
+	"name": "@polaris.gl/gsi",
+	"version": "0.1.0-alpha.2",
+	"description": "",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"type": "module",
+	"license": "MIT",
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"README.md",
+		"dist/*"
+	],
+	"scripts": {
+		"start": "vite --open /examples/ --cors",
+		"build": "./scripts/build.sh",
+		"clean": "./scripts/clean.sh",
+		"rebuild": "npm run clean && npm run build"
+	},
+	"dependencies": {
+		"@gs.i/frontend-sdk": "0.2.1-alpha.3",
+		"@gs.i/processor-bound": "0.2.1-alpha.3",
+		"@gs.i/processor-culling": "0.2.1-alpha.3",
+		"@gs.i/processor-graph": "0.2.1-alpha.3",
+		"@gs.i/processor-indicator": "0.2.1-alpha.3",
+		"@gs.i/processor-matrix": "0.2.1-alpha.3",
+		"@gs.i/processor-raycast": "0.2.1-alpha.3",
+		"@gs.i/schema-scene": "0.2.1-alpha.3",
+		"@gs.i/utils-math": "^0.0.0-beta",
+		"@gs.i/utils-specify": "0.2.1-alpha.3",
+		"@polaris.gl/base": "^0.1.0-alpha.2",
+		"@polaris.gl/projection": "^0.1.0-alpha.2",
+		"@polaris.gl/utils": "^0.1.0-alpha.2",
+		"ani-timeline": "alpha",
+		"hammerjs": "^2.0.8"
+	},
+	"devDependencies": {
+		"typescript": ">4.4.0"
+	}
 }
