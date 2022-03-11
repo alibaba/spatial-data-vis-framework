@@ -7,20 +7,12 @@ import { Projection } from '@polaris.gl/projection'
 import { CameraProxy } from 'camera-proxy'
 import { Vector2, Vector3, Matrix4, Euler } from '@gs.i/utils-math'
 import { Mesh } from '@gs.i/frontend-sdk'
-import { IR, MeshDataType } from '@gs.i/schema-scene'
+import { IR, NodeLike } from '@gs.i/schema-scene'
 import { deepCloneMesh, traverse } from './utils'
 import { getOrientationMatrix } from './geometry'
 // import { computeBBox, computeBSphere } from '@gs.i/utils-geometry'
 import { CoordV2, PickEvent } from '@polaris.gl/base'
-import {
-	getWorldMatrix,
-	toLngLatAlt,
-	toWorldPosition,
-	toScreenXY,
-	PolarisGSI,
-	StandardLayer,
-	StandardLayerProps,
-} from '@polaris.gl/gsi'
+import { toScreenXY, PolarisGSI, StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 
 const R = 6378137 // 常量 - 地球半径
 
@@ -66,7 +58,7 @@ export const defaultMarkerProps = {
 export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProps> {
 	lnglatalt: [number, number, number]
 	html?: HTMLElement
-	object3d?: MeshDataType
+	object3d?: NodeLike
 
 	// lnglat转换过来的position，但不是渲染时真正的realPosition，因为还有经过投影变换同步
 	_position: Vector3
@@ -163,7 +155,7 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 		this.addEventListener('init', (e) => {
 			const polaris = e.polaris
 			const projection = e.projection
-			const timeline = e.timeline
+
 			// 地球球心世界位置
 			this.earthCenter.fromArray(projection['_xyz0'] ?? [0, 0, -R]).multiplyScalar(-1)
 
@@ -669,10 +661,3 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 	// 	}
 	// }
 }
-
-/**
- * Temp vars
- */
-const _mat4 = new Matrix4()
-const _vec3 = new Vector3()
-const _vec2 = new Vector2()
