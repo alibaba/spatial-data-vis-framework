@@ -1,31 +1,32 @@
 {
-    "name": "@polaris.gl/react",
-    "version": "0.1.0-alpha.1",
-    "description": "",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "license": "MIT",
-    "publishConfig": {
-        "access": "public"
-    },
-    "files": [
-        "README.md",
-        "dist/*"
-    ],
-    "scripts": {
-        "build": "./scripts/build.sh",
-        "clean": "./scripts/clean.sh",
-        "rebuild": "npm run clean && npm run build"
-    },
-    "dependencies": {
-        "@polaris.gl/base": "^0.1.0-alpha.1",
-        "@polaris.gl/gsi": "^0.1.0-alpha.1",
-        "@types/react": "^17.0.38"
-    },
-    "peerDependencies": {
-        "react": ">16.13.0"
-    },
-    "devDependencies": {
-        "typescript": ">4.4.0"
-    }
+	"name": "@polaris.gl/react",
+	"version": "0.1.0-alpha.2",
+	"description": "",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"peerDependencies": {
+		"react": ">16.13.0"
+	},
+	"type": "module",
+	"license": "MIT",
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"README.md",
+		"dist/*"
+	],
+	"scripts": {
+		"build": "./scripts/build.sh",
+		"clean": "./scripts/clean.sh",
+		"rebuild": "npm run clean && npm run build"
+	},
+	"dependencies": {
+		"@polaris.gl/base": "^0.1.0-alpha.2",
+		"@polaris.gl/gsi": "^0.1.0-alpha.2",
+		"@types/react": "^17.0.38"
+	},
+	"devDependencies": {
+		"typescript": ">4.4.0"
+	}
 }
