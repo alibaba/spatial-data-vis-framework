@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/utils-worker-manager",
-    "version": "0.0.0-alpha.9",
+    "version": "0.1.0-alpha.0",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",

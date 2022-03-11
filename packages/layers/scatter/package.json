@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/layer-scatter",
-    "version": "0.0.0-alpha.9",
+    "version": "0.1.0-alpha.0",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -18,9 +18,9 @@
     "dependencies": {
         "@gs.i/frontend-sdk": "0.2.1-alpha.3",
         "@gs.i/utils-geometry": "0.2.1-alpha.3",
-        "@gs.i/utils-specify": "0.2.1-alpha.3",
         "@gs.i/utils-math": "^0.0.0-beta",
-        "@polaris.gl/gsi": "^0.0.0-alpha.9"
+        "@gs.i/utils-specify": "0.2.1-alpha.3",
+        "@polaris.gl/gsi": "^0.1.0-alpha.0"
     },
     "devDependencies": {
         "typescript": ">4.4.0"

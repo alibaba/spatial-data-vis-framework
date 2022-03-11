@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/react",
-    "version": "0.0.0-alpha.9",
+    "version": "0.1.0-alpha.0",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -18,8 +18,8 @@
         "rebuild": "npm run clean && npm run build"
     },
     "dependencies": {
-        "@polaris.gl/base": "^0.0.0-alpha.9",
-        "@polaris.gl/gsi": "^0.0.0-alpha.9",
+        "@polaris.gl/base": "^0.1.0-alpha.0",
+        "@polaris.gl/gsi": "^0.1.0-alpha.0",
         "@types/react": "^17.0.38"
     },
     "peerDependencies": {
