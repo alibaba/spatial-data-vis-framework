@@ -33,6 +33,7 @@
 		"@polaris.gl/base": "^0.1.0-alpha.2",
 		"@polaris.gl/projection": "^0.1.0-alpha.2",
 		"@polaris.gl/utils": "^0.1.0-alpha.2",
+		"camera-proxy": "alpha",
 		"ani-timeline": "alpha",
 		"hammerjs": "^2.0.8"
 	},
