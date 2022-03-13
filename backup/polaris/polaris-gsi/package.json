@@ -16,12 +16,12 @@
         "rebuild": "npm run clean && npm run build"
     },
     "dependencies": {
-        "@gs.i/schema-scene": "0.2.1-alpha.4",
-        "@gs.i/processor-bound": "0.2.1-alpha.4",
-        "@gs.i/processor-culling": "0.2.1-alpha.4",
-        "@gs.i/processor-graph": "0.2.1-alpha.4",
-        "@gs.i/processor-indicator": "0.2.1-alpha.4",
-        "@gs.i/processor-matrix": "0.2.1-alpha.4",
+        "@gs.i/schema-scene": "0.2.1-alpha.5",
+        "@gs.i/processor-bound": "0.2.1-alpha.5",
+        "@gs.i/processor-culling": "0.2.1-alpha.5",
+        "@gs.i/processor-graph": "0.2.1-alpha.5",
+        "@gs.i/processor-indicator": "0.2.1-alpha.5",
+        "@gs.i/processor-matrix": "0.2.1-alpha.5",
         "@polaris.gl/base": "^0.0.0-alpha.9",
         "@polaris.gl/layer-std": "^0.0.0-alpha.9",
         "@polaris.gl/projection": "^0.0.0-alpha.9",
