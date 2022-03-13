@@ -1,6 +1,6 @@
 {
 	"name": "@polaris.gl/utils-easing",
-	"version": "0.1.0-alpha.8",
+	"version": "0.1.0-alpha.9",
 	"description": "",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
