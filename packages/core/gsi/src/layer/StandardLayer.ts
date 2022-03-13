@@ -193,6 +193,7 @@ export class StandardLayer<
 	 * @deprecated
 	 */
 	protected onDepthTestChange(depthTest: boolean) {
+		console.log('StandardLayer: depthTest change, will rebuild material')
 		this.group.children.forEach((mesh) => {
 			if (isRenderable(mesh)) {
 				//
@@ -202,6 +203,8 @@ export class StandardLayer<
 
 				mesh.material.extensions.EXT_matr_advanced.depthTest =
 					depthTest ?? mesh.material.extensions.EXT_matr_advanced.depthTest
+
+				mesh.material.version++
 			}
 		})
 	}
