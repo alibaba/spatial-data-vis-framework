@@ -58,6 +58,10 @@ export class EventDispatcher<TEventTypes extends EventMapBase = any> {
 				this.#options.set(listener, options)
 			}
 		}
+
+		// reflection api
+		// used to add custom behaviors for `addEventListener` method
+		this.dispatchEvent({ type: 'addEventListener', source: { type, listener, options } })
 	}
 
 	removeEventListener<TEventTypeName extends keyof TEventTypes>(
@@ -141,7 +145,7 @@ export class EventDispatcher<TEventTypes extends EventMapBase = any> {
 			 * assign the event type
 			 */
 			type: TEventTypeName
-		},
+		} & Record<string, any>,
 		listener: ListenerCbk<TEventTypes, TEventTypeName>
 	): void {
 		if (!event.type) {
@@ -166,7 +170,7 @@ export class EventDispatcher<TEventTypes extends EventMapBase = any> {
  * options
  * @note drop DOM related options
  */
-interface ListenerOptions {
+export interface ListenerOptions {
 	/**
 	 * A boolean value indicating that the listener should be invoked at most once after
 	 * being added. If true, the listener would be automatically removed when invoked.
@@ -179,7 +183,7 @@ interface ListenerOptions {
 /**
  * type of listener callback function
  */
-type ListenerCbk<
+export type ListenerCbk<
 	TEventTypes extends Record<string, Record<string, any>>,
 	TName extends keyof TEventTypes
 > = (
