@@ -20,8 +20,8 @@
 		"build:umd": "npx webpack"
 	},
 	"dependencies": {
-		"@gs.i/frontend-sdk": "0.2.1-alpha.3",
-		"@gs.i/utils-geom-builders": "0.2.1-alpha.3",
+		"@gs.i/frontend-sdk": "0.2.1-alpha.4",
+		"@gs.i/utils-geom-builders": "0.2.1-alpha.4",
 		"@polaris.gl/gsi": "^0.1.0-alpha.8"
 	},
 	"devDependencies": {
