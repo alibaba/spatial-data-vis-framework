@@ -92,6 +92,53 @@ export class PolygonLayer extends StandardLayer<PolygonLayerProps> {
 
 		// this.pickedFeatures = []
 
+		this.addEventListener('init', () => {
+			this._init()
+		})
+
+		// TODO: refactor highlight
+		// /**
+		//  * Highilight api
+		//  * @param {number[]} dataIndexArr
+		//  * @param {{type: 'none' | 'select' | 'hover' }} style
+		//  */
+		// this.highlightByIndices = (dataIndexArr, style) => {
+		// 	const data = this.getProp('data')
+		// 	if (!data || !Array.isArray(data.features)) return
+		// 	if (!style || !style.type) return
+
+		// 	dataIndexArr.forEach((index) => {
+		// 		const feature = data.features[index]
+		// 		if (!feature) return
+
+		// 		// Restore last highlight styles
+		// 		this._restoreFeatureColor(feature)
+		// 		this._restoreHoverLines(feature)
+		// 		this._restoreSelectLines(feature)
+
+		// 		switch (style.type) {
+		// 			case 'none':
+		// 				break
+		// 			case 'select':
+		// 				this._updateSelectLines(feature)
+		// 				if (this.selectColor) {
+		// 					this._updateFeatureColor(feature, this.selectColor)
+		// 				}
+		// 				break
+		// 			case 'hover':
+		// 				this._updateHoverLines(feature)
+		// 				if (this.hoverColor) {
+		// 					this._updateFeatureColor(feature, this.hoverColor)
+		// 				}
+		// 				break
+		// 			default:
+		// 				console.error(`Polaris::PolygonLayer - Invalid style.type param: ${style}`)
+		// 		}
+		// 	})
+		// }
+	}
+
+	private _init() {
 		this.listenProps(['selectColor'], () => {
 			const c = this.getProp('selectColor')
 			if (c) {
@@ -352,47 +399,6 @@ export class PolygonLayer extends StandardLayer<PolygonLayerProps> {
 				}
 			}
 		)
-
-		// TODO: refactor highlight
-		// /**
-		//  * Highilight api
-		//  * @param {number[]} dataIndexArr
-		//  * @param {{type: 'none' | 'select' | 'hover' }} style
-		//  */
-		// this.highlightByIndices = (dataIndexArr, style) => {
-		// 	const data = this.getProp('data')
-		// 	if (!data || !Array.isArray(data.features)) return
-		// 	if (!style || !style.type) return
-
-		// 	dataIndexArr.forEach((index) => {
-		// 		const feature = data.features[index]
-		// 		if (!feature) return
-
-		// 		// Restore last highlight styles
-		// 		this._restoreFeatureColor(feature)
-		// 		this._restoreHoverLines(feature)
-		// 		this._restoreSelectLines(feature)
-
-		// 		switch (style.type) {
-		// 			case 'none':
-		// 				break
-		// 			case 'select':
-		// 				this._updateSelectLines(feature)
-		// 				if (this.selectColor) {
-		// 					this._updateFeatureColor(feature, this.selectColor)
-		// 				}
-		// 				break
-		// 			case 'hover':
-		// 				this._updateHoverLines(feature)
-		// 				if (this.hoverColor) {
-		// 					this._updateFeatureColor(feature, this.hoverColor)
-		// 				}
-		// 				break
-		// 			default:
-		// 				console.error(`Polaris::PolygonLayer - Invalid style.type param: ${style}`)
-		// 		}
-		// 	})
-		// }
 	}
 
 	// TODO: refactor picking
