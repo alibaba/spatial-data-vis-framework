@@ -68,10 +68,6 @@ export abstract class AbstractLayer<
 		this.#projectionLocal = props?.projection
 		this.#timelineLocal = props?.timeline
 
-		if (props?.parent) {
-			props.parent.add(this)
-		}
-
 		this.setProps(props || {})
 
 		/**
@@ -150,6 +146,10 @@ export abstract class AbstractLayer<
 				)
 			}
 		})
+
+		if (props?.parent) {
+			props.parent.add(this)
+		}
 	}
 
 	/**
