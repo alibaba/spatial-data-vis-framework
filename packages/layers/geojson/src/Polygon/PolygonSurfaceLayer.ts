@@ -136,18 +136,7 @@ export class PolygonSurfaceLayer extends StandardLayer<PolygonSurfaceLayerProps>
 		this._storeName = 'Polaris_PolygonSurfaceLayer'
 		this._geomCache = new Map()
 
-		this.listenProps(['tessellation'], (e) => {
-			this._tessellation = this.getProps('tessellation') ?? 0
-		})
-
 		this.matr = new PolygonMatr()
-
-		this.listenProps(['transparent', 'doubleSide', 'metallic', 'roughness'], (e) => {
-			this.matr.metallicFactor = this.getProps('metallic')
-			this.matr.roughnessFactor = this.getProps('roughness')
-			this.matr.alphaMode = this.getProps('transparent') ? 'BLEND' : 'OPAQUE'
-			this.matr.side = this.getProps('doubleSide') ? 'double' : 'front'
-		})
 
 		this.onRenderOrderChange = (renderOrder) => {
 			if (this.mesh) {
@@ -175,6 +164,19 @@ export class PolygonSurfaceLayer extends StandardLayer<PolygonSurfaceLayerProps>
 		this.addEventListener('init', (e) => {
 			const polaris = e.polaris
 			const projection = e.projection
+
+			this.listenProps(['tessellation'], (e) => {
+				this._tessellation = this.getProps('tessellation') ?? 0
+			})
+			this.listenProps(['transparent', 'doubleSide'], (e) => {
+				this.matr.alphaMode = this.getProps('transparent') ? 'BLEND' : 'OPAQUE'
+				this.matr.side = this.getProps('doubleSide') ? 'double' : 'front'
+				this.matr.version++
+			})
+			this.listenProps(['metallic', 'roughness'], (e) => {
+				this.matr.metallicFactor = this.getProps('metallic')
+				this.matr.roughnessFactor = this.getProps('roughness')
+			})
 
 			// Init WorkerManager
 

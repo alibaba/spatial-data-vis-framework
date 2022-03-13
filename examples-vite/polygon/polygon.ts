@@ -6,9 +6,14 @@ import { IndicatorProcessor } from '@gs.i/processor-indicator'
 import { HelperLayer } from '@polaris.gl/layer-std-helper'
 import { LodLineStringLayer, PolygonLayer } from '@polaris.gl/layer-geojson'
 
+const indicator = new IndicatorProcessor({
+	useWireframe: true,
+	useBBox: true,
+})
+
 const p = new PolarisLite({
 	container: document.querySelector('#container') as HTMLDivElement,
-	background: 'transparent',
+	// background: 'transparent',
 	// autoplay: false,
 })
 
@@ -114,6 +119,10 @@ polygonLayer1.updateData(newGeo)
 // 	}
 // }
 // polygonLayer1.onHovered = (info) => {}
+
+indicator.traverse(polygonLayer1.sideLayer.group)
+console.log(polygonLayer1.surfaceLayer)
+indicator.traverse(polygonLayer1.surfaceLayer.group)
 
 // line
 const lineLayer2 = (window['line'] = new LodLineStringLayer({
