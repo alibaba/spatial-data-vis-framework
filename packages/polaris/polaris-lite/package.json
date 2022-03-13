@@ -1,6 +1,6 @@
 {
 	"name": "@polaris.gl/lite",
-	"version": "0.1.0-alpha.4",
+	"version": "0.1.0-alpha.5",
 	"description": "",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -30,8 +30,8 @@
 		"@gs.i/processor-matrix": "0.2.1-alpha.3",
 		"@gs.i/processor-raycast": "^0.2.1-alpha.3",
 		"@gs.i/schema-scene": "^0.2.1-alpha.3",
-		"@polaris.gl/base": "^0.1.0-alpha.4",
-		"@polaris.gl/gsi": "^0.1.0-alpha.4"
+		"@polaris.gl/base": "^0.1.0-alpha.5",
+		"@polaris.gl/gsi": "^0.1.0-alpha.5"
 	},
 	"devDependencies": {
 		"@gs.i/processor-indicator": "^0.2.1-alpha.3",
