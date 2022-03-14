@@ -72,7 +72,7 @@ export class Node<TEventMap extends NodeEvents = NodeEvents> extends EventDispat
 	 * @readonly
 	 */
 	get parent() {
-		return this.#parent
+		return this._parent
 	}
 
 	/**
@@ -80,7 +80,7 @@ export class Node<TEventMap extends NodeEvents = NodeEvents> extends EventDispat
 	 * @readonly
 	 */
 	get children() {
-		return this.#children
+		return this._children
 	}
 
 	/**
@@ -88,7 +88,7 @@ export class Node<TEventMap extends NodeEvents = NodeEvents> extends EventDispat
 	 * @readonly
 	 */
 	get root() {
-		return this.#root
+		return this._root
 	}
 
 	add(child: Node): void {
@@ -99,7 +99,7 @@ export class Node<TEventMap extends NodeEvents = NodeEvents> extends EventDispat
 		// if (this.children.has(child)) {
 		// 	throw new Error(`AbstractNode: This child has already been added to current node.`)
 		// }
-		if (child.#removed) {
+		if (child._removed) {
 			throw new Error(`AbstractNode: This node has already been removed before. Do not re-use.`)
 		}
 		if (child === this) {
@@ -125,7 +125,7 @@ export class Node<TEventMap extends NodeEvents = NodeEvents> extends EventDispat
 
 		this.children.add(child)
 
-		child.#parent = this
+		child._parent = this
 
 		// emit `add` before `rootChange`
 		child.dispatchEvent({ type: 'add', parent: this })
@@ -151,8 +151,8 @@ export class Node<TEventMap extends NodeEvents = NodeEvents> extends EventDispat
 		 */
 		const root = this.root || this // @careful
 		child.traverse((node) => {
-			if (node.#root !== root) {
-				node.#root = root
+			if (node._root !== root) {
+				node._root = root
 				node.dispatchEvent({ type: 'rootChange', root })
 			}
 		})
@@ -161,8 +161,8 @@ export class Node<TEventMap extends NodeEvents = NodeEvents> extends EventDispat
 	remove(child: Node): void {
 		this.children.delete(child)
 
-		child.#parent = null
-		child.#root = null
+		child._parent = null
+		child._root = null
 
 		// emit `remove` on child
 		child.dispatchEvent({ type: 'remove', parent: this })
@@ -174,8 +174,8 @@ export class Node<TEventMap extends NodeEvents = NodeEvents> extends EventDispat
 		// @note only this child and its sub-tree are affected.
 		const root = child // @careful
 		child.traverse((node) => {
-			if (node.#root !== root) {
-				node.#root = root
+			if (node._root !== root) {
+				node._root = root
 				node.dispatchEvent({ type: 'rootChange', root })
 			}
 		})
@@ -196,10 +196,10 @@ export class Node<TEventMap extends NodeEvents = NodeEvents> extends EventDispat
 	 * has this node been added and removed before
 	 * @note currently not support re-add an used node
 	 */
-	#removed = false
-	#root: null | Node = null
-	#parent: null | Node = null
-	#children = new Set<Node>()
+	private _removed = false
+	private _root: null | Node = null
+	private _parent: null | Node = null
+	private _children = new Set<Node>()
 
 	/**
 	 * callback when object/layer is added to a parent
