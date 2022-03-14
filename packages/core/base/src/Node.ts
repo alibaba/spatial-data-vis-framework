@@ -163,6 +163,7 @@ export class Node<TEventMap extends NodeEvents = NodeEvents> extends EventDispat
 
 		child._parent = null
 		child._root = null
+		child._removed = true
 
 		// emit `remove` on child
 		child.dispatchEvent({ type: 'remove', parent: this })
