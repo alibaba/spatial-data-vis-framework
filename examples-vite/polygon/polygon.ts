@@ -107,7 +107,7 @@ const polygonLayer1 = (window['layer1'] = new PolygonLayer({
 	hoverLineWidth: 1,
 	selectLineWidth: 4,
 	selectLinesHeight: 0,
-	workersCount: 0,
+	workersCount: 4,
 }))
 p.add(polygonLayer1)
 polygonLayer1.updateData(newGeo)
