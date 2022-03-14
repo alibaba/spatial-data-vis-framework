@@ -89,9 +89,10 @@ geojson.features.forEach((feature) => {
 const polygonLayer1 = (window['layer1'] = new PolygonLayer({
 	// projection: new SphereProjection({}),
 	getFillColor: (feature) => {
-		const r = Math.floor(100 + Math.random() * 155).toString(16)
-		const color = `#${r}aa${r}`
-		return color
+		// const r = Math.floor(Math.random() * 255).toString(16)
+		// const color = `#${r}66${r}`
+		// return color
+		return Math.round(Math.random() * 0xffffff)
 	},
 	getSideColor: () => '#999999',
 	getFillOpacity: () => 1.0,
@@ -100,13 +101,13 @@ const polygonLayer1 = (window['layer1'] = new PolygonLayer({
 	enableExtrude: true,
 	baseAlt: 0,
 	depthTest: true,
-	pickable: false,
+	pickable: true,
 	// hoverColor: false,
 	// selectColor: false,
 	hoverLineWidth: 1,
 	selectLineWidth: 4,
 	selectLinesHeight: 0,
-	workersCount: 4,
+	workersCount: 0,
 }))
 p.add(polygonLayer1)
 polygonLayer1.updateData(newGeo)
@@ -120,9 +121,9 @@ polygonLayer1.updateData(newGeo)
 // }
 // polygonLayer1.onHovered = (info) => {}
 
-indicator.traverse(polygonLayer1.sideLayer.group)
-console.log(polygonLayer1.surfaceLayer)
-indicator.traverse(polygonLayer1.surfaceLayer.group)
+// console.log('polygonLayer1', polygonLayer1)
+// indicator.traverse(polygonLayer1.sideLayer.mesh)
+// indicator.traverse(polygonLayer1.surfaceLayer.mesh)
 
 // line
 const lineLayer2 = (window['line'] = new LodLineStringLayer({
@@ -154,7 +155,10 @@ p.add(lineLayer2)
 
 const polygonLayer2 = (window['layer2'] = new PolygonLayer({
 	getFillColor: (feature) => {
-		return 0 - ((Math.random() * 0xffffff).toString(16).split('.')[0] as any)
+		// const r = Math.floor(Math.random() * 255).toString(16)
+		// const color = `#${r}66${r}`
+		// return color
+		return Math.round(Math.random() * 0xffffff)
 	},
 	getFillOpacity: () => 1.0,
 	getSideColor: () => '#999999',
@@ -166,15 +170,17 @@ const polygonLayer2 = (window['layer2'] = new PolygonLayer({
 	// pickable: true,
 	// workersCount: 8,
 	// projection: new SphereProjection({}),
+	workersCount: 0,
 }))
+
+// ATTENTION 这里如果把 add 放在 data fetch 之后，就可以渲染
 p.add(polygonLayer2)
-polygonLayer2.updateData(
-	await (
-		await fetch(
-			'https://gw.alipayobjects.com/os/bmw-prod/6a0e53c5-3d79-407f-a554-2f97916f7940.json'
-		)
-	).json()
-)
+
+const data2 = await (
+	await fetch('https://gw.alipayobjects.com/os/bmw-prod/6a0e53c5-3d79-407f-a554-2f97916f7940.json')
+).json()
+
+polygonLayer2.updateData(data2)
 // polygonLayer2.onPicked = (info) => {
 // 	console.log('onPicked', info)
 // 	if (info && info.data && info.data.feature) {
@@ -183,6 +189,8 @@ polygonLayer2.updateData(
 // 		// polygonLayer2.highlightByIndices([index], { type: 'select' })
 // 	}
 // }
+
+console.log('polygonLayer2', polygonLayer2)
 
 p.setStatesCode('1|-1.191044|56.161481|0.000000|0.70540|-0.03000|1.73000')
 // p.setStatesCode('1|110|36|0.000000|0.00000|0.00000|1.73000')

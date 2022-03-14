@@ -398,8 +398,8 @@ export class PolygonSurfaceLayer extends StandardLayer<PolygonSurfaceLayerProps>
 
 		this.mesh.geometry = this.geom
 
-		computeBSphere(this.geom)
-		computeBBox(this.geom)
+		this.geom.boundingSphere = computeBSphere(this.geom)
+		this.geom.boundingBox = computeBBox(this.geom)
 
 		// Create selection polyline
 		// Remove if existed
