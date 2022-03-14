@@ -16,10 +16,10 @@
         "rebuild": "npm run clean && npm run build"
     },
     "dependencies": {
-        "@gs.i/schema-scene": "0.2.1-alpha.5",
-        "@gs.i/frontend-sdk": "0.2.1-alpha.5",
-        "@gs.i/processor-matrix": "0.2.1-alpha.5",
-        "@gs.i/processor-raycast": "0.2.1-alpha.5",
+        "@gs.i/schema-scene": "0.2.1-alpha.6",
+        "@gs.i/frontend-sdk": "0.2.1-alpha.6",
+        "@gs.i/processor-matrix": "0.2.1-alpha.6",
+        "@gs.i/processor-raycast": "0.2.1-alpha.6",
         "@gs.i/utils-math": "^0.0.0-beta",
         "@polaris.gl/base": "^0.0.0-alpha.9",
         "@polaris.gl/projection": "^0.0.0-alpha.9",
