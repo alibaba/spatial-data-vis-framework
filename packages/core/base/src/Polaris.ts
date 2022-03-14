@@ -409,7 +409,9 @@ export abstract class AbstractPolaris<
 				obj.dispatchEvent({ type: 'afterRender', polaris: this })
 			})
 		} catch (error) {
+			// console.error(error)
 			this.dispatchEvent({ type: 'tickError', error: error })
+			throw error
 		}
 	}
 
