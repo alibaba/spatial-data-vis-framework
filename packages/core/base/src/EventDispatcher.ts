@@ -26,9 +26,9 @@ export type DefaultEventMap = Record<string, never>
  *
  */
 export class EventDispatcher<TEventTypes extends EventMapBase = any> {
-	#listeners = {} as any
+	private readonly _listeners = {} as any
 	// eslint-disable-next-line @typescript-eslint/ban-types
-	#options = new WeakMap<Function, ListenerOptions>()
+	private readonly _options = new WeakMap<Function, ListenerOptions>()
 
 	readonly isEventDispatcher = true
 
@@ -46,7 +46,7 @@ export class EventDispatcher<TEventTypes extends EventMapBase = any> {
 		 */
 		options?: ListenerOptions
 	): void {
-		const listeners = this.#listeners
+		const listeners = this._listeners
 
 		if (listeners[type] === undefined) {
 			listeners[type] = []
@@ -55,7 +55,7 @@ export class EventDispatcher<TEventTypes extends EventMapBase = any> {
 		if (listeners[type].indexOf(listener) === -1) {
 			listeners[type].push(listener)
 			if (options !== undefined) {
-				this.#options.set(listener, options)
+				this._options.set(listener, options)
 			}
 		}
 
@@ -74,7 +74,7 @@ export class EventDispatcher<TEventTypes extends EventMapBase = any> {
 		 */
 		listener: ListenerCbk<TEventTypes, TEventTypeName>
 	): void {
-		const listeners = this.#listeners
+		const listeners = this._listeners
 		const listenerArray = listeners[type]
 
 		if (listenerArray !== undefined) {
@@ -100,7 +100,7 @@ export class EventDispatcher<TEventTypes extends EventMapBase = any> {
 			throw new Error('event.type is required')
 		}
 
-		const listeners = this.#listeners
+		const listeners = this._listeners
 		const listenerArray = listeners[event.type]
 
 		if (listenerArray !== undefined) {
@@ -119,7 +119,7 @@ export class EventDispatcher<TEventTypes extends EventMapBase = any> {
 
 				listener.call(this, eventOut)
 
-				if (this.#options.get(listener)?.once) {
+				if (this._options.get(listener)?.once) {
 					this.removeEventListener(event.type, listener)
 				}
 			}
@@ -127,7 +127,7 @@ export class EventDispatcher<TEventTypes extends EventMapBase = any> {
 	}
 
 	removeAllEventListeners<TEventTypeName extends keyof TEventTypes>(type: TEventTypeName): void {
-		const listeners = this.#listeners
+		const listeners = this._listeners
 
 		if (listeners[type] !== undefined) {
 			listeners[type] = []
@@ -161,7 +161,7 @@ export class EventDispatcher<TEventTypes extends EventMapBase = any> {
 
 		listener.call(this, eventOut)
 
-		if (this.#options.get(listener)?.once) {
+		if (this._options.get(listener)?.once) {
 			this.removeEventListener(event.type, listener)
 		}
 	}
