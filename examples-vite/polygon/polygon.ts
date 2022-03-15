@@ -110,6 +110,9 @@ const polygonLayer1 = (window['layer1'] = new PolygonLayer({
 	workersCount: 4,
 }))
 p.add(polygonLayer1)
+
+await Promise.resolve()
+
 polygonLayer1.updateData(newGeo)
 // polygonLayer1.onPicked = (info) => {
 // 	console.log('onPicked', info)
