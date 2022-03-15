@@ -1,5 +1,5 @@
-import { StandardLayer } from '@polaris.gl/layer-std'
-import { PolarisGSI } from '../src/PolarisGSI'
+import { StandardLayer } from '../src/layer/StandardLayer'
+import { PolarisGSI } from '../src/polaris/PolarisGSI'
 
 await test(true, 'StandardLayer', () => {
 	const d = new StandardLayer({})
