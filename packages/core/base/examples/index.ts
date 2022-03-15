@@ -378,7 +378,7 @@ await test(false, 'Polaris+Layer', () => {
 	p.add(inode)
 })
 
-await test(true, 'RootChange', () => {
+await test(false, 'RootChange', () => {
 	class L extends AbstractLayer {
 		constructor(props) {
 			super(props)
@@ -411,6 +411,51 @@ await test(true, 'RootChange', () => {
 			name: 'leaf3',
 		})
 		inode.add(leaf3)
+	})
+
+	root.add(inode)
+})
+await test(true, 'AddSubWhenInit', () => {
+	class L extends AbstractLayer {
+		constructor(props) {
+			super(props)
+
+			this.addEventListener('rootChange', (e) => {
+				console.log('root rootChange')
+			})
+		}
+		dispose() {}
+		updateAlignmentMatrix() {}
+	}
+	class Parent extends AbstractLayer {
+		constructor(props) {
+			super(props)
+
+			this.addEventListener('rootChange', (e) => {
+				console.log('parent rootChange')
+				this.add(new Child({}))
+			})
+		}
+		dispose() {}
+		updateAlignmentMatrix() {}
+	}
+	class Child extends AbstractLayer {
+		constructor(props) {
+			super(props)
+
+			this.addEventListener('rootChange', (e) => {
+				console.log('child rootChange')
+			})
+		}
+		dispose() {}
+		updateAlignmentMatrix() {}
+	}
+
+	const root = new L({
+		name: 'root',
+	})
+	const inode = new Parent({
+		name: 'Parent',
 	})
 
 	root.add(inode)
