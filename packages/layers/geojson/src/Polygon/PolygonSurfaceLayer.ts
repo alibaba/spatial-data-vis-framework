@@ -206,10 +206,6 @@ export class PolygonSurfaceLayer extends StandardLayer<PolygonSurfaceLayerProps>
 			// 	done()
 			// })
 
-			// 3D 内容
-			this.mesh = new Mesh({ name: 'PolygonSurface', material: this.matr })
-			this.group.add(this.mesh)
-
 			// 数据与配置的应用（包括reaction）
 			this.listenProps(
 				[
@@ -390,16 +386,17 @@ export class PolygonSurfaceLayer extends StandardLayer<PolygonSurfaceLayerProps>
 		})
 
 		this.geom = new Geom()
-
 		this.geom.attributes.position = new Attr(new Float32Array(positions), 3)
 		this.geom.attributes.color = new Attr(new Uint16Array(colors), 4, false, 'DYNAMIC_DRAW')
 		const indicesArray = offset > 65535 ? new Uint32Array(indices) : new Uint16Array(indices)
 		this.geom.indices = new Attr(indicesArray, 1)
 
-		this.mesh.geometry = this.geom
-
 		this.geom.boundingSphere = computeBSphere(this.geom)
 		this.geom.boundingBox = computeBBox(this.geom)
+
+		// regenerate mesh
+		this._generateMesh()
+		this.mesh.geometry = this.geom
 
 		// Create selection polyline
 		// Remove if existed
@@ -668,6 +665,14 @@ export class PolygonSurfaceLayer extends StandardLayer<PolygonSurfaceLayerProps>
 	 */
 	clearHoverLineUpdteRanges() {
 		this._clearLineUpdteRanges('hover')
+	}
+
+	private _generateMesh() {
+		if (this.mesh) {
+			this.group.remove(this.mesh)
+		}
+		this.mesh = new Mesh({ name: 'PolygonSurface', material: this.matr })
+		this.group.add(this.mesh)
 	}
 
 	private _updateFeatureHighlight(feature, mode: 'select' | 'hover') {
