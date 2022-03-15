@@ -30,7 +30,7 @@ import { PolygonMatr } from './PolygonMatr'
 import { Polaris } from '@polaris.gl/base'
 import { isDISPOSED } from '@gs.i/schema-scene'
 import { WorkerManager } from '@polaris.gl/utils-worker-manager'
-import { createWorkers } from '../workers/PolygonGeomWorker'
+import { createWorkers } from '../workers/PolygonGeomWorkerFactory'
 
 /**
  * 配置项 interface
