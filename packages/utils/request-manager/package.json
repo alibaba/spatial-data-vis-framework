@@ -1,6 +1,6 @@
 {
 	"name": "@polaris.gl/utils-request-manager",
-	"version": "0.1.0-alpha.10",
+	"version": "0.1.0-alpha.11",
 	"description": "",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
