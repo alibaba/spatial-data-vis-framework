@@ -13,7 +13,8 @@ const p = new PolarisLite({
 	// background: 'transparent',
 	// autoplay: false,
 })
-const h = new HelperLayer({ parent: p, length: 10000 })
+const h = new HelperLayer({ length: 10000 })
+p.add(h)
 h.setProps({ box: false })
 globalThis.p = p
 console.log(p)

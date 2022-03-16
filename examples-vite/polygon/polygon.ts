@@ -21,7 +21,8 @@ const p = new PolarisLite({
 // 	// debugger
 // 	// throw e.error // 这样 throw 会丢失调用栈
 // })
-const h = new HelperLayer({ parent: p, length: 10000 })
+const h = new HelperLayer({ length: 10000 })
+p.add(h)
 h.setProps({ box: false })
 
 // p.addEventListener('viewChange', (e) => {
