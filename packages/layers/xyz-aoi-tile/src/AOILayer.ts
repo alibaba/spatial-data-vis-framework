@@ -485,6 +485,9 @@ export class AOILayer extends STDLayer {
 	 * highlight api for TileLayers
 	 */
 	highlightByIds(idsArr: (number | string)[], style: { [name: string]: any }) {
+		if (!this._idIndicatorRangeMap) {
+			return
+		}
 		const type = style.type
 		if (type !== 'hover' && type !== 'select' && type !== 'none') {
 			console.error(`AOILayer - Invalid argument style.type: ${style}`)
@@ -1038,6 +1041,9 @@ export class AOILayer extends STDLayer {
 	}
 
 	private _setStyleById(id: number | string, type: string) {
+		if (!this._idIndicatorRangeMap) {
+			return
+		}
 		const rangeInfos = this._idIndicatorRangeMap.get(id)
 		if (!rangeInfos || !type) return
 		rangeInfos.forEach((info) => {
