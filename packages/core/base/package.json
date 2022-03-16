@@ -1,6 +1,6 @@
 {
 	"name": "@polaris.gl/base",
-	"version": "0.1.0-alpha.14",
+	"version": "0.1.0-alpha.15",
 	"description": "",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -21,9 +21,9 @@
 	},
 	"dependencies": {
 		"@gs.i/schema-ext-scene": "^0.0.0-beta",
-		"@polaris.gl/coordinator": "^0.1.0-alpha.14",
-		"@polaris.gl/projection": "^0.1.0-alpha.14",
-		"@polaris.gl/props-manager": "^0.1.0-alpha.14",
+		"@polaris.gl/coordinator": "^0.1.0-alpha.15",
+		"@polaris.gl/projection": "^0.1.0-alpha.15",
+		"@polaris.gl/props-manager": "^0.1.0-alpha.15",
 		"ani-timeline": "alpha",
 		"camera-proxy": "alpha"
 	},
