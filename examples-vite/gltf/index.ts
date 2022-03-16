@@ -32,7 +32,8 @@ await test(true, 'PolarisLite', () => {
 
 	p.setStatesCode('1|119.310764|26.073899|0.000000|0.00000|-0.03000|15')
 
-	const h = new HelperLayer({ parent: p })
+	const h = new HelperLayer()
+	p.add(h)
 	h.setProps({ box: false })
 
 	// p.addEventListener('viewChange', (e) => {

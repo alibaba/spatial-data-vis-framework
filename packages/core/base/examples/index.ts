@@ -283,7 +283,7 @@ await test(false, 'Polaris+Layer', () => {
 					this.getProp('bb')
 				)
 			})
-			this.watchProps(['parent', 'name'], (e) => {
+			this.watchProps(['name'], (e) => {
 				console.error('Do not modify static props')
 			})
 			this.addEventListener('visibilityChange', (e) => {
@@ -320,8 +320,8 @@ await test(false, 'Polaris+Layer', () => {
 	const leaf = new L({
 		name: 'leaf',
 		aa: 2,
-		parent: inode,
 	})
+	inode.add(leaf)
 
 	class P extends AbstractPolaris {
 		constructor(initialProps: PolarisProps) {
