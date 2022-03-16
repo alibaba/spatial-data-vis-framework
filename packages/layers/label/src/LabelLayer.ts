@@ -1,10 +1,10 @@
-import { PolarisGSI, StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
-import { Color, Vector2 } from '@gs.i/utils-math'
 /**
  * Copyright (C) 2021 Alibaba Group Holding Limited
  * All rights reserved.
  */
-
+import { PolarisGSI, StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
+import { Color, Vector2 } from '@gs.i/utils-math'
+import { Track } from 'ani-timeline'
 import { SimplifiedMarker } from './SimplifiedMarker'
 import { OptionalDefault } from './utils'
 
@@ -138,6 +138,8 @@ export class LabelLayer extends StandardLayer<LabelLayerProps> {
 	_currInvisibles: SimplifiedMarker[]
 
 	_currVisibles: SimplifiedMarker[]
+
+	_animTracks: Track[] = []
 
 	constructor(props: Partial<LabelLayerProps> = {}) {
 		const _props = {
@@ -652,7 +654,7 @@ export class LabelLayer extends StandardLayer<LabelLayerProps> {
 	private _showMarker(marker, timeline, duration = 200) {
 		marker.alpha = 0.0
 		marker.labelVisible = true
-		timeline.addTrack({
+		const track = timeline.addTrack({
 			id: 'MarkerShow',
 			startTime: timeline.currentTime,
 			duration: duration,
@@ -660,17 +662,19 @@ export class LabelLayer extends StandardLayer<LabelLayerProps> {
 			onEnd: () => {
 				marker.alpha = 1.0
 				marker.labelVisible = true
+				this._animTracks.splice(this._animTracks.indexOf(track), 1)
 			},
 			onUpdate: (t, p) => {
 				marker.alpha = p
 			},
 		})
+		this._animTracks.push(track)
 	}
 
 	private _hideMarker(marker, timeline, duration = 200) {
 		marker.alpha = 1.0
 		marker.labelVisible = true
-		timeline.addTrack({
+		const track = timeline.addTrack({
 			id: 'MarkerHide',
 			startTime: timeline.currentTime,
 			duration: duration,
@@ -678,10 +682,12 @@ export class LabelLayer extends StandardLayer<LabelLayerProps> {
 			onEnd: () => {
 				marker.alpha = 0.0
 				marker.labelVisible = false
+				this._animTracks.splice(this._animTracks.indexOf(track), 1)
 			},
 			onUpdate: (t, p) => {
 				marker.alpha = 1.0 - p
 			},
 		})
+		this._animTracks.push(track)
 	}
 }
