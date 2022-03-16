@@ -36,7 +36,6 @@ export interface StandardLayer {
  * 配置项 interface
  */
 export interface StandardLayerProps extends LayerProps {
-	parent?: StandardLayer | PolarisGSI
 	/**
 	 * @deprecated @unreliable may break internal 3d scene
 	 */

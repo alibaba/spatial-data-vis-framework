@@ -28,7 +28,8 @@ const amapLayer = new AMapLayer({
 })
 p.add(amapLayer)
 
-const h = new HelperLayer({ parent: p, length: 10000 })
+const h = new HelperLayer({ length: 10000 })
+p.add(h)
 h.setProps({ box: false })
 globalThis.p = p
 console.log(p)

@@ -16,7 +16,8 @@ await test(true, 'PolarisLite', () => {
 		asyncRendering: true, // 为了和AMap渲染同步加的参数，在AMap加载的时候一定要打开
 	})
 
-	const h = new HelperLayer({ parent: p })
+	const h = new HelperLayer()
+	p.add(h)
 	h.setProps({ box: false })
 
 	// p.addEventListener('viewChange', (e) => {
