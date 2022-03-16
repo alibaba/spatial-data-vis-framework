@@ -25,7 +25,6 @@ import { functionlize, getColorUint, OptionalDefault } from '../utils'
 /**
  * 配置项 interface
  */
-// import { THREE } from '@ali/GL2'
 export type PolygonSideLayerProps = StandardLayerProps &
 	typeof defaultProps & {
 		data?: FeatureCollection
@@ -79,10 +78,6 @@ export class PolygonSideLayer extends StandardLayer<PolygonSideLayerProps> {
 	}
 
 	init(projection, timeline, polaris) {
-		// 3D 内容
-		this.mesh = new Mesh({ name: 'PolygonSide', material: this.matr })
-		this.group.add(this.mesh)
-
 		// 数据与配置的应用（包括 reaction）
 		this.listenProps(['data', 'getColor', 'getThickness', 'baseAlt'], () => {
 			this.geom = new Geom()
@@ -144,15 +139,26 @@ export class PolygonSideLayer extends StandardLayer<PolygonSideLayerProps> {
 				}
 			})
 
+			this._generateMesh()
+
 			this.geom.attributes.position = new Attr(new Float32Array(positions), 3)
 			this.geom.attributes.color = new Attr(new Uint16Array(colors), 4, false, 'DYNAMIC_DRAW')
 			const indicesArray = offset > 65535 ? new Uint32Array(indices) : new Uint16Array(indices)
 			this.geom.indices = new Attr(indicesArray, 1)
 
 			this.mesh.geometry = this.geom
+			this.mesh.material = this.matr
 
-			computeBSphere(this.geom)
-			computeBBox(this.geom)
+			this.geom.boundingSphere = computeBSphere(this.geom)
+			this.geom.boundingBox = computeBBox(this.geom)
 		})
+	}
+
+	private _generateMesh() {
+		if (this.mesh) {
+			this.group.remove(this.mesh)
+		}
+		this.mesh = new Mesh({ name: 'PolygonSide', material: this.matr })
+		this.group.add(this.mesh)
 	}
 }

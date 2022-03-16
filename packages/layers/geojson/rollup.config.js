@@ -10,5 +10,10 @@ export default {
 		sourcemap: true,
 		inlineDynamicImports: true,
 	},
-	plugins: [commonjs(), nodeResolve(), sourcemaps(), webWorkerLoader()],
+	plugins: [
+		commonjs(),
+		nodeResolve(),
+		sourcemaps(),
+		webWorkerLoader({ inline: true, forceInline: true, preserveSource: true }),
+	],
 }
