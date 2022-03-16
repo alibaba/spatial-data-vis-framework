@@ -128,6 +128,26 @@ export abstract class AbstractLayer<
 			if (sourceType === 'add' && this.parent) {
 				this.dispatchAnEvent({ type: 'add', parent: this }, sourceListener)
 			}
+
+			/**
+			 * @bug THIS WILL BREAK THE ORDER OF init and afterInit
+			 *
+			 * ```
+			 * class Sub extends Layer {
+			 * 		constructor() {
+			 * 			super() // here
+			 * 			this.addEventListener('afterInit')
+			 * 			this.addEventListener('init')
+			 * 		}
+			 * }
+			 *
+			 * // right
+			 * parent.add(new Sub())
+			 *
+			 * // wrong
+			 * new Sub({parent})
+			 * ```
+			 */
 			if (sourceType === 'init' && this.inited) {
 				// settle the projection for this layer
 				const projection = resolveProjection(this) as Projection
@@ -138,6 +158,23 @@ export abstract class AbstractLayer<
 				this.dispatchAnEvent(
 					{
 						type: 'init',
+						projection,
+						timeline,
+						polaris,
+					},
+					sourceListener
+				)
+			}
+			if (sourceType === 'afterInit' && this.inited) {
+				// settle the projection for this layer
+				const projection = resolveProjection(this) as Projection
+				// settle the timeline for this layer
+				const timeline = resolveTimeline(this) as Timeline
+				// settle the polaris for this layer
+				const polaris = e.root as AbstractPolaris
+				this.dispatchAnEvent(
+					{
+						type: 'afterInit',
 						projection,
 						timeline,
 						polaris,
