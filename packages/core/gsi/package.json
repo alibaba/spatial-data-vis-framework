@@ -1,6 +1,6 @@
 {
 	"name": "@polaris.gl/gsi",
-	"version": "0.1.0-alpha.13",
+	"version": "0.1.0-alpha.14",
 	"description": "",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -30,9 +30,9 @@
 		"@gs.i/schema-scene": "0.2.1-alpha.8",
 		"@gs.i/utils-math": "^0.0.0-beta",
 		"@gs.i/utils-specify": "0.2.1-alpha.8",
-		"@polaris.gl/base": "^0.1.0-alpha.13",
-		"@polaris.gl/projection": "^0.1.0-alpha.13",
-		"@polaris.gl/utils": "^0.1.0-alpha.13",
+		"@polaris.gl/base": "^0.1.0-alpha.14",
+		"@polaris.gl/projection": "^0.1.0-alpha.14",
+		"@polaris.gl/utils": "^0.1.0-alpha.14",
 		"ani-timeline": "alpha",
 		"camera-proxy": "alpha",
 		"hammerjs": "^2.0.8"
