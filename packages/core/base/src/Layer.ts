@@ -75,7 +75,7 @@ export abstract class AbstractLayer<
 		 * Emit when this layer is added to a polaris tree (a layer tree whose root is a polaris instance)
 		 * Once inited, the parent-chain of this layer won't change again.
 		 */
-		this.addEventListener('rootChange', async (e) => {
+		this.addEventListener('rootChange', (e) => {
 			if (this.#inited) {
 				const msg = 'InternalError: This layer has already been inited. cannot move a layer'
 				console.error(msg)
