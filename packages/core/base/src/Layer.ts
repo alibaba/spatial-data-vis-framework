@@ -14,7 +14,6 @@ import { Callback, ListenerOptions, PropsManager } from '@polaris.gl/props-manag
 
 export interface LayerProps {
 	name?: string
-	parent?: AbstractLayer
 	timeline?: Timeline
 	projection?: Projection
 }
@@ -114,42 +113,6 @@ export abstract class AbstractLayer<
 				})
 			}
 		})
-
-		/**
-		 * special case for Add and Init event.
-		 * because polaris allow setting parent in initial props.
-		 * addEventListener in subclass constructor will miss Add and Init event.
-		 */
-		this.addEventListener('addEventListener' as any, (e) => {
-			const sourceType = e.source.type
-			const sourceListener = e.source.listener
-			// const sourceOptions = e.source.options
-
-			if (sourceType === 'add' && this.parent) {
-				this.dispatchAnEvent({ type: 'add', parent: this }, sourceListener)
-			}
-			if (sourceType === 'init' && this.inited) {
-				// settle the projection for this layer
-				const projection = resolveProjection(this) as Projection
-				// settle the timeline for this layer
-				const timeline = resolveTimeline(this) as Timeline
-				// settle the polaris for this layer
-				const polaris = e.root as AbstractPolaris
-				this.dispatchAnEvent(
-					{
-						type: 'init',
-						projection,
-						timeline,
-						polaris,
-					},
-					sourceListener
-				)
-			}
-		})
-
-		if (props?.parent) {
-			props.parent.add(this)
-		}
 	}
 
 	/**

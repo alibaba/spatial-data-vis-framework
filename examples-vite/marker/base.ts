@@ -14,7 +14,8 @@ await test(true, 'PolarisLite', () => {
 		// autoplay: false,
 	})
 
-	const h = new HelperLayer({ parent: p })
+	const h = new HelperLayer()
+	p.add(h)
 	h.setProps({ box: false })
 
 	// p.addEventListener('viewChange', (e) => {
