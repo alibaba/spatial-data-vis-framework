@@ -1,6 +1,6 @@
 {
 	"name": "@polaris.gl/layer-scatter",
-	"version": "0.1.0-alpha.15",
+	"version": "0.1.0-alpha.17",
 	"description": "",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -20,11 +20,11 @@
 		"build:umd": "npx webpack"
 	},
 	"dependencies": {
-		"@gs.i/frontend-sdk": "0.2.1-alpha.9",
-		"@gs.i/utils-geometry": "0.2.1-alpha.9",
+		"@gs.i/frontend-sdk": "0.2.1-alpha.11",
+		"@gs.i/utils-geometry": "0.2.1-alpha.11",
 		"@gs.i/utils-math": "^0.0.0-beta",
-		"@gs.i/utils-specify": "0.2.1-alpha.9",
-		"@polaris.gl/gsi": "^0.1.0-alpha.15"
+		"@gs.i/utils-specify": "0.2.1-alpha.11",
+		"@polaris.gl/gsi": "^0.1.0-alpha.17"
 	},
 	"devDependencies": {
 		"typescript": ">4.4.0"
