@@ -78,14 +78,14 @@ export class FlyLineLayer extends StandardLayer<FlyLineLayerProps> {
 			this.updateFlylinesData(this.getProp('data'))
 		})
 
-		this.onViewChange = (cameraProxy) => {
-			const w = cameraProxy.canvasWidth
-			const h = cameraProxy.canvasHeight
+		this.onViewChange = (cameraProxy, polaris) => {
+			const w = polaris.width
+			const h = polaris.height
 			const originRes = this.flyline.mesh.material.config['resolution']
 			if (originRes.x !== w || originRes.y !== h) {
 				this.flyline.mesh.material.config['resolution'] = {
-					x: cameraProxy.canvasWidth,
-					y: cameraProxy.canvasHeight,
+					x: w,
+					y: h,
 				}
 			}
 		}
@@ -150,8 +150,8 @@ export class FlyLineLayer extends StandardLayer<FlyLineLayerProps> {
 			...this.props,
 			timeline: timeline,
 			resolution: {
-				x: polaris.cameraProxy.canvasWidth,
-				y: polaris.cameraProxy.canvasHeight,
+				x: polaris.width,
+				y: polaris.height,
 			},
 		})
 

@@ -126,15 +126,13 @@ flyline.updateData(data)
 //
 const polygonLayer = new PolygonLayer({
 	getFillColor: (feature) => {
-		const r = Math.floor(100 + Math.random() * 155).toString(16)
-		const color = `#${r}aa${r}`
-		return color
+		return Math.round(Math.random() * 0xffffff)
 	},
 	getSideColor: () => '#999999',
 	getFillOpacity: () => 1.0,
 	transparent: false,
 	getThickness: () => 100000,
-	enableExtrude: true,
+	enableExtrude: false,
 	baseAlt: 0,
 	depthTest: true,
 	pickable: false,
