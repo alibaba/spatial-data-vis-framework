@@ -18,7 +18,7 @@ export class SimplifiedMarker extends Marker {
 		}
 		_props.autoHide = false
 		_props.html = undefined
-		_props.highPerfMode = true
+		_props.highPerfMode = false
 		super(_props)
 		this.labelVisible = false
 		this.labelBox = new Box2()
