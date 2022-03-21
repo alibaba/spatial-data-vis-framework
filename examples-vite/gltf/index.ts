@@ -85,6 +85,8 @@ await test(true, 'PolarisLite', () => {
 		}
 
 		gltfLayer.loadGLB(url).then((meshes) => {
+			console.log(meshes)
+
 			const projection = gltfLayer.resolveProjection()
 			if (projection) {
 				// 平移模型
@@ -116,7 +118,7 @@ await test(true, 'PolarisLite', () => {
 								positions[i * 3 + 2] += centerPt[2]
 							}
 							// 改变颜色
-							item1.material['emissiveFactor'] = color
+							item1.material['baseColorFactor'] = color
 							item1.material['roughnessFactor'] = 0.5
 							item1.material['metallicFactor'] = 0.1
 						}
