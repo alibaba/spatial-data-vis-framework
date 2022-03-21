@@ -491,11 +491,11 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 		if (!this._object3d) return
 
 		if (!this._object3d.parent) {
-			this.group.children.add(this._object3d)
+			this.group.add(this._object3d)
 		} else {
 			// 防御式编程，如果被之前的Marker共用了，就克隆一个（克隆的mesh不会有parent）
 			this._object3d = deepCloneMesh(this._object3d)
-			this.group.children.add(this._object3d)
+			this.group.add(this._object3d)
 		}
 
 		// this.preparePicking()

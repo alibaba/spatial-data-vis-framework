@@ -44,6 +44,7 @@ export class GSIView extends View {
 		super()
 		// @todo @simon should add group into wrapper after alignment ready
 		this.alignmentWrapper.children.add(this.group)
+		this.group.parent = this.alignmentWrapper
 		// @qianxun: will be called in Layer initialization
 		// super.init(layer)
 	}
@@ -94,6 +95,7 @@ export class GSIView extends View {
 		}
 		if (GSIView.check(parentView)) {
 			parentView.alignmentWrapper.children.add(this.alignmentWrapper)
+			this.alignmentWrapper.parent = parentView.alignmentWrapper
 		} else {
 			throw new Error('Polaris::GSIView - Cannot append to a different parent view type')
 		}
@@ -109,6 +111,7 @@ export class GSIView extends View {
 		}
 		if (GSIView.check(parentView)) {
 			parentView.alignmentWrapper.children.delete(this.alignmentWrapper)
+			delete this.alignmentWrapper.parent
 		}
 	}
 
