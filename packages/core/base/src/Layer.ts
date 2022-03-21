@@ -9,7 +9,7 @@ import type { CameraProxy } from 'camera-proxy'
 import type { AbstractLayerEvents } from './events'
 
 import { MAX_DEPTH, Node } from './Node'
-import { AbstractPolaris } from './Polaris'
+import type { AbstractPolaris } from './Polaris'
 import { Callback, ListenerOptions, PropsManager } from '@polaris.gl/props-manager'
 
 export interface LayerProps {
