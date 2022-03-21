@@ -87,7 +87,7 @@ export function earlyStopTraverse(
 	if (node === undefined || node === null) return
 
 	const shouldStop = handler(node, parent)
-	if (shouldStop === true) return
+	if (shouldStop === true) return true
 
 	// if (node.children && node.children.size > 0) {
 	// 	node.children.forEach((child) => traverse(child, handler, node))

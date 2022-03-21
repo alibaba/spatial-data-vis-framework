@@ -65,43 +65,54 @@ export const defaultMarkerProps = {
 export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProps> {
 	readonly isMarker = true
 
-	lnglatalt: [number, number, number]
-	html?: HTMLElement
-	object3d?: NodeLike
+	private _lnglatalt: [number, number, number]
+	get lnglatalt() {
+		return this._lnglatalt
+	}
+
+	private _html?: HTMLElement
+	get html() {
+		return this._html
+	}
+
+	private _object3d?: NodeLike
+	get object3d() {
+		return this._object3d
+	}
 
 	// lnglat转换过来的position，但不是渲染时真正的realPosition，因为还有经过投影变换同步
-	_position: Vector3
+	private _position: Vector3
 	get position() {
 		return this._position
 	}
 
 	// realWorldPosition，经过投影同步后的真实世界坐标，从transform.worldMatrix中得到
-	_worldPosition: Vector3
+	private _worldPosition: Vector3
 	get worldPosition() {
 		return this._worldPosition
 	}
 
 	// 只有在球面投影时这个direction才有作用，是从球心到marker位置的方向，用来计算是否被旋转到了背面
-	_worldDirection: Vector3
+	private _worldDirection: Vector3
 	get worldDirection() {
 		return this._worldDirection
 	}
 
 	// Screen coords of html DOM
-	_screenXY: Vector2
+	private _screenXY: Vector2
 	get screenXY() {
 		return this._screenXY
 	}
 
 	// Visibility vars
-	camPosition: Vector3
-	camRotationEuler: Euler
-	inScreen: boolean
-	onEarthFrontSide: boolean
-	altAngleThres: number
-	angleThres: number
-	earthCenter: Vector3
-	framesAfterInit: number
+	private _camPosition: Vector3
+	private _camRotationEuler: Euler
+	private _inScreen: boolean
+	private _onEarthFrontSide: boolean
+	private _altAngleThres: number
+	private _angleThres: number
+	private _earthCenter: Vector3
+	private _framesAfterInit: number
 
 	// Animation
 	private _meshAlphaModes = new Map<IR.RenderableNode, IR.Material['alphaMode']>()
@@ -144,15 +155,15 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 		super(_props)
 
 		// basic
-		this.camPosition = new Vector3()
-		this.camRotationEuler = new Euler()
+		this._camPosition = new Vector3()
+		this._camRotationEuler = new Euler()
 		this._position = new Vector3()
 		this._worldPosition = new Vector3()
 		this._worldDirection = new Vector3(0, 0, 1)
-		this.earthCenter = new Vector3()
+		this._earthCenter = new Vector3()
 		this._screenXY = new Vector2(-10000, -10000)
-		this.inScreen = true
-		this.onEarthFrontSide = true
+		this._inScreen = true
+		this._onEarthFrontSide = true
 
 		//
 		this._disposed = false
@@ -166,7 +177,7 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 			const projection = e.projection
 
 			// 地球球心世界位置
-			this.earthCenter.fromArray(projection['_xyz0'] ?? [0, 0, -R]).multiplyScalar(-1)
+			this._earthCenter.fromArray(projection['_xyz0'] ?? [0, 0, -R]).multiplyScalar(-1)
 
 			/**
 			 * Update onViewChange
@@ -195,7 +206,7 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 					this.group.children.forEach((child) => {
 						this.group.children.delete(child)
 					})
-					this.object3d = this.getProp('object3d')
+					this._object3d = this.getProp('object3d')
 					this.initObject3d()
 					this.resetInitFrames()
 				},
@@ -205,7 +216,7 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 			this.watchProps(
 				['lng', 'lat', 'alt'],
 				() => {
-					this.lnglatalt = [this.getProp('lng'), this.getProp('lat'), this.getProp('alt')]
+					this._lnglatalt = [this.getProp('lng'), this.getProp('lat'), this.getProp('alt')]
 					this.updateLnglatPosition(projection)
 					this.updateWorldPosition()
 					this.updateVisibility(polaris.cameraProxy, projection)
@@ -239,15 +250,15 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 			return
 		}
 
-		if (this.object3d) {
-			traverse(this.object3d, (mesh) => {
+		if (this._object3d) {
+			traverse(this._object3d, (mesh) => {
 				if (IR.isRenderable(mesh)) {
 					mesh.material.opacity = 0.0
 					mesh.material.alphaMode = 'BLEND'
 				}
 			})
 		}
-		if (this.html) {
+		if (this._html) {
 			this.element.style.opacity = '0.0'
 		}
 		this.visible = true
@@ -258,29 +269,29 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 			duration: duration,
 			onStart: () => {},
 			onEnd: () => {
-				if (this.object3d) {
-					traverse(this.object3d, (mesh) => {
+				if (this._object3d) {
+					traverse(this._object3d, (mesh) => {
 						if (IR.isRenderable(mesh)) {
 							mesh.material.opacity = this._matrOpMap.get(mesh.material) ?? 1.0
 							mesh.material.alphaMode = this._meshAlphaModes.get(mesh) || ('OPAQUE' as const)
 						}
 					})
 				}
-				if (this.html) {
+				if (this._html) {
 					this.element.style.opacity = '1.0'
 				}
 				this.visible = true
 				this.updateElement()
 			},
 			onUpdate: (t, p) => {
-				if (this.object3d) {
-					traverse(this.object3d, (mesh) => {
+				if (this._object3d) {
+					traverse(this._object3d, (mesh) => {
 						if (IR.isRenderable(mesh)) {
 							mesh.material.opacity = (this._matrOpMap.get(mesh.material) ?? 1.0) * p
 						}
 					})
 				}
-				if (this.html) {
+				if (this._html) {
 					this.element.style.opacity = p.toString()
 				}
 			},
@@ -294,14 +305,14 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 			return
 		}
 
-		if (this.object3d) {
-			traverse(this.object3d, (mesh) => {
+		if (this._object3d) {
+			traverse(this._object3d, (mesh) => {
 				if (IR.isRenderable(mesh)) {
 					mesh.material.alphaMode = 'BLEND'
 				}
 			})
 		}
-		if (this.html) {
+		if (this._html) {
 			this.element.style.opacity = '1.0'
 		}
 
@@ -311,27 +322,27 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 			duration: duration,
 			onStart: () => {},
 			onEnd: () => {
-				if (this.object3d) {
-					traverse(this.object3d, (mesh) => {
+				if (this._object3d) {
+					traverse(this._object3d, (mesh) => {
 						if (IR.isRenderable(mesh)) {
 							mesh.material.opacity = 0.0
 						}
 					})
 				}
-				if (this.html) {
+				if (this._html) {
 					this.element.style.opacity = '0.0'
 				}
 				this.visible = false
 			},
 			onUpdate: (t, p) => {
-				if (this.object3d) {
-					traverse(this.object3d, (mesh) => {
+				if (this._object3d) {
+					traverse(this._object3d, (mesh) => {
 						if (IR.isRenderable(mesh)) {
 							mesh.material.opacity = (this._matrOpMap.get(mesh.material) ?? 1.0) * (1 - p)
 						}
 					})
 				}
-				if (this.html) {
+				if (this._html) {
 					this.element.style.opacity = (1 - p).toString()
 				}
 			},
@@ -344,8 +355,8 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 	 */
 	raycast(polaris: PolarisGSI, canvasCoords: CoordV2, ndc: CoordV2): PickInfo | undefined {
 		// 2D DOM picking
-		if (this.html) {
-			const bbox = this.html.getBoundingClientRect()
+		if (this._html) {
+			const bbox = this._html.getBoundingClientRect()
 			const pbox = polaris.view.html.element.getBoundingClientRect()
 
 			// 扣除Polaris element在屏幕上的偏移量
@@ -362,7 +373,7 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 			) {
 				// HTML has been picked
 				return {
-					distance: !this.html.style.zIndex ? 0 : parseInt(this.html.style.zIndex),
+					distance: !this._html.style.zIndex ? 0 : parseInt(this._html.style.zIndex),
 					point: { x: Infinity, y: Infinity, z: Infinity },
 					pointLocal: { x: Infinity, y: Infinity, z: Infinity },
 					object: this,
@@ -373,16 +384,16 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 		}
 
 		// 3D object picking
-		if (!this.object3d) return
+		if (!this._object3d) return
 		const recursive = this.getProp('recursivePicking')
 		if (!recursive) {
-			return this._raycastObject3d(this.object3d, polaris, ndc)
+			return this._raycastObject3d(this._object3d, polaris, ndc)
 		}
 		// traverse node
 		let raycastResult: PickInfo | undefined
-		earlyStopTraverse(this.object3d, (node) => {
+		earlyStopTraverse(this._object3d, (node) => {
 			raycastResult = this._raycastObject3d(node, polaris, ndc)
-			if (raycastResult) return true
+			if (raycastResult) return true // stop traversing
 			return
 		})
 		return raycastResult
@@ -392,7 +403,7 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 		this.group.children.forEach((child) => {
 			this.group.children.delete(child)
 		})
-		if (this.html && this.view.html) {
+		if (this._html && this.view.html) {
 			while (this.element.lastChild) {
 				this.element.removeChild(this.element.lastChild)
 			}
@@ -405,7 +416,7 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 		if (perfMode) {
 			this.addEventListener('viewChange', (e) => {
 				const cam = e.cameraProxy
-				if (this.framesAfterInit > 5) {
+				if (this._framesAfterInit > 5) {
 					this.updateWorldPosition(false)
 					this.updateVisibility(cam, projection)
 					this.updateScreenXY()
@@ -419,7 +430,7 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 
 			this.addEventListener('beforeRender', () => {
 				// 每次属性变动就更新前10帧，确保group.worldMatrix已经更新完毕
-				if (++this.framesAfterInit < 5) {
+				if (++this._framesAfterInit < 5) {
 					this.updateWorldPosition(false)
 					this.updateVisibility(cam, projection)
 					this.updateScreenXY()
@@ -457,12 +468,12 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 
 		// 允许使用文本作为HTML
 		if (html instanceof HTMLElement) {
-			this.html = html
-			this.html.style.position = 'absolute'
-			this.element.appendChild(this.html)
+			this._html = html
+			this._html.style.position = 'absolute'
+			this.element.appendChild(this._html)
 		} else {
 			this.element.innerHTML = html
-			this.html = this.element
+			this._html = this.element
 		}
 
 		// Set styles
@@ -477,19 +488,19 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 	}
 
 	private initObject3d() {
-		if (!this.object3d) return
+		if (!this._object3d) return
 
-		if (!this.object3d.parent) {
-			this.group.children.add(this.object3d)
+		if (!this._object3d.parent) {
+			this.group.children.add(this._object3d)
 		} else {
 			// 防御式编程，如果被之前的Marker共用了，就克隆一个（克隆的mesh不会有parent）
-			this.object3d = deepCloneMesh(this.object3d)
-			this.group.children.add(this.object3d)
+			this._object3d = deepCloneMesh(this._object3d)
+			this.group.children.add(this._object3d)
 		}
 
 		// this.preparePicking()
 
-		traverse(this.object3d, (mesh) => {
+		traverse(this._object3d, (mesh) => {
 			if (IR.isRenderable(mesh)) {
 				// 保存mesh的原始alphaMode，show和hide结束时还原
 				this._meshAlphaModes.set(mesh, mesh.material.alphaMode)
@@ -499,23 +510,23 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 	}
 
 	private updateLnglatPosition(projection) {
-		this.lnglatalt[0] = this.getProp('lng')
-		this.lnglatalt[1] = this.getProp('lat')
-		this.lnglatalt[2] = this.getProp('alt')
+		this._lnglatalt[0] = this.getProp('lng')
+		this._lnglatalt[1] = this.getProp('lat')
+		this._lnglatalt[2] = this.getProp('alt')
 
 		// position
 		this._position.fromArray(
-			projection.project(this.lnglatalt[0], this.lnglatalt[1], this.lnglatalt[2])
+			projection.project(this._lnglatalt[0], this._lnglatalt[1], this._lnglatalt[2])
 		)
 
 		// direction
 		this._v1.fromArray(
-			projection.project(this.lnglatalt[0], this.lnglatalt[1], this.lnglatalt[2] + 10)
+			projection.project(this._lnglatalt[0], this._lnglatalt[1], this._lnglatalt[2] + 10)
 		)
 		this._worldDirection.subVectors(this._v1, this._position).normalize()
 
 		// Update lookat direction of object3d
-		const orientation = getOrientationMatrix(this.lnglatalt, projection, new Vector3())
+		const orientation = getOrientationMatrix(this._lnglatalt, projection, new Vector3())
 
 		this._mat4
 			.identity()
@@ -526,7 +537,7 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 		this.group.transform['matrix'] = this._mat4.toArray()
 
 		// 夹角阈值，用来判断visibility
-		this.altAngleThres = Math.acos(R / (R + this.getProp('alt')))
+		this._altAngleThres = Math.acos(R / (R + this.getProp('alt')))
 	}
 
 	/**
@@ -567,33 +578,34 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 			if (projection.isSphereProjection) {
 				// 球面投影下使用球面切点判断可见性
 				const camStates = cam.getCartesianStates()
-				this.camPosition.set(
+				this._camPosition.set(
 					camStates.position[0] - cam.center[0],
 					camStates.position[1] - cam.center[1],
 					camStates.position[2] - cam.center[2]
 				)
-				this.camRotationEuler.fromArray(camStates.rotationEuler)
+				this._camRotationEuler.fromArray(camStates.rotationEuler)
 
 				// earthCenter至相机方向
-				const earthToCam = this._v2.subVectors(this.camPosition, this.earthCenter).normalize()
-				const camDis = this.camPosition.distanceTo(this.earthCenter)
+				const earthToCam = this._v2.subVectors(this._camPosition, this._earthCenter).normalize()
+				const camDis = this._camPosition.distanceTo(this._earthCenter)
 
 				// 夹角阈值(用来判断visibility) = 相机地球相切中心角 + marker相机与地球相切中心角
-				this.angleThres = Math.acos(R / camDis) + this.altAngleThres
+				this._angleThres = Math.acos(R / camDis) + this._altAngleThres
 
-				const normal = this._v3.subVectors(this._worldPosition, this.earthCenter).normalize()
+				const normal = this._v3.subVectors(this._worldPosition, this._earthCenter).normalize()
 
-				if (Math.acos(earthToCam.dot(normal)) > this.angleThres) {
-					this.onEarthFrontSide = false
+				if (Math.acos(earthToCam.dot(normal)) > this._angleThres) {
+					this._onEarthFrontSide = false
 				} else {
-					this.onEarthFrontSide = true
+					this._onEarthFrontSide = true
 				}
 			} else {
-				this.onEarthFrontSide = true
+				this._onEarthFrontSide = true
 			}
-			this.group.visible = this.onEarthFrontSide && this.visible
+			this.group.visible = this._onEarthFrontSide && this.visible
 			if (this.view.html) {
-				this.element.style.visibility = this.onEarthFrontSide && this.visible ? 'inherit' : 'hidden'
+				this.element.style.visibility =
+					this._onEarthFrontSide && this.visible ? 'inherit' : 'hidden'
 			}
 		} else {
 			this.group.visible = this.visible
@@ -605,7 +617,7 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 
 	private updateScreenXY() {
 		// update screenXY
-		const xy = toScreenXY(this, this.lnglatalt[0], this.lnglatalt[1], this.lnglatalt[2])
+		const xy = toScreenXY(this, this._lnglatalt[0], this._lnglatalt[1], this._lnglatalt[2])
 		if (xy) {
 			this._screenXY.copy(xy)
 		}
@@ -624,12 +636,12 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 	}
 
 	private updateElement() {
-		if (!this.html) return
+		if (!this._html) return
 
 		const el = this.element
 
 		// visibility check
-		if (this.inScreen && this.onEarthFrontSide && this.visible) {
+		if (this._inScreen && this._onEarthFrontSide && this.visible) {
 			// el.style.transform = `translate(${this.screenXY.x + this.props.offsetX}px, ${
 			// 	this.screenXY.y + this.props.offsetY
 			// }px)`
@@ -651,7 +663,7 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 	}
 
 	private resetInitFrames() {
-		this.framesAfterInit = 0
+		this._framesAfterInit = 0
 	}
 
 	private _raycastObject3d(
