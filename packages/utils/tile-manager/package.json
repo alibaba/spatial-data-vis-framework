@@ -1,6 +1,6 @@
 {
 	"name": "@polaris.gl/utils-tile-manager",
-	"version": "0.1.0-alpha.17",
+	"version": "0.1.0-alpha.18",
 	"description": "",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -19,10 +19,10 @@
 		"rebuild": "npm run clean && npm run build"
 	},
 	"dependencies": {
-		"@gs.i/schema-scene": "0.2.1-alpha.14",
-		"@polaris.gl/base": "^0.1.0-alpha.17",
-		"@polaris.gl/gsi": "^0.1.0-alpha.17",
-		"@polaris.gl/projection": "^0.1.0-alpha.17",
+		"@gs.i/schema-scene": "0.2.1-alpha.16",
+		"@polaris.gl/base": "^0.1.0-alpha.18",
+		"@polaris.gl/gsi": "^0.1.0-alpha.18",
+		"@polaris.gl/projection": "^0.1.0-alpha.18",
 		"ani-timeline": "alpha",
 		"global-mercator": "3.1.0"
 	},
