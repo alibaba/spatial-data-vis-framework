@@ -26,7 +26,7 @@ const center3D = [119.315693, 26.070336, 0] as const // 模型中心经纬度,�
 await test(true, 'PolarisLite', () => {
 	const p = new PolarisLite({
 		container: document.querySelector('#container') as HTMLDivElement,
-		background: 'transparent',
+		// background: 'transparent',
 		// autoplay: false,
 	})
 
@@ -116,7 +116,7 @@ await test(true, 'PolarisLite', () => {
 								positions[i * 3 + 2] += centerPt[2]
 							}
 							// 改变颜色
-							item1.material['baseColorFactor'] = color
+							item1.material['emissiveFactor'] = color
 							item1.material['roughnessFactor'] = 0.5
 							item1.material['metallicFactor'] = 0.1
 						}

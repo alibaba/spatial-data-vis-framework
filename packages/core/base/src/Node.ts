@@ -9,10 +9,10 @@
  * An abstract tree structure based on EventDispatcher.
  *
  * The tree constructed with AbstractNode is designed to be a "scene graph" :
- * - N-ary(多叉树), a node can have multiple children.
- * - directed(有向), from root to leaf.
- * - acyclic(无环), no loop.
- * - rooted(有单一根), every node has only one parent
+ * - N-ary (多叉树). A node can have multiple children.
+ * - directed (有向). From the root to leaves.
+ * - acyclic (无环). No loop. There is one and only one path to every node.
+ * - rooted/oriented (有单一根). Every node has a single parent. Every scene has a single root.
  *
  * Also you can not re-use a removed node or change its position.
  */
@@ -144,8 +144,8 @@ export class Node<TEventMap extends NodeEvents = NodeEvents> extends EventDispat
 		 * In both scenarios, the child's adding will trigger a new traversal (B) for it's subtree.
 		 * witch will trigger rootChangeEvent for the new child.
 		 *
-		 * That is to sat, one event can be triggered twice on a node, if the node is added during
-		 * a event that is dispatched with a traversal.
+		 * That is to say, one event can be triggered twice on a node, if the node is added during
+		 * a event that is dispatched in a traversal.
 		 *
 		 * It is necessary to prevent this behavior carefully. Or just do not dispatch events in traversal.
 		 */
