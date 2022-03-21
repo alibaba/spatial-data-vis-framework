@@ -44,7 +44,9 @@ export const defaultBasicProps = {
 	enablePointer: true,
 
 	/**
-	 * whether to enable penetrating picking
+	 * whether to enable penetrating picking,
+	 * enable this prop will let polaris trigger every hit layer under a pick/touch event,
+	 * not just the nearest layer only.
 	 * default is false
 	 */
 	deepPicking: false,

@@ -391,6 +391,11 @@ export class PolygonSurfaceLayer extends StandardLayer<PolygonSurfaceLayerProps>
 		const indicesArray = offset > 65535 ? new Uint32Array(indices) : new Uint16Array(indices)
 		this.geom.indices = new Attr(indicesArray, 1)
 
+		// disable auto gpu dispose
+		this.geom.attributes.position.disposable = false
+		this.geom.attributes.color.disposable = false
+		this.geom.indices.disposable = false
+
 		this.geom.boundingSphere = computeBSphere(this.geom)
 		this.geom.boundingBox = computeBBox(this.geom)
 
@@ -409,9 +414,9 @@ export class PolygonSurfaceLayer extends StandardLayer<PolygonSurfaceLayerProps>
 
 	private _genLineIndicators(polaris, selectPosArr: number[][]) {
 		// Hover indicator
-		const hoverLineWidth = this.getProps('hoverLineWidth') as number
-		const hoverLineColor = this.getProps('hoverLineColor')
-		const hoverLineLevel = this.getProps('hoverLineLevel')
+		const hoverLineWidth = this.getProp('hoverLineWidth') as number
+		const hoverLineColor = this.getProp('hoverLineColor')
+		const hoverLineLevel = this.getProp('hoverLineLevel')
 		let hoverLevel = hoverLineLevel
 		if (hoverLineWidth > 1 && hoverLineLevel === 1) {
 			hoverLevel = 2
@@ -429,7 +434,7 @@ export class PolygonSurfaceLayer extends StandardLayer<PolygonSurfaceLayerProps>
 			dynamic: true,
 			u: false,
 			texture: undefined,
-			renderOrder: this.getProps('renderOrder'),
+			renderOrder: this.getProp('renderOrder'),
 			depthTest: true,
 			transparent: true,
 			// alphaTest: 0.0001,
@@ -443,9 +448,9 @@ export class PolygonSurfaceLayer extends StandardLayer<PolygonSurfaceLayerProps>
 		hoverIndicator.addToLayer(this)
 
 		// Select indicator
-		const selectLineWidth = this.getProps('selectLineWidth') as number
-		const selectLineColor = this.getProps('selectLineColor')
-		const selectLineLevel = this.getProps('selectLineLevel')
+		const selectLineWidth = this.getProp('selectLineWidth') as number
+		const selectLineColor = this.getProp('selectLineColor')
+		const selectLineLevel = this.getProp('selectLineLevel')
 		let selectLevel = selectLineLevel
 		if (selectLineWidth > 1 && selectLineLevel === 1) {
 			selectLevel = 2
@@ -463,7 +468,7 @@ export class PolygonSurfaceLayer extends StandardLayer<PolygonSurfaceLayerProps>
 			dynamic: true,
 			u: false,
 			texture: undefined,
-			renderOrder: this.getProps('renderOrder'),
+			renderOrder: this.getProp('renderOrder'),
 			depthTest: true,
 			transparent: true,
 			// alphaTest: 0.0001,
@@ -759,7 +764,7 @@ export class PolygonSurfaceLayer extends StandardLayer<PolygonSurfaceLayerProps>
 	}
 
 	private _updateColorsAttr() {
-		const data = this.getProps('data')
+		const data = this.getProp('data')
 		if (!(data && Array.isArray(data.features))) {
 			return
 		}
@@ -772,8 +777,8 @@ export class PolygonSurfaceLayer extends StandardLayer<PolygonSurfaceLayerProps>
 			)
 			return
 		}
-		const getColor = this.getProps('getColor')
-		const getOpacity = this.getProps('getOpacity')
+		const getColor = this.getProp('getColor')
+		const getOpacity = this.getProp('getOpacity')
 		data.features.forEach((feature) => {
 			const color = new Color(getColor(feature))
 			const opacity = getOpacity(feature) ?? 1.0
