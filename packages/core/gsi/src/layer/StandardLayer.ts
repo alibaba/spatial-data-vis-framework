@@ -11,7 +11,15 @@
 
 import { Timeline } from 'ani-timeline'
 import { Projection } from '@polaris.gl/projection'
-import { Layer, LayerProps, PickEventResult, AbstractLayerEvents } from '@polaris.gl/base'
+import {
+	Layer,
+	LayerProps,
+	PickEventResult,
+	AbstractLayerEvents,
+	AbstractPolaris,
+	CoordV2,
+	PickInfo,
+} from '@polaris.gl/base'
 import { GSIView } from './view/GsiView'
 import { HtmlView } from './view/HtmlView'
 import { isRenderable } from '@gs.i/schema-scene'
@@ -251,21 +259,10 @@ export class StandardLayer<
 
 	override dispose(): void {}
 
-	// TODO refactor picking
-	// override raycast(
-	// 	polaris: AbstractPolaris,
-	// 	canvasCoord: CoordV2,
-	// 	ndc: CoordV2
-	// ): PickEvent | undefined {
-	// 	if (!this.inited) {
-	// 		console.warn('raycast: layer not inited')
-	// 		return undefined
-	// 	}
-
-	// 	if (!this.getProp('pickable')) {
-	// 		return undefined
-	// 	}
-	// }
+	raycast(polaris: AbstractPolaris, canvasCoord: CoordV2, ndc: CoordV2): PickInfo | undefined {
+		// Leave the method to be implemented by subclass
+		return
+	}
 }
 
 /**
