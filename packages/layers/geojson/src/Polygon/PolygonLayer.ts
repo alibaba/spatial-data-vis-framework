@@ -9,7 +9,8 @@ import { Color, Box2 } from '@gs.i/utils-math'
  * 可以使用 Layer，自己添加需要的 view；
  * 也可以使用 StandardLayer，添加好 gsiView 和 htmlView 的 Layer，懒人福音。
  */
-import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
+import { PolarisGSI, StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
+import { AbstractPolaris, CoordV2, PickInfo } from '@polaris.gl/base'
 
 /**
  * 内部逻辑依赖
@@ -18,6 +19,7 @@ import { FeatureCollection } from '@turf/helpers'
 import { PolygonSideLayer } from './PolygonSideLayer'
 import { PolygonSurfaceLayer } from './PolygonSurfaceLayer'
 import { functionlize, OptionalDefault } from '../utils'
+import { Vec3 } from '@gs.i/schema-scene'
 
 export const defaultProps = {
 	name: 'PolygonLayer',
@@ -53,7 +55,8 @@ export const defaultProps = {
 	hoverLineWidth: 1,
 	hoverLineColor: '#262626',
 	/**
-	 * Worker params
+	 * Workers count
+	 * default is 0
 	 */
 	workersCount: 0,
 }
@@ -70,17 +73,12 @@ export interface SelectionDataType {
 
 export class PolygonLayer extends StandardLayer<PolygonLayerProps> {
 	props: any
+
 	surfaceLayer: PolygonSurfaceLayer
 	sideLayer: PolygonSideLayer
 
-	/**
-	 * Picking相关
-	 */
-	// multiSelect: boolean
 	selectColor: Color | undefined
 	hoverColor: Color | undefined
-	// pickedFeatures: Array<any>
-	// hoveredFeature: any
 
 	constructor(props: OptionalDefault<PolygonLayerProps, typeof defaultProps> = {}) {
 		const _props: any = {
@@ -90,93 +88,101 @@ export class PolygonLayer extends StandardLayer<PolygonLayerProps> {
 		super(_props)
 		this.props = _props
 
-		// this.pickedFeatures = []
-
 		this.addEventListener('init', () => {
 			this._init()
 		})
+	}
 
-		// TODO: refactor highlight
-		// /**
-		//  * Highilight api
-		//  * @param {number[]} dataIndexArr
-		//  * @param {{type: 'none' | 'select' | 'hover' }} style
-		//  */
-		// this.highlightByIndices = (dataIndexArr, style) => {
-		// 	const data = this.getProp('data')
-		// 	if (!data || !Array.isArray(data.features)) return
-		// 	if (!style || !style.type) return
+	/**
+	 * Highlight api
+	 */
+	highlightByIndices(dataIndexArr: number[], style: { type: 'none' | 'select' | 'hover' }) {
+		const data = this.getProp('data')
 
-		// 	dataIndexArr.forEach((index) => {
-		// 		const feature = data.features[index]
-		// 		if (!feature) return
+		if (!data || !Array.isArray(data.features)) return
+		if (!style || !style.type) return
 
-		// 		// Restore last highlight styles
-		// 		this._restoreFeatureColor(feature)
-		// 		this._restoreHoverLines(feature)
-		// 		this._restoreSelectLines(feature)
+		dataIndexArr.forEach((index) => {
+			const feature = data.features[index]
+			if (!feature) return
 
-		// 		switch (style.type) {
-		// 			case 'none':
-		// 				break
-		// 			case 'select':
-		// 				this._updateSelectLines(feature)
-		// 				if (this.selectColor) {
-		// 					this._updateFeatureColor(feature, this.selectColor)
-		// 				}
-		// 				break
-		// 			case 'hover':
-		// 				this._updateHoverLines(feature)
-		// 				if (this.hoverColor) {
-		// 					this._updateFeatureColor(feature, this.hoverColor)
-		// 				}
-		// 				break
-		// 			default:
-		// 				console.error(`Polaris::PolygonLayer - Invalid style.type param: ${style}`)
-		// 		}
-		// 	})
-		// }
+			// Restore last highlight styles
+			this._restoreFeatureColor(feature)
+			this._restoreHoverLines(feature)
+			this._restoreSelectLines(feature)
+
+			switch (style.type) {
+				case 'none':
+					break
+				case 'select':
+					this._updateSelectLines(feature)
+					if (this.selectColor) {
+						this._updateFeatureColor(feature, this.selectColor)
+					}
+					break
+				case 'hover':
+					this._updateHoverLines(feature)
+					if (this.hoverColor) {
+						this._updateFeatureColor(feature, this.hoverColor)
+					}
+					break
+				default:
+					console.error(`Polaris::PolygonLayer - Invalid style.type param: ${style}`)
+			}
+		})
 	}
 
 	private _init() {
-		this.listenProps(['selectColor'], () => {
-			const c = this.getProp('selectColor')
-			if (c) {
-				this.selectColor = new Color().set(c)
-			} else {
-				this.selectColor = undefined
-			}
-		})
+		this.watchProps(
+			['selectColor'],
+			() => {
+				const c = this.getProp('selectColor')
+				if (c) {
+					this.selectColor = new Color().set(c)
+				} else {
+					this.selectColor = undefined
+				}
+			},
+			{ immediate: true }
+		)
 
-		this.listenProps(['hoverColor'], () => {
-			const c = this.getProp('hoverColor')
-			if (c) {
-				this.hoverColor = new Color().set(c)
-			} else {
-				this.hoverColor = undefined
-			}
-		})
+		this.watchProps(
+			['hoverColor'],
+			() => {
+				const c = this.getProp('hoverColor')
+				if (c) {
+					this.hoverColor = new Color().set(c)
+				} else {
+					this.hoverColor = undefined
+				}
+			},
+			{ immediate: true }
+		)
 
 		// Calculate feature lnglat bbox and store
-		this.listenProps(['data'], () => {
-			let data = this.getProp('data')
-			if (!data) return
+		this.watchProps(
+			['data'],
+			() => {
+				let data = this.getProp('data')
+				if (!data) return
 
-			if (typeof data === 'string') {
-				data = JSON.parse(data)
-			}
+				if (typeof data === 'string') {
+					data = JSON.parse(data)
+				}
 
-			const geojson = data as Exclude<PolygonLayerProps['data'], undefined | string>
+				const geojson = data as Exclude<PolygonLayerProps['data'], undefined | string>
 
-			if (geojson.type !== 'FeatureCollection' || !geojson.features || !geojson.features.length)
-				return
+				if (geojson.type !== 'FeatureCollection' || !geojson.features || !geojson.features.length)
+					return
 
-			geojson.features.forEach((feature) => {
-				calcFeatureBounds(feature)
-			})
-		})
+				geojson.features.forEach((feature) => {
+					calcFeatureBounds(feature)
+				})
+			},
+			{ immediate: true }
+		)
 
-		this.listenProps(
+		this.watchProps(
 			[
 				'data',
 				'getFillColor',
@@ -249,7 +255,7 @@ export class PolygonLayer extends StandardLayer<PolygonLayerProps> {
 				// Update
 				if (e.initial) {
 					// Update all
-					this.surfaceLayer.updateProps({
+					this.surfaceLayer.setProps({
 						data,
 						getColor,
 						getThickness,
@@ -271,7 +277,7 @@ export class PolygonLayer extends StandardLayer<PolygonLayerProps> {
 					})
 				} else if (e.changedKeys.includes('data')) {
 					// Update props/data independently
-					this.surfaceLayer.updateProps({
+					this.surfaceLayer.setProps({
 						data,
 						getColor,
 						getThickness,
@@ -296,7 +302,7 @@ export class PolygonLayer extends StandardLayer<PolygonLayerProps> {
 					// })
 				} else {
 					// Update props only
-					this.surfaceLayer.updateProps({
+					this.surfaceLayer.setProps({
 						getColor,
 						getThickness,
 						getOpacity,
@@ -316,10 +322,11 @@ export class PolygonLayer extends StandardLayer<PolygonLayerProps> {
 						workersCount,
 					})
 				}
-			}
+			},
+			{ immediate: true }
 		)
 
-		this.listenProps(
+		this.watchProps(
 			[
 				'data',
 				'getSideColor',
@@ -363,7 +370,7 @@ export class PolygonLayer extends StandardLayer<PolygonLayerProps> {
 					// Update
 					if (e.initial) {
 						// Update all
-						this.sideLayer.updateProps({
+						this.sideLayer.setProps({
 							data,
 							getColor,
 							getThickness,
@@ -374,7 +381,7 @@ export class PolygonLayer extends StandardLayer<PolygonLayerProps> {
 						})
 					} else if (e.changedKeys.includes('data')) {
 						// Update props/data independently
-						this.sideLayer.updateProps({
+						this.sideLayer.setProps({
 							getColor,
 							getThickness,
 							opacity,
@@ -385,7 +392,7 @@ export class PolygonLayer extends StandardLayer<PolygonLayerProps> {
 						this.sideLayer.updateData(data)
 					} else {
 						// Update props only
-						this.sideLayer.updateProps({
+						this.sideLayer.setProps({
 							getColor,
 							getThickness,
 							opacity,
@@ -397,51 +404,65 @@ export class PolygonLayer extends StandardLayer<PolygonLayerProps> {
 				} else if (this.sideLayer) {
 					this.remove(this.sideLayer)
 				}
-			}
+			},
+			{ immediate: true }
 		)
 	}
 
-	// TODO: refactor picking
-	// raycast(polaris, canvasCoords, ndc): PickEvent | undefined {
-	// 	if (!this.getProp('pickable')) return
-	// 	if (!this.surfaceLayer || !this.surfaceLayer.geom || !this.surfaceLayer.geom.attributes.color)
-	// 		return
+	/**
+	 * Perform raycast testing
+	 */
+	override raycast(
+		polaris: AbstractPolaris,
+		canvasCoord: CoordV2,
+		ndc: CoordV2
+	): PickInfo | undefined {
+		const p = polaris as PolarisGSI
 
-	// 	const pickResult = (polaris as PolarisGSI).pickObject(this.surfaceLayer.mesh, ndc, {})
-	// 	let event: PickEvent | undefined
-	// 	if (pickResult.hit && pickResult.intersections && pickResult.intersections.length > 0) {
-	// 		const inter0 = pickResult.intersections[0]
-	// 		event = {
-	// 			distance: inter0.distance as number,
-	// 			point: inter0.point as { x: number; y: number; z: number },
-	// 			pointLocal: inter0.pointLocal as { x: number; y: number; z: number },
-	// 			index: -1,
-	// 			object: undefined,
-	// 			data: undefined,
-	// 		}
-	// 		// Find corresponding feature data
-	// 		this.surfaceLayer.featIndexRangeMap.forEach((range, feature) => {
-	// 			if (
-	// 				inter0.index !== undefined &&
-	// 				inter0.index >= range[0] / 3 &&
-	// 				inter0.index <= range[1] / 3
-	// 			) {
-	// 				const data: SelectionDataType = {
-	// 					curr: feature,
-	// 					feature,
-	// 				}
+		if (!this.getProp('pickable')) return
+		if (!this.surfaceLayer || !this.surfaceLayer.geom) return
 
-	// 				if (event) {
-	// 					event.object = this.surfaceLayer.mesh
-	// 					event.index = feature.index
-	// 					event.data = data
-	// 				}
-	// 			}
-	// 		})
-	// 	}
+		const matrix = p.matrixProcessor.getCachedWorldMatrix(this.surfaceLayer.mesh)
+		if (!matrix) return
 
-	// 	return event
-	// }
+		const pickResult = p.raycastRenderableNode(this.surfaceLayer.mesh, ndc, {})
+
+		let event: PickInfo | undefined
+		if (pickResult.hit && pickResult.intersections && pickResult.intersections.length > 0) {
+			const inter0 = pickResult.intersections[0]
+			const point = inter0.point as Vec3
+			const pointLocal = inter0.pointLocal as Vec3
+			event = {
+				distance: inter0.distance as number,
+				point: { x: point.x, y: point.y, z: point.z },
+				pointLocal: { x: pointLocal.x, y: pointLocal.y, z: pointLocal.z },
+				index: -1,
+				object: undefined,
+				data: undefined,
+			}
+			// Find corresponding feature data
+			this.surfaceLayer.featIndexRangeMap.forEach((range, feature) => {
+				if (
+					inter0.index !== undefined &&
+					inter0.index >= range[0] / 3 &&
+					inter0.index <= range[1] / 3
+				) {
+					const data: SelectionDataType = {
+						curr: feature,
+						feature,
+					}
+
+					if (event) {
+						event.object = this.surfaceLayer.mesh
+						event.index = feature.index
+						event.data = data
+					}
+				}
+			})
+		}
+
+		return event
+	}
 
 	private _updateSelectLines(feature) {
 		if (this.surfaceLayer) {

@@ -4,7 +4,7 @@ import { XYZTileManager, TileRenderables, TileToken } from '@polaris.gl/utils-ti
 import { RequestPending, XYZTileRequestManager } from '@polaris.gl/utils-request-manager'
 import { PolarisGSI, StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 import { Mesh, UnlitMaterial, Geom, Attr } from '@gs.i/frontend-sdk'
-import { AbstractPolaris, CoordV2, CoordV3, PickEvent } from '@polaris.gl/base'
+import { AbstractPolaris, CoordV2, CoordV3, PickInfo } from '@polaris.gl/base'
 import Pbf from 'pbf'
 import { decode } from 'geobuf'
 import { Projection } from '@polaris.gl/projection'
