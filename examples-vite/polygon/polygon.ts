@@ -103,11 +103,15 @@ const polygonLayer1 = (window['layer1'] = new PolygonLayer({
 	baseAlt: 0,
 	depthTest: true,
 	pickable: true,
-	// hoverColor: false,
-	// selectColor: false,
-	hoverLineWidth: 1,
-	selectLineWidth: 4,
+	selectColor: undefined, // '#ff0099',
+	hoverColor: undefined, // '#6600ff',
 	selectLinesHeight: 0,
+	selectLineLevel: 2 as 1 | 2 | 4,
+	selectLineWidth: 4,
+	selectLineColor: '#FFAE0F',
+	hoverLineLevel: 2 as 1 | 2 | 4,
+	hoverLineWidth: 2,
+	hoverLineColor: '#262626',
 	workersCount: 4,
 }))
 p.add(polygonLayer1)
@@ -115,15 +119,21 @@ p.add(polygonLayer1)
 await Promise.resolve()
 
 polygonLayer1.updateData(newGeo)
-// polygonLayer1.onPicked = (info) => {
-// 	console.log('onPicked', info)
-// 	if (info && info.data && info.data.feature) {
-// 		const feature = info.data.feature
-// 		const index = feature.index
-// 		polygonLayer1.highlightByIndices([index], { type: 'select' })
-// 	}
-// }
-// polygonLayer1.onHovered = (info) => {}
+
+const picked = new Set<number>()
+polygonLayer1.addEventListener('hover', (event) => {})
+polygonLayer1.addEventListener('pick', (event) => {
+	const info = event.result
+	console.log('pick', info)
+	console.log('feature', info?.data?.feature)
+	if (info && info.data && info.data.feature) {
+		const index = info.index
+		polygonLayer1.highlightByIndices([index], { type: 'select' })
+		picked.add(index)
+	} else {
+		picked.forEach((index) => polygonLayer1.highlightByIndices([index], { type: 'none' }))
+	}
+})
 
 // console.log('polygonLayer1', polygonLayer1)
 // indicator.traverse(polygonLayer1.sideLayer.mesh)

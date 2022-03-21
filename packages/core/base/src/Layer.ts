@@ -9,7 +9,7 @@ import type { CameraProxy } from 'camera-proxy'
 import type { AbstractLayerEvents } from './events'
 
 import { MAX_DEPTH, Node } from './Node'
-import type { AbstractPolaris } from './Polaris'
+import { AbstractPolaris } from './Polaris'
 import { Callback, ListenerOptions, PropsManager } from '@polaris.gl/props-manager'
 
 export interface LayerProps {
@@ -144,17 +144,18 @@ export abstract class AbstractLayer<
 		return this.#timelineLocal
 	}
 
-	// TODO refactor picking
-	// /**
-	//  * optional raycast implement.
-	//  *
-	//  * don't implement this if this layer doesn't support raycast
-	//  * @param polaris
-	//  * @param canvasCoord
-	//  * @param ndc
-	//  * @deprecated This design is very scratchy
-	//  */
-	// raycast?(polaris: AbstractPolaris, canvasCoord: CoordV2, ndc: CoordV2): PickEvent | undefined
+	/**
+	 * optional raycast implement.
+	 * don't implement this if this layer doesn't support raycast
+	 * @param polaris
+	 * @param canvasCoord
+	 * @param ndc
+	 */
+	abstract raycast(
+		polaris: AbstractPolaris,
+		canvasCoord: CoordV2,
+		ndc: CoordV2
+	): PickInfo | undefined
 
 	// TODO: Is is necessary to dispose propsManager and event Listeners
 	abstract dispose(): void
@@ -374,7 +375,7 @@ export interface CoordV3 {
 	z: number
 }
 
-export interface PickEvent {
+export interface PickInfo {
 	/**
 	 * 碰撞点与视点距离
 	 */
@@ -406,7 +407,9 @@ export interface PickEvent {
 	data?: any
 }
 
-export interface PickEventResult extends PickEvent {
+export interface PickEventResult extends PickInfo {
+	layer: AbstractLayer
+
 	pointerCoords: {
 		canvas: CoordV2
 		ndc: CoordV2

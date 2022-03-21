@@ -7,7 +7,7 @@ import { Mesh } from '@gs.i/frontend-sdk'
 import { deepCloneMesh } from './utils'
 import { Marker } from './Marker'
 import { PolarisGSI, StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
-import { CoordV2, PickEvent } from '@polaris.gl/base'
+import { CoordV2, PickInfo } from '@polaris.gl/base'
 
 /**
  * 配置项 interface
@@ -28,6 +28,12 @@ export interface MarkerLayerProps extends StandardLayerProps {
 	 * which may cause position/screenXY updating lag (a bit)
 	 */
 	highPerfMode?: boolean
+
+	/**
+	 * Whether to test only Marker's object3d only or
+	 * test its children when performing raycast
+	 */
+	recursivePicking?: boolean
 }
 
 /**
@@ -42,6 +48,7 @@ export const defaultProps: MarkerLayerProps = {
 	object3d: null,
 	autoHide: false,
 	highPerfMode: false,
+	recursivePicking: false,
 }
 
 /**
@@ -55,7 +62,7 @@ export const defaultProps: MarkerLayerProps = {
 export class MarkerLayer extends StandardLayer<MarkerLayerProps> {
 	props: any
 
-	private markers: Marker[]
+	private _markers: Marker[]
 
 	constructor(props: MarkerLayerProps = {}) {
 		const config = {
@@ -65,7 +72,7 @@ export class MarkerLayer extends StandardLayer<MarkerLayerProps> {
 		super(config)
 
 		this.props = config
-		this.markers = []
+		this._markers = []
 
 		this.element.className = 'maker-layer'
 	}
@@ -88,7 +95,7 @@ export class MarkerLayer extends StandardLayer<MarkerLayerProps> {
 					updateProps[key] = this.getProp(key)
 				})
 
-				this.markers.forEach((marker) => {
+				this._markers.forEach((marker) => {
 					if (marker) marker.updateProps(updateProps)
 				})
 			},
@@ -114,11 +121,11 @@ export class MarkerLayer extends StandardLayer<MarkerLayerProps> {
 	}
 
 	raycast(polaris, canvasCoord, ndc) {
-		if (!this.getProp('pickable')) return
+		if (!this.getProp('pickable') || !this.getProp('data')) return
 		const data = this.getProp('data')
-		const results: PickEvent[] = []
-		for (let i = 0; i < this.markers.length; i++) {
-			const marker = this.markers[i]
+		const results: PickInfo[] = []
+		for (let i = 0; i < this._markers.length; i++) {
+			const marker = this._markers[i]
 			const result = this._pickMarker(polaris as PolarisGSI, canvasCoord, ndc, marker, i)
 			if (result) {
 				const pickEvent = {
@@ -135,10 +142,10 @@ export class MarkerLayer extends StandardLayer<MarkerLayerProps> {
 
 	updateMarkers(data: any[]) {
 		// Remove old markers
-		this.markers.forEach((marker) => {
+		this._markers.forEach((marker) => {
 			this.remove(marker as any) // todo: marker should not be layer
 		})
-		this.markers.length = 0
+		this._markers.length = 0
 
 		for (let i = 0; i < data.length; i++) {
 			const markerProps = data[i]
@@ -172,18 +179,18 @@ export class MarkerLayer extends StandardLayer<MarkerLayerProps> {
 			})
 
 			this.add(marker as any) // todo: marker should not be layer
-			this.markers.push(marker)
+			this._markers.push(marker)
 		}
 	}
 
 	show(duration = 1000) {
-		this.markers.forEach((marker) => {
+		this._markers.forEach((marker) => {
 			marker.show(duration)
 		})
 	}
 
 	hide(duration = 1000) {
-		this.markers.forEach((marker) => {
+		this._markers.forEach((marker) => {
 			marker.hide(duration)
 		})
 	}
@@ -194,15 +201,17 @@ export class MarkerLayer extends StandardLayer<MarkerLayerProps> {
 		ndc: CoordV2,
 		marker: Marker,
 		dataIndex: number
-	): PickEvent | undefined {
+	): PickInfo | undefined {
 		const data = this.getProp('data')
 		if (!data || data.length === 0) return
 
-		const pickResult = marker.pick(polaris, canvasCoords, ndc)
+		const pickResult = marker.raycast(polaris, canvasCoords, ndc)
 		if (!pickResult) return
 
 		pickResult.index = dataIndex
-		pickResult.data = data[dataIndex]
+		pickResult.data = {
+			dataItem: data[dataIndex],
+		}
 		return pickResult
 	}
 }

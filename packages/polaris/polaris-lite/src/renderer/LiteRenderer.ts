@@ -140,7 +140,7 @@ export class LiteRenderer extends Renderer {
 	/**
 	 * 场景相机
 	 */
-	private camera: PerspectiveCamera
+	camera: PerspectiveCamera
 
 	/**
 	 * Postprocessing
@@ -152,7 +152,6 @@ export class LiteRenderer extends Renderer {
 	 * Picking
 	 */
 	raycaster: Raycaster
-	private _internalThreeRaycaster: ThreeRaycaster
 
 	/**
 	 * capabilities object
@@ -313,11 +312,11 @@ export class LiteRenderer extends Renderer {
 		 * 		WebGL2
 		 * 			使用一个独立的 color buffer，同步绘制
 		 */
-		this.raycaster = new Raycaster({
-			boundingProcessor: this.props.boundingProcessor,
-			matrixProcessor: this.props.matrixProcessor,
-		})
-		this._internalThreeRaycaster = new ThreeRaycaster()
+		// this.raycaster = new Raycaster({
+		// 	boundingProcessor: this.props.boundingProcessor,
+		// 	matrixProcessor: this.props.matrixProcessor,
+		// })
+		// this._internalThreeRaycaster = new ThreeRaycaster()
 
 		/**
 		 * @stage_2 只兼容桌面端，考虑是否放到 GL2 renderer 里，IE 是否需要？

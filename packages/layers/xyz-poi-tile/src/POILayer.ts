@@ -10,7 +10,7 @@ import {
 } from '@polaris.gl/utils-tile-manager'
 import { Marker } from '@polaris.gl/layer-std-marker'
 import { RequestPending, XYZTileRequestManager } from '@polaris.gl/utils-request-manager'
-import { AbstractPolaris, CoordV2, PickEvent } from '@polaris.gl/base'
+import { AbstractPolaris, CoordV2, PickInfo } from '@polaris.gl/base'
 import { Projection } from '@polaris.gl/projection'
 import { colorToUint8Array, brushColorToImage } from '@polaris.gl/utils'
 import { PointsMeshPickHelper } from './helpers'

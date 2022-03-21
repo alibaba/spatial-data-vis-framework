@@ -4,7 +4,7 @@
  */
 
 import { Projection } from '@polaris.gl/projection'
-import { Attribute, isDISPOSED } from '@gs.i/schema-scene'
+import { Attribute, isDISPOSED, NodeLike } from '@gs.i/schema-scene'
 import { Vector3, Matrix3, Matrix4, Color } from '@gs.i/utils-math'
 
 export * from './constants'
