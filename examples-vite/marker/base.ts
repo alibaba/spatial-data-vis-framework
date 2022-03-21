@@ -9,6 +9,7 @@ import { IndicatorProcessor } from '@gs.i/processor-indicator'
 import { HelperLayer } from '@polaris.gl/layer-std-helper'
 
 import { MarkerLayer, Marker } from '@polaris.gl/layer-std-marker'
+import { traverseBFS } from '@gs.i/utils-traverse'
 
 await test(true, 'PolarisLite', () => {
 	const p = new PolarisLite({
@@ -59,21 +60,23 @@ await test(true, 'PolarisLite', () => {
 				lng: -0.01,
 				lat: 0.01,
 			},
-			{
-				object3d: new Mesh({
-					name: 'cylinder',
-					geometry: generateCylinder(),
-					material: new PbrMaterial({
-						baseColorFactor: { r: 1, g: 0.5, b: 0.5 },
-					}),
-				}),
-				lng: 0,
-				lat: 0,
-				alt: 300,
-			},
+			// {
+			// 	object3d: new Mesh({
+			// 		name: 'cylinder',
+			// 		geometry: generateCylinder(),
+			// 		material: new PbrMaterial({
+			// 			baseColorFactor: { r: 1, g: 0.5, b: 0.5 },
+			// 		}),
+			// 	}),
+			// 	lng: 0,
+			// 	lat: 0,
+			// 	alt: 300,
+			// },
 		],
 	})
 	p.add(markerLayer)
+
+	setAttrsDisposableFalseRecur(markerLayer)
 
 	console.log(markerLayer)
 
@@ -128,7 +131,11 @@ await test(true, 'PolarisLite', () => {
 	// p.add(l)
 
 	markerLayer.addEventListener('pick', (e) => {
-		console.log('pick', e)
+		if (e.result) {
+			console.log('hit', e)
+		} else {
+			console.log('not hit', e)
+		}
 	})
 })
 
@@ -152,20 +159,21 @@ function generateCylinder() {
 	return cylinder
 }
 
-// function setAttrsDisposableFalseRecur(markerLayer) {
-// 	markerLayer.children.forEach(marker => {
-// 		const queue: IR.NodeLike[] = []
-// 		marker.group.children.forEach(child => {
-// 			if (isRenderable(child)) {
-// 				for(const name in child.geometry.attributes) {
-// 					const attr = child.geometry.attributes[name]
-// 					attr && (attr.disposable = false)
-// 				}
-// 				child.geometry.indices && (child.)
-// 			}
-// 		})
-// 	})
-// }
+function setAttrsDisposableFalseRecur(markerLayer: MarkerLayer) {
+	markerLayer.markers.forEach((marker) => {
+		if (marker.object3d) {
+			traverseBFS(marker.object3d, (node) => {
+				if (isRenderable(node)) {
+					for (const name in node.geometry.attributes) {
+						const attr = node.geometry.attributes[name]
+						attr && (attr.disposable = false)
+					}
+					node.geometry.indices && (node.geometry.indices.disposable = false)
+				}
+			})
+		}
+	})
+}
 
 // ===
 

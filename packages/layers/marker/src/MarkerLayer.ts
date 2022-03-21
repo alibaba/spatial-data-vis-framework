@@ -64,6 +64,10 @@ export class MarkerLayer extends StandardLayer<MarkerLayerProps> {
 
 	private _markers: Marker[]
 
+	get markers() {
+		return this._markers
+	}
+
 	constructor(props: MarkerLayerProps = {}) {
 		const config = {
 			...defaultProps,
@@ -175,7 +179,7 @@ export class MarkerLayer extends StandardLayer<MarkerLayerProps> {
 			const marker = new Marker({
 				...this.props,
 				...markerProps,
-				pickable: this.getProp('pickable'),
+				pickable: false,
 			})
 
 			this.add(marker as any) // todo: marker should not be layer
