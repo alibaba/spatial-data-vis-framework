@@ -78,3 +78,27 @@ export function traverse(
 			traverse(child, handler, node)
 		}
 }
+
+export function earlyStopTraverse(
+	node: IR.NodeLike,
+	handler: (node: IR.NodeLike, parent?: IR.NodeLike) => boolean | undefined,
+	parent?: IR.NodeLike
+): boolean | undefined {
+	if (node === undefined || node === null) return
+
+	const shouldStop = handler(node, parent)
+	if (shouldStop === true) return
+
+	// if (node.children && node.children.size > 0) {
+	// 	node.children.forEach((child) => traverse(child, handler, node))
+	// }
+
+	// @note a little bit faster
+	if (node.children)
+		for (const child of node.children) {
+			const shouldStop = earlyStopTraverse(child, handler, node)
+			if (shouldStop === true) return true
+		}
+
+	return
+}

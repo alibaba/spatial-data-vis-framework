@@ -7,11 +7,11 @@ import { Projection } from '@polaris.gl/projection'
 import { CameraProxy } from 'camera-proxy'
 import { Vector2, Vector3, Matrix4, Euler } from '@gs.i/utils-math'
 import { Mesh } from '@gs.i/frontend-sdk'
-import { IR, NodeLike } from '@gs.i/schema-scene'
-import { deepCloneMesh, traverse } from './utils'
+import { IR, NodeLike, isDISPOSED, isRenderable } from '@gs.i/schema-scene'
+import { deepCloneMesh, earlyStopTraverse, traverse } from './utils'
 import { getOrientationMatrix } from './geometry'
 // import { computeBBox, computeBSphere } from '@gs.i/utils-geometry'
-import { CoordV2, PickEvent } from '@polaris.gl/base'
+import { CoordV2, PickInfo } from '@polaris.gl/base'
 import { toScreenXY, PolarisGSI, StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 
 const R = 6378137 // 常量 - 地球半径
@@ -31,9 +31,15 @@ export interface MarkerProps extends StandardLayerProps {
 	autoHide?: boolean
 	/**
 	 * enables high performance mode will reduce the calculation of marker.worldMatrix
-	 * which may cause position/screenXY updating lag (a bit)
+	 * which may cause position/screenXY updating lag (one frame normally)
 	 */
 	highPerfMode?: boolean
+
+	/**
+	 * Whether to test only Marker's object3d only or
+	 * test its children when performing raycast
+	 */
+	recursivePicking?: boolean
 }
 
 /**
@@ -50,12 +56,15 @@ export const defaultMarkerProps = {
 	// object3d: undefined,
 	autoHide: false,
 	highPerfMode: false,
+	recursivePicking: false,
 }
 
 /**
  * 单一的Marker，实现在地图上放置三维和二维Marker，可单独使用，一般推荐使用MarkerLayer组件批量生成
  */
 export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProps> {
+	readonly isMarker = true
+
 	lnglatalt: [number, number, number]
 	html?: HTMLElement
 	object3d?: NodeLike
@@ -329,7 +338,11 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 		})
 	}
 
-	pick(polaris: PolarisGSI, canvasCoords: CoordV2, ndc: CoordV2): PickEvent | undefined {
+	/**
+	 * @note currently only supports object3d with geometry mode of TRIANGLES
+	 * @todo support other geometry modes
+	 */
+	raycast(polaris: PolarisGSI, canvasCoords: CoordV2, ndc: CoordV2): PickInfo | undefined {
 		// 2D DOM picking
 		if (this.html) {
 			const bbox = this.html.getBoundingClientRect()
@@ -359,31 +372,20 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 			}
 		}
 
-		// TODO: refactor picking
 		// 3D object picking
-		// if (polaris.pickObject === undefined) return
-
-		// if (this.object3d && this.object3d.geometry) {
-		// 	const result = polaris.pickObject(this.object3d, ndc, {
-		// 		backfaceCulling: true,
-		// 		allInters: false, // The pick process can return as soon as it hits the first triangle
-		// 		threshold: 10, // In case the object3d is a line mesh
-		// 	})
-		// 	if (result.hit && result.intersections) {
-		// 		// object3d has been picked
-		// 		const inter0 = result.intersections[0]
-		// 		return {
-		// 			distance: inter0.distance as number,
-		// 			point: inter0.point as { x: number; y: number; z: number },
-		// 			pointLocal: inter0.pointLocal as { x: number; y: number; z: number },
-		// 			object: this,
-		// 			index: 0,
-		// 			data: undefined,
-		// 		}
-		// 	}
-		// }
-
-		return
+		if (!this.object3d) return
+		const recursive = this.getProp('recursivePicking')
+		if (!recursive) {
+			return this._raycastObject3d(this.object3d, polaris, ndc)
+		}
+		// traverse node
+		let raycastResult: PickInfo | undefined
+		earlyStopTraverse(this.object3d, (node) => {
+			raycastResult = this._raycastObject3d(node, polaris, ndc)
+			if (raycastResult) return true
+			return
+		})
+		return raycastResult
 	}
 
 	dispose(): void {
@@ -401,21 +403,21 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 
 	private _initUpdatingLogic(cam, projection, perfMode) {
 		if (perfMode) {
-			this.onViewChange = (cam, polaris) => {
+			this.addEventListener('viewChange', (e) => {
+				const cam = e.cameraProxy
 				if (this.framesAfterInit > 5) {
 					this.updateWorldPosition(false)
 					this.updateVisibility(cam, projection)
 					this.updateScreenXY()
 					this.updateElement()
 				}
-			}
+			})
 
-			this.onVisibilityChange = () => {
+			this.addEventListener('visibilityChange', () => {
 				this.updateVisibility(cam, projection)
-			}
+			})
 
-			// 每一帧更新位置
-			this.onBeforeRender = () => {
+			this.addEventListener('beforeRender', () => {
 				// 每次属性变动就更新前10帧，确保group.worldMatrix已经更新完毕
 				if (++this.framesAfterInit < 5) {
 					this.updateWorldPosition(false)
@@ -426,19 +428,20 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 					this.updateScreenXY()
 					this.updateElement()
 				}
-			}
+			})
 		} else {
-			this.onViewChange = (cam, polaris) => {
+			this.addEventListener('viewChange', (e) => {
+				const cam = e.cameraProxy
 				this.updateWorldPosition(true)
 				this.updateVisibility(cam, projection)
 				this.updateScreenXY()
 				this.updateElement()
-			}
+			})
 
-			this.onVisibilityChange = () => {
+			this.addEventListener('visibilityChange', () => {
 				this.updateVisibility(cam, projection)
 				this.updateElement()
-			}
+			})
 		}
 	}
 
@@ -649,6 +652,50 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 
 	private resetInitFrames() {
 		this.framesAfterInit = 0
+	}
+
+	private _raycastObject3d(
+		object3d: IR.NodeLike,
+		polaris: PolarisGSI,
+		ndc: CoordV2
+	): PickInfo | undefined {
+		const node = object3d
+
+		if (!isRenderable(node)) return
+
+		const geom = node.geometry
+		if (!geom) return
+		if (geom.mode !== 'TRIANGLES') {
+			// ONLY support geometry mode 'TRIANGLES'
+			return
+		}
+
+		// check attr disposable
+		if (!geom.attributes.position || isDISPOSED(geom.attributes.position.array)) {
+			return
+		}
+		if (geom.indices && isDISPOSED(geom.indices.array)) {
+			return
+		}
+
+		const result = polaris.raycastRenderableNode(node, ndc, {
+			allInters: false,
+		})
+
+		if (result.hit && result.intersections && result.intersections.length > 0) {
+			// object3d has been picked
+			const inter0 = result.intersections[0]
+			return {
+				distance: inter0.distance as number,
+				point: inter0.point as { x: number; y: number; z: number },
+				pointLocal: inter0.pointLocal as { x: number; y: number; z: number },
+				object: this,
+				index: 0,
+				data: undefined,
+			}
+		}
+
+		return
 	}
 
 	// seems unnecessary
