@@ -254,6 +254,7 @@ export class StandardLayer<
 		const old = this.view.gsi.alignmentWrapper.transform.matrix as number[]
 		if (!isEqualArray(old, matrix)) {
 			copyArray(matrix, old)
+			this.view.gsi.alignmentWrapper.transform.version++
 		}
 	}
 
