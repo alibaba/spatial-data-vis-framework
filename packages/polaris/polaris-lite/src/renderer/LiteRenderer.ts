@@ -215,18 +215,15 @@ export class LiteRenderer extends Renderer {
 			antialias: this.props.antialias === 'msaa',
 			stencil: false,
 		}
-		this.context = canvas.getContext('webgl', attributes)
-		if (!this.context) {
-			throw new Error('GSILiteRenderer - Cannot get WebGLRenderingContext. ')
-		}
 
 		this.renderer = new WebGLRenderer({
 			canvas: this.canvas,
-			context: this.context,
+			// context: this.context,
 			alpha: true,
 			antialias: this.props.antialias === 'msaa',
 			stencil: false,
 		})
+		this.context = this.renderer.getContext()
 		this.renderer.setClearAlpha(1.0)
 		/** @FIXME gamma correction未生效 */
 		// this.renderer.gammaOutput = true

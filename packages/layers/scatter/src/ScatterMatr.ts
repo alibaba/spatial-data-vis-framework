@@ -20,30 +20,30 @@ export class ScatterMatr extends PointMaterial {
 		super()
 		this.setProps(props)
 
-		// @note these are setters. setters can not use class property syntax
-		this.defines = {
-			// USE_COLORS: false,
-			// COLOR_STEPS: 0,
-		}
-		this.uniforms = {
-			time: { value: 0 },
-			color: { value: { r: 1.0, g: 1.0, b: 1.0 } },
-			// colors: {
-			// 	value: [],
-			// 	type: 'vec3',
-			// },
-			// thresholds: {
-			// 	value: [],
-			// 	type: 'float',
-			// },
-			colNumber: { value: 1.0 },
-			rowNumber: { value: 1.0 },
-			TEX: {
-				value: specifyTexture({
-					image: { uri: 'https://img.alicdn.com/tfs/TB1X4pmgAyWBuNjy0FpXXassXXa-64-64.png' },
-				}),
-			},
-		}
+		// // @note these are setters. setters can not use class property syntax
+		// this.defines = {
+		// 	// USE_COLORS: false,
+		// 	// COLOR_STEPS: 0,
+		// }
+		// this.uniforms = {
+		// 	time: { value: 0 },
+		// 	color: { value: { r: 1.0, g: 1.0, b: 1.0 } },
+		// 	// colors: {
+		// 	// 	value: [],
+		// 	// 	type: 'vec3',
+		// 	// },
+		// 	// thresholds: {
+		// 	// 	value: [],
+		// 	// 	type: 'float',
+		// 	// },
+		// 	colNumber: { value: 1.0 },
+		// 	rowNumber: { value: 1.0 },
+		// 	TEX: {
+		// 		value: specifyTexture({
+		// 			image: { uri: 'https://img.alicdn.com/tfs/TB1X4pmgAyWBuNjy0FpXXassXXa-64-64.png' },
+		// 		}),
+		// 	},
+		// }
 
 		this.global = `
 			uniform float time;
@@ -51,8 +51,11 @@ export class ScatterMatr extends PointMaterial {
 			uniform float rowNumber;
 			uniform vec3 color;
 			uniform sampler2D TEX;
+
+			#ifdef USE_COLORS
 			uniform float thresholds[COLOR_STEPS];
 			uniform vec3 colors[COLOR_STEPS];
+			#endif
 	
 			varying vec2 vColRow;
 			varying vec3 vColor;
@@ -119,6 +122,7 @@ export class ScatterMatr extends PointMaterial {
 			colors = arr.map((a) => new Color(a.color))
 			thresholds = arr.map((a) => a.value)
 		}
+		this.uniforms.time = { value: 0 }
 		this.uniforms.color = { value: new Color(this.getProps('color')) }
 		this.uniforms.colNumber = { value: this.getProps('colNumber') }
 		this.uniforms.rowNumber = { value: this.getProps('rowNumber') }
