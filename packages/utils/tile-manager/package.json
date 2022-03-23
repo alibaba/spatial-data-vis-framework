@@ -19,7 +19,7 @@
 		"rebuild": "npm run clean && npm run build"
 	},
 	"dependencies": {
-		"@gs.i/schema-scene": "0.2.1-alpha.17",
+		"@gs.i/schema-scene": "0.2.1-alpha.18",
 		"@polaris.gl/base": "^0.1.0-alpha.19",
 		"@polaris.gl/gsi": "^0.1.0-alpha.19",
 		"@polaris.gl/projection": "^0.1.0-alpha.19",
