@@ -204,7 +204,7 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 				['object3d'],
 				() => {
 					this.group.children.forEach((child) => {
-						this.group.children.delete(child)
+						this.group.remove(child)
 					})
 					this._object3d = this.getProp('object3d')
 					this.initObject3d()
@@ -535,6 +535,7 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 
 		// @note @todo this is not safe. GSI.SDK should add matrix to transform
 		this.group.transform['matrix'] = this._mat4.toArray()
+		this.group.transform.version++
 
 		// 夹角阈值，用来判断visibility
 		this._altAngleThres = Math.acos(R / (R + this.getProp('alt')))
