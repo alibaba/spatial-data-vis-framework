@@ -282,15 +282,6 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 		return this.renderer.capture()
 	}
 
-	/**
-	 * @TODO `externalScale`
-	 *
-	 * @param {*} width
-	 * @param {*} height
-	 * @param {number} [ratio=1.0] 渲染像素比例，设置该值可渲染更低/更高分辨率图像
-	 * @param {number} [externalScale=1.0] 外部设置的scale值，如style.transform等
-	 * @memberof Polaris
-	 */
 	resize(
 		width,
 		height,
@@ -307,6 +298,16 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 		if (this.renderer) {
 			this.renderer.resize(width, height, ratio)
 			this.renderer.updateCamera(this.cameraProxy)
+		}
+	}
+
+	/**
+	 * Set external scale (eg. HTMLElement.style.transform) and correct the camera control scale.
+	 * @NOTE Make sure the external translation or scale has been set before calling this API
+	 */
+	setExternalScale(scale = 1.0) {
+		if (this.cameraControl) {
+			this.cameraControl.scale = scale / (this.ratio ?? 1.0)
 		}
 	}
 
