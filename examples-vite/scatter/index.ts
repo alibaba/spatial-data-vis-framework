@@ -23,7 +23,7 @@ const scatterLayer = new ScatterLayer({
 	size: 1.5,
 	opacity: 0.5,
 	color: '#B900FD',
-	useColors: true,
+	useColors: false,
 	colors: [
 		// { color: '#FDC871', value: 0.2 },
 		{ color: '#FF7300', value: 0.4 },
