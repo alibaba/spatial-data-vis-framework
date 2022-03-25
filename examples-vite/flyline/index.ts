@@ -121,6 +121,8 @@ const flyline = new FlyLineLayer({
 	minHeight: 0,
 	maxHeight: 0.5,
 })
+p.add(flyline)
+
 flyline.updateData(data)
 
 //
@@ -143,6 +145,7 @@ const polygonLayer = new PolygonLayer({
 	selectLinesHeight: 0,
 	workersCount: 4,
 })
+
 fetch('https://polaris-geo.oss-cn-hangzhou.aliyuncs.com/simple/amap/China_Fill_25.json')
 	.then((r) => r.json())
 	.then((geojson) => {
@@ -150,7 +153,6 @@ fetch('https://polaris-geo.oss-cn-hangzhou.aliyuncs.com/simple/amap/China_Fill_2
 		p.setStatesCode('1|104.962825|35.065100|0.000000|0.66540|0.09000|3.53000')
 	})
 
-p.add(flyline)
 p.add(polygonLayer)
 
 window['p'] = p
