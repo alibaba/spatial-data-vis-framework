@@ -56,7 +56,7 @@ async function editFile(file) {
 	// 需要 file 在闭包里
 	function replacement(match, before, moduleName, after) {
 		if (
-			(moduleName.startsWith('.') || moduleName.startsWith('/')) &&
+			isFile(moduleName) &&
 			!(
 				moduleName.endsWith('.js') ||
 				moduleName.endsWith('.mjs') ||
@@ -115,3 +115,18 @@ glob(path.resolve(__dirname, '../dist') + '/**/*.js', {}, (err, files) => {
 		await editFile(path.resolve(__dirname, '../', file))
 	})
 })
+
+function isFile(moduleName) {
+	if (moduleName.startsWith('.') || moduleName.startsWith('/')) {
+		return true
+	}
+	const slashes = moduleName.split('/').length - 1
+	const hasAt = moduleName.startsWith('@')
+	if (hasAt && slashes > 1) {
+		return true
+	}
+	if (!hasAt && slashes > 0) {
+		return true
+	}
+	return false
+}
