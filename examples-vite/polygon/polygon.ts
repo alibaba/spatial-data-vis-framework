@@ -11,11 +11,20 @@ const indicator = new IndicatorProcessor({
 	useBBox: true,
 })
 
+const container = document.querySelector('#container') as HTMLDivElement
 const p = new PolarisLite({
-	container: document.querySelector('#container') as HTMLDivElement,
+	container,
 	// background: 'transparent',
 	// autoplay: false,
+	autoResize: true,
 })
+
+// let n = 0
+// setInterval(() => {
+// 	n++
+// 	p.resize(500 + 300 * Math.sin(n / 10), 500 + 300 * Math.sin(n / 10))
+// 	console.log('resize')
+// }, 100)
 
 // p.addEventListener('tickError', (e) => {
 // 	// debugger
