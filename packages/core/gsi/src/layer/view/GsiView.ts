@@ -82,7 +82,7 @@ export class GSIView extends View {
 	 * Implement
 	 */
 	onVisibilityChange(visible: boolean) {
-		this.group && (this.group.visible = visible)
+		this.alignmentWrapper && (this.alignmentWrapper.visible = visible)
 	}
 
 	/**
