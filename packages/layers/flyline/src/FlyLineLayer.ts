@@ -58,37 +58,6 @@ export class FlyLineLayer extends StandardLayer<FlyLineLayerProps> {
 		this.props = _props
 
 		this.grids = []
-
-		this.listenProps(['renderOrder'], () => {
-			this.flyline && (this.flyline.mesh.renderOrder = this.getProp('renderOrder') ?? 0)
-		})
-
-		this.listenProps(['depthTest'], () => {
-			this.flyline && (this.flyline.mesh.material.depthTest = this.getProp('depthTest') ?? true)
-		})
-
-		this.listenProps(['duration', 'delay', 'repeat', 'minHeight', 'maxHeight', 'data'], () => {
-			this.props['duration'] = this.getProp('duration')
-			this.props['delay'] = this.getProp('delay')
-			this.props['repeat'] = this.getProp('repeat')
-			this.props['minHeight'] = this.getProp('minHeight')
-			this.props['maxHeight'] = this.getProp('maxHeight')
-			const data = this.getProp('data')
-			if (!data || !data.length) return
-			this.updateFlylinesData(this.getProp('data'))
-		})
-
-		this.onViewChange = (cameraProxy, polaris) => {
-			const w = polaris.width
-			const h = polaris.height
-			const originRes = this.flyline.mesh.material.config['resolution']
-			if (originRes.x !== w || originRes.y !== h) {
-				this.flyline.mesh.material.config['resolution'] = {
-					x: w,
-					y: h,
-				}
-			}
-		}
 	}
 
 	init(projection, timeline, polaris) {
@@ -118,6 +87,7 @@ export class FlyLineLayer extends StandardLayer<FlyLineLayerProps> {
 			'useColors',
 			'colors',
 		] as const
+
 		this.listenProps(listeningFlylineProps, () => {
 			listeningFlylineProps.forEach((key) => {
 				// @note this is a problem of ts, key became a union type and props[key] collapsed into `never`
@@ -131,6 +101,39 @@ export class FlyLineLayer extends StandardLayer<FlyLineLayerProps> {
 			this.createFlyline(timeline, polaris)
 			this.updateFlylinesData(data)
 		})
+
+		this.listenProps(['renderOrder'], () => {
+			this.flyline && (this.flyline.mesh.renderOrder = this.getProp('renderOrder') ?? 0)
+		})
+
+		this.listenProps(['depthTest'], () => {
+			this.flyline && (this.flyline.mesh.material.depthTest = this.getProp('depthTest') ?? true)
+		})
+
+		this.listenProps(['duration', 'delay', 'repeat', 'minHeight', 'maxHeight', 'data'], () => {
+			this.props['duration'] = this.getProp('duration')
+			this.props['delay'] = this.getProp('delay')
+			this.props['repeat'] = this.getProp('repeat')
+			this.props['minHeight'] = this.getProp('minHeight')
+			this.props['maxHeight'] = this.getProp('maxHeight')
+			const data = this.getProp('data')
+			if (!data || !data.length) return
+			this.updateFlylinesData(this.getProp('data'))
+		})
+
+		this.onViewChange = (cameraProxy, polaris) => {
+			if (!this.flyline) return
+
+			const w = polaris.width
+			const h = polaris.height
+			const originRes = this.flyline.mesh.material.config['resolution']
+			if (originRes.x !== w || originRes.y !== h) {
+				this.flyline.mesh.material.config['resolution'] = {
+					x: w,
+					y: h,
+				}
+			}
+		}
 	}
 
 	createFlyline(timeline, polaris) {

@@ -210,28 +210,32 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 		})
 
 		// Responsive for container resize
-		this.watchProps(['autoResize'], () => {
-			const autoResize = this.getProp('autoResize')
-			if (autoResize) {
-				if (!this._resizeListener) {
-					this._resizeListener = setInterval(() => {
-						const width = container.clientWidth
-						const height = container.clientHeight
-						if (width !== this.width || height !== this.height) {
-							this.resize(width, height, this.ratio)
-							this.dispatchEvent({
-								type: 'viewChange',
-								cameraProxy: this.cameraProxy,
-								polaris: this,
-							})
-						}
-					}, 200)
+		this.watchProps(
+			['autoResize'],
+			() => {
+				const autoResize = this.getProp('autoResize')
+				if (autoResize) {
+					if (!this._resizeListener) {
+						this._resizeListener = setInterval(() => {
+							const width = container.clientWidth
+							const height = container.clientHeight
+							if (width !== this.width || height !== this.height) {
+								this.resize(width, height, this.ratio)
+								this.dispatchEvent({
+									type: 'viewChange',
+									cameraProxy: this.cameraProxy,
+									polaris: this,
+								})
+							}
+						}, 200)
+					}
+				} else if (this._resizeListener) {
+					clearInterval(this._resizeListener)
+					this._resizeListener = undefined
 				}
-			} else if (this._resizeListener) {
-				clearInterval(this._resizeListener)
-				this._resizeListener = undefined
-			}
-		})
+			},
+			true
+		)
 	}
 
 	// setRenderer(renderer: Renderer) {
