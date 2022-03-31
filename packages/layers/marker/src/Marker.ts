@@ -461,7 +461,7 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 
 		if (!html || !this.view.html) return
 
-		this.element.style.position = 'absolute'
+		// this.element.style.position = 'absolute'
 		this.element.style.visibility = 'hidden'
 		this.element.style.cursor = 'default'
 		this.element.style.userSelect = 'none'
