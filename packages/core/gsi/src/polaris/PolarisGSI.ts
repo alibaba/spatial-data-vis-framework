@@ -226,6 +226,9 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 									cameraProxy: this.cameraProxy,
 									polaris: this,
 								})
+								if (this.getProp('asyncRendering')) {
+									this.render()
+								}
 							}
 						}, 200)
 					}

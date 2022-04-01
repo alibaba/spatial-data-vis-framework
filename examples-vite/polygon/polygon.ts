@@ -16,6 +16,7 @@ const p = new PolarisLite({
 	container,
 	// background: 'transparent',
 	// autoplay: false,
+	// asyncRendering: true,
 	autoResize: true,
 })
 
