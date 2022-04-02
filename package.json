@@ -24,20 +24,29 @@
     "clean": "rm -rf ./yarn.lock && rm -rf gsi-packages && rm -rf ./node_modules && lerna clean -y && lerna run --no-private --stream --parallel clean",
     "build": "lerna run build --ignore @gs.i/* --stream --no-private",
     "rebuild": "lerna run --no-private --stream rebuild",
-    "watch": "node scripts/watch.mjs --fast"
+    "watch": "node scripts/watch.mjs --fast",
+    "prepare": "husky install"
+  },
+  "lint-staged": {
+    "**/*.{js,ts,cjs,cts,mjs,mts,jsx,tsx}": [
+      "eslint",
+      "prettier --write --ignore-unknown"
+    ]
   },
   "devDependencies": {
-    "vite": "*",
-    "typescript": "^4.5.4",
     "@typescript-eslint/eslint-plugin": "5.8.0",
     "@typescript-eslint/parser": "5.8.0",
-    "eslint": "8.5.0",
-    "eslint-config-prettier": "8.3.0",
-    "shelljs": "^0.8.4",
-    "jsonc-parser": "^3.0.0",
+    "chokidar": "^3.5.2",
     "colors": "=1.4.0",
     "concurrently": "^6.4.0",
-    "chokidar": "^3.5.2"
-  },
-  "optionalDependencies": {}
+    "eslint": "8.5.0",
+    "eslint-config-prettier": "8.3.0",
+    "husky": "^7.0.4",
+    "jsonc-parser": "^3.0.0",
+    "lint-staged": "^12.3.7",
+    "prettier": "^2.6.1",
+    "shelljs": "^0.8.4",
+    "typescript": "^4.5.4",
+    "vite": "*"
+  }
 }

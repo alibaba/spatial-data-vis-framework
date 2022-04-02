@@ -39,6 +39,9 @@
 	"explorer.decorations.colors": true,
 	"explorer.decorations.badges": true,
 	"files.associations": {
-		"README": "markdown"
+		"*.baseline": "json",
+		"**/README": "markdown",
+		"**/*.json.bac": "json",
+		"**/*.json.bac.*": "json"
 	}
 }
