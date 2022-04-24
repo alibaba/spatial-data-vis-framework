@@ -2,16 +2,7 @@
  *
  */
 
-import {
-	Projection,
-	GeocentricProjection,
-	EquirectangularProjection,
-	EquirectangularProjectionPDC,
-	AzimuthalEquidistantProjection,
-	GallStereoGraphicProjection,
-	SphereProjection,
-	MercatorProjection,
-} from '@polaris.gl/projection'
+import { Projection } from '@polaris.gl/projection'
 
 import { Euler, Matrix4 } from '@gs.i/utils-math'
 

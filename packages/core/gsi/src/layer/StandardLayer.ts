@@ -186,13 +186,6 @@ export class StandardLayer<
 		return this.view.html.element
 	}
 
-	// /**
-	//  * Highlight API
-	//  *
-	//  * @memberof StandardLayer
-	//  */
-	// highlightByIndices: (dataIndexArr: number[], style: { [name: string]: any }) => void
-
 	/**
 	 * depthTest的设定函数，可被子类重写
 	 * @node 默认只遍历group内的第一层

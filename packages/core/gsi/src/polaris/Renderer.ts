@@ -62,16 +62,6 @@ export abstract class Renderer {
 	 */
 	abstract updateProps(props: { [key: string]: any }): void
 
-	// TODO refactor picking
-	/**
-	 * 	Picking
-	 */
-	// abstract pick(
-	// 	target: any,
-	// 	ndc: { x: number; y: number },
-	// 	options?: { [key: string]: any }
-	// ): PickResult
-
 	abstract getCapabilities(): {
 		pointSizeRange: [number, number]
 		lineWidthRange: [number, number]

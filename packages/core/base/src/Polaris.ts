@@ -106,11 +106,6 @@ export abstract class AbstractPolaris<
 		this.timeline = timeline
 		this.projection = projection
 
-		// this._props = props
-
-		// const [changeableProps, staticKeys] = propsFilter(_props, changeableKeys)
-		// this.updateProps(changeableProps)
-
 		/**
 		 * init html / canvas
 		 */
@@ -481,11 +476,6 @@ export abstract class AbstractPolaris<
 		return true
 	}
 
-	// TODO refactor picking
-	// polaris can not be raycast-ed. polaris call raycast on layers
-	// override raycast(p: never, c: never, n: never): never {
-	// 	throw new Error('polaris can not be raycast-ed')
-	// }
 	// polaris is the root of projection tree. no need to updateAlignmentMatrix
 	override updateAlignmentMatrix(m: never): never {
 		throw new Error('polaris do not updateAlignmentMatrix')

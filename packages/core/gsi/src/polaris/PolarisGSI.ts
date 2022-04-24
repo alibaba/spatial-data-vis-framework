@@ -81,11 +81,6 @@ export const DefaultPolarisGSIProps = {
 
 export type PolarisGSIProps = PolarisProps & Partial<typeof DefaultPolarisGSIProps>
 
-// TODO: refactor picking
-// export interface LayerPickEvent extends PickEventResult {
-// 	layer: AbstractLayer
-// }
-
 export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 	readonly isPolarisGSI = true
 
@@ -241,19 +236,6 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 		)
 	}
 
-	// setRenderer(renderer: Renderer) {
-	// 	if (this.renderer) {
-	// 		throw new Error('PolarisGSI - 目前不支持动态替换 polaris 的 renderer')
-	// 	}
-	// 	this.renderer = renderer
-	// 	this.cameraProxy.config.onUpdate = (cam) => this.renderer.updateCamera(cam)
-	// 	this.cameraProxy['onUpdate'] = (cam) => this.renderer.updateCamera(cam)
-	// 	// 这里立刻update
-	// 	this.renderer.updateCamera(this.cameraProxy)
-	// 	this.renderer.resize(this.width, this.height, this.ratio)
-	// 	this.view.html.element.appendChild(this.renderer.canvas)
-	// }
-
 	raycast(
 		polaris: AbstractPolaris<any, AbstractPolarisEvents>,
 		canvasCoord: CoordV2,
@@ -351,9 +333,6 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 		// Remove event listeners
 		this.hammer.off('tap')
 		this.hammer.destroy()
-		const element = this.view.html.element
-		// TODO refactor picking
-		// element.removeEventListener('mousemove', this._mouseMoveHandler)
 
 		// Dispose layers
 		this.traverse((base) => {
@@ -366,65 +345,6 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 
 		super.dispose()
 	}
-
-	// TODO refactor picking
-	// /**
-	//  * 对pickable并实现picking方法的layers进行pick操作
-	//  */
-	// pick(
-	// 	canvasCoords: CoordV2,
-	// 	options = { deepPicking: false }
-	// ): LayerPickEvent | LayerPickEvent[] | undefined {
-	// 	const element = this.view.html.element
-	// 	const bbox = element.getBoundingClientRect()
-	// 	const left = bbox.left
-	// 	const top = bbox.top
-	// 	const width = element.clientWidth
-	// 	const height = element.clientHeight
-	// 	const ndc = {
-	// 		x: (canvasCoords.x / width) * 2 - 1,
-	// 		y: -(canvasCoords.y / height) * 2 + 1,
-	// 	}
-
-	// 	if (ndc.x < -1.0 || ndc.x > 1.0 || ndc.y < -1.0 || ndc.y > 1.0) {
-	// 		return
-	// 	}
-
-	// 	// Collect pick results
-	// 	const candidates: LayerPickEvent[] = []
-	// 	this.traverseVisible((layer) => {
-	// 		// @note check `pickable` inside `.raycast` method. instead of make it a props
-	// 		// since it is not only a prop. but also the type of the layer
-	// 		// if a layer doesn't support raycasting, leave it implemented
-	// 		if (layer.raycast) {
-	// 			const layerRes = layer.raycast(this, canvasCoords, ndc)
-	// 			if (layerRes) {
-	// 				candidates.push({
-	// 					...layerRes,
-	// 					layer: layer,
-	// 					// pointer coords
-	// 					pointerCoords: {
-	// 						screen: { x: canvasCoords.x + left, y: canvasCoords.y + top },
-	// 						canvas: canvasCoords,
-	// 						ndc,
-	// 					},
-	// 				})
-	// 			}
-	// 		}
-	// 	})
-
-	// 	// Sort and get the closest picked layer
-	// 	if (candidates.length > 0) {
-	// 		candidates.sort(this._pickedLayerSortFn)
-	// 		if (options.deepPicking) {
-	// 			return candidates
-	// 		} else {
-	// 			return candidates[0]
-	// 		}
-	// 	}
-
-	// 	return
-	// }
 
 	/**
 	 * 初始化pointer相关事件

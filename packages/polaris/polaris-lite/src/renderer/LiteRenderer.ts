@@ -8,9 +8,7 @@ import {
 	Object3D,
 	Vector3,
 	WebGLRenderer,
-	Raycaster as ThreeRaycaster,
 	WebGLRenderTarget,
-	Clock,
 	Scene,
 	PerspectiveCamera,
 	Color,
@@ -23,14 +21,12 @@ import {
 	PointLight,
 } from 'three-lite'
 import { colorToString, PolarisProps } from '@polaris.gl/base'
-import { Renderer, PickResult, GSIView } from '@polaris.gl/gsi'
+import { Renderer, GSIView } from '@polaris.gl/gsi'
 import { ThreeLiteConverter } from '@gs.i/backend-threelite'
 import { CameraProxy } from 'camera-proxy'
 import * as SDK from '@gs.i/frontend-sdk'
-// import * as postprocessing from 'postprocessing'
-// const { EffectComposer, ShaderPass } = postprocessing
 import { calcCamNearFar } from './utils'
-import { Raycaster, RaycastInfo } from '@gs.i/processor-raycast'
+import { Raycaster } from '@gs.i/processor-raycast'
 import type { MatProcessor } from '@gs.i/processor-matrix'
 import type { BoundingProcessor } from '@gs.i/processor-bound'
 import type { GraphProcessor } from '@gs.i/processor-graph'
@@ -76,10 +72,6 @@ export const defaultProps = {
 	reflectionRatio: 1.0,
 	castShadow: false,
 }
-
-// export interface PolarisPass extends postprocessing.Pass {
-// 	onViewChange?: (cam: CameraProxy) => void
-// }
 
 // Temp vars
 const _vec3 = new Vector3()
@@ -536,47 +528,6 @@ export class LiteRenderer extends Renderer {
 		return _vec3.toArray()
 	}
 
-	// TODO refactor picking
-	/**
-	 *
-	 *
-	 * @param {MeshDataType} object
-	 * @param {{ x: number; y: number }} ndcCoords
-	 * @param {{ allInters?: boolean; threshold?: number; backfaceCulling?: boolean }} options allInters: 是否返回所有碰撞点并排序; threshold: lineMesh碰撞测试阈值; backfaceCulling: triangleMesh是否测试背面
-	 * @return {*}  {PickResult}
-	 * @memberof GSIGL2Renderer
-	 */
-	// pick(
-	// 	object: RenderableNode,
-	// 	ndcCoords: { x: number; y: number },
-	// 	options: { allInters?: boolean; threshold?: number; backfaceCulling?: boolean }
-	// ): PickResult {
-	// 	const result: PickResult = {
-	// 		hit: false,
-	// 		intersections: [],
-	// 	}
-
-	// 	this._internalThreeRaycaster.setFromCamera(ndcCoords, this.camera)
-	// 	this.raycaster.set(
-	// 		this._internalThreeRaycaster.ray.origin.clone(),
-	// 		this._internalThreeRaycaster.ray.direction.clone()
-	// 	)
-	// 	this.raycaster.near = this.camera.near
-	// 	this.raycaster.far = Infinity
-
-	// 	if (!object.geometry) {
-	// 		return result
-	// 	}
-
-	// 	options = options ?? {}
-	// 	const info = this.raycaster.raycast(object, options.allInters ?? false)
-
-	// 	if (info.hit) {
-	// 		return info
-	// 	}
-	// 	return result
-	// }
-
 	getCapabilities(): {
 		pointSizeRange: [number, number]
 		lineWidthRange: [number, number]
@@ -681,169 +632,4 @@ export class LiteRenderer extends Renderer {
 			}
 		}
 	}
-
-	/**
-	 * 初始化后期处理
-	 *
-	 * @private
-	 * @memberof GSIGL2Renderer
-	 */
-	// private initPostprocessing() {
-	// 	this.props.renderToFBO = false
-
-	// 	const ppList = this.props.postprocessing
-	// 		? this.props.postprocessing.length > 0
-	// 			? this.props.postprocessing
-	// 			: undefined
-	// 		: undefined
-	// 	const antialiasing = this.props.antialias
-
-	// 	// if no pp & 'msaa', using hardware antialiasing
-	// 	if ((!antialiasing || antialiasing === 'msaa') && !ppList) {
-	// 		return
-	// 	}
-
-	// 	// If use pp aa -> disable webgl2 msaa, GL2
-	// 	this.frame['multisample'] = antialiasing === 'msaa' ? 4 : 0
-
-	// 	// dispose prev EffectComposer
-	// 	if (this.effectComposer) {
-	// 		this.effectComposer.dispose()
-	// 	}
-
-	// 	// Preparation
-	// 	const passes = {}
-
-	// 	// EffectComposer
-	// 	const composer = (this.effectComposer = new EffectComposer(this.renderer, {
-	// 		// Bokeh需要depth
-	// 		depthBuffer: true,
-	// 		depthTexture: true,
-	// 	}))
-	// 	this.props.renderToFBO = true
-
-	// 	let aaPass
-	// 	const depthPasses: PolarisPass[] = [] // Depth passes should be rendered before aa pass
-	// 	const normalPasses: PolarisPass[] = [] // Normal passes should be rendered last
-
-	// 	// Render pass
-	// 	const frameBuffer = new ReadPass(this.frame)
-	// 	composer.addPass(frameBuffer)
-
-	// 	// AA pass
-	// 	if (antialiasing === 'smaa') {
-	// 		const SMAAPass = postprocessing['SMAAPass']
-	// 		const areaImage = new Image()
-	// 		areaImage.src = SMAAPass.areaImageDataURL
-	// 		const searchImage = new Image()
-	// 		searchImage.src = SMAAPass.searchImageDataURL
-	// 		aaPass = new SMAAPass(searchImage, areaImage)
-	// 		passes['SMAAPass'] = aaPass
-	// 	} else if (antialiasing === 'fxaa') {
-	// 		aaPass = new ShaderPass(genFXAAMaterial({ THREE }))
-	// 		aaPass.name = 'FXAAPass'
-	// 		aaPass.onViewChange = (cam) => {
-	// 			if (!this.renderer) return
-	// 			const drawingBufferSize = this.renderer.getDrawingBufferSize()
-	// 			const matr = aaPass.getFullscreenMaterial()
-	// 			matr.uniforms.resolution.value.set(drawingBufferSize.width, drawingBufferSize.height)
-	// 		}
-	// 		passes['FXAAPass'] = aaPass
-	// 	}
-
-	// 	if (!aaPass && !ppList) {
-	// 		return
-	// 	}
-
-	// 	// No more passes needed
-	// 	if (!ppList) {
-	// 		aaPass.renderToScreen = true
-	// 		composer.addPass(aaPass)
-	// 		return
-	// 	}
-
-	// 	// More passes needed
-	// 	if (aaPass) {
-	// 		aaPass.renderToScreen = false
-	// 	}
-
-	// 	// Process custom passes
-	// 	for (let i = 0; i < ppList.length; i++) {
-	// 		const { name, props } = ppList[i]
-	// 		const passName = name + 'Pass'
-	// 		let pass: PolarisPass
-	// 		if (passName === 'BokehPass' || passName === 'RealisticBokehPass') {
-	// 			// BokehPass needs depthTexture as input
-	// 			pass = new BokehPass()
-	// 			const uniforms = pass['uniforms']
-	// 			uniforms.tDepth.value = this.frame.depthTexture
-	// 			pass.onViewChange = (cam) => {
-	// 				if (!(props && props.autoFocus === false)) {
-	// 					uniforms.focus.value = cam.distance
-	// 				}
-	// 				if (!(props && props.autoDOF === false)) {
-	// 					uniforms.dof.value = cam.distance * 0.15
-	// 					uniforms.aperture.value = 1 / cam.distance
-	// 				}
-	// 				uniforms.cameraNear.value = this.props.cameraNear
-	// 				uniforms.cameraFar.value = this.props.cameraFar
-	// 			}
-	// 			depthPasses.push(pass)
-	// 		} else {
-	// 			if (!postprocessing[passName]) {
-	// 				console.error('[Polaris::Renderer-gsi-gl2] Invalid pass name')
-	// 				continue
-	// 			}
-	// 			if (Array.isArray(props)) {
-	// 				providePassArgs(props, {
-	// 					scene: this.scene,
-	// 					camera: this.camera,
-	// 				})
-	// 				pass = new postprocessing[passName](...props)
-	// 			} else {
-	// 				pass = new postprocessing[passName]({
-	// 					...props,
-	// 				})
-	// 			}
-	// 			normalPasses.push(pass)
-	// 		}
-
-	// 		// Attemp to set pass material.depthWrite
-	// 		if (pass.getFullscreenMaterial()) {
-	// 			pass.getFullscreenMaterial().depthWrite = !!props.depthWrite
-	// 		} else if (pass['setMaterialsProps']) {
-	// 			pass['setMaterialsProps']({
-	// 				depthWrite: !!props.depthWrite,
-	// 			})
-	// 		} else {
-	// 			// Do nothing
-	// 		}
-
-	// 		pass.enabled = !props.disabled
-	// 		passes[passName] = pass
-	// 	}
-
-	// 	// Add passes, order: aa -> depth -> normal passes
-	// 	if (aaPass) composer.addPass(aaPass)
-	// 	depthPasses.forEach((p) => {
-	// 		// Attemp to set scene depth, may not work as expected
-	// 		if (p.getFullscreenMaterial()) {
-	// 			p.getFullscreenMaterial().uniforms.tDepth.value = this.frame.depthTexture
-	// 		}
-	// 		composer.addPass(p)
-	// 	})
-	// 	normalPasses.forEach((p) => composer.addPass(p))
-	// 	this.passes = passes
-
-	// 	// Set last pass .renderToScreen
-	// 	if (composer.passes.length > 0) {
-	// 		for (let i = composer.passes.length - 1; i >= 0; i--) {
-	// 			const pass = composer.passes[i]
-	// 			if (pass.enabled) {
-	// 				pass.renderToScreen = true
-	// 				break
-	// 			}
-	// 		}
-	// 	}
-	// }
 }
