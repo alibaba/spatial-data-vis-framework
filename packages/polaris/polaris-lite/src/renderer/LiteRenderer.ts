@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import * as IR from '@gs.i/schema-scene'
+import type * as IR from '@gs.i/schema-scene'
 import {
 	Object3D,
 	Vector3,
@@ -20,71 +20,47 @@ import {
 	DirectionalLight,
 	PointLight,
 } from 'three-lite'
-import { colorToString, PolarisProps } from '@polaris.gl/base'
-import { Renderer, GSIView } from '@polaris.gl/gsi'
+import { Renderer, GSIView, PolarisGSIProps } from '@polaris.gl/gsi'
 import { ThreeLiteConverter } from '@gs.i/backend-threelite'
 import { CameraProxy } from 'camera-proxy'
 import * as SDK from '@gs.i/frontend-sdk'
-import { calcCamNearFar } from './utils'
+import { calcCamNearFar, colorToString } from './utils'
 import { Raycaster } from '@gs.i/processor-raycast'
-import type { MatProcessor } from '@gs.i/processor-matrix'
-import type { BoundingProcessor } from '@gs.i/processor-bound'
-import type { GraphProcessor } from '@gs.i/processor-graph'
-import type { CullingProcessor } from '@gs.i/processor-culling'
 
-/**
- *
- *
- * @export
- * @interface RendererProps
- * @extends {PolarisProps}
- */
-export interface RendererProps
-	extends Required<
-		Pick<
-			PolarisProps,
-			| 'width'
-			| 'ratio'
-			| 'height'
-			| 'antialias'
-			| 'background'
-			| 'fov'
-			| 'viewOffset'
-			| 'renderToFBO'
-			| 'lights'
-			| 'cameraNear'
-			| 'cameraFar'
-			| 'postprocessing'
-		>
-	> {
+export type RendererConfig = {
 	enableReflection?: boolean
 	reflectionRatio?: number
 	castShadow?: boolean
-
-	matrixProcessor: MatProcessor
-	boundingProcessor: BoundingProcessor
-	graphProcessor: GraphProcessor
-	cullingProcessor: CullingProcessor
-}
+} & Required<
+	Pick<
+		PolarisGSIProps,
+		| 'width'
+		| 'height'
+		| 'ratio'
+		| 'antialias'
+		| 'background'
+		| 'fov'
+		| 'viewOffset'
+		| 'renderToFBO'
+		| 'lights'
+		| 'cameraNear'
+		| 'cameraFar'
+		| 'postprocessing'
+		| 'matrixProcessor'
+		| 'boundingProcessor'
+		| 'graphProcessor'
+		| 'cullingProcessor'
+	>
+>
 
 export const defaultProps = {
-	enableReflection: false,
+	enableReflection: true,
 	reflectionRatio: 1.0,
 	castShadow: false,
 }
 
-// Temp vars
-const _vec3 = new Vector3()
-
-/**
- *
- *
- * @export
- * @class LiteRenderer
- * @extends {Renderer}
- */
 export class LiteRenderer extends Renderer {
-	props: RendererProps
+	private config: Required<RendererConfig>
 
 	/**
 	 * GSI - threelite 转换器
@@ -159,19 +135,19 @@ export class LiteRenderer extends Renderer {
 	/**
 	 * 反射相关FBO、Pass
 	 */
-	// private reflectionTexture: WebGLRenderTarget
+	reflectionTexture?: WebGLRenderTarget
+	reflectionTextureRough?: WebGLRenderTarget
 	// private reflectionTextureFXAA: WebGLRenderTarget
-	// private reflectionTextureRough: WebGLRenderTarget
 	// private reflectionDrawPass: Pass
 	// private reflectionFxaaPass: Pass
 	// private reflectionBlurPass: Pass
 	// private reflector: Mesh
 	// private reflectionTexMatrix: Matrix4
 
-	constructor(props: RendererProps) {
+	constructor(props: RendererConfig) {
 		super()
 
-		this.props = {
+		this.config = {
 			...defaultProps,
 			...props,
 		}
@@ -179,40 +155,35 @@ export class LiteRenderer extends Renderer {
 		/**
 		 * @stage_0 MPV
 		 */
-		const canvasWidth = this.props.width * (this.props.ratio ?? 1.0)
-		const canvasHeight = this.props.height * (this.props.ratio ?? 1.0)
+		const canvasWidth = this.config.width * (this.config.ratio ?? 1.0)
+		const canvasHeight = this.config.height * (this.config.ratio ?? 1.0)
 		const canvas = document.createElement('canvas')
 		canvas.width = canvasWidth
 		canvas.height = canvasHeight
 		canvas.style.position = 'absolute'
 		canvas.style.left = '0px'
 		canvas.style.top = '0px'
-		canvas.style.width = this.props.width + 'px'
-		canvas.style.height = this.props.height + 'px'
+		canvas.style.width = this.config.width + 'px'
+		canvas.style.height = this.config.height + 'px'
 		this.canvas = canvas
 
 		// Converter
 		this.conv = new ThreeLiteConverter({
-			matrixProcessor: this.props.matrixProcessor,
-			boundingProcessor: this.props.boundingProcessor,
-			graphProcessor: this.props.graphProcessor,
-			cullingProcessor: this.props.cullingProcessor,
+			matrixProcessor: this.config.matrixProcessor,
+			boundingProcessor: this.config.boundingProcessor,
+			graphProcessor: this.config.graphProcessor,
+			cullingProcessor: this.config.cullingProcessor,
 		})
 
 		/**
 		 * init renderer
 		 */
-		const attributes: WebGLContextAttributes = {
-			alpha: true,
-			antialias: this.props.antialias === 'msaa',
-			stencil: false,
-		}
 
 		this.renderer = new WebGLRenderer({
 			canvas: this.canvas,
 			// context: this.context,
 			alpha: true,
-			antialias: this.props.antialias === 'msaa',
+			antialias: this.config.antialias === 'msaa',
 			stencil: false,
 		})
 		this.context = this.renderer.getContext()
@@ -236,11 +207,11 @@ export class LiteRenderer extends Renderer {
 		 * init scene
 		 */
 		this.scene = new Scene()
-		if (this.props.background === 'transparent') {
+		if (this.config.background === 'transparent') {
 			this.scene.background = null
 			this.renderer.setClearAlpha(0.0)
 		} else {
-			this.scene.background = new Color(this.props.background as string)
+			this.scene.background = new Color(this.config.background as string)
 		}
 
 		/**
@@ -267,45 +238,28 @@ export class LiteRenderer extends Renderer {
 		 * @note 整个 camera 的转换都放进 renderer 里，这里只提供 camera proxy
 		 * 反正在哪里转都是一样的
 		 */
-		const { cameraNear, cameraFar } = this.props
+		const { cameraNear, cameraFar } = this.config
 		this.camera = new PerspectiveCamera(
-			this.props.fov,
-			this.props.width / this.props.height,
+			this.config.fov,
+			this.config.width / this.config.height,
 			cameraNear,
 			cameraFar
 		)
 		this.camera.matrixAutoUpdate = false
-		if (this.props.viewOffset) {
+		if (this.config.viewOffset) {
 			this.camera.setViewOffset(
-				this.props.width,
-				this.props.height,
-				this.props.viewOffset[0],
-				this.props.viewOffset[1],
-				this.props.viewOffset[2] ?? this.props.width,
-				this.props.viewOffset[3] ?? this.props.height
+				this.config.width,
+				this.config.height,
+				this.config.viewOffset[0],
+				this.config.viewOffset[1],
+				this.config.viewOffset[2] ?? this.config.width,
+				this.config.viewOffset[3] ?? this.config.height
 			)
 		}
 
 		/**
 		 * @stage_1 BI 需要
 		 */
-
-		/**
-		 * init picking
-		 * 出于兼容性、实现简洁性，应该使用 CPU picking （raycasting）
-		 * 但是出于 GL2 和 WebGPU 的优势考虑，应该使用 GPU picking （color buffer）
-		 * - GPU picking
-		 * 		WebGL
-		 * 			使用一个单独的 RT
-		 * 			使用一个PickingMaterial 绘制layer masked物体，同时编ID，映射layer
-		 * 		WebGL2
-		 * 			使用一个独立的 color buffer，同步绘制
-		 */
-		// this.raycaster = new Raycaster({
-		// 	boundingProcessor: this.props.boundingProcessor,
-		// 	matrixProcessor: this.props.matrixProcessor,
-		// })
-		// this._internalThreeRaycaster = new ThreeRaycaster()
 
 		/**
 		 * @stage_2 只兼容桌面端，考虑是否放到 GL2 renderer 里，IE 是否需要？
@@ -343,7 +297,7 @@ export class LiteRenderer extends Renderer {
 			this.conv.convert(this.rootWrapper)
 		}
 
-		if (this.props.renderToFBO) {
+		if (this.config.renderToFBO) {
 			// Postprocessing rendering
 			this.renderer.setRenderTarget(this.frame)
 			this.renderer.render(this.scene, this.camera)
@@ -365,8 +319,8 @@ export class LiteRenderer extends Renderer {
 		this.canvas.width = canvasWidth
 		this.canvas.height = canvasHeight
 
-		this.props.width = width
-		this.props.height = height
+		this.config.width = width
+		this.config.height = height
 
 		this.renderer.setDrawingBufferSize(width, height, ratio)
 
@@ -417,7 +371,7 @@ export class LiteRenderer extends Renderer {
 		this.camera.updateMatrixWorld(true)
 
 		// Update point lights position
-		const pLights = this.props.lights?.pointLights
+		const pLights = this.config.lights?.pointLights
 		if (pLights) {
 			this.lights.children.forEach((light) => {
 				const type = light.name.split('.')[0]
@@ -440,8 +394,8 @@ export class LiteRenderer extends Renderer {
 		// Update cameraNear/cameraFar
 		const [near, far] = calcCamNearFar(cam)
 		if (near && far && (this.camera.near !== near || this.camera.far !== far)) {
-			this.camera.near = Math.max(near, this.props.cameraNear as number)
-			this.camera.far = Math.min(far, this.props.cameraFar as number)
+			this.camera.near = Math.max(near, this.config.cameraNear as number)
+			this.camera.far = Math.min(far, this.config.cameraFar as number)
 			this.camera.updateProjectionMatrix()
 		}
 
@@ -461,8 +415,8 @@ export class LiteRenderer extends Renderer {
 
 		/** Update reflectionTexture */
 		// const canvasSize = this.renderer.getSize(vec2)
-		// const reflectionWidth = Math.floor(canvasSize.width * (this.props.reflectionRatio ?? 1.0))
-		// const reflectionHeight = Math.floor(canvasSize.height * (this.props.reflectionRatio ?? 1.0))
+		// const reflectionWidth = Math.floor(canvasSize.width * (this.config.reflectionRatio ?? 1.0))
+		// const reflectionHeight = Math.floor(canvasSize.height * (this.config.reflectionRatio ?? 1.0))
 		// this.reflectionTexture.setSize(reflectionWidth, reflectionHeight)
 		// this.reflectionTextureFXAA.setSize(reflectionWidth, reflectionHeight)
 		// this.reflectionTextureRough.setSize(reflectionWidth / 2, reflectionHeight / 2)
@@ -471,61 +425,59 @@ export class LiteRenderer extends Renderer {
 		// this.reflectionBlurPass.resize(reflectionWidth, reflectionHeight)
 	}
 
-	updateProps(props) {
-		this.props = {
-			...this.props,
+	updateConfig(props) {
+		this.config = {
+			...this.config,
 			...props,
 		}
-		if (this.props.background === 'transparent') {
+		if (this.config.background === 'transparent') {
 			this.scene.background = null
 			this.renderer.setClearAlpha(0.0)
 		} else {
-			this.scene.background = new Color(this.props.background as string)
+			this.scene.background = new Color(this.config.background as string)
 		}
 
-		const canvasWidth = this.props.width * (this.props.ratio ?? 1.0)
-		const canvasHeight = this.props.height * (this.props.ratio ?? 1.0)
-		this.canvas.style.width = this.props.width + 'px'
-		this.canvas.style.height = this.props.height + 'px'
+		const canvasWidth = this.config.width * (this.config.ratio ?? 1.0)
+		const canvasHeight = this.config.height * (this.config.ratio ?? 1.0)
+		this.canvas.style.width = this.config.width + 'px'
+		this.canvas.style.height = this.config.height + 'px'
 		this.canvas.width = canvasWidth
 		this.canvas.height = canvasHeight
 		this.renderer.setSize(canvasWidth, canvasHeight)
 		this.renderer.setViewport(0, 0, canvasWidth, canvasHeight)
 
-		const { cameraNear, cameraFar, fov } = this.props
+		const { cameraNear, cameraFar, fov } = this.config
 		this.camera.near = cameraNear as number
 		this.camera.far = cameraFar as number
 		this.camera.fov = fov as number
-		this.camera.aspect = this.props.width / this.props.height
-		if (this.props.viewOffset && this.props.viewOffset.length === 4) {
+		this.camera.aspect = this.config.width / this.config.height
+		if (this.config.viewOffset && this.config.viewOffset.length === 4) {
 			this.camera.setViewOffset(
-				this.props.width,
-				this.props.height,
-				this.props.viewOffset[0],
-				this.props.viewOffset[1],
-				this.props.viewOffset[2],
-				this.props.viewOffset[3]
+				this.config.width,
+				this.config.height,
+				this.config.viewOffset[0],
+				this.config.viewOffset[1],
+				this.config.viewOffset[2],
+				this.config.viewOffset[3]
 			)
 		}
 		this.camera.updateProjectionMatrix()
 
 		this.initLights()
 
-		if (this.props.postprocessing && this.props.postprocessing.length > 0) {
+		if (this.config.postprocessing && this.config.postprocessing.length > 0) {
 			/** @QianXun 目前先采用全部替换pass的方式来更新pp props */
 			// this.initPostprocessing()
 		} else {
-			this.props.renderToFBO = false
+			this.config.renderToFBO = false
 			this.renderer.autoClear = true
 		}
 	}
 
 	getNDC(worldPosition: { x: number; y: number; z: number }): number[] {
-		_vec3.x = worldPosition.x
-		_vec3.y = worldPosition.y
-		_vec3.z = worldPosition.z
-		_vec3.project(this.camera)
-		return _vec3.toArray()
+		return new Vector3(worldPosition.x, worldPosition.y, worldPosition.z)
+			.project(this.camera)
+			.toArray()
 	}
 
 	getCapabilities(): {
@@ -545,25 +497,25 @@ export class LiteRenderer extends Renderer {
 	 * @memberof GSIGL2Renderer
 	 */
 	private initLights() {
-		if (this.props.lights) {
+		if (this.config.lights) {
 			// gltf to three
-			if (this.props.lights.ambientLight) {
+			if (this.config.lights.ambientLight) {
 				const name = 'AmbientLight'
 				let aLight: AmbientLight = this.lights.getObjectByName(name) as AmbientLight
 				if (!aLight) {
 					aLight = new AmbientLight()
 					this.lights.add(aLight)
 				}
-				if (this.props.lights.ambientLight.color) {
-					aLight.color = new Color(colorToString(this.props.lights.ambientLight.color))
+				if (this.config.lights.ambientLight.color) {
+					aLight.color = new Color(colorToString(this.config.lights.ambientLight.color))
 				}
 
-				aLight.intensity = this.props.lights.ambientLight.intensity ?? 1.0
+				aLight.intensity = this.config.lights.ambientLight.intensity ?? 1.0
 				aLight.name = name
 				aLight.matrixAutoUpdate = false
 			}
-			if (this.props.lights.directionalLights) {
-				const dLights = this.props.lights.directionalLights
+			if (this.config.lights.directionalLights) {
+				const dLights = this.config.lights.directionalLights
 				dLights.forEach((item, index) => {
 					const name = 'DirectionalLight.' + index
 					let dlight: DirectionalLight = this.lights.getObjectByName(name) as DirectionalLight
@@ -595,8 +547,8 @@ export class LiteRenderer extends Renderer {
 					}
 				})
 			}
-			if (this.props.lights.pointLights) {
-				const pLights = this.props.lights.pointLights
+			if (this.config.lights.pointLights) {
+				const pLights = this.config.lights.pointLights
 				pLights.forEach((item, index) => {
 					const name = 'PointLight.' + index
 					let plight: PointLight = this.lights.getObjectByName(name) as PointLight

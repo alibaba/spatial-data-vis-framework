@@ -18,11 +18,26 @@ if (!fs.existsSync(distPath)) {
 	fs.mkdirSync(distPath)
 }
 
-const files = fs.readdirSync(srcPath)
-let count = 0
-files.forEach((file) => {
-	if (file.endsWith('.glsl')) {
-		fs.readFile(path.resolve(srcPath, file), 'utf-8', (err, data) => {
+const glob = require('glob')
+
+glob(srcPath + '/**/*.glsl', {}, (err, files) => {
+	if (files.length === 0) {
+		console.log(`[glsl-processor] - No glsl files found.`)
+	}
+
+	files.forEach((filePathAbs) => {
+		const filePathRel = path.relative(srcPath, filePathAbs)
+
+		const targetPath = path.resolve(distPath, filePathRel)
+
+		const targetDirPath = path.dirname(targetPath)
+
+		if (!fs.existsSync(targetDirPath)) {
+			console.log('dist folder does not exist: ' + targetDirPath + '. -> mkdir-ing...')
+			fs.mkdirSync(targetDirPath, { recursive: true })
+		}
+
+		fs.readFile(filePathAbs, 'utf-8', (err, data) => {
 			if (err) {
 				console.error(err)
 				return
@@ -32,19 +47,15 @@ files.forEach((file) => {
 			data = data.trim()
 			data = data.replace(/\n{1,}/g, '\n') // Remove empty lines
 
-			const transContent = 'export default `' + data + '`'
+			const transContent = 'export default /* glsl */`' + data + '`'
 
-			fs.writeFile(path.resolve(distPath, file + ext), transContent, (err) => {
+			fs.writeFile(targetPath + ext, transContent, (err) => {
 				if (err) {
 					console.error(err)
 					return
 				}
-				console.log('\x1b[32m%s\x1b[0m', `[glsl-processor] - ${file}`)
+				console.log('\x1b[32m%s\x1b[0m', `[glsl-processor] - ${filePathRel}`)
 			})
 		})
-		count++
-	}
+	})
 })
-if (count === 0) {
-	console.log(`[glsl-processor] - No glsl files found, skip`)
-}

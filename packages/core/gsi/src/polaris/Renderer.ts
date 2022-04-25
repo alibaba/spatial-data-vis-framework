@@ -60,7 +60,7 @@ export abstract class Renderer {
 	/**
 	 * 更新场景配置
 	 */
-	abstract updateProps(props: { [key: string]: any }): void
+	abstract updateConfig(props: { [key: string]: any }): void
 
 	abstract getCapabilities(): {
 		pointSizeRange: [number, number]
