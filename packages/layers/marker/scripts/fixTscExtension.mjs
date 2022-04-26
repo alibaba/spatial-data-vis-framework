@@ -86,7 +86,10 @@ async function editFile(file) {
 				} catch (error) {
 					console.warn(
 						'\x1b[33m%s\x1b[0m',
-						`找不到被引用的模块，将使用 .js 作为后缀：${moduleName} in ${file}`
+						`找不到被引用的模块，将使用 .js 作为后缀：${moduleName} in ${path.relative(
+							path.resolve(__dirname, '../'),
+							file
+						)}`
 					)
 					extension = '.js'
 				}
