@@ -1,4 +1,4 @@
-import { StandardLayer } from '@polaris.gl/layer-std'
+import { StandardLayer } from '@polaris.gl/gsi'
 import { PolarisLite } from '../src/index'
 
 import { generateScene } from '@gs.i/utils-random-scene'
@@ -28,12 +28,12 @@ await test(true, 'PolarisLite', () => {
 	})
 	console.log(scene)
 
-	// const indicator = new IndicatorProcessor({
-	// 	// hideOriginal: true,
-	// 	useBBox: true,
-	// 	useBSphere: true,
-	// 	// useWireframe: true,
-	// })
+	const indicator = new IndicatorProcessor({
+		// hideOriginal: true,
+		useBBox: true,
+		useBSphere: true,
+		// useWireframe: true,
+	})
 	// indicator.traverse(scene)
 
 	const l = new StandardLayer({})

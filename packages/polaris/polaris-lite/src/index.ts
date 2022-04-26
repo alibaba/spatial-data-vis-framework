@@ -4,21 +4,17 @@
  */
 
 import { isRenderable, RenderableNode, Vec3 } from '@gs.i/schema-scene'
-import { PolarisProps } from '@polaris.gl/base'
-import { PolarisGSI } from '@polaris.gl/gsi'
+import { PolarisGSI, PolarisGSIProps } from '@polaris.gl/gsi'
 import { LiteRenderer } from './renderer/LiteRenderer'
 import { Raycaster as ThreeLiteRaycaster } from 'three-lite'
 import { Raycaster, RaycastInfo } from '@gs.i/processor-raycast'
 
-export interface PolarisLiteProps extends PolarisProps {}
+export interface PolarisLiteProps extends PolarisGSIProps {}
 
-export interface PolarisLite extends PolarisGSI {}
 export class PolarisLite extends PolarisGSI {
 	readonly renderer: LiteRenderer
 
-	// raycast objects
-	private _threeLiteRaycaster: ThreeLiteRaycaster
-	private _raycaster: Raycaster
+	private raycaster: Raycaster
 
 	constructor(props: PolarisLiteProps) {
 		super(props)
@@ -31,11 +27,24 @@ export class PolarisLite extends PolarisGSI {
 		this.renderer.resize(this.width, this.height, this.ratio)
 		this.view.html.element.appendChild(this.renderer.canvas)
 
-		// init picking
-		this._threeLiteRaycaster = new ThreeLiteRaycaster()
-		this._raycaster = new Raycaster({
+		this.raycaster = new Raycaster({
 			boundingProcessor: this.props.boundingProcessor,
 			matrixProcessor: this.props.matrixProcessor,
+		})
+
+		// Renderer props update listener
+		const rendererProps = [
+			'background',
+			'cameraNear',
+			'cameraFar',
+			'fov',
+			'viewOffset',
+			'lights',
+			'postprocessing',
+		] as const
+		this.watchProps(rendererProps, (e) => {
+			this.cameraProxy.fov = e.props.fov ?? this.cameraProxy.fov
+			this.renderer.updateConfig(e.props)
 		})
 	}
 
@@ -66,13 +75,13 @@ export class PolarisLite extends PolarisGSI {
 
 		const cam = this.renderer.camera
 
-		this._threeLiteRaycaster.setFromCamera(ndcCoords, cam)
-		this._raycaster.set(
-			this._threeLiteRaycaster.ray.origin as Vec3, // safe to assert here
-			this._threeLiteRaycaster.ray.direction as Vec3 // safe to assert here
+		_threeLiteRaycaster.setFromCamera(ndcCoords, cam)
+		this.raycaster.set(
+			_threeLiteRaycaster.ray.origin as Vec3, // safe to assert here
+			_threeLiteRaycaster.ray.direction as Vec3 // safe to assert here
 		)
-		this._raycaster.near = cam.near
-		this._raycaster.far = Infinity
+		this.raycaster.near = cam.near
+		this.raycaster.far = Infinity
 
 		if (object.geometry.mode !== 'TRIANGLES') {
 			console.warn(`PolarisLite - Unsupported geometry mode: ${object.geometry.mode}. `)
@@ -82,7 +91,7 @@ export class PolarisLite extends PolarisGSI {
 			}
 		}
 
-		const info = this._raycaster.raycast(object, options.allInters)
+		const info = this.raycaster.raycast(object, options.allInters)
 
 		if (!info.hit) {
 			return {
@@ -94,3 +103,8 @@ export class PolarisLite extends PolarisGSI {
 		return info
 	}
 }
+
+/**
+ * used for calculate ray from camera
+ */
+const _threeLiteRaycaster = new ThreeLiteRaycaster()

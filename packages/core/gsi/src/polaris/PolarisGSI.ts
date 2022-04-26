@@ -8,7 +8,6 @@ import {
 	AbstractPolaris,
 	PolarisProps,
 	defaultProps as defaultPolarisProps,
-	AbstractLayer,
 	PickEventResult,
 	PickInfo,
 	CoordV2,
@@ -179,31 +178,6 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 		 * Props listener
 		 */
 
-		// Renderer props update listener
-		const rendererProps = [
-			'background',
-			'cameraNear',
-			'cameraFar',
-			'fov',
-			'viewOffset',
-			'lights',
-			'postprocessing',
-		] as const
-		this.watchProps(rendererProps, (e) => {
-			// const changedProps = e.props
-
-			const newProps = {}
-			for (let i = 0; i < rendererProps.length; i++) {
-				const key = rendererProps[i]
-				newProps[key] = this.getProp(key)
-			}
-
-			if (this.renderer) {
-				this.cameraProxy.fov = newProps['fov']
-				this.renderer.updateProps(newProps)
-			}
-		})
-
 		// Responsive for container resize
 		this.watchProps(
 			['autoResize'],
@@ -233,6 +207,16 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 				}
 			},
 			true
+		)
+
+		// static props (shall not change these props)
+		this.watchProps(
+			['matrixProcessor', 'boundingProcessor', 'graphProcessor', 'cullingProcessor'],
+			(e) => {
+				const msg = `Do not modify static props: [${e.changedKeys.join(',')}]`
+				this.dispatchEvent({ type: 'error', error: new Error(msg) })
+				console.error(msg)
+			}
 		)
 	}
 

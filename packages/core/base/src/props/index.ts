@@ -5,7 +5,7 @@
 
 import { BasicProps, defaultBasicProps } from './BasicProps'
 import { CameraProps, defaultCameraProps } from './CameraProps'
-import { SceneProps, defaultSceneProps, colorToString } from './SceneProps'
+import { SceneProps, defaultSceneProps } from './SceneProps'
 
 export interface PolarisProps extends BasicProps, CameraProps, SceneProps {}
 
@@ -14,8 +14,6 @@ export const defaultProps = {
 	...defaultCameraProps,
 	...defaultSceneProps,
 }
-
-export { colorToString }
 
 export const STATIC_PROPS = [
 	'autoResize' as const,
