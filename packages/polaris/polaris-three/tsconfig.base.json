@@ -1,0 +1,45 @@
+// DO NOT EDIT
+// AUTO COPIED FROM ROOT/shared
+
+{
+	"compilerOptions": {
+		// es6 === es2015 es2016 增加 includes
+		// ES2017 add Object.values() padStart atomics async await
+		// ES2018 Rest / Spread for Objects , Asynchronous Iteration
+		// ES2019 flat trim
+		// ES2020 BigInt Dynamic-import ?? ?. allSettled import.meta
+		// @see https://github.com/tsconfig/bases/blob/main/bases/node14.json
+		"target": "es2020",
+		"lib": ["ES2020", "DOM"],
+		"moduleResolution": "node",
+		"module": "ES2020", // @see https://www.typescriptlang.org/tsconfig#module
+		"declaration": true,
+		"declarationMap": true,
+		"sourceMap": false,
+		"strict": true,
+		"esModuleInterop": true, // import React from 'react'
+		"strictPropertyInitialization": false,
+		//
+		"forceConsistentCasingInFileNames": true,
+		//
+		"noImplicitAny": false, // TODO 改成 true，所有 any 必须显式
+		"noImplicitThis": true,
+		"noImplicitReturns": true, // TODO 改成 true，
+		"noFallthroughCasesInSwitch": true,
+		"exactOptionalPropertyTypes": false, // TODO 改成 true，
+		"alwaysStrict": true,
+		"noImplicitOverride": false, // TODO 改成 true，
+		"strictNullChecks": true,
+		//
+		"experimentalDecorators": true,
+		"incremental": false,
+		"isolatedModules": true,
+		"resolveJsonModule": true,
+		// "skipLibCheck": true,
+		"typeRoots": ["./node_modules/@types/"], // 这样来避免所有 上级目录的 @types 都被包含进去
+		"jsx": "react", // Emit .js files with JSX changed to the equivalent React.createElement calls
+		//
+		"allowJs": true
+	},
+	"include": ["typings"] // 如果 child config 有这个字段，该值会被忽略
+}

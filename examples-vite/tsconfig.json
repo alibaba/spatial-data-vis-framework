@@ -49,6 +49,9 @@
 		},
 		{
 			"path": "../packages/polaris/polaris-react"
+		},
+		{
+			"path": "../packages/polaris/polaris-three"
 		}
 	]
 }

@@ -1,0 +1,41 @@
+{
+	"name": "@polaris.gl/three",
+	"version": "0.1.0-alpha.22",
+	"description": "",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"type": "module",
+	"license": "MIT",
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"README.md",
+		"dist/*"
+	],
+	"scripts": {
+		"start": "vite --open /examples/ --cors --config vite.config.cjs",
+		"build": "./scripts/build.sh",
+		"prebuild": "node ./scripts/glsl-processor.cjs",
+		"clean": "./scripts/clean.sh",
+		"rebuild": "npm run clean && npm run build",
+		"build:umd": "npx webpack"
+	},
+	"dependencies": {
+		"@gs.i/backend-three": "0.2.1-alpha.23",
+		"three": "^0.139.2",
+		"@gs.i/frontend-sdk": "0.2.1-alpha.23",
+		"@gs.i/processor-raycast": "^0.2.1-alpha.23",
+		"@gs.i/schema-scene": "^0.2.1-alpha.23",
+		"@polaris.gl/gsi": "^0.1.0-alpha.22"
+	},
+	"devDependencies": {
+		"@gs.i/processor-indicator": "^0.2.1-alpha.23",
+		"@gs.i/utils-random-scene": "^0.2.1-alpha.23",
+		"vite-plugin-string": "^1.1.2",
+		"@types/offscreencanvas": "latest",
+		"@types/webvr-api": "latest",
+		"@types/three": "^0.139.0",
+		"typescript": ">4.4.0"
+	}
+}
