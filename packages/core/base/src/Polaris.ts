@@ -16,7 +16,6 @@ import { PolarisProps, defaultProps, STATIC_PROPS } from './props/index'
 import type { AbstractPolarisEvents } from './events'
 import { checkViewChange, debug } from './utils'
 
-export { colorToString } from './props/index'
 export type { PolarisProps } from './props/index'
 
 /**
@@ -28,10 +27,6 @@ export abstract class AbstractPolaris<
 > extends AbstractLayer<TProps, TEvents> {
 	readonly isAbstractPolaris = true
 	readonly isPolaris = true
-
-	/**
-	 * @todo readonly props should use getter
-	 */
 
 	readonly cameraProxy: AnimatedCameraProxy
 

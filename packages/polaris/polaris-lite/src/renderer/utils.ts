@@ -69,3 +69,17 @@ export function calcCamNearFar(cameraProxy) {
 	// console.log('near, far', near, far)
 	return [near, far]
 }
+
+export function colorToString(RGB): string {
+	if (Array.isArray(RGB)) {
+		// if (RGB.length === 3) {
+		return 'rgb(' + RGB.join(',') + ')'
+		// } else {
+		// 	console.warn('RGB应该为3位，alpha通道可能不会支持')
+		// 	return 'rgba(' + RGB.join(',') + ')'
+		// }
+	} else {
+		// undefined | string
+		return RGB
+	}
+}
