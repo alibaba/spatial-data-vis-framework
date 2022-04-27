@@ -47,10 +47,10 @@ await test(true, 'PolarisThree', () => {
 
 	p.add(l)
 
-	const r = new Reflector(new THREE.PlaneGeometry(500, 500), { multisample: 8 })
+	const r = new Reflector({ clipBias: 0.01, debug: true, debugBlur: true })
 
-	// r.rotation.x = 1
-	r.position.x = -100
+	// r.position.z = 10
+	// r.position.x = -100
 	r.updateMatrixWorld()
 
 	p.renderer['scene'].add(r)

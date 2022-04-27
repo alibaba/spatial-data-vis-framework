@@ -19,6 +19,7 @@ import {
 	AmbientLight,
 	DirectionalLight,
 	PointLight,
+	Texture,
 } from 'three'
 import { Renderer, GSIView, PolarisGSIProps } from '@polaris.gl/gsi'
 import { Converter } from '@gs.i/backend-three'
@@ -28,9 +29,9 @@ import { calcCamNearFar, colorToString } from './utils'
 import { Raycaster } from '@gs.i/processor-raycast'
 
 export type RendererConfig = {
-	enableReflection?: boolean
-	reflectionRatio?: number
-	castShadow?: boolean
+	enableReflection: boolean
+	reflectionRatio: number
+	castShadow: boolean
 } & Required<
 	Pick<
 		PolarisGSIProps,
@@ -135,8 +136,8 @@ export class ThreeRenderer extends Renderer {
 	/**
 	 * 反射相关FBO、Pass
 	 */
-	reflectionTexture?: WebGLRenderTarget
-	reflectionTextureRough?: WebGLRenderTarget
+	// reflectionTexture?: Texture
+	// reflectionTextureBlur?: Texture
 	// private reflectionTextureFXAA: WebGLRenderTarget
 	// private reflectionDrawPass: Pass
 	// private reflectionFxaaPass: Pass
@@ -412,17 +413,6 @@ export class ThreeRenderer extends Renderer {
 				pass.onViewChange && pass.onViewChange(cam)
 			}
 		}
-
-		/** Update reflectionTexture */
-		// const canvasSize = this.renderer.getSize(vec2)
-		// const reflectionWidth = Math.floor(canvasSize.width * (this.config.reflectionRatio ?? 1.0))
-		// const reflectionHeight = Math.floor(canvasSize.height * (this.config.reflectionRatio ?? 1.0))
-		// this.reflectionTexture.setSize(reflectionWidth, reflectionHeight)
-		// this.reflectionTextureFXAA.setSize(reflectionWidth, reflectionHeight)
-		// this.reflectionTextureRough.setSize(reflectionWidth / 2, reflectionHeight / 2)
-		// this.reflectionDrawPass.resize(reflectionWidth, reflectionHeight)
-		// this.reflectionFxaaPass.resize(reflectionWidth, reflectionHeight)
-		// this.reflectionBlurPass.resize(reflectionWidth, reflectionHeight)
 	}
 
 	updateConfig(props) {

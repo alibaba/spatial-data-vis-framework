@@ -60,6 +60,9 @@ export interface PolarisGSI {
 export const DefaultPolarisGSIProps = {
 	...(defaultPolarisProps as Required<typeof defaultPolarisProps>),
 	enablePicking: true,
+	enableReflection: false,
+	reflectionRatio: 0.5,
+
 	/**
 	 * @note safe to share globally @simon
 	 */
@@ -84,11 +87,6 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 	readonly isPolarisGSI = true
 
 	/**
-	 * @todo should be accessible for polaris user. change this may have no effects.
-	 */
-	protected props: PolarisGSIProps & Required<typeof DefaultPolarisGSIProps>
-
-	/**
 	 * top view layer
 	 */
 	view: {
@@ -109,6 +107,10 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 	readonly graphProcessor: GraphProcessor
 	readonly cullingProcessor: CullingProcessor
 
+	reflectionTexture?: IR.Texture
+	reflectionTextureBlur?: IR.Texture
+	reflectionMatrix?: IR.Matrix
+
 	/**
 	 * pointer 事件封装
 	 */
@@ -126,8 +128,6 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 		}
 		super(mergedProps)
 
-		this.props = mergedProps
-
 		this.matrixProcessor = mergedProps.matrixProcessor
 		this.boundingProcessor = mergedProps.boundingProcessor
 		this.graphProcessor = mergedProps.graphProcessor
@@ -144,7 +144,7 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 		/**
 		 * init html / canvas
 		 */
-		const container = this.props.container as HTMLDivElement
+		const container = mergedProps.container as HTMLDivElement
 
 		// render html view
 		this.view.html.element
@@ -159,7 +159,7 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 		this._initPointerEvents()
 
 		// 相机控制事件
-		if (this.props.cameraControl) {
+		if (mergedProps.cameraControl) {
 			if (isTouchDevice) {
 				this.cameraControl = new TouchControl({
 					camera: this.cameraProxy,
@@ -337,7 +337,7 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 	 * @memberof PolarisGSI
 	 */
 	private _initPointerEvents() {
-		if (!this.props.enablePointer) return
+		if (!this.getProp('enablePointer')) return
 
 		const element = this.view.html.element
 		element.addEventListener('contextmenu', (e) => {

@@ -23,6 +23,7 @@
 		"@polaris.gl/layer-xyz-aoi-tile": "^0.1.0-alpha.22",
 		"@polaris.gl/layer-xyz-poi-tile": "^0.1.0-alpha.22",
 		"@polaris.gl/lite": "^0.1.0-alpha.22",
+		"@polaris.gl/three": "^0.1.0-alpha.22",
 		"@polaris.gl/projection": "^0.1.0-alpha.22",
 		"@polaris.gl/react": "^0.1.0-alpha.22",
 		"react": "^16.13.0",

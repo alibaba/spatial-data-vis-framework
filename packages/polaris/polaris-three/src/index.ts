@@ -1,3 +1,4 @@
+import { specifyTexture } from '@gs.i/utils-specify'
 /**
  * Copyright (C) 2021 Alibaba Group Holding Limited
  * All rights reserved.
@@ -8,16 +9,32 @@ import { PolarisGSI, PolarisGSIProps } from '@polaris.gl/gsi'
 import { ThreeRenderer } from './renderer/ThreeRenderer'
 import { Raycaster as ThreeRaycaster } from 'three'
 import { Raycaster, RaycastInfo } from '@gs.i/processor-raycast'
-import { initReflection, Reflector } from './renderer/reflection'
+import { Reflector } from './renderer/Reflector'
+
+export type PolarisThreeProps = PolarisGSIProps & {
+	/**
+	 * @deprecated not implemented yet.
+	 */
+	castShadow?: boolean
+}
 
 export class PolarisThree extends PolarisGSI {
 	readonly renderer: ThreeRenderer
-
 	private raycaster: Raycaster
 
-	constructor(props: PolarisGSIProps) {
+	private readonly enableReflection: boolean
+	private readonly reflectionRatio: number
+	private readonly castShadow: boolean
+	private readonly reflector?: Reflector
+
+	constructor(props: PolarisThreeProps) {
 		super(props)
-		this.renderer = new ThreeRenderer(this.props)
+
+		this.enableReflection = !!props.enableReflection
+		this.reflectionRatio = props.reflectionRatio || 0.5
+		this.castShadow = !!props.castShadow
+
+		this.renderer = new ThreeRenderer(this.getRendererConfig())
 
 		this.cameraProxy.config.onUpdate = (cam) => this.renderer.updateCamera(cam)
 		this.cameraProxy['onUpdate'] = (cam) => this.renderer.updateCamera(cam)
@@ -27,18 +44,52 @@ export class PolarisThree extends PolarisGSI {
 		this.view.html.element.appendChild(this.renderer.canvas)
 
 		this.raycaster = new Raycaster({
-			boundingProcessor: this.props.boundingProcessor,
-			matrixProcessor: this.props.matrixProcessor,
+			boundingProcessor: this.boundingProcessor,
+			matrixProcessor: this.matrixProcessor,
 		})
+
+		if (this.enableReflection) {
+			this.reflector = new Reflector({
+				textureWidth: (this.getProp('width') as number) * this.reflectionRatio,
+				textureHeight: (this.getProp('height') as number) * this.reflectionRatio,
+				debugBlur: false,
+			})
+
+			this.renderer['scene'].add(this.reflector)
+
+			this.reflectionTexture = specifyTexture({
+				image: {
+					uri: 'https://img.alaassicdn.com/imgextra/i1/O1CN01V6Tl3V1dzC8hdgJdi_!!6000000003806-2-tps-4096-4096.png',
+				},
+				extensions: { EXT_ref_threejs: this.reflector.texture },
+			})
+			this.reflectionTextureBlur = specifyTexture({
+				image: {
+					uri: 'https://img.alicdn.com/imgextra/i1/O1CN01V6Tl3V1dzC8hdgJdi_!!6000000003806-2-tps-4096-4096.png',
+				},
+				extensions: { EXT_ref_threejs: this.reflector.textureBlur },
+			})
+
+			this.reflectionMatrix = this.reflector.reflectionMatrix.elements
+
+			this.watchProps(['width', 'height'], (e) => {
+				this.reflector?.resize(
+					(this.getProp('width') as number) * this.reflectionRatio,
+					(this.getProp('height') as number) * this.reflectionRatio
+				)
+			})
+		}
 
 		// Renderer props update listener
 		const rendererProps = [
+			'antialias',
 			'background',
-			'cameraNear',
-			'cameraFar',
 			'fov',
 			'viewOffset',
+			'renderToFBO',
 			'lights',
+			'cameraNear',
+			'cameraFar',
 			'postprocessing',
 		] as const
 		this.watchProps(rendererProps, (e) => {
@@ -101,9 +152,47 @@ export class PolarisThree extends PolarisGSI {
 
 		return info
 	}
+
+	private getRendererConfig() {
+		const config = {
+			enableReflection: this.enableReflection,
+			reflectionRatio: this.reflectionRatio,
+			castShadow: this.castShadow,
+			matrixProcessor: this.matrixProcessor,
+			boundingProcessor: this.boundingProcessor,
+			graphProcessor: this.graphProcessor,
+			cullingProcessor: this.cullingProcessor,
+
+			width: this.getProp('width'),
+			height: this.getProp('height'),
+			ratio: this.getProp('ratio'),
+			antialias: this.getProp('antialias'),
+			background: this.getProp('background'),
+			fov: this.getProp('fov'),
+			viewOffset: this.getProp('viewOffset'),
+			renderToFBO: this.getProp('renderToFBO'),
+			lights: this.getProp('lights'),
+			cameraNear: this.getProp('cameraNear'),
+			cameraFar: this.getProp('cameraFar'),
+			postprocessing: this.getProp('postprocessing') || (false as const),
+		}
+
+		Object.keys(config).forEach((key) => {
+			const value = config[key]
+			if (value === undefined) {
+				console.error(
+					`PolarisThree:getRendererConfig: ${key} is undefined. May cause renderer error.`
+				)
+			}
+		})
+
+		return config as NonNullableObject<typeof config>
+	}
 }
 
 /**
  * used for calculate ray from camera
  */
 const _threeRaycaster = new ThreeRaycaster()
+
+type NonNullableObject<T> = { [K in keyof T]: NonNullable<T[K]> }

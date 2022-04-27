@@ -1,15 +1,16 @@
-import vs from './canvasMesh_vs.glsl?raw'
-import fs from './canvasMesh_fs.glsl?raw'
+import vs from './canvasMesh_vs.glsl'
+import fs from './canvasMesh_fs.glsl'
+
+import { PlaneBufferGeometry, RawShaderMaterial, Mesh } from 'three'
 
 export default class CanvasMesh {
-	constructor(props = {}, THREE) {
+	constructor(props = {}) {
 		const { renderTarget, customVs, customFs, uniforms, defines = {} } = props
-		// @TODO 去THREE化？
-		this.geometry = new THREE.PlaneBufferGeometry(2, 2)
+		this.geometry = new PlaneBufferGeometry(2, 2)
 
 		this.material =
 			props.material ||
-			new THREE.RawShaderMaterial({
+			new RawShaderMaterial({
 				vertexShader: customVs || vs,
 				fragmentShader: customFs || fs,
 				uniforms: {
@@ -23,6 +24,6 @@ export default class CanvasMesh {
 			})
 
 		this.material.name = props.name || props.type || (props.material || {}).name
-		this.mesh = new THREE.Mesh(this.geometry, this.material)
+		this.mesh = new Mesh(this.geometry, this.material)
 	}
 }

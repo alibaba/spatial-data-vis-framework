@@ -1,7 +1,7 @@
 /*eslint-env node*/
-const path = require('path')
-const fs = require('fs')
 const { defineConfig } = require('vite')
+
+const vitePluginString = require('vite-plugin-string').default
 
 module.exports = defineConfig({
 	server: {
@@ -15,4 +15,17 @@ module.exports = defineConfig({
 			ignored: ['!**/node_modules/@polaris.gl/**'],
 		},
 	},
+	plugins: [
+		vitePluginString({
+			/* Default */
+			include: ['**/*.glsl'],
+
+			/* Default: undefined */
+			exclude: 'node_modules/**',
+
+			/* Default: true */
+			// if true, using logic from rollup-plugin-glsl
+			compress: false,
+		}),
+	],
 })

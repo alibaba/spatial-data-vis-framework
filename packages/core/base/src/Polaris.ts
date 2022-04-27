@@ -28,10 +28,6 @@ export abstract class AbstractPolaris<
 	readonly isAbstractPolaris = true
 	readonly isPolaris = true
 
-	/**
-	 * @todo readonly props should use getter
-	 */
-
 	readonly cameraProxy: AnimatedCameraProxy
 
 	readonly timeline: Timeline

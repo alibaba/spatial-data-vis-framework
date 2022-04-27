@@ -17,9 +17,13 @@ import {
 	BufferAttribute,
 	MeshBasicMaterial,
 	WebGLRenderer,
+	Matrix4,
+	Plane,
+	Vector3,
+	Vector4,
+	RGBAFormat,
 } from 'three'
 
-import * as THREE from 'three'
 // import Pass from './pipeline/Pass'
 import FXAAPass from './pipeline/pass/FXAAPass'
 import BlurPass from './pipeline/pass/BlurPass'
@@ -55,7 +59,7 @@ export class Reflector extends PureMesh {
 	readonly fxaaPass: FXAAPass
 	readonly blurPass: BlurPass
 
-	readonly reflectionTexMatrix = new THREE.Matrix4()
+	readonly reflectionTexMatrix = new Matrix4()
 
 	private readonly cameraProxy: CameraProxy
 
@@ -75,7 +79,7 @@ export class Reflector extends PureMesh {
 		this.reflectionTexture = new WebGLRenderTarget(reflectionWidth, reflectionHeight, {
 			minFilter: NearestFilter,
 			magFilter: NearestFilter,
-			format: RGBFormat,
+			format: RGBAFormat,
 			stencilBuffer: false,
 			// depthBuffer: false,
 		})
@@ -84,7 +88,7 @@ export class Reflector extends PureMesh {
 		this.reflectionTextureFXAA = new WebGLRenderTarget(reflectionWidth, reflectionHeight, {
 			minFilter: LinearFilter,
 			magFilter: LinearFilter,
-			format: RGBFormat,
+			format: RGBAFormat,
 			stencilBuffer: false,
 			depthBuffer: false,
 		})
@@ -93,7 +97,7 @@ export class Reflector extends PureMesh {
 		this.reflectionTextureRough = new WebGLRenderTarget(reflectionWidth / 2, reflectionHeight / 2, {
 			minFilter: LinearFilter,
 			magFilter: LinearFilter,
-			format: RGBFormat,
+			format: RGBAFormat,
 			stencilBuffer: false,
 			depthBuffer: false,
 		})
@@ -117,44 +121,38 @@ export class Reflector extends PureMesh {
 		// this.drawPass.setOutput(this.reflectionTexture)
 
 		// AA
-		this.fxaaPass = new FXAAPass(
-			{
-				width: reflectionWidth,
-				height: reflectionHeight,
-			},
-			THREE
-		)
+		this.fxaaPass = new FXAAPass({
+			width: reflectionWidth,
+			height: reflectionHeight,
+		})
 
 		this.fxaaPass.setInput(this.reflectionTexture)
 		this.fxaaPass.setOutput(this.reflectionTextureFXAA)
 
 		// 模糊
-		this.blurPass = new BlurPass(
-			{
-				width: reflectionWidth,
-				height: reflectionHeight,
-				kernel: 3,
-			},
-			THREE
-		)
+		this.blurPass = new BlurPass({
+			width: reflectionWidth,
+			height: reflectionHeight,
+			kernel: 3,
+		})
 
 		this.blurPass.setInput(this.reflectionTextureFXAA)
 		this.blurPass.setOutput(this.reflectionTextureRough)
 
 		const clipBias = 0
 
-		const reflectorPlane = new THREE.Plane()
-		const normal = new THREE.Vector3(0, 1, 0)
-		const cameraWorldPosition = new THREE.Vector3()
-		const reflectorWorldPosition = new THREE.Vector3()
-		const rotationMatrix = new THREE.Matrix4()
-		const clipPlane = new THREE.Vector4()
+		const reflectorPlane = new Plane()
+		const normal = new Vector3(0, 1, 0)
+		const cameraWorldPosition = new Vector3()
+		const reflectorWorldPosition = new Vector3()
+		const rotationMatrix = new Matrix4()
+		const clipPlane = new Vector4()
 
-		const view = new THREE.Vector3()
-		const q = new THREE.Vector4()
-		const target = new THREE.Vector3()
+		const view = new Vector3()
+		const q = new Vector4()
+		const target = new Vector3()
 
-		this.reflectionTexMatrix = new THREE.Matrix4()
+		this.reflectionTexMatrix = new Matrix4()
 
 		this.onBeforeRender = (renderer, scene, _camera) => {
 			const camera = _camera as PerspectiveCamera

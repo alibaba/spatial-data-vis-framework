@@ -1,8 +1,10 @@
 import CanvasMesh from './CanvasMesh'
 
+import { OrthographicCamera, Scene, WebGLRenderTarget } from 'three'
+
 // @TODO: 拆分Pass和CopyPass
 export default class Pass {
-	constructor(conf = {}, THREE) {
+	constructor(conf = {}) {
 		this.isPass = true
 
 		this.width = conf.width
@@ -20,24 +22,19 @@ export default class Pass {
 		} else {
 			this.uniforms = conf.uniforms
 			// 对整个画布进行2d后期处理
-			this.canvasMesh = new CanvasMesh(
-				{
-					customVs: conf.vs,
-					customFs: conf.fs,
-					uniforms: conf.uniforms,
-					defines: conf.defines || {},
-				},
-				THREE
-			)
+			this.canvasMesh = new CanvasMesh({
+				customVs: conf.vs,
+				customFs: conf.fs,
+				uniforms: conf.uniforms,
+				defines: conf.defines || {},
+			})
 
-			this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 2)
+			this.camera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 2)
 			this.camera.position.z = 1
 
-			this.scene = new THREE.Scene()
+			this.scene = new Scene()
 			this.scene.add(this.canvasMesh.mesh)
 		}
-
-		this.RenderTarget = THREE.WebGLRenderTarget
 	}
 
 	resize(width, height) {
@@ -60,10 +57,10 @@ export default class Pass {
 	}
 
 	pipeTo(pass) {
-		const renderTarget = new this.RenderTarget(pass.width, pass.height, {
+		const renderTarget = new WebGLRenderTarget(pass.width, pass.height, {
 			depth: pass.depth,
 		})
-		renderTarget.multisample = pass.multisample
+		renderTarget.samples = pass.multisample
 		this.setOutput(renderTarget)
 		pass.setInput(renderTarget)
 	}

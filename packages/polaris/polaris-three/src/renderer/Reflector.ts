@@ -1,6 +1,10 @@
-import { BufferGeometry, LinearFilter, Material, RGBFormat } from 'three'
 import {
-	Color,
+	BufferAttribute,
+	BufferGeometry,
+	LinearFilter,
+	MeshBasicMaterial,
+	RGBAFormat,
+	// Color,
 	Matrix4,
 	Mesh,
 	PerspectiveCamera,
@@ -10,45 +14,64 @@ import {
 	Vector3,
 	Vector4,
 	WebGLRenderTarget,
+	PlaneBufferGeometry,
+	Texture,
 } from 'three'
 
-import * as THREE from 'three'
-// import Pass from './pipeline/Pass'
 import FXAAPass from './pipeline/pass/FXAAPass'
 import BlurPass from './pipeline/pass/BlurPass'
+import Pass from './pipeline/Pass'
 
-class Reflector extends Mesh<BufferGeometry, Material> {
-	camera = new PerspectiveCamera()
-	renderTarget: WebGLRenderTarget
+/**
+ * pure functional mesh.
+ * @note needs to be rendered to work
+ */
+class PureMesh extends Mesh<BufferGeometry, MeshBasicMaterial> {
+	readonly geometry = new BufferGeometry()
+	readonly material = new MeshBasicMaterial()
+	readonly frustumCulled = false as const
+	constructor() {
+		super()
+		this.geometry.setAttribute(
+			'position',
+			new BufferAttribute(new Float32Array([0, 0, 0, 0, 0, 0, 0, 0, 0]), 3, false)
+		)
+	}
+}
 
-	readonly reflectionTextureFXAA: WebGLRenderTarget
-	readonly reflectionTextureRough: WebGLRenderTarget
-	readonly fxaaPass: FXAAPass
-	readonly blurPass: BlurPass
+export class Reflector extends PureMesh {
+	readonly isReflector = true
 
-	isReflector = true
+	private readonly camera = new PerspectiveCamera()
+	private readonly renderTarget: WebGLRenderTarget
+	private readonly renderTargetCopy: WebGLRenderTarget
 
-	constructor(
-		geometry,
-		options: {
-			color?: Color | string
-			textureWidth?: number
-			textureHeight?: number
-			clipBias?: number
-			shader?: any
-			multisample?: number
-		}
-	) {
-		super(geometry)
+	// private readonly renderTargetFXAA: WebGLRenderTarget
+	private readonly renderTargetBlur: WebGLRenderTarget
+	// private readonly fxaaPass: FXAAPass
+	private readonly blurPass: BlurPass
+	private readonly copyPass: Pass
+
+	readonly texture: Texture
+	readonly textureBlur: Texture
+	readonly reflectionMatrix: Matrix4
+
+	constructor(options: {
+		textureWidth?: number
+		textureHeight?: number
+		clipBias?: number
+		debug?: boolean
+		debugBlur?: boolean
+	}) {
+		super()
 
 		this.type = 'Reflector'
 
-		const color = options.color !== undefined ? new Color(options.color) : new Color(0x7f7f7f)
 		const textureWidth = options.textureWidth || 512
 		const textureHeight = options.textureHeight || 512
 		const clipBias = options.clipBias || 0
-		const shader = options.shader || Reflector.ReflectorShader
-		const multisample = options.multisample !== undefined ? options.multisample : 4
+		const debug = options.debug ?? false
+		const debugBlur = options.debugBlur ?? false
 
 		//
 
@@ -64,73 +87,81 @@ class Reflector extends Mesh<BufferGeometry, Material> {
 		const target = new Vector3()
 		const q = new Vector4()
 
-		const textureMatrix = new Matrix4()
+		this.reflectionMatrix = new Matrix4()
+
 		const virtualCamera = this.camera
 
 		this.renderTarget = new WebGLRenderTarget(textureWidth, textureHeight, {
-			samples: multisample,
+			samples: 4,
 		} as any)
+
+		this.renderTargetCopy = new WebGLRenderTarget(textureWidth, textureHeight)
+
+		this.texture = this.renderTargetCopy.texture
 
 		// start
 
-		this.reflectionTextureFXAA = new WebGLRenderTarget(textureWidth, textureHeight, {
+		// this.renderTargetFXAA = new WebGLRenderTarget(textureWidth, textureHeight, {
+		// 	minFilter: LinearFilter,
+		// 	magFilter: LinearFilter,
+		// 	format: RGBAFormat,
+		// 	stencilBuffer: false,
+		// 	depthBuffer: false,
+		// })
+		// this.renderTargetFXAA.texture.generateMipmaps = false
+
+		this.renderTargetBlur = new WebGLRenderTarget(textureWidth / 2, textureHeight / 2, {
 			minFilter: LinearFilter,
 			magFilter: LinearFilter,
-			format: RGBFormat,
+			format: RGBAFormat,
 			stencilBuffer: false,
 			depthBuffer: false,
 		})
-		this.reflectionTextureFXAA.texture.generateMipmaps = false
+		this.renderTargetBlur.texture.generateMipmaps = false
 
-		this.reflectionTextureRough = new WebGLRenderTarget(textureWidth / 2, textureHeight / 2, {
-			minFilter: LinearFilter,
-			magFilter: LinearFilter,
-			format: RGBFormat,
-			stencilBuffer: false,
-			depthBuffer: false,
+		this.textureBlur = this.renderTargetBlur.texture
+
+		// use fxaa instead of msaa
+		// {
+		// 	// AA
+		// 	this.fxaaPass = new FXAAPass({
+		// 		width: textureWidth,
+		// 		height: textureHeight,
+		// 	})
+		// 	this.fxaaPass.setInput(this.renderTarget)
+		// 	this.fxaaPass.setOutput(this.renderTargetFXAA)
+		// 	// 模糊
+		// 	this.blurPass = new BlurPass({
+		// 		width: textureWidth,
+		// 		height: textureHeight,
+		// 		kernel: 4,
+		// 	})
+		// 	this.blurPass.setInput(this.renderTargetFXAA)
+		// 	this.blurPass.setOutput(this.renderTargetBlur)
+		// }
+
+		// 复制
+
+		this.copyPass = new Pass({
+			width: textureWidth,
+			height: textureHeight,
+			kernel: 4,
 		})
-		this.reflectionTextureRough.texture.generateMipmaps = false
 
-		// AA
-		this.fxaaPass = new FXAAPass(
-			{
-				width: textureWidth,
-				height: textureHeight,
-			},
-			THREE
-		)
-
-		this.fxaaPass.setInput(this.renderTarget)
-		this.fxaaPass.setOutput(this.reflectionTextureFXAA)
+		this.copyPass.setInput(this.renderTarget)
+		this.copyPass.setOutput(this.renderTargetCopy)
 
 		// 模糊
-		this.blurPass = new BlurPass(
-			{
-				width: textureWidth,
-				height: textureHeight,
-				kernel: 4,
-			},
-			THREE
-		)
-
-		this.blurPass.setInput(this.reflectionTextureFXAA)
-		this.blurPass.setOutput(this.reflectionTextureRough)
-
-		// end
-
-		const material = new ShaderMaterial({
-			uniforms: UniformsUtils.clone(shader.uniforms),
-			fragmentShader: shader.fragmentShader,
-			vertexShader: shader.vertexShader,
+		this.blurPass = new BlurPass({
+			width: textureWidth,
+			height: textureHeight,
+			kernel: 4,
 		})
 
-		// material.uniforms['tDiffuse'].value = this.renderTarget.texture
-		// material.uniforms['tDiffuse'].value = this.reflectionTextureFXAA.texture
-		material.uniforms['tDiffuse'].value = this.reflectionTextureRough.texture
-		material.uniforms['color'].value = color
-		material.uniforms['textureMatrix'].value = textureMatrix
+		this.blurPass.setInput(this.renderTargetCopy)
+		this.blurPass.setOutput(this.renderTargetBlur)
 
-		this.material = material
+		// end
 
 		this.onBeforeRender = (renderer, scene, _camera) => {
 			const camera = _camera as PerspectiveCamera
@@ -175,15 +206,15 @@ class Reflector extends Mesh<BufferGeometry, Material> {
 
 			// Update the texture matrix
 			// prettier-ignore
-			textureMatrix.set(
+			this.reflectionMatrix.set(
 				0.5, 0.0, 0.0, 0.5,
 				0.0, 0.5, 0.0, 0.5,
 				0.0, 0.0, 0.5, 0.5,
 				0.0, 0.0, 0.0, 1.0
 			);
-			textureMatrix.multiply(virtualCamera.projectionMatrix)
-			textureMatrix.multiply(virtualCamera.matrixWorldInverse)
-			textureMatrix.multiply(this.matrixWorld)
+			this.reflectionMatrix.multiply(virtualCamera.projectionMatrix)
+			this.reflectionMatrix.multiply(virtualCamera.matrixWorldInverse)
+			// this.reflectionMatrix.multiply(this.matrixWorld)
 
 			// Now update projection matrix with new clip plane, implementing code from: http://www.terathon.com/code/oblique.html
 			// Paper explaining this technique: http://www.terathon.com/lengyel/Lengyel-Oblique.pdf
@@ -231,14 +262,17 @@ class Reflector extends Mesh<BufferGeometry, Material> {
 
 			renderer.state.buffers.depth.setMask(true) // make sure the depth buffer is writable so it can be properly cleared, see #18897
 
+			// start
+
 			if (renderer.autoClear === false) renderer.clear()
 			renderer.render(scene, virtualCamera)
 
-			// start
-
-			renderer.autoClear = true
-			this.fxaaPass.render(renderer)
+			// renderer.autoClear = true
+			// this.fxaaPass.render(renderer)
+			// renderer.autoClear = false
 			renderer.autoClear = false
+			this.copyPass.render(renderer)
+			// renderer.autoClear = true
 			this.blurPass.render(renderer)
 
 			renderer.autoClear = true
@@ -262,51 +296,95 @@ class Reflector extends Mesh<BufferGeometry, Material> {
 
 			this.visible = true
 		}
+
+		if (debugBlur) {
+			const debugMesh = new DebugPlaneMesh(this.reflectionMatrix, this.renderTargetBlur)
+			this.add(debugMesh)
+		} else if (debug) {
+			const debugMesh = new DebugPlaneMesh(this.reflectionMatrix, this.renderTarget)
+			this.add(debugMesh)
+		}
+	}
+
+	resize(width: number, height: number) {
+		const reflectionWidth = Math.floor(width)
+		const reflectionHeight = Math.floor(height)
+
+		this.renderTarget.setSize(reflectionWidth, reflectionHeight)
+		this.renderTargetCopy.setSize(reflectionWidth, reflectionHeight)
+		// this.renderTargetFXAA.setSize(reflectionWidth, reflectionHeight)
+		this.renderTargetBlur.setSize(reflectionWidth / 2, reflectionHeight / 2)
+		// this.drawPass.resize(reflectionWidth, reflectionHeight)
+		// this.fxaaPass.resize(reflectionWidth, reflectionHeight)
+		this.blurPass.resize(reflectionWidth, reflectionHeight)
+		this.copyPass.resize(reflectionWidth, reflectionHeight)
 	}
 
 	dispose() {
 		this.renderTarget.dispose()
+		this.renderTargetBlur.dispose()
 		this.material.dispose()
+		this.blurPass.dispose()
+	}
+}
+
+/**
+ * debug the reflection texture
+ */
+class DebugPlaneMesh extends Mesh<PlaneBufferGeometry, ShaderMaterial> {
+	constructor(reflectionMatrix: Matrix4, rt: WebGLRenderTarget) {
+		super()
+
+		const shader = DebugPlaneMesh.Shader
+
+		this.geometry = new PlaneBufferGeometry(100000, 100000)
+		this.material = new ShaderMaterial({
+			uniforms: UniformsUtils.clone(shader.uniforms),
+			fragmentShader: shader.fragmentShader,
+			vertexShader: shader.vertexShader,
+		})
+
+		// material.uniforms['color'].value = color
+		this.material.uniforms['reflectionMatrix'].value = reflectionMatrix
+		this.material.uniforms['reflectionMap'].value = rt.texture
 	}
 
-	static ReflectorShader = {
+	static Shader = {
 		uniforms: {
-			color: {
+			// color: {
+			// 	value: new Color('black'),
+			// },
+
+			reflectionMap: {
 				value: null,
 			},
 
-			tDiffuse: {
-				value: null,
-			},
-
-			textureMatrix: {
+			reflectionMatrix: {
 				value: null,
 			},
 		},
 
 		vertexShader: /* glsl */ `
-		uniform mat4 textureMatrix;
-		varying vec4 vUv;
+		uniform mat4 reflectionMatrix;
+		varying vec4 vUvReflection;
 
 		#include <common>
-		#include <logdepthbuf_pars_vertex>
 
 		void main() {
 
-			vUv = textureMatrix * vec4( position, 1.0 );
+			vec4 worldPosition = modelMatrix * vec4( position, 1.0 );
+			vUvReflection = reflectionMatrix * vec4( worldPosition.xyz, 1.0 );
 
 			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
-			#include <logdepthbuf_vertex>
 
 		}`,
 
 		fragmentShader: /* glsl */ `
 		uniform vec3 color;
-		uniform sampler2D tDiffuse;
-		varying vec4 vUv;
+		uniform sampler2D reflectionMap;
+		varying vec4 vUvReflection;
 
-		#include <logdepthbuf_pars_fragment>
 
 		float blendOverlay( float base, float blend ) {
 
@@ -322,15 +400,12 @@ class Reflector extends Mesh<BufferGeometry, Material> {
 
 		void main() {
 
-			#include <logdepthbuf_fragment>
-
-			vec4 base = texture2DProj( tDiffuse, vUv );
-			gl_FragColor = vec4( blendOverlay( base.rgb, color ), 1.0 );
+			vec4 reflectionColor = texture2DProj( reflectionMap, vUvReflection );
+			// gl_FragColor = vec4( blendOverlay( reflectionColor.rgb, color ), 1.0 );
+			gl_FragColor = vec4(reflectionColor.rgb, 1.0);
 
 			#include <encodings_fragment>
 
 		}`,
 	}
 }
-
-export { Reflector }

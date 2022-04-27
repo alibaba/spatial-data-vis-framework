@@ -1,7 +1,9 @@
 import Pass from '../Pass'
-import fs from './glsl/blur_fs.glsl?raw'
-import vs from './glsl/blur_vs.glsl?raw'
+import fs from './glsl/blur_fs.glsl'
+import vs from './glsl/blur_vs.glsl'
 import CanvasMesh from '../CanvasMesh'
+
+import { WebGLRenderTarget, Vector2, Scene } from 'three'
 
 /**
  * The Kawase blur kernel presets.
@@ -26,34 +28,31 @@ const defaultConf = {
 }
 
 export default class BlurPass extends Pass {
-	constructor(conf, THREE) {
-		super(conf, THREE)
+	constructor(conf) {
+		super(conf)
 
 		this.kernel = conf.kernel === undefined ? defaultConf.kernel : conf.kernel
 
 		this.kernels = kernelPresets[this.kernel]
 
-		this.proTargetX = new THREE.WebGLRenderTarget(this.width / 2, this.height / 2)
+		this.proTargetX = new WebGLRenderTarget(this.width / 2, this.height / 2)
 
-		this.proTargetY = new THREE.WebGLRenderTarget(this.width / 2, this.height / 2)
+		this.proTargetY = new WebGLRenderTarget(this.width / 2, this.height / 2)
 
-		this.texelSize = new THREE.Vector2(1 / this.width, 1 / this.height)
+		this.texelSize = new Vector2(1 / this.width, 1 / this.height)
 		this.halfTexelSize = this.texelSize.clone().multiplyScalar(0.5)
 
-		this.kernelScene = new THREE.Scene()
-		this.kernelMesh = new CanvasMesh(
-			{
-				customVs: vs,
-				customFs: fs,
-				uniforms: {
-					texelSize: { value: this.texelSize },
-					halfTexelSize: { value: this.halfTexelSize },
-					kernel: { value: 0 },
-					tex: {},
-				},
+		this.kernelScene = new Scene()
+		this.kernelMesh = new CanvasMesh({
+			customVs: vs,
+			customFs: fs,
+			uniforms: {
+				texelSize: { value: this.texelSize },
+				halfTexelSize: { value: this.halfTexelSize },
+				kernel: { value: 0 },
+				tex: {},
 			},
-			THREE
-		)
+		})
 		this.kernelScene.add(this.kernelMesh.mesh)
 	}
 

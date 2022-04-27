@@ -1,6 +1,8 @@
 import Pass from '../Pass'
-import fs from './glsl/fxaa_fs.glsl?raw'
-import vs from './glsl/fxaa_vs.glsl?raw'
+import fs from './glsl/fxaa_fs.glsl'
+import vs from './glsl/fxaa_vs.glsl'
+
+import { Vector2 } from 'three'
 
 /**
  * The Kawase blur kernel presets.
@@ -15,14 +17,14 @@ const defaultConf = {
 }
 
 export default class FXAAPass extends Pass {
-	constructor(conf, THREE) {
+	constructor(conf) {
 		conf.uniforms = {
 			tex: {},
-			resolution: { value: new THREE.Vector2(conf.width, conf.height) },
+			resolution: { value: new Vector2(conf.width, conf.height) },
 		}
 		conf.vs = vs
 		conf.fs = fs
-		super(conf, THREE)
+		super(conf)
 	}
 
 	resize(width, height) {
