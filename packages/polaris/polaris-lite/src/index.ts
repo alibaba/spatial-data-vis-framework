@@ -18,7 +18,7 @@ export class PolarisLite extends PolarisGSI {
 
 	constructor(props: PolarisLiteProps) {
 		super(props)
-		this.renderer = new LiteRenderer(this.props)
+		this.renderer = new LiteRenderer(this.getRendererConfig())
 
 		this.cameraProxy.config.onUpdate = (cam) => this.renderer.updateCamera(cam)
 		this.cameraProxy['onUpdate'] = (cam) => this.renderer.updateCamera(cam)
@@ -28,8 +28,8 @@ export class PolarisLite extends PolarisGSI {
 		this.view.html.element.appendChild(this.renderer.canvas)
 
 		this.raycaster = new Raycaster({
-			boundingProcessor: this.props.boundingProcessor,
-			matrixProcessor: this.props.matrixProcessor,
+			boundingProcessor: this.boundingProcessor,
+			matrixProcessor: this.matrixProcessor,
 		})
 
 		// Renderer props update listener
@@ -102,9 +102,44 @@ export class PolarisLite extends PolarisGSI {
 
 		return info
 	}
+
+	private getRendererConfig() {
+		const config = {
+			matrixProcessor: this.matrixProcessor,
+			boundingProcessor: this.boundingProcessor,
+			graphProcessor: this.graphProcessor,
+			cullingProcessor: this.cullingProcessor,
+
+			width: this.getProp('width'),
+			height: this.getProp('height'),
+			ratio: this.getProp('ratio'),
+			antialias: this.getProp('antialias'),
+			background: this.getProp('background'),
+			fov: this.getProp('fov'),
+			viewOffset: this.getProp('viewOffset'),
+			renderToFBO: this.getProp('renderToFBO'),
+			lights: this.getProp('lights'),
+			cameraNear: this.getProp('cameraNear'),
+			cameraFar: this.getProp('cameraFar'),
+			postprocessing: this.getProp('postprocessing') || (false as const),
+		}
+
+		Object.keys(config).forEach((key) => {
+			const value = config[key]
+			if (value === undefined) {
+				console.error(
+					`PolarisThree:getRendererConfig: ${key} is undefined. May cause renderer error.`
+				)
+			}
+		})
+
+		return config as NonNullableObject<typeof config>
+	}
 }
 
 /**
  * used for calculate ray from camera
  */
 const _threeLiteRaycaster = new ThreeLiteRaycaster()
+
+type NonNullableObject<T> = { [K in keyof T]: NonNullable<T[K]> }
