@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
+import { StandardLayer, StandardLayerProps, PolarisGSI } from '@polaris.gl/gsi'
 declare let window: any
 
 export interface AMapLayerProps extends StandardLayerProps {
@@ -66,9 +66,11 @@ export class AMapLayer extends StandardLayer<AMapLayerProps> {
 		this.element.className = 'polaris-amap-layer'
 		this.element.id = 'polaris-amap-layer'
 
-		this.addEventListener('init', ({ projection, timeline, polaris }) => {
+		this.addEventListener('init', (e) => {
+			const polaris = e.polaris as PolarisGSI
+			const projection = e.projection
 			// polaris图层背景透明
-			polaris['renderer'].renderer.setClearAlpha(0.0)
+			polaris['renderer']['renderer'].setClearAlpha(0.0)
 			// 获取相机和投影
 			this.cam = polaris.cameraProxy
 			this.projection = projection
@@ -264,7 +266,7 @@ export class AMapLayer extends StandardLayer<AMapLayerProps> {
 	/**
 	 * 立即同步相机
 	 */
-	_initAmapCamera = (polaris: any) => {
+	_initAmapCamera = (polaris: PolarisGSI) => {
 		if (!this.map) return
 
 		const cam = polaris.cameraProxy
@@ -282,9 +284,9 @@ export class AMapLayer extends StandardLayer<AMapLayerProps> {
 		const param = zoomToPerspectiveParam(cam.zoom, cam.canvasWidth, cam.canvasHeight)
 		const newFov = (param.fov / Math.PI) * 180.0
 
-		polaris.renderer.updateProps({ fov: newFov })
+		polaris.renderer.updateConfig({ fov: newFov })
 		cam.fov = newFov
-		cam.update()
+		cam['update']()
 
 		// 稍微改变经纬度触发同步
 		const amapCenter = this.projection.unproject(...cam.center)
