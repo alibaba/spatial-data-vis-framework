@@ -21,6 +21,7 @@ const p = new PolarisThree({
 	container,
 	autoResize: true,
 	enableReflection: true,
+	// reflectionRatio: 1.0,
 })
 
 const h = new HelperLayer({ length: 10000 })
