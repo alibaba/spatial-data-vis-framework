@@ -28,12 +28,16 @@ await test(true, 'PolarisLite', () => {
 	globalThis.p = p
 	console.log(p)
 
+	const div = document.createElement('div')
+	div.style.backgroundColor = 'pink'
+	div.innerText = 'hoho'
+
 	const markerLayer = new MarkerLayer({
 		pickable: true,
 		recursivePicking: true,
 		data: [
 			{ html: 'hahaha', lng: 0, lat: 0 },
-			{ html: 'hoho', lng: 0.01, lat: 0 },
+			{ html: div, lng: 0.01, lat: 0 },
 			{
 				object3d: generateScene({
 					// scale: 1000,

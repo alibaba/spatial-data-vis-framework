@@ -461,7 +461,7 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 
 		if (!html || !this.view.html) return
 
-		// this.element.style.position = 'absolute'
+		this.element.style.position = 'absolute'
 		this.element.style.visibility = 'hidden'
 		this.element.style.cursor = 'default'
 		this.element.style.userSelect = 'none'
@@ -652,8 +652,9 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 			const top = this._screenXY.y + this.getProp('offsetY')
 
 			// FIX: performance issues to get offsetLeft/offsetTop each frame
-			el.style.left = `${left}px`
-			el.style.top = `${top}px`
+			el.style.transform = `translate(${left}px, ${top}px)`
+			// el.style.left = `${left}px`
+			// el.style.top = `${top}px`
 
 			if (el.style.visibility === 'hidden') {
 				el.style.visibility = 'inherit'
