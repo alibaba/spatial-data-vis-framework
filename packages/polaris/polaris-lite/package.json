@@ -1,6 +1,6 @@
 {
 	"name": "@polaris.gl/lite",
-	"version": "0.1.0-alpha.25",
+	"version": "0.1.0-alpha.26",
 	"description": "",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -26,7 +26,7 @@
 		"@gs.i/frontend-sdk": "0.2.1-alpha.25",
 		"@gs.i/processor-raycast": "^0.2.1-alpha.25",
 		"@gs.i/schema-scene": "^0.2.1-alpha.25",
-		"@polaris.gl/gsi": "^0.1.0-alpha.24",
+		"@polaris.gl/gsi": "^0.1.0-alpha.26",
 		"three-lite": "0.0.139-alpha"
 	},
 	"devDependencies": {

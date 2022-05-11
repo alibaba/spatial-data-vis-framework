@@ -1,6 +1,6 @@
 {
 	"name": "@polaris.gl/coordinator",
-	"version": "0.1.0-alpha.24",
+	"version": "0.1.0-alpha.26",
 	"description": "",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
