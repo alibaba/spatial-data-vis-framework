@@ -1,6 +1,6 @@
 {
 	"name": "@polaris.gl/utils",
-	"version": "0.1.0-alpha.24",
+	"version": "0.1.0-alpha.26",
 	"description": "",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -19,10 +19,10 @@
 		"rebuild": "npm run clean && npm run build"
 	},
 	"dependencies": {
-		"@gs.i/frontend-sdk": "0.2.1-alpha.23",
-		"@gs.i/schema-scene": "0.2.1-alpha.23",
-		"@gs.i/utils-math": "^0.2.1-alpha.23",
-		"@polaris.gl/base": "^0.1.0-alpha.24",
+		"@gs.i/frontend-sdk": "0.2.1-alpha.25",
+		"@gs.i/schema-scene": "0.2.1-alpha.25",
+		"@gs.i/utils-math": "^0.2.1-alpha.25",
+		"@polaris.gl/base": "^0.1.0-alpha.26",
 		"@polaris.gl/projection": "^0.1.0-alpha.24",
 		"is-touch-device": "^1.0.1"
 	},

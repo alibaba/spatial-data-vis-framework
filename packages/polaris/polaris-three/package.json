@@ -1,6 +1,6 @@
 {
 	"name": "@polaris.gl/three",
-	"version": "0.1.0-alpha.24",
+	"version": "0.1.0-alpha.26",
 	"description": "",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -22,16 +22,16 @@
 		"build:umd": "npx webpack"
 	},
 	"dependencies": {
-		"@gs.i/backend-three": "0.2.1-alpha.23",
-		"@gs.i/frontend-sdk": "0.2.1-alpha.23",
-		"@gs.i/processor-raycast": "^0.2.1-alpha.23",
-		"@gs.i/schema-scene": "^0.2.1-alpha.23",
-		"@polaris.gl/gsi": "^0.1.0-alpha.24",
+		"@gs.i/backend-three": "0.2.1-alpha.25",
+		"@gs.i/frontend-sdk": "0.2.1-alpha.25",
+		"@gs.i/processor-raycast": "^0.2.1-alpha.25",
+		"@gs.i/schema-scene": "^0.2.1-alpha.25",
+		"@polaris.gl/gsi": "^0.1.0-alpha.26",
 		"three": "^0.139.2"
 	},
 	"devDependencies": {
-		"@gs.i/processor-indicator": "^0.2.1-alpha.23",
-		"@gs.i/utils-random-scene": "^0.2.1-alpha.23",
+		"@gs.i/processor-indicator": "^0.2.1-alpha.25",
+		"@gs.i/utils-random-scene": "^0.2.1-alpha.25",
 		"@types/offscreencanvas": "latest",
 		"@types/three": "^0.139.0",
 		"@types/webvr-api": "latest",
