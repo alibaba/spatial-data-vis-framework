@@ -1,6 +1,6 @@
 {
 	"name": "@polaris.gl/layer-std-marker",
-	"version": "0.1.0-alpha.26",
+	"version": "0.1.0-alpha.27",
 	"description": "",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -20,14 +20,14 @@
 		"build:umd": "npx webpack"
 	},
 	"dependencies": {
-		"@gs.i/frontend-sdk": "0.2.1-alpha.25",
-		"@gs.i/schema-scene": "0.2.1-alpha.25",
-		"@gs.i/utils-geometry": "0.2.1-alpha.25",
-		"@gs.i/utils-math": "^0.2.1-alpha.25",
-		"@polaris.gl/base": "^0.1.0-alpha.26",
-		"@polaris.gl/gsi": "^0.1.0-alpha.26",
-		"@polaris.gl/projection": "^0.1.0-alpha.24",
-		"@polaris.gl/utils": "^0.1.0-alpha.26"
+		"@gs.i/frontend-sdk": "0.2.1-alpha.28",
+		"@gs.i/schema-scene": "0.2.1-alpha.28",
+		"@gs.i/utils-geometry": "0.2.1-alpha.28",
+		"@gs.i/utils-math": "0.2.1-alpha.28",
+		"@polaris.gl/base": "0.1.0-alpha.27",
+		"@polaris.gl/gsi": "0.1.0-alpha.27",
+		"@polaris.gl/projection": "0.1.0-alpha.27",
+		"@polaris.gl/utils": "0.1.0-alpha.27"
 	},
 	"devDependencies": {
 		"typescript": ">4.4.0"
