@@ -16,8 +16,6 @@ import { PolarisProps, defaultProps, STATIC_PROPS } from './props/index'
 import type { AbstractPolarisEvents } from './events'
 import { checkViewChange, debug } from './utils'
 
-export * from 'camera-proxy'
-
 export type { PolarisProps } from './props/index'
 
 /**

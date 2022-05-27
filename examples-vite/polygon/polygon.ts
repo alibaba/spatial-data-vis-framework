@@ -17,9 +17,9 @@ const indicator = new IndicatorProcessor({
 const container = document.querySelector('#container') as HTMLDivElement
 const p = new PolarisLite({
 	container,
-	background: 'transparent',
+	// background: 'transparent',
 	// autoplay: false,
-	asyncRendering: true,
+	// asyncRendering: true,
 	autoResize: true,
 	// projection: new EquirectangularProjection({}),
 })
