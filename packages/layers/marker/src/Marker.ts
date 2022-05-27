@@ -3,8 +3,8 @@
  * All rights reserved.
  */
 
+import { CameraProxy } from '@polaris.gl/base'
 import { Projection } from '@polaris.gl/projection'
-import { CameraProxy } from 'camera-proxy'
 import { Vector2, Vector3, Matrix4, Euler } from '@gs.i/utils-math'
 import { Mesh } from '@gs.i/frontend-sdk'
 import { IR, NodeLike, isDISPOSED, isRenderable } from '@gs.i/schema-scene'

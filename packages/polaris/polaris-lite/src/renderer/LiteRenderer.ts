@@ -22,7 +22,7 @@ import {
 } from 'three-lite'
 import { Renderer, GSIView, PolarisGSIProps } from '@polaris.gl/gsi'
 import { ThreeLiteConverter } from '@gs.i/backend-threelite'
-import { CameraProxy } from 'camera-proxy'
+import { CameraProxy } from '@polaris.gl/base'
 import * as SDK from '@gs.i/frontend-sdk'
 import { calcCamNearFar, colorToString } from './utils'
 import { Raycaster } from '@gs.i/processor-raycast'

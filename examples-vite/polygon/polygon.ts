@@ -6,6 +6,9 @@ import { IndicatorProcessor } from '@gs.i/processor-indicator'
 import { HelperLayer } from '@polaris.gl/layer-std-helper'
 import { LodLineStringLayer, PolygonLayer } from '@polaris.gl/layer-geojson'
 
+import { EquirectangularProjection } from '@polaris.gl/projection'
+import { AMapLayer } from '@polaris.gl/layer-amap'
+
 const indicator = new IndicatorProcessor({
 	useWireframe: true,
 	useBBox: true,
@@ -14,10 +17,11 @@ const indicator = new IndicatorProcessor({
 const container = document.querySelector('#container') as HTMLDivElement
 const p = new PolarisLite({
 	container,
-	// background: 'transparent',
+	background: 'transparent',
 	// autoplay: false,
-	// asyncRendering: true,
+	asyncRendering: true,
 	autoResize: true,
+	// projection: new EquirectangularProjection({}),
 })
 
 // let n = 0
@@ -34,6 +38,10 @@ const p = new PolarisLite({
 const h = new HelperLayer({ length: 10000 })
 p.add(h)
 h.setProps({ box: false })
+
+// AMap
+// const amapLayer = new AMapLayer()
+// p.add(amapLayer)
 
 // p.addEventListener('viewChange', (e) => {
 // 	console.log(e)
