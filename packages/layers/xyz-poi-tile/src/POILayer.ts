@@ -1,7 +1,7 @@
 import { specifyTexture } from '@gs.i/utils-specify'
 import { isDISPOSED } from '@gs.i/schema-scene'
 import { Mesh, PointMaterial, Geom, Attr } from '@gs.i/frontend-sdk'
-import { Color } from '@gs.i/utils-math'
+import { Color, Vector2 } from '@gs.i/utils-math'
 import {
 	XYZTileManager,
 	TileRenderables,
@@ -10,14 +10,14 @@ import {
 } from '@polaris.gl/utils-tile-manager'
 import { Marker } from '@polaris.gl/layer-std-marker'
 import { RequestPending, XYZTileRequestManager } from '@polaris.gl/utils-request-manager'
-import { AbstractPolaris, CoordV2, PickInfo } from '@polaris.gl/base'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
+import { CoordV2, PickInfo, AbstractPolaris } from '@polaris.gl/base'
 import { Projection } from '@polaris.gl/projection'
 import { colorToUint8Array, brushColorToImage } from '@polaris.gl/utils'
-import { PointsMeshPickHelper } from './helpers'
-import { PolarisGSI, StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
+import { PolarisGSI } from '@polaris.gl/gsi'
 import Pbf from 'pbf'
 import { decode } from 'geobuf'
-import { functionlize, RequireDefault } from './utils'
+import { PointsMeshPickHelper } from './PointsMeshPickHelper'
 
 /**
  * 配置项 interface
@@ -31,7 +31,7 @@ export interface POILayerProps extends StandardLayerProps {
 
 	/**
 	 * Pass in a user customized RequestManager to replace the default one
-	 * Set a requestManager from outside and managed by user to let different layers share the same http resources.
+	 * Setting a requestManager managed by user to let different layers share http resource caches.
 	 */
 	requestManager?: XYZTileRequestManager
 
@@ -41,11 +41,11 @@ export interface POILayerProps extends StandardLayerProps {
 	getUrl: (x: number, y: number, z: number) => string | { url: string; requestParams?: any }
 
 	/**
-	 * The id prop key in feature.properties is essential for XYZ tiles,
-	 * especially for user interactions such as styling/picking.
-	 * The default feature is 'id', but you can change it for your own applications.
-	 * This property value should be UNIQUE for each valid geo feature in tile data.
-	 * @NOTE Clustered features MAY not have id prop in properties
+	 * The id key in feature.properties is essential for XYZ tiles,
+	 * especially for user interactions such as styling & picking.
+	 * The default key is 'id', but you can change it for your own applications.
+	 * This id value should be UNIQUE for each valid geo feature in tile data.
+	 * @NOTE Clustered features MAY not have id prop in feature.properties
 	 */
 	featureIdKey: string
 
@@ -105,7 +105,7 @@ export interface POILayerProps extends StandardLayerProps {
 	 * usually both numbers are between [-1.0, 1.0], but not necessary.
 	 * @NOTE bottom/left values should be < 0, top/right values should be > 0.
 	 */
-	pointOffset: readonly [number, number]
+	pointOffset: [number, number]
 
 	/**
 	 * cluster size (px)
@@ -128,11 +128,6 @@ export interface POILayerProps extends StandardLayerProps {
 	clusterColorBlend: 'replace' | 'multiply' | 'add'
 
 	/**
-	 * TODO: @qianxun describe this
-	 */
-	clusterStyle?
-
-	/**
 	 * Get cluster feature text string
 	 * @return => {string} to set this feature as a cluster, the content will be rendered onto marker
 	 * @return => {undefined} to set this feature as non-clustered point, it will be rendered as normal point
@@ -142,7 +137,7 @@ export interface POILayerProps extends StandardLayerProps {
 	/**
 	 * cluster dom style
 	 */
-	getClusterDOMStyle?: { [key: string]: any } | ((feature: any) => { [key: string]: any })
+	getClusterDOMStyle?: { [key: string]: any } | ((feature: any) => any)
 
 	/**
 	 * Custom geojson filter
@@ -184,22 +179,38 @@ export interface POILayerProps extends StandardLayerProps {
 	viewZoomReduction?: number
 
 	/**
+	 * Tile update zoom step, set this > 1 will let layer decrease its tile requests
+	 */
+	viewZoomStep?: number
+
+	/**
 	 * TileManager tile update strategy option
 	 * use replacement method when current vis tiles are in pending states
-	 * default is true
+	 * default is false
 	 */
 	useParentReplaceUpdate?: boolean
+
+	/**
+	 * The ratio to check if the current level tiles should replace parent tiles
+	 * only if the: currAvailableTilesCount > totalTilesShouldBeVisible * ratio is true, the parent tiles will be hidden
+	 * and replaced by correct tiles
+	 * @default 0.3
+	 * @NOTE this config will only work if 'useParentReplaceUpdate' option is on
+	 */
+	replacementRatio?: number
+
+	/**
+	 *
+	 */
+	debug?: boolean
 }
 
 /**
  * 配置项 默认值
  */
-export const defaultProps = {
-	name: 'POILayer',
-	dataType: 'auto' as const,
-	getUrl: (x, y, z) => {
-		throw new Error('getUrl prop is not defined')
-	},
+export const defaultProps: POILayerProps = {
+	dataType: 'auto',
+	getUrl: (x, y, z) => 'CUSTOM_TILES_URL_HERE',
 	minZoom: 3,
 	maxZoom: 20,
 	featureIdKey: 'id',
@@ -207,31 +218,41 @@ export const defaultProps = {
 	pointImage:
 		'https://img.alicdn.com/imgextra/i3/O1CN01naDbsE1HeeoOqvic6_!!6000000000783-2-tps-256-256.png',
 	getPointColor: '#ffafff',
-	pointColorBlend: 'replace' as const,
+	pointColorBlend: 'replace',
 	pointSize: 16,
 	pointHoverSize: 32,
-	pointOffset: [0.0, 0.0] as const,
+	pointOffset: [0.0, 0.0],
 	clusterImage:
 		'https://img.alicdn.com/imgextra/i2/O1CN016yGVRh1Tdzf8SkuLn_!!6000000002406-2-tps-60-60.png',
 	clusterColor: '#00afff',
-	clusterColorBlend: 'replace' as const,
+	clusterColorBlend: 'replace',
 	clusterSize: 64,
 	getClusterDOMStyle: {},
 	getClusterContent: (feature) => undefined,
 	framesBeforeRequest: 10,
 	cacheSize: 512,
 	viewZoomReduction: 0,
-	useParentReplaceUpdate: true,
+	viewZoomStep: 1,
+	useParentReplaceUpdate: false,
+	replacementRatio: 0.3,
+	debug: false,
 }
 
-defaultProps as POILayerProps
-
-export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof defaultProps>> {
+export class POILayer extends StandardLayer {
 	matr: PointMaterial
 
-	requestManager: XYZTileRequestManager
+	get tileManager() {
+		if (this.getProp('debug')) {
+			return this._tileManager
+		} else {
+			console.warn('TileManager can only be get in debug mode')
+			return undefined
+		}
+	}
 
-	tileManager: XYZTileManager
+	protected _requestManager: XYZTileRequestManager
+
+	protected _tileManager: XYZTileManager
 
 	private _ratio: number
 
@@ -279,19 +300,30 @@ export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof
 			...props,
 		}
 		super(_props)
+		this.group.name = 'POILayer'
 		this._ratio = 1.0
-
-		this.addEventListener('init', (e) => {
-			this._init(e.projection, e.timeline, e.polaris)
-		})
 	}
 
 	/**
-	 * highlight api for TileLayers
+	 * get the current tile loading status of this layer
 	 */
-	highlightByIds: (idsArr: number[], style: { [name: string]: any }) => void
+	getLoadingStatus(): { pends: number; total: number } {
+		if (!this._tileManager) {
+			// not inited yet
+			return {
+				pends: 0,
+				total: 0,
+			}
+		}
+		const pends = this._tileManager.getPendingTilesCount()
+		const total = this._tileManager.getVisibleTilesCount()
+		return {
+			pends,
+			total,
+		}
+	}
 
-	_init(projection, timeline, polaris) {
+	init(projection, timeline, polaris) {
 		const p = polaris as PolarisGSI
 
 		if (!projection.isPlaneProjection) {
@@ -300,6 +332,9 @@ export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof
 
 		// cache polaris render ratio for pointSizes computation
 		this._ratio = polaris.ratio ?? 1.0
+
+		/** picking */
+		this.raycast = this._pickPOI
 
 		this.listenProps(
 			[
@@ -330,6 +365,7 @@ export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof
 				'cacheSize',
 				'viewZoomReduction',
 				'useParentReplaceUpdate',
+				'replacementRatio',
 			],
 			() => {
 				this._checkProps(p)
@@ -348,7 +384,7 @@ export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof
 
 				this.matr = this._createPointMatr(polaris)
 
-				const dtConfig = this.getProps('dataType')
+				const dtConfig = this.getProp('dataType')
 				let dataType
 				switch (dtConfig) {
 					case 'pbf': {
@@ -368,44 +404,50 @@ export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof
 					}
 				}
 
-				if (this.requestManager) {
-					this.requestManager.dispose()
+				if (this._requestManager) {
+					this._requestManager.dispose()
 				}
 
-				const customFetcher = this.getProps('customFetcher')
-				const customTileKeyGen = this.getProps('customTileKeyGen')
-				this.requestManager =
-					this.getProps('requestManager') ??
+				const customFetcher = this.getProp('customFetcher')
+				const customTileKeyGen = this.getProp('customTileKeyGen')
+				this._requestManager =
+					this.getProp('requestManager') ??
 					new XYZTileRequestManager({
 						dataType,
 						fetcher: customFetcher ? ({ x, y, z }) => customFetcher(x, y, z) : undefined,
 						getCacheKey: customTileKeyGen ? ({ x, y, z }) => customTileKeyGen(x, y, z) : undefined,
 						getUrl: (requestArgs) => {
-							return this.getProps('getUrl')(requestArgs.x, requestArgs.y, requestArgs.z)
+							return this.getProp('getUrl')(requestArgs.x, requestArgs.y, requestArgs.z)
 						},
 					})
 
-				if (this.tileManager) {
-					this.tileManager.dispose()
-				}
-
-				this.tileManager = new XYZTileManager({
+				const tileManagerConfig = {
 					layer: this,
-					minZoom: this.getProps('minZoom'),
-					maxZoom: this.getProps('maxZoom'),
-					cacheSize: this.getProps('cacheSize'),
-					framesBeforeUpdate: this.getProps('framesBeforeRequest'),
-					viewZoomReduction: this.getProps('viewZoomReduction'),
-					useParentReplaceUpdate: this.getProps('useParentReplaceUpdate'),
+					timeline,
+					polaris,
+					minZoom: this.getProp('minZoom'),
+					maxZoom: this.getProp('maxZoom'),
+					cacheSize: this.getProp('cacheSize'),
+					framesBeforeUpdate: this.getProp('framesBeforeRequest'),
+					viewZoomReduction: this.getProp('viewZoomReduction'),
+					useParentReplaceUpdate: this.getProp('useParentReplaceUpdate'),
+					replacementRatio: this.getProp('replacementRatio'),
+					zoomStep: this.getProp('viewZoomStep'),
 					getTileRenderables: (tileToken) => {
 						return this._createTileRenderables(tileToken, projection, polaris)
 					},
 					onTileRelease: (tile, token) => {
 						this._releaseTile(tile, token)
 					},
-				})
-
-				this.tileManager.start()
+					printErrors: this.getProp('debug'),
+				}
+				if (!this._tileManager) {
+					this._tileManager = new XYZTileManager(tileManagerConfig)
+					this._tileManager.start()
+				} else {
+					this._tileManager.updateConfig(tileManagerConfig)
+					this._tileManager.clear()
+				}
 			}
 		)
 
@@ -413,44 +455,42 @@ export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof
 			const polaris = p as AbstractPolaris
 			this._ratio = polaris.ratio ?? 1.0
 			if (this.matr) {
-				// @note matr.uniform is currently a setter. can not read from it
-				// this.matr.uniforms.uResolution.value = { x: polaris.canvasWidth, y: polaris.canvasHeight }
+				this.matr.uniforms.uResolution.value = { x: polaris.canvasWidth, y: polaris.canvasHeight }
 			}
 			// if (Math.abs(cam.pitch) > 0.0001) {
 			// 	console.warn('POILayer - POILayer under 3D view mode is currently not supported')
 			// }
 		}
+	}
 
-		/** highlight api */
-		// this.highlightByIndices = undefined
+	/**
+	 * highlight api for TileLayers
+	 */
+	highlightByIds(idsArr: (number | string)[], style: { [name: string]: any }) {
+		if (!this._idMeshesMap) return
+		if (!style || !style.type) return
 
-		/** highlight api 2 */
-		this.highlightByIds = (idsArr: (number | string)[], style: { [name: string]: any }) => {
-			if (!this._idMeshesMap) return
-			if (!style || !style.type) return
-
-			const type = style.type
-			idsArr.forEach((id) => {
-				const meshInfos = this._idMeshesMap.get(id)
-				if (!meshInfos) return
-				meshInfos.forEach((meshInfo) => {
-					const obj = meshInfo.obj
-					const objIdx = meshInfo.objIdx
-					if (obj instanceof Marker) {
-						/** @TODO react on marker highlight */
-						return
-					} else if (obj instanceof Mesh) {
-						if (type === 'none') {
-							this._updatePointSizeByIndex(obj, objIdx, this._getPointStyledSize(style))
-							this._idStyleMap.delete(id)
-						} else if (type === 'hover') {
-							this._updatePointSizeByIndex(obj, objIdx, this._getPointStyledSize(style))
-							this._idStyleMap.set(id, { ...style })
-						}
+		const type = style.type
+		idsArr.forEach((id) => {
+			const meshInfos = this._idMeshesMap.get(id)
+			if (!meshInfos) return
+			meshInfos.forEach((meshInfo) => {
+				const obj = meshInfo.obj
+				const objIdx = meshInfo.objIdx
+				if (obj instanceof Marker) {
+					/** react on marker highlight, to be designed */
+					return
+				} else if (obj instanceof Mesh) {
+					if (type === 'none') {
+						this._updatePointSizeByIndex(obj, objIdx, this._getPointStyledSize(style))
+						this._idStyleMap.delete(id)
+					} else if (type === 'hover') {
+						this._updatePointSizeByIndex(obj, objIdx, this._getPointStyledSize(style))
+						this._idStyleMap.set(id, { ...style })
 					}
-				})
+				}
 			})
-		}
+		})
 	}
 
 	dispose() {
@@ -460,20 +500,13 @@ export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof
 		this._indexMeshMap = new Map()
 		this._idMeshesMap = new Map()
 		this._idStyleMap = new Map()
-		this.requestManager.dispose()
-		this.tileManager.dispose()
-	}
-
-	getState() {
-		const pendsCount = this.tileManager ? this.tileManager.getPendsCount() : undefined
-		return {
-			pendsCount,
-		}
+		this._requestManager.dispose()
+		this._tileManager.dispose()
 	}
 
 	private _checkProps(polaris: PolarisGSI) {
-		const pointSize = this.getProps('pointSize') * this._ratio
-		const pointHoverSize = this.getProps('pointHoverSize') * this._ratio
+		const pointSize = this.getProp('pointSize') * this._ratio
+		const pointHoverSize = this.getProp('pointHoverSize') * this._ratio
 		const capabilities = polaris.renderer.getCapabilities()
 		const maxSize = capabilities.pointSizeRange[1]
 		if (pointSize > maxSize || pointHoverSize > maxSize) {
@@ -488,17 +521,17 @@ export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof
 	private _createPointImgElement() {
 		this._pointImgElem = new Image()
 		this._pointImgElem.setAttribute('crossOrigin', 'anonymous')
-		this._pointImgElem.src = this.getProps('pointImage')
+		this._pointImgElem.src = this.getProp('pointImage')
 	}
 
 	private _createTileRenderables(token, projection, polaris): TilePromise {
-		const dataType = this.getProps('dataType')
-		const geojsonFilter = this.getProps('geojsonFilter')
+		const dataType = this.getProp('dataType')
+		const geojsonFilter = this.getProp('geojsonFilter')
 		const x = token[0],
 			y = token[1],
 			z = token[2]
 
-		const requestPending = this.requestManager.request({ x, y, z })
+		const requestPending = this._requestManager.request({ x, y, z })
 		const requestPromise = requestPending.promise
 		const cacheKey = this._getCacheKey(x, y, z)
 
@@ -576,8 +609,8 @@ export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof
 	}
 
 	private _createPointMatr(polaris: AbstractPolaris) {
-		const pointOffset = this.getProps('pointOffset')
-		const pointColorBlend = this.getProps('pointColorBlend')
+		const pointOffset = this.getProp('pointOffset')
+		const pointColorBlend = this.getProp('pointColorBlend')
 		let P_COLOR_MODE = 0
 		switch (pointColorBlend) {
 			case 'replace':
@@ -589,14 +622,20 @@ export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof
 			case 'add':
 				P_COLOR_MODE = 2
 				break
+			default:
 		}
 
 		const matr = new PointMaterial({
 			alphaMode: 'BLEND',
-			depthTest: this.getProps('depthTest'),
+			depthTest: this.getProp('depthTest'),
 			baseColorFactor: { r: 1, g: 1, b: 1 },
 			baseColorTexture: specifyTexture({
-				image: { uri: this.getProps('pointImage'), extensions: { EXT_image: { flipY: true } } },
+				image: {
+					uri: this.getProp('pointImage'),
+					extensions: {
+						EXT_image_flipY: true,
+					},
+				},
 				sampler: {
 					minFilter: 'LINEAR_MIPMAP_LINEAR',
 					magFilter: 'LINEAR',
@@ -609,25 +648,32 @@ export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof
 			},
 			uniforms: {
 				uOffset: {
-					value: { x: pointOffset[0], y: pointOffset[1] },
+					value: new Vector2(pointOffset[0], pointOffset[1]),
 				},
 				uResolution: {
-					value: { x: polaris.canvasWidth, y: polaris.canvasHeight },
+					value: new Vector2(polaris.canvasWidth, polaris.canvasHeight),
 				},
 			},
-			global: `
-				uniform vec2 uOffset;
-				uniform vec2 uResolution;
-
-				varying vec3 vColor;
-			`,
+			// attributes: {
+			// 	aSize: 'float',
+			// 	aColor: 'vec3',
+			// },
 			vertGlobal: `
-				attribute float aSize;
-				attribute vec3 aColor;
+			attribute float aSize;
+			attribute vec3 aColor;
 			`,
+
+			// varyings: {
+			// 	vColor: 'vec3',
+			// },
+			global: `
+			varying vec3 vColor;
+			`,
+
 			vertPointGeometry: `
 				pointSize = aSize;
 			`,
+
 			vertOutput: `
 				vColor = aColor / 255.0;
 				// calc point offsets
@@ -638,6 +684,7 @@ export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof
 				vec2 offset = uOffset;
 				glPosition.xy += offset * pxRange;
 			`,
+
 			fragOutput: `
 			#if P_COLOR_MODE == 0          // replace
 				fragColor.rgb = vColor;
@@ -662,19 +709,18 @@ export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof
 			return
 		}
 
-		const featureIdKey = this.getProps('featureIdKey')
-		const baseAlt = this.getProps('baseAlt')
-		const featureFilter = this.getProps('featureFilter')
-		const getClusterContent = this.getProps('getClusterContent')
-		const clusterSize = this.getProps('clusterSize')
-		const getPointColor = functionlize(this.getProps('getPointColor'))
-		const pointOffset = this.getProps('pointOffset')
-		const renderOrder = this.getProps('renderOrder')
+		const featureIdKey = this.getProp('featureIdKey')
+		const baseAlt = this.getProp('baseAlt')
+		const featureFilter = this.getProp('featureFilter')
+		const getClusterContent = this.getProp('getClusterContent')
+		const clusterSize = this.getProp('clusterSize')
+		const getPointColor = this.getProp('getPointColor')
+		const pointOffset = this.getProp('pointOffset')
+		const renderOrder = this.getProp('renderOrder')
 
 		const mesh = new Mesh({
 			name: key ? key : 'pois',
 		})
-
 		mesh.renderOrder = renderOrder
 
 		const layers: Marker[] = []
@@ -784,37 +830,34 @@ export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof
 	private async _getClusterImage() {
 		if (this._clusterImgUrl) return this._clusterImgUrl
 
-		this._clusterImgUrl = await brushColorToImage(
-			this.getProps('clusterImage'),
-			this.getProps('clusterColor'),
-			this.getProps('clusterSize'),
-			this.getProps('clusterSize'),
-			this.getProps('clusterColorBlend')
-		)
-
-		return this._clusterImgUrl
+		try {
+			this._clusterImgUrl = await brushColorToImage(
+				this.getProp('clusterImage'),
+				this.getProp('clusterColor'),
+				this.getProp('clusterSize'),
+				this.getProp('clusterSize'),
+				this.getProp('clusterColorBlend')
+			)
+			return this._clusterImgUrl
+		} catch (e) {
+			console.error(`POILayer - Generating cluster image error`)
+			throw e
+		}
 	}
 
 	private _createClusterDiv(text: string, clusterImage: string, feature: any) {
-		const clusterSize = this.getProps('clusterSize')
+		const clusterSize = this.getProp('clusterSize')
+		const getClusterDOMStyle = this.getProp('getClusterDOMStyle')
 
 		const div = document.createElement('div')
 		div.innerText = text
 
 		const style = div.style as any
-		const getClusterDOMStyle = this.getProps('getClusterDOMStyle')
-		if (getClusterDOMStyle) {
-			let customStyle: { [key: string]: any }
-			if (typeof getClusterDOMStyle === 'function') {
-				customStyle = getClusterDOMStyle(feature)
-			} else {
-				customStyle = getClusterDOMStyle
-			}
-			for (const key in customStyle) {
-				if (Object.prototype.hasOwnProperty.call(customStyle, key)) {
-					const value = customStyle[key]
-					style[key] = value
-				}
+		const customStyle = getClusterDOMStyle(feature)
+		for (const key in customStyle) {
+			if (Object.prototype.hasOwnProperty.call(customStyle, key)) {
+				const value = customStyle[key]
+				style[key] = value
 			}
 		}
 
@@ -834,54 +877,53 @@ export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof
 		return `${x}|${y}|${z}`
 	}
 
-	// TODO: refactor picking
-	// raycast(polaris: AbstractPolaris, canvasCoords: CoordV2, ndc: CoordV2): PickEvent | undefined {
-	// 	if (!this.tileManager || !(polaris instanceof PolarisGSI)) return
+	private _pickPOI(polaris: PolarisGSI, canvasCoords: CoordV2, ndc: CoordV2): PickInfo | undefined {
+		if (!this._tileManager) return
 
-	// 	const markers: Marker[] = []
-	// 	const meshes: Mesh[] = []
+		const markers: Marker[] = []
+		const meshes: Mesh[] = []
 
-	// 	const renderableList = this.tileManager.getVisibleTiles()
-	// 	renderableList.forEach((r) => markers.push(...(r.layers as Marker[])))
-	// 	renderableList.forEach((r) => meshes.push(...(r.meshes as Mesh[])))
+		const renderableList = this._tileManager.getVisibleTiles()
+		renderableList.forEach((r) => markers.push(...(r.layers as Marker[])))
+		renderableList.forEach((r) => meshes.push(...(r.meshes as Mesh[])))
 
-	// 	// pick markers
-	// 	for (let i = 0; i < markers.length; i++) {
-	// 		const marker = markers[i]
-	// 		const pickResult = marker.pick(polaris, canvasCoords, ndc)
-	// 		if (pickResult) {
-	// 			const feature = this._renderableFeatureMap.get(marker)
-	// 			pickResult.index = feature.index
-	// 			pickResult.data = {
-	// 				type: 'cluster',
-	// 				feature,
-	// 				curr: feature,
-	// 			}
-	// 			return pickResult
-	// 		}
-	// 	}
+		// pick markers
+		for (let i = 0; i < markers.length; i++) {
+			const marker = markers[i]
+			const pickResult = marker.raycast(polaris, canvasCoords, ndc)
+			if (pickResult) {
+				const feature = this._renderableFeatureMap.get(marker)
+				pickResult.index = feature.index
+				pickResult.data = {
+					type: 'cluster',
+					feature,
+					curr: feature,
+				}
+				return pickResult
+			}
+		}
 
-	// 	// pick points
-	// 	for (let i = 0; i < meshes.length; i++) {
-	// 		const mesh = meshes[i]
-	// 		if (!mesh.extras) continue
-	// 		const pickHelper = mesh.extras.pickHelper as PointsMeshPickHelper
-	// 		const pickResult = pickHelper.pick(polaris, canvasCoords)
-	// 		if (pickResult) {
-	// 			const features = this._renderableFeatureMap.get(mesh)
-	// 			const feature = features[pickResult.index]
-	// 			pickResult.index = feature.index
-	// 			pickResult.data = {
-	// 				type: 'point',
-	// 				feature,
-	// 				curr: feature, // backward compatibility
-	// 			}
-	// 			return pickResult
-	// 		}
-	// 	}
+		// pick points
+		for (let i = 0; i < meshes.length; i++) {
+			const mesh = meshes[i]
+			if (!mesh.extras) continue
+			const pickHelper = mesh.extras.pickHelper as PointsMeshPickHelper
+			const pickResult = pickHelper.pick(polaris, canvasCoords)
+			if (pickResult) {
+				const features = this._renderableFeatureMap.get(mesh)
+				const feature = features[pickResult.index]
+				pickResult.index = feature.index
+				pickResult.data = {
+					type: 'point',
+					feature,
+					curr: feature, // backward compatibility
+				}
+				return pickResult
+			}
+		}
 
-	// 	return
-	// }
+		return
+	}
 
 	private _updatePointSizeByIndex(mesh: Mesh, index: number, size: number) {
 		const attr = mesh.geometry?.attributes.aSize
@@ -890,15 +932,33 @@ export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof
 		if (isDISPOSED(array)) return
 		array[index] = size
 
-		if (!attr.extensions) attr.extensions = {}
-		if (!attr.extensions.EXT_buffer_partial_update)
-			attr.extensions.EXT_buffer_partial_update = { updateRanges: [] }
+		// Update attr ranges
+		if (attr.extensions?.EXT_buffer_partial_update) {
+			const ext = attr.extensions.EXT_buffer_partial_update
+			ext.updateRanges = ext.updateRanges || []
+			ext.updateRanges.push({
+				start: index,
+				count: 1,
+			})
+		} else {
+			attr.extensions = attr.extensions || {}
+			attr.extensions.EXT_buffer_partial_update = {
+				updateRanges: [
+					{
+						start: index,
+						count: 1,
+					},
+				],
+			}
+		}
 
-		attr.extensions.EXT_buffer_partial_update.updateRanges.push({
-			start: index,
-			count: 1,
-		})
-		attr.version++
+		// @deprecated
+		// attr.updateRanges = attr.updateRanges || []
+		// attr.updateRanges.push({
+		// 	start: index,
+		// 	count: 1,
+		// })
+		// attr.version++
 	}
 
 	private _setIdMeshesMap(id: number | string, obj: any) {
@@ -918,8 +978,8 @@ export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof
 	}
 
 	private _getPointStyledSize(style?: { [name: string]: any }): number {
-		const pointSize = this.getProps('pointSize') * this._ratio
-		const pointHoverSize = this.getProps('pointHoverSize') * this._ratio
+		const pointSize = this.getProp('pointSize') * this._ratio
+		const pointHoverSize = this.getProp('pointHoverSize') * this._ratio
 		if (!style || !style.type) {
 			return pointSize
 		}
@@ -934,7 +994,7 @@ export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof
 	}
 
 	private _releaseTile(tile: TileRenderables, token: TileToken) {
-		const featureIdKey = this.getProps('featureIdKey')
+		const featureIdKey = this.getProp('featureIdKey')
 
 		tile.meshes.forEach((mesh) => {
 			// for non-cluster points mesh, features is a list

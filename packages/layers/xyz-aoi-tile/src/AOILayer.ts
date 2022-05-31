@@ -1,23 +1,18 @@
-import { MeshDataType } from '@gs.i/schema-scene'
+import { NodeLike } from '@gs.i/schema-scene'
 import { computeBBox, computeBSphere } from '@gs.i/utils-geometry'
+import { genBSphereWireframe } from '@gs.i/utils-wireframe'
 import { XYZTileManager, TileRenderables, TileToken } from '@polaris.gl/utils-tile-manager'
 import { RequestPending, XYZTileRequestManager } from '@polaris.gl/utils-request-manager'
-import { PolarisGSI, StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 import { Mesh, UnlitMaterial, Geom, Attr } from '@gs.i/frontend-sdk'
-import { AbstractPolaris, CoordV2, CoordV3, PickInfo } from '@polaris.gl/base'
+import { CoordV2, CoordV3, AbstractPolaris, PickInfo } from '@polaris.gl/base'
 import Pbf from 'pbf'
 import { decode } from 'geobuf'
 import { Projection } from '@polaris.gl/projection'
 import { colorToUint8Array } from '@polaris.gl/utils'
-
+import { PolarisGSI } from '@polaris.gl/gsi'
 import { Color } from '@gs.i/utils-math'
-import {
-	featureToLinePositions,
-	createRangeArray,
-	getFeatureTriangles,
-	RequireDefault,
-	functionlize,
-} from './utils'
+import { featureToLinePositions, createRangeArray, getFeatureTriangles } from './utils'
 import { LineIndicator } from '@polaris.gl/utils-indicator'
 import { WorkerManager } from '@polaris.gl/utils-worker-manager'
 import { createWorkers } from './workers/createWorkers'
@@ -33,7 +28,7 @@ export interface AOILayerProps extends StandardLayerProps {
 
 	/**
 	 * Pass in a user customized RequestManager to replace the default one
-	 * Set a requestManager from outside and managed by user to let different layers share the same http resources.
+	 * Setting a requestManager managed by user to let different layers share http resource caches.
 	 */
 	requestManager?: XYZTileRequestManager
 
@@ -44,10 +39,9 @@ export interface AOILayerProps extends StandardLayerProps {
 
 	/**
 	 * The id key in feature.properties is essential for XYZ tiles,
-	 * especially for user interactions such as styling/picking.
-	 * The default feature is 'id', but you can change it for your own applications.
-	 * This property value should be UNIQUE for each valid geo feature in tile data.
-	 * @NOTE Clustered features MAY not have id prop in properties
+	 * especially for user interactions such as styling & picking.
+	 * The default key is 'id', but you can change it for your own applications.
+	 * This id value should be UNIQUE for each valid geo feature in tile data.
 	 */
 	featureIdKey: string
 
@@ -88,8 +82,9 @@ export interface AOILayerProps extends StandardLayerProps {
 
 	/**
 	 * Hover LineIndicator level
+	 * @default 2
 	 */
-	hoverLineLevel: 0 | 1 | 2 | 4
+	hoverLineLevel: number
 
 	/**
 	 *
@@ -102,9 +97,22 @@ export interface AOILayerProps extends StandardLayerProps {
 	hoverLineColor: number | string
 
 	/**
-	 * Select LineIndicator level
+	 * The line color rendered on AOIs when un-hovered (normal conditions)
+	 * @default '#000000'
 	 */
-	selectLineLevel: 0 | 1 | 2 | 4
+	unHoveredLineColor?: number | string
+
+	/**
+	 * The line opacity rendered on AOIs when un-hovered (normal conditions)
+	 * @default 0.0
+	 */
+	unHoveredLineOpacity?: number
+
+	/**
+	 * Select LineIndicator level
+	 * @default 2
+	 */
+	selectLineLevel: number
 
 	/**
 	 *
@@ -134,7 +142,7 @@ export interface AOILayerProps extends StandardLayerProps {
 
 	/**
 	 * The limit of tile cache count
-	 * default is 512
+	 * @default 512
 	 */
 	cacheSize?: number
 
@@ -150,17 +158,31 @@ export interface AOILayerProps extends StandardLayerProps {
 	customTileKeyGen?: (x: number, y: number, z: number) => string
 
 	/**
-	 * Increasing view zoom reduction will let layer request less but lower level tiles
+	 * Increasing view zoom reduction will let layer request less but lower level tiles,
 	 * This may help with low fetching speed problem
 	 */
 	viewZoomReduction?: number
 
 	/**
-	 * TileManager tile update strategy option
+	 * Tile update zoom step, set this > 1 will let layer decrease its tile requests
+	 */
+	viewZoomStep?: number
+
+	/**
+	 * TileManager tile update strategy option,
 	 * use replacement method when current vis tiles are in pending states
-	 * default is true
+	 * @default true
 	 */
 	useParentReplaceUpdate?: boolean
+
+	/**
+	 * The ratio to check if the current level tiles should replace parent tiles
+	 * only if the: currAvailableTilesCount > totalTilesShouldBeVisible * ratio is true, the parent tiles will be hidden
+	 * and replaced by correct tiles
+	 * @default 0.3
+	 * @NOTE this config will only work if 'useParentReplaceUpdate' option is on
+	 */
+	replacementRatio?: number
 
 	/**
 	 * Number of worker used, can be set to 0.
@@ -168,7 +190,7 @@ export interface AOILayerProps extends StandardLayerProps {
 	workersNum?: number
 
 	/**
-	 * Enable debug mode: print errors, render boundingSphere
+	 * Enable debug mode: print errors, create boundingSphere wireframe
 	 */
 	debug?: boolean
 }
@@ -176,35 +198,34 @@ export interface AOILayerProps extends StandardLayerProps {
 /**
  * 配置项 默认值
  */
-const defaultProps = {
-	name: 'AOILayer',
-	dataType: 'auto' as const,
-	getUrl: (x, y, z) => {
-		throw new Error('getUrl prop is not defined')
-	},
+const defaultProps: AOILayerProps = {
+	dataType: 'auto',
+	getUrl: (x, y, z) => 'CUSTOM_TILES_URL_HERE',
 	minZoom: 3,
 	maxZoom: 20,
-	featureIdKey: 'id' as const,
+	featureIdKey: 'id',
 	baseAlt: 0,
 	getColor: '#ffffff',
 	getOpacity: 1.0,
 	transparent: false,
 	indicatorLinesHeight: 0,
-	hoverLineLevel: 2 as const,
+	hoverLineLevel: 2,
 	hoverLineWidth: 1,
 	hoverLineColor: '#333333',
-	selectLineLevel: 2 as const,
+	unHoveredLineColor: '#000000',
+	unHoveredLineOpacity: 0.0,
+	selectLineLevel: 2,
 	selectLineWidth: 2,
 	selectLineColor: '#00ffff',
 	framesBeforeRequest: 10,
 	cacheSize: 512,
 	viewZoomReduction: 0,
+	viewZoomStep: 1,
 	useParentReplaceUpdate: true,
+	replacementRatio: 0.3,
 	workersNum: 0,
 	debug: false,
 }
-
-defaultProps as AOILayerProps // this check the type but do not assign AOILayerProps to defaultProps
 
 type IndicatorRangeInfo = {
 	hoverIndicator: LineIndicator
@@ -212,17 +233,26 @@ type IndicatorRangeInfo = {
 	ranges: { offset: number; count: number }[]
 }
 
-export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof defaultProps>> {
+export class AOILayer extends StandardLayer {
 	matr: UnlitMaterial
-
-	requestManager: XYZTileRequestManager
-
-	tileManager: XYZTileManager
 
 	/**
 	 * Performance info
 	 */
 	info: { times: Map<number | string, { reqTime: number; genTime: number }> }
+
+	get tileManager() {
+		if (this.getProp('debug')) {
+			return this._tileManager
+		} else {
+			console.warn('TileManager can only be get in debug mode')
+			return undefined
+		}
+	}
+
+	protected _requestManager: XYZTileRequestManager
+
+	protected _tileManager: XYZTileManager
 
 	/**
 	 * WorkerManager
@@ -238,7 +268,7 @@ export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof
 	/**
 	 * Map for Mesh <-> Feature relations
 	 */
-	private _renderableFeatureMap: Map<MeshDataType, any[]>
+	private _renderableFeatureMap: Map<NodeLike, any[]>
 
 	/**
 	 * Map for Feature <-> GeomIndexRange in the current Mesh
@@ -264,39 +294,54 @@ export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof
 
 	private _selectedIds: Set<number | string>
 
+	/**
+	 * debug prop
+	 */
+	private _renderBSphere: boolean
+
 	constructor(props: Partial<AOILayerProps> = {}) {
 		const _props = {
 			...defaultProps,
 			...props,
 		}
 		super(_props)
-
-		this.addEventListener('init', (e) => {
-			this._init(e.projection, e.timeline, e.polaris)
-		})
+		this.group.name = 'AOILayer'
 	}
 
 	/**
-	 * highlight api for TileLayers
+	 * get the current tile loading status of this layer
 	 */
-	highlightByIds: (idsArr: number[], style: { [name: string]: any }) => void
+	getLoadingStatus(): { pends: number; total: number } {
+		if (!this._tileManager) {
+			// not inited yet
+			return {
+				pends: 0,
+				total: 0,
+			}
+		}
+		const pends = this._tileManager.getPendingTilesCount()
+		const total = this._tileManager.getVisibleTilesCount()
+		return {
+			pends,
+			total,
+		}
+	}
 
-	private _init(projection, timeline, polaris) {
+	init(projection, timeline, polaris) {
 		const p = polaris as AbstractPolaris
 
 		if (!projection.isPlaneProjection) {
 			throw new Error('AOILayer - TileLayer can only be used under plane projections')
 		}
 
+		/** picking */
+		this.raycast = this._pickAOI
+
 		this.listenProps(['workersNum'], () => {
-			if (this._workerManager) {
-				throw new Error('can not change props.workersNum')
-			} else {
-				const workersNum = this.getProp('workersNum')
-				if (workersNum && workersNum > 0) {
-					const workers: Worker[] = createWorkers(workersNum)
-					this._workerManager = new WorkerManager(workers)
-				}
+			const workersNum = this.getProp('workersNum')
+			if (workersNum > 0) {
+				const workers: Worker[] = createWorkers(workersNum)
+				this._workerManager = new WorkerManager(workers)
 			}
 		})
 
@@ -316,6 +361,8 @@ export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof
 				'hoverLineLevel',
 				'hoverLineWidth',
 				'hoverLineColor',
+				'unHoveredLineColor',
+				'unHoveredLineOpacity',
 				'selectLineLevel',
 				'selectLineWidth',
 				'selectLineColor',
@@ -326,7 +373,9 @@ export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof
 				'customTileKeyGen',
 				'cacheSize',
 				'viewZoomReduction',
+				'viewZoomStep',
 				'useParentReplaceUpdate',
+				'replacementRatio',
 			],
 			() => {
 				this._featureCount = 0
@@ -369,13 +418,13 @@ export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof
 					}
 				}
 
-				if (this.requestManager) {
-					this.requestManager.dispose()
+				if (this._requestManager) {
+					this._requestManager.dispose()
 				}
 
 				const customFetcher = this.getProp('customFetcher')
 				const customTileKeyGen = this.getProp('customTileKeyGen')
-				this.requestManager =
+				this._requestManager =
 					this.getProp('requestManager') ??
 					new XYZTileRequestManager({
 						dataType,
@@ -386,18 +435,20 @@ export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof
 						},
 					})
 
-				if (this.tileManager) {
-					this.tileManager.dispose()
-				}
-
-				this.tileManager = new XYZTileManager({
+				// FIX: do not create a new tileManager in every updateProps.
+				// Problems may occur due to potential multiple propUpdates triggered by user
+				const tileManagerConfig = {
 					layer: this,
+					timeline,
+					polaris,
 					minZoom: this.getProp('minZoom'),
 					maxZoom: this.getProp('maxZoom'),
 					cacheSize: this.getProp('cacheSize'),
 					framesBeforeUpdate: this.getProp('framesBeforeRequest'),
 					viewZoomReduction: this.getProp('viewZoomReduction'),
 					useParentReplaceUpdate: this.getProp('useParentReplaceUpdate'),
+					replacementRatio: this.getProp('replacementRatio'),
+					zoomStep: this.getProp('viewZoomStep'),
 					getTileRenderables: (tileToken) => {
 						return this._createTileRenderables(tileToken, projection, polaris)
 					},
@@ -405,9 +456,14 @@ export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof
 						this._releaseTile(tile, token)
 					},
 					printErrors: this.getProp('debug'),
-				})
-
-				this.tileManager.start()
+				}
+				if (!this._tileManager) {
+					this._tileManager = new XYZTileManager(tileManagerConfig)
+					this._tileManager.start()
+				} else {
+					this._tileManager.updateConfig(tileManagerConfig)
+					this._tileManager.clear()
+				}
 			}
 		)
 
@@ -420,47 +476,48 @@ export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof
 			// 	console.warn('AOILayer - AOILayer under 3D view mode is currently not supported')
 			// }
 		}
+	}
 
-		/** highlight api */
-		this.highlightByIds = (idsArr: (number | string)[], style: { [name: string]: any }) => {
-			const type = style.type
-			if (type !== 'hover' && type !== 'select' && type !== 'none') {
-				console.error(`AOILayer - Invalid argument style.type: ${style}`)
-				return
-			}
-			idsArr.forEach((id) => {
-				this._setStyleById(id, type)
-				// cache or delete style
-				if (type === 'none') {
-					this._hoveredIds.delete(id)
-					this._selectedIds.delete(id)
-				} else if (type === 'hover') {
-					this._hoveredIds.add(id)
-				} else if (type === 'select') {
-					this._selectedIds.add(id)
-				}
-			})
+	/**
+	 * highlight api for TileLayers
+	 */
+	highlightByIds(idsArr: (number | string)[], style: { [name: string]: any }) {
+		if (!this._idIndicatorRangeMap) {
+			return
 		}
+		const type = style.type
+		if (type !== 'hover' && type !== 'select' && type !== 'none') {
+			console.error(`AOILayer - Invalid argument style.type: ${style}`)
+			return
+		}
+		idsArr.forEach((id) => {
+			this._setStyleById(id, type)
+			// cache or delete style
+			if (type === 'none') {
+				this._hoveredIds.delete(id)
+				this._selectedIds.delete(id)
+			} else if (type === 'hover') {
+				this._hoveredIds.add(id)
+			} else if (type === 'select') {
+				this._selectedIds.add(id)
+			}
+		})
 	}
 
 	dispose() {
+		this.info = {
+			times: new Map(),
+		}
 		this._featureCount = 0
-		this.info.times = new Map()
 		this._renderableFeatureMap = new Map()
 		this._featureIndexRangeMap = new Map()
 		this._idIndicatorRangeMap = new Map()
 		this._hoveredIds = new Set()
 		this._selectedIds = new Set()
 		this._indicators = new Set()
-		this.requestManager.dispose()
-		this.tileManager.dispose()
-	}
-
-	getState() {
-		const pendsCount = this.tileManager ? this.tileManager.getPendsCount() : undefined
-		return {
-			pendsCount,
-		}
+		this._requestManager && this._requestManager.dispose()
+		this._tileManager && this._tileManager.dispose()
+		this._workerManager && this._workerManager.dispose()
 	}
 
 	private _createTileRenderables(token, projection, polaris) {
@@ -470,17 +527,19 @@ export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof
 			y = token[1],
 			z = token[2]
 
-		const requestPending = this.requestManager.request({ x, y, z })
+		const requestPending = this._requestManager.request({ x, y, z })
 		const cacheKey = this._getCacheKey(x, y, z)
 
 		// perf indicator
-		this.info.times.set(cacheKey, { reqTime: performance.now(), genTime: 0 })
+		if (this.getProp('debug')) {
+			this.info.times.set(cacheKey, { reqTime: performance.now(), genTime: 0 })
+		}
 
 		const promise = new Promise<TileRenderables>((resolve, reject) => {
 			requestPending.promise
 				.then((data) => {
 					// Perf log
-					const time = this.info.times.get(cacheKey)
+					const time = this.getProp('debug') ? this.info.times.get(cacheKey) : undefined
 					if (time) {
 						time.reqTime = performance.now() - time.reqTime
 						time.genTime = performance.now()
@@ -507,7 +566,7 @@ export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof
 							geojson = data
 						}
 					} else {
-						console.error(`Invalid dataType prop value: ${dataType}`)
+						console.error(`AOILayer - Invalid dataType prop value: ${dataType}`)
 						resolve(emptyTile)
 						return
 					}
@@ -561,14 +620,28 @@ export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof
 		const transparent = this.getProp('transparent')
 		const matr = new UnlitMaterial({
 			alphaMode: transparent ? 'BLEND' : 'OPAQUE',
+			depthTest: this.getProp('depthTest'),
 			baseColorFactor: { r: 1, g: 1, b: 1 },
+			uniforms: {},
+			// attributes: {
+			// 	aColor: 'vec4',
+			// },
+			// varyings: {
+			// 	vColor: 'vec4',
+			// },
+			global: `
+			varying vec4 vColor;
+			`,
+			vertGlobal: `
+			attribute vec4 aColor;
+			`,
+			vertOutput: `
+				vColor = aColor / 255.0;
+			`,
+			fragOutput: `
+				fragColor = vColor;
+			`,
 		})
-
-		matr.depthTest = this.getProp('depthTest')
-		matr.vertGlobal = `attribute vec4 aColor;`
-		matr.global = `varying vec4 vColor;`
-		matr.vertOutput = `vColor = aColor / 255.0;`
-		matr.fragOutput = `fragColor = vColor;`
 		return matr
 	}
 
@@ -592,8 +665,8 @@ export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof
 		const featureIdKey = this.getProp('featureIdKey')
 		const baseAlt = this.getProp('baseAlt')
 		const featureFilter = this.getProp('featureFilter')
-		const getColor = functionlize(this.getProp('getColor'))
-		const getOpacity = functionlize(this.getProp('getOpacity'))
+		const getColor = this.getProp('getColor')
+		const getOpacity = this.getProp('getOpacity')
 		const lineHeight = this.getProp('indicatorLinesHeight')
 		const pickable = this.getProp('pickable')
 
@@ -639,18 +712,23 @@ export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof
 			if (geometry.type === 'Polygon' || geometry.type === 'MultiPolygon') {
 				// polygon triangles generation
 				// use workers if available
-
-				const result = this._workerManager
-					? await this._workerManager.execute({
-							data: {
-								task: 'getFeatureTriangles',
-								feature,
-								projectionDesc: projection.toDesc(),
-								baseAlt,
-							},
-							transferables: [],
-					  })
-					: getFeatureTriangles(feature, projection, baseAlt)
+				let result: any
+				try {
+					result = this._workerManager
+						? await this._workerManager.execute({
+								data: {
+									task: 'getFeatureTriangles',
+									feature,
+									projectionDesc: projection.toDesc(),
+									baseAlt,
+								},
+								transferables: [],
+						  })
+						: getFeatureTriangles(feature, projection, baseAlt)
+				} catch (e) {
+					console.error('AOILayer - Error when executing getFeatureTriangles')
+					throw e
+				}
 
 				const { positions: featPositions, indices: featIndices } = result
 
@@ -741,7 +819,12 @@ export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof
 			meshFeatures.push(feature)
 		})
 
-		const results = await Promise.all(loadPromises)
+		try {
+			await Promise.all(loadPromises)
+		} catch (e) {
+			console.error('AOILayer - Error when generating feature renderables')
+			throw e
+		}
 
 		const posAttr = new Attr(new Float32Array(positions), 3)
 		const colorAttr = new Attr(new Uint8Array(colors), 4)
@@ -763,23 +846,13 @@ export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof
 		mesh.geometry = geom
 		mesh.material = this.matr
 
-		// geom.boundingSphere = new Sphere(new Vector3(), Infinity)
-		// geom.boundingBox = new Box3(
-		// 	new Vector3(-Infinity, -Infinity, -Infinity),
-		// 	new Vector3(Infinity, Infinity, Infinity)
-		// )
-
-		if (this.getProp('debug') && geom.boundingSphere) {
-			console.warn('debug unimplemented')
-
-			// TODO: gen wire frame is a GSI processor now
-			// const wireframe = new Mesh({
-			// 	name: 'bsphere-wireframe',
-			// 	geometry: genBSphereWireframe(geom.boundingSphere),
-			// 	// geometry: genBBoxWireframe(geom.boundingBox),
-			// 	material: new UnlitMaterial({ baseColorFactor: { r: 1, g: 0, b: 1 } }),
-			// })
-			// mesh.add(wireframe)
+		if (this.getProp('debug') && this._renderBSphere && geom.boundingSphere) {
+			const wireframe = new Mesh({
+				name: 'bsphere-wireframe',
+				geometry: genBSphereWireframe(geom.boundingSphere),
+				material: new UnlitMaterial({ baseColorFactor: { r: 1, g: 0, b: 1 } }),
+			})
+			mesh.add(wireframe)
 		}
 
 		this._renderableFeatureMap.set(mesh, meshFeatures)
@@ -807,6 +880,10 @@ export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof
 		const hoverLineWidth = this.getProp('hoverLineWidth') as number
 		const hoverLineColor = this.getProp('hoverLineColor')
 		const hoverLineLevel = this.getProp('hoverLineLevel')
+		const unHoveredLineColor = this.getProp('unHoveredLineColor')
+		const unHoveredLineOpacity = this.getProp('unHoveredLineOpacity')
+
+		// hover indicator
 		let hoverLevel = hoverLineLevel
 		if (hoverLineWidth > 1 && hoverLineLevel === 1) {
 			hoverLevel = 2
@@ -829,14 +906,16 @@ export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof
 			transparent: true,
 		}
 		const hoverIndicator = new LineIndicator(selectPosArr, hoverLineConfig, {
-			defaultColor: new Color(0.0, 0.0, 0.0),
-			defaultAlpha: 0.0,
+			defaultColor: new Color(unHoveredLineColor),
+			defaultAlpha: unHoveredLineOpacity,
+			// defaultColor: new Color(1.0, 1.0, 1.0),
+			// defaultAlpha: 0.0,
 			highlightColor: new Color(hoverLineColor),
 			highlightAlpha: 1.0,
 		})
 		hoverIndicator.gline.extras.isHoverIndicator = true
 
-		// Select indicator
+		// select indicator
 		const selectLineWidth = this.getProp('selectLineWidth') as number
 		const selectLineColor = this.getProp('selectLineColor')
 		const selectLineLevel = this.getProp('selectLineLevel')
@@ -879,54 +958,53 @@ export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof
 		return `${x}|${y}|${z}`
 	}
 
-	// raycast(polaris: AbstractPolaris, canvasCoords: CoordV2, ndc: CoordV2): PickEvent | undefined {
-	// 	if (!this.tileManager || !(polaris instanceof PolarisGSI)) return
-	// 	const tiles = this.tileManager.getVisibleTiles()
-	// 	for (let i = 0; i < tiles.length; i++) {
-	// 		const tile = tiles[i]
-	// 		const meshes = tile.meshes
+	private _pickAOI(polaris: PolarisGSI, canvasCoords: CoordV2, ndc: CoordV2): PickInfo | undefined {
+		if (!this._tileManager || !(polaris instanceof PolarisGSI)) return
+		const tiles = this._tileManager.getVisibleTiles()
+		for (let i = 0; i < tiles.length; i++) {
+			const tile = tiles[i]
+			const meshes = tile.meshes
+			const mesh = meshes.find((mesh) => mesh.extras && mesh.extras.isAOI)
+			if (!mesh) continue
 
-	// 		const mesh = meshes.find((mesh) => mesh.extras && mesh.extras.isAOI)
-	// 		if (!mesh) continue
+			const pickResult = polaris.raycastRenderableNode(mesh, ndc)
+			if (pickResult.hit && pickResult.intersections && pickResult.intersections.length > 0) {
+				const intersection = pickResult.intersections[0]
+				const index = intersection.index
+				const features = this._renderableFeatureMap.get(mesh)
+				if (index === undefined || !features) return
 
-	// 		const pickResult = polaris.pickObject(mesh, ndc)
-	// 		if (pickResult.hit && pickResult.intersections && pickResult.intersections.length > 0) {
-	// 			const intersection = pickResult.intersections[0]
-	// 			const index = intersection.index
-	// 			const features = this._renderableFeatureMap.get(mesh)
-	// 			if (index === undefined || !features) return
+				// find the hit feature by feature indexRange
+				let hitFeature
+				const indexTri = index * 3
+				for (let j = 0; j < features.length; j++) {
+					const feature = features[j]
+					const indexRange = this._featureIndexRangeMap.get(feature)
+					if (indexRange && indexTri >= indexRange[0] && indexTri <= indexRange[1]) {
+						hitFeature = feature
+						break
+					}
+				}
 
-	// 			// find the hit feature by feature indexRange
-	// 			let hitFeature
-	// 			const indexTri = index * 3
-	// 			for (let j = 0; j < features.length; j++) {
-	// 				const feature = features[j]
-	// 				const indexRange = this._featureIndexRangeMap.get(feature)
-	// 				if (indexRange && indexTri >= indexRange[0] && indexTri <= indexRange[1]) {
-	// 					hitFeature = feature
-	// 					break
-	// 				}
-	// 			}
+				if (!hitFeature) return
 
-	// 			if (!hitFeature) return
+				const event: PickInfo = {
+					distance: intersection.distance ?? 0,
+					index: hitFeature.index,
+					point: intersection.point as CoordV3,
+					pointLocal: intersection.pointLocal as CoordV3,
+					object: mesh,
+					data: {
+						feature: hitFeature,
+						curr: hitFeature, // backward compatibility
+					},
+				}
+				return event
+			}
+		}
 
-	// 			const event: PickEvent = {
-	// 				distance: intersection.distance ?? 0,
-	// 				index: hitFeature.index,
-	// 				point: intersection.point as CoordV3,
-	// 				pointLocal: intersection.pointLocal as CoordV3,
-	// 				object: mesh,
-	// 				data: {
-	// 					feature: hitFeature,
-	// 					curr: hitFeature, // backward compatibility
-	// 				},
-	// 			}
-	// 			return event
-	// 		}
-	// 	}
-
-	// 	return
-	// }
+		return
+	}
 
 	private _cacheIndicatorRanges(
 		idRangeMap: Map<number | string, { offset: number; count: number }[]>,
@@ -966,6 +1044,9 @@ export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof
 	}
 
 	private _setStyleById(id: number | string, type: string) {
+		if (!this._idIndicatorRangeMap) {
+			return
+		}
 		const rangeInfos = this._idIndicatorRangeMap.get(id)
 		if (!rangeInfos || !type) return
 		rangeInfos.forEach((info) => {

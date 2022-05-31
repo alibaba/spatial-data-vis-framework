@@ -19,7 +19,7 @@
 		"rebuild": "npm run clean && npm run build",
 		"postbuild": "npm run bundleWorker",
 		"postrebuild": "npm run bundleWorker",
-		"bundleWorker": "npx rollup ./dist/workers/GeomWorker.js --file ./dist/workers/GeomWorker.js -c rollup.config.js"
+		"bundleWorker": "npx rollup ./dist/workers/createWorkers.js --file ./dist/workers/createWorkers.js -c rollup.config.js"
 	},
 	"dependencies": {
 		"@gs.i/frontend-sdk": "0.2.1-alpha.29",

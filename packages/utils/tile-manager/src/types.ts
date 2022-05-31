@@ -1,5 +1,5 @@
 import { StandardLayer } from '@polaris.gl/gsi'
-import { MeshDataType } from '@gs.i/schema-scene'
+import { RenderableNode } from '@gs.i/schema-scene'
 
 export type TileToken = (number | string)[]
 
@@ -9,7 +9,7 @@ export type TileToken = (number | string)[]
  * @note TileRenderables is provided by user
  */
 export type TileRenderables = {
-	meshes: MeshDataType[]
+	meshes: RenderableNode[]
 	layers: StandardLayer[]
 }
 
@@ -46,12 +46,17 @@ export interface TileManager {
 	/**
 	 * Start updating tiles
 	 */
-	start(): Promise<void>
+	start(): void
 
 	/**
 	 * Stop updating tiles
 	 */
-	stop(): Promise<void>
+	stop(): void
+
+	/**
+	 * Update configs
+	 */
+	updateConfig(config: any): void
 
 	/**
 	 * Get current visible tiles list
@@ -61,7 +66,12 @@ export interface TileManager {
 	/**
 	 * Get current pending (requesting/generating) tiles count
 	 */
-	getPendsCount(): number
+	getPendingTilesCount(): number
+
+	/**
+	 * Get current total count of tiles that should be visible (including tiles being requesting/generating)
+	 */
+	getVisibleTilesCount(): number
 
 	/**
 	 * forEach call for every cached tiles
@@ -74,7 +84,12 @@ export interface TileManager {
 	forEachVisibleTile(f: (TileRenderables: TileRenderables, index?: number) => any)
 
 	/**
-	 * Dispose
+	 * clear all tiles & caches
+	 */
+	clear(): void
+
+	/**
+	 * dispose memory
 	 */
 	dispose(): void
 }
