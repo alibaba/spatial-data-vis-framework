@@ -49,7 +49,10 @@ export class PointsMeshPickHelper {
 		 * 4. Search for alpha on that coord pixel
 		 */
 		const worldMatrixArr = polaris.matrixProcessor.getWorldMatrix(this.mesh)
-		if (!worldMatrixArr) return
+		if (!worldMatrixArr) {
+			console.error('POILayer - get mesh worldMatrix error')
+			return
+		}
 		this._worldMatrix.fromArray(worldMatrixArr)
 
 		const w = this._imgWidth

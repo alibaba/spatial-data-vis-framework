@@ -33,7 +33,7 @@ h.setProps({ box: false })
 globalThis.p = p
 console.log(p)
 
-p.setStatesCode('1|120.184301|30.265237|0.000000|0.00000|0.00000|16.70400') // closer hz
+p.setStatesCode('1|121.48195363210442|31.196897659037806|0.000000|0.00000|0.00000|15.00400') // closer sh
 
 const framesBeforeRequest = 10
 const viewZoomReduction = 0
@@ -48,6 +48,7 @@ const aoi = new AOILayer({
 	workersNum: Math.max(navigator.hardwareConcurrency - 4, 0),
 	viewZoomReduction,
 	framesBeforeRequest,
+	dataType: 'geojson',
 	customFetcher: (x, y, z) => {
 		const url = getAOIUrl(x, y, z)
 		const controller = new AbortController()
@@ -55,7 +56,7 @@ const aoi = new AOILayer({
 		const promise = new Promise<any>((resolve, reject) => {
 			fetch(url, { signal })
 				.then((res) => {
-					resolve(res.arrayBuffer())
+					resolve(res.json())
 				})
 				.catch((e) => {
 					reject(e)
@@ -71,14 +72,14 @@ const aoi = new AOILayer({
 		}
 	},
 	// getUrl: getAOIUrl,
-	getColor: (feature) => feature.properties.id * 13,
+	getColor: (feature) => Math.random() * 0xffffff,
 	getOpacity: 0.5,
 	transparent: true,
-	hoverLineWidth: 2,
+	hoverLineWidth: 4,
 	hoverLineColor: '#333333',
-	selectLineWidth: 4,
-	selectLineColor: '#00afff',
-	// pickable: true,
+	selectLineWidth: 8,
+	selectLineColor: '#af3f5f',
+	pickable: true,
 	onPicked: (info) => {
 		console.log('info', info)
 		// aoi.highlightByIds(Array.from(picked), { type: 'none' })
@@ -113,40 +114,5 @@ p.add(aoi)
 window['aoi'] = aoi
 
 function getAOIUrl(x, y, z) {
-	const params = {
-		PostgreSQL: {
-			dbname: 'EXAMPLE',
-			user: 'EXAMPLE',
-			password: 'EXAMPLE',
-			host: 'EXAMPLE',
-			port: '1921',
-		},
-		fc_param: {
-			x,
-			y,
-			z,
-			id_column: 'id',
-			geometry_column: 'geometry',
-			clip_geometry: null,
-			area_code: null,
-			source: '浙江省_杭州市_building',
-			output_format: 'geojson_pbf',
-			layer: {
-				default: {
-					geometry_type: 'Polygon',
-					visible_columns: [],
-					simplify_scalar: 10,
-					filter_expression: null,
-					preserve_collapsed: false,
-					with_boundary: true,
-					visible_zlevel: [3, 20],
-					clickable_zlevel: [13, 20],
-				},
-			},
-		},
-	}
-	return (
-		'EXAMPLE' +
-		JSON.stringify(params)
-	)
+	return 'https://fbi-geography.oss-cn-hangzhou.aliyuncs.com/tests/oneTile.json'
 }

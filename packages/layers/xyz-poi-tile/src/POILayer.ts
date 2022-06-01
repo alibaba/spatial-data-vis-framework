@@ -18,6 +18,7 @@ import { PolarisGSI } from '@polaris.gl/gsi'
 import Pbf from 'pbf'
 import { decode } from 'geobuf'
 import { PointsMeshPickHelper } from './PointsMeshPickHelper'
+import { getGenerator } from './utils'
 
 /**
  * 配置项 interface
@@ -667,6 +668,8 @@ export class POILayer extends StandardLayer {
 			// 	vColor: 'vec3',
 			// },
 			global: `
+			uniform vec2 uOffset;
+			uniform vec2 uResolution;
 			varying vec3 vColor;
 			`,
 
@@ -712,9 +715,9 @@ export class POILayer extends StandardLayer {
 		const featureIdKey = this.getProp('featureIdKey')
 		const baseAlt = this.getProp('baseAlt')
 		const featureFilter = this.getProp('featureFilter')
-		const getClusterContent = this.getProp('getClusterContent')
+		const getClusterContent = getGenerator(this.getProp('getClusterContent'))
 		const clusterSize = this.getProp('clusterSize')
-		const getPointColor = this.getProp('getPointColor')
+		const getPointColor = getGenerator(this.getProp('getPointColor'))
 		const pointOffset = this.getProp('pointOffset')
 		const renderOrder = this.getProp('renderOrder')
 

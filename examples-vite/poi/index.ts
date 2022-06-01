@@ -34,7 +34,7 @@ h.setProps({ box: false })
 globalThis.p = p
 console.log(p)
 
-p.setStatesCode('1|120.184301|30.265237|0.000000|0.00000|0.00000|16.70400') // closer hz
+p.setStatesCode('1|120.078445|30.305767|0.000000|0.00000|0.00000|10.71268')
 
 const framesBeforeRequest = 10
 const viewZoomReduction = 0
@@ -47,15 +47,15 @@ const poi = new POILayer({
 	// },
 	framesBeforeRequest,
 	viewZoomReduction,
-	dataType: 'pbf',
-	pointSize: 20,
+	dataType: 'geojson',
+	pointSize: 24,
 	pointHoverSize: 24,
 	pointOffset: [0.0, 0.5],
-	getPointColor: '#ffaf99',
+	getPointColor: '#1f5f9f',
 	pointImage:
-		'https://img.alicdn.com/imgextra/i2/O1CN01VcJVlk28INDH4OCXH_!!6000000007909-2-tps-500-500.png',
+		'https://img.alicdn.com/imgextra/i2/O1CN01NdsW721dq2EvEQ7ka_!!6000000003786-2-tps-64-64.png',
 	pointColorBlend: 'add',
-	clusterSize: 40,
+	clusterSize: 48,
 	clusterColor: '#ffaf99',
 	clusterImage:
 		'https://img.alicdn.com/imgextra/i2/O1CN016yGVRh1Tdzf8SkuLn_!!6000000002406-2-tps-60-60.png',
@@ -63,6 +63,7 @@ const poi = new POILayer({
 	minZoom: 3,
 	maxZoom: 20,
 	getUrl: getPOIUrl,
+	featureIdKey: 'f4',
 	getClusterContent: (feature) => {
 		if (feature.properties.number_of_point > 1) {
 			const count = Math.round(feature.properties.number_of_point)
@@ -80,7 +81,7 @@ const poi = new POILayer({
 			color: '#fff',
 		}
 	},
-	pickable: false,
+	pickable: true,
 	onPicked: (data) => {
 		console.log('data', data)
 	},
@@ -106,46 +107,5 @@ p.add(poi)
 window['poi'] = poi
 
 function getPOIUrl(x, y, z) {
-	const params = {
-		PostgreSQL: {
-			dbname: 'EXAMPLE',
-			user: 'EXAMPLE',
-			password: 'EXAMPLE',
-			host: 'EXAMPLE',
-			port: '1921',
-		},
-		fc_param: {
-			x,
-			y,
-			z,
-			id_column: 'id',
-			geometry_column: 'geometry',
-			clip_geometry: null,
-			area_code: null,
-			source: 'hz_house_order',
-			output_format: 'geojson_pbf',
-			layer: {
-				default: {
-					geometry_type: 'point',
-					visible_columns: ['count'],
-					filter_expression: [],
-					visible_zlevel: [1, 20],
-					clickable_zlevel: [15, 20],
-					aggregation: {
-						zlevel: [1, 15],
-						clustering_method: 'bin',
-						clustering_scalar: 1000,
-						fields: {
-							count_number: ['id', 'count'],
-							sum_number: ['count', 'sum'],
-						},
-					},
-				},
-			},
-		},
-	}
-	return (
-		'EXAMPLE' +
-		JSON.stringify(params)
-	)
+	return 'https://fbi-geography.oss-cn-hangzhou.aliyuncs.com/tests/oneTilePOI.json'
 }

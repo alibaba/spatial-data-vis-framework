@@ -12,7 +12,12 @@ import { Projection } from '@polaris.gl/projection'
 import { colorToUint8Array } from '@polaris.gl/utils'
 import { PolarisGSI } from '@polaris.gl/gsi'
 import { Color } from '@gs.i/utils-math'
-import { featureToLinePositions, createRangeArray, getFeatureTriangles } from './utils'
+import {
+	featureToLinePositions,
+	createRangeArray,
+	getFeatureTriangles,
+	getGenerator,
+} from './utils'
 import { LineIndicator } from '@polaris.gl/utils-indicator'
 import { WorkerManager } from '@polaris.gl/utils-worker-manager'
 import { createWorkers } from './workers/createWorkers'
@@ -665,8 +670,8 @@ export class AOILayer extends StandardLayer {
 		const featureIdKey = this.getProp('featureIdKey')
 		const baseAlt = this.getProp('baseAlt')
 		const featureFilter = this.getProp('featureFilter')
-		const getColor = this.getProp('getColor')
-		const getOpacity = this.getProp('getOpacity')
+		const getColor = getGenerator(this.getProp('getColor'))
+		const getOpacity = getGenerator(this.getProp('getOpacity'))
 		const lineHeight = this.getProp('indicatorLinesHeight')
 		const pickable = this.getProp('pickable')
 
@@ -966,6 +971,13 @@ export class AOILayer extends StandardLayer {
 			const meshes = tile.meshes
 			const mesh = meshes.find((mesh) => mesh.extras && mesh.extras.isAOI)
 			if (!mesh) continue
+
+			// get WorldMatrix ready first
+			const matrix = polaris.matrixProcessor.getWorldMatrix(mesh)
+			if (!matrix) {
+				console.error('AOILayer - get mesh worldMatrix error')
+				return
+			}
 
 			const pickResult = polaris.raycastRenderableNode(mesh, ndc)
 			if (pickResult.hit && pickResult.intersections && pickResult.intersections.length > 0) {

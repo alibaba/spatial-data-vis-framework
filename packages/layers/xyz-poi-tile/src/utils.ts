@@ -113,3 +113,10 @@ export function createRangeArray(start: number, end: number) {
 		return new Uint32Array([start, end])
 	}
 }
+
+export function getGenerator(prop: any): (...args: any[]) => any {
+	if (typeof prop === 'function') {
+		return prop
+	}
+	return () => prop
+}
