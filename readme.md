@@ -62,9 +62,9 @@ Polaris.gl 致力于提供一个 空间数据视觉组件的 开放标准，所�
 Make sure you have `nodejs` and `lerna@4` installed.
 
 ```sh
-node -v # v14 or higher
+node -v # v14 or higher.
 
-npx lerna -v # v4.x 
+npx lerna -v # v4.x only. v5 is not yet supported.
 ```
 
 ### Setup
