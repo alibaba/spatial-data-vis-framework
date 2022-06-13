@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/polaris-hd",
-    "version": "0.0.0-alpha.7",
+    "version": "0.0.0-alpha.30",
     "description": "",
     "main": "dist/Polairs.HD.js",
     "types": "dist/Polairs.HD.d.ts",

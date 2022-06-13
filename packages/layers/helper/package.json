@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/layer-std-helper",
-    "version": "0.0.0-alpha.14",
+    "version": "0.0.0-alpha.30",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -18,7 +18,7 @@
     "dependencies": {
         "@gs.i/frontend-sdk": "^0.0.0-beta",
         "@gs.i/utils-geom-builders": "^0.0.0-beta",
-        "@polaris.gl/layer-std": "^0.0.0-alpha.14"
+        "@polaris.gl/layer-std": "0.0.0-alpha.30"
     },
     "devDependencies": {
         "typescript": ">4.4.0"
