@@ -28,7 +28,7 @@ export const defaultProps: AMapLayerProps = {
 	zIndex: -9999,
 	showLogo: true, // 是否显示高德logo
 	showLabel: false, // 是否显示地图标注
-	zooms: [3, 20], // 地图缩放上下限,默认3~20
+	zooms: [1, 20], // 地图缩放上下限,默认3~20
 	style: 'normal', // //主题有: 标准-normal, 幻影黑-dark,月光银-light,远山黛-whitesmoke,草色青-fresh,雅土灰-grey,涂鸦-graffiti,马卡龙-macaron,靛青蓝-blue,极夜蓝-darkblue,酱籽-wine
 	layers: [
 		// 地图显示图层集合: 卫星图层-Satellite,路网图层RoadNet,实施交通图层-Traffic
@@ -182,7 +182,7 @@ export class AMapLayer extends STDLayer {
 				buildingAnimation: false, // 禁止楼快出现动画效果
 				resizeEnable: true,
 				expandZoomRange: true, // zooms默认最大为19，true才能放大至20
-				zooms: [3, 20], // 高德默认[3,19]
+				zooms: this.getProps('zooms'), // 高德默认[3,19]
 				zoomEnable: true,
 				// 自定义属性
 				center: [120, 30],
@@ -191,7 +191,7 @@ export class AMapLayer extends STDLayer {
 				layers: [],
 				features: ['bg', 'road'],
 				// 区别投影
-				crs: this.projection.type === 'MercatorProjection' ? 'EPSG3857' : 'EPSG4326',
+				crs: this.projection.type.includes('MercatorProjection') ? 'EPSG3857' : 'EPSG4326',
 				showLabel: this.getProps('showLabel'),
 			})
 		}

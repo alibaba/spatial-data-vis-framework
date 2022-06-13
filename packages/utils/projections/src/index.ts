@@ -11,6 +11,7 @@ import Projection, {
 } from './Projection'
 import AzimuthalEquidistantProjection from './AzimuthalEquidistantProjection'
 import MercatorProjection from './MercatorProjection'
+import MercatorProjectionPDC from './MercatorProjectionPDC'
 import EquirectangularProjection from './EquirectangularProjection'
 import EquirectangularProjectionPDC from './EquirectangularProjectionPDC'
 import GallStereoGraphicProjection from './GallStereoGraphicProjection'
@@ -27,9 +28,9 @@ export function createFromDesc(str: string): Projection {
 		const centerStr = desc[4]
 		const centerLLA = centerStr.split(',')
 		const center = [
-			((centerLLA[0] as unknown) as number) - 0,
-			((centerLLA[1] as unknown) as number) - 0,
-			((centerLLA[2] as unknown) as number) - 0,
+			(centerLLA[0] as unknown as number) - 0,
+			(centerLLA[1] as unknown as number) - 0,
+			(centerLLA[2] as unknown as number) - 0,
 		]
 
 		return createProjection(type, center, units, orientation)
@@ -79,6 +80,7 @@ export function isSimiliarProjections(p0, p1) {
 export {
 	AzimuthalEquidistantProjection,
 	MercatorProjection,
+	MercatorProjectionPDC,
 	EquirectangularProjection,
 	EquirectangularProjectionPDC,
 	GallStereoGraphicProjection,
