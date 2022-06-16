@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/utils-props-manager",
-    "version": "0.0.0-alpha.30",
+    "version": "0.0.0-alpha.31",
     "description": "",
     "main": "dist/PropsManager.js",
     "types": "dist/PropsManager.d.ts",

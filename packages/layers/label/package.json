@@ -1,6 +1,6 @@
 {
     "name": "@polaris.gl/layer-label",
-    "version": "0.0.0-alpha.30",
+    "version": "0.0.0-alpha.31",
     "description": "",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -17,9 +17,9 @@
     },
     "dependencies": {
         "@gs.i/utils-math": "^0.0.0-beta",
-        "@polaris.gl/gsi": "0.0.0-alpha.30",
-        "@polaris.gl/layer-std": "0.0.0-alpha.30",
-        "@polaris.gl/layer-std-marker": "0.0.0-alpha.30"
+        "@polaris.gl/gsi": "0.0.0-alpha.31",
+        "@polaris.gl/layer-std": "0.0.0-alpha.31",
+        "@polaris.gl/layer-std-marker": "0.0.0-alpha.31"
     },
     "devDependencies": {
         "typescript": ">4.4.0"
