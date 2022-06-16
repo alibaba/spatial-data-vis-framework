@@ -36,13 +36,15 @@ export class XYZTileManager extends CommonTileManager {
 		super({
 			..._config,
 			getViewTiles: (polaris, minZoom, maxZoom) => {
-				return getViewTiles(
+				const viewTiles = getViewTiles(
 					polaris,
 					minZoom,
 					maxZoom,
 					this.config.viewZoomReduction,
 					this.config.zoomStep
 				)
+				// console.log('viewTiles', viewTiles)
+				return viewTiles
 			},
 			getParentTileToken,
 			getChildTileTokens,
@@ -101,6 +103,19 @@ const getViewTiles = (
 		lnglatMax[0] = Math.max(lnglat[0], lnglatMax[0])
 		lnglatMax[1] = Math.max(lnglat[1], lnglatMax[1])
 	})
+
+	// clamp lng to [-180, 180]
+	lnglatMin[0] < -180 && (lnglatMin[0] = -180)
+	lnglatMin[0] > 180 && (lnglatMin[0] = 180)
+	lnglatMax[0] < -180 && (lnglatMax[0] = -180)
+	lnglatMax[0] > 180 && (lnglatMax[0] = 180)
+
+	// return [] if geo box is not valid (min === max)
+	const geoRangeLen = lnglatMax.map((v, i) => v - lnglatMin[i])
+	if (geoRangeLen[0] === 0 || geoRangeLen[1] === 0) {
+		// console.log('empty geo range box')
+		return []
+	}
 
 	let zoom = Math.floor(polaris.cameraProxy.zoom)
 	zoom = Math.min(Math.max(minZoom, zoom), maxZoom)
