@@ -1,1 +1,1 @@
-# Best Practive, Better Polaris
+# Best Practices, Better Polaris
