@@ -1,5 +1,3 @@
-// DO NOT EDIT
-// AUTO COPIED FROM ROOT/shared
 {
 	"extends": "./tsconfig.base.json",
 	"compilerOptions": {
