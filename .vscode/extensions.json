@@ -1,0 +1,8 @@
+{
+	"recommendations": [
+		"christian-kohler.path-intellisense",
+		"naumovs.color-highlight",
+		"esbenp.prettier-vscode",
+		"dbaeumer.vscode-eslint"
+	]
+}

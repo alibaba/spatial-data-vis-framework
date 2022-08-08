@@ -1,0 +1,12 @@
+{
+	"extends": "./tsconfig.base.json",
+	"compilerOptions": {
+		"module": "esnext",
+		"rootDir": ".",
+		"composite": true,
+		"incremental": true
+	},
+	"include": [".", "typings"],
+	"exclude": ["node_modules", "*.js"],
+	"references": []
+}

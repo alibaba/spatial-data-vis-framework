@@ -1,0 +1,27 @@
+{
+	"root": true,
+	"env": {
+		"browser": true,
+		"es6": true
+	},
+	"parser": "@typescript-eslint/parser",
+	"plugins": ["@typescript-eslint"],
+	"extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended", "prettier"],
+	"rules": {
+		"@typescript-eslint/explicit-function-return-type": "off",
+		"@typescript-eslint/no-explicit-any": "off",
+		"@typescript-eslint/no-empty-function": "off",
+		"@typescript-eslint/no-empty-interface": "off",
+		"@typescript-eslint/explicit-module-boundary-types": "off",
+		"@typescript-eslint/no-var-requires": "off",
+		"no-mixed-spaces-and-tabs": ["error", "smart-tabs"],
+		"array-element-newline": ["warn", "consistent"],
+		"@typescript-eslint/ban-types": ["warn"],
+		// https://eslint.org/docs/rules/no-unused-vars#options
+		"@typescript-eslint/no-unused-vars": [
+			"warn",
+			{ "vars": "local", "args": "none", "ignoreRestSiblings": false }
+		]
+		// "no-extra-semi": "warn"
+	}
+}
