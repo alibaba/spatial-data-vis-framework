@@ -3,6 +3,7 @@ const path = require('path')
 const fs = require('fs')
 const { defineConfig } = require('vite')
 // import { viteCommonjs } from '@originjs/vite-plugin-commonjs'
+const basicSsl = require('@vitejs/plugin-basic-ssl')
 
 const entries = getDemoEntries()
 
@@ -19,7 +20,6 @@ module.exports = defineConfig({
 		host: '0.0.0.0',
 		port: 2000,
 		cors: true,
-		force: true,
 		https: true,
 	},
 	worker: {
@@ -28,11 +28,10 @@ module.exports = defineConfig({
 	esbuild: {
 		target: 'esnext',
 	},
-	// plugins: [viteCommonjs()],
-	// assetsInclude: ['**/*orker.js'],
+	plugins: [basicSsl()],
 	clearScreen: false,
 	optimizeDeps: {
-		// exclude: ['@polaris.gl/layer-geojson'],
+		force: true,
 		esbuildOptions: {
 			// splitting: false,
 			// external: 'workers/*',

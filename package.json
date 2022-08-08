@@ -7,8 +7,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "start": "npx vite",
-    "build": "npx vite build"
+    "start": "npx vite"
   },
   "engines": {
     "node": ">=14.17.4"
@@ -70,6 +69,7 @@
     "@originjs/vite-plugin-commonjs": "^1.0.3",
     "@typescript-eslint/eslint-plugin": "^5.32.0",
     "@typescript-eslint/parser": "^5.32.0",
+    "@vitejs/plugin-basic-ssl": "^0.1.1",
     "chokidar": "^3.5.3",
     "concurrently": "^7.3.0",
     "eslint": "^8.21.0",
