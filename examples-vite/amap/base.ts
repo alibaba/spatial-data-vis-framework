@@ -1,3 +1,5 @@
+import { Mesh } from '@gs.i/frontend-sdk'
+import { buildBox } from '@gs.i/utils-geom-builders'
 import { StandardLayer } from '@polaris.gl/gsi'
 import { PolarisLite } from '@polaris.gl/lite'
 
@@ -7,6 +9,7 @@ import { HelperLayer } from '@polaris.gl/layer-std-helper'
 
 import { MarkerLayer, Marker } from '@polaris.gl/layer-std-marker'
 import { AMapLayer } from '@polaris.gl/layer-amap'
+import { specifyUnlitMaterial } from '@gs.i/utils-specify'
 
 await test(true, 'PolarisLite', () => {
 	const p = new PolarisLite({
@@ -14,6 +17,9 @@ await test(true, 'PolarisLite', () => {
 		background: 'transparent',
 		// autoplay: false,
 		asyncRendering: true, // 为了和AMap渲染同步加的参数，在AMap加载的时候一定要打开
+		// autoResize: true,
+		width: 700,
+		height: 700,
 	})
 
 	const h = new HelperLayer()
@@ -64,6 +70,16 @@ await test(true, 'PolarisLite', () => {
 		lat: 0.01,
 	})
 	markerLayer.add(marker4)
+	const marker5 = new Marker({
+		html: '5',
+		object3d: new Mesh({
+			material: specifyUnlitMaterial({ type: 'unlit', baseColorFactor: { r: 1, g: 0, b: 0 } }),
+			geometry: buildBox({ width: 0.5, height: 0.5, depth: 0.5 }),
+		}),
+		lng: 119.918,
+		lat: 30.0475,
+	})
+	markerLayer.add(marker5)
 
 	// ---------------------
 	// 传入外部amap instance并交给Polaris管理
@@ -104,16 +120,17 @@ await test(true, 'PolarisLite', () => {
 		})
 		const amapLayer = new AMapLayer({ amapInstance: map })
 		p.add(amapLayer)
+
 		console.log(amapLayer)
 	}
 	const url =
-		'https://webapi.amap.com/maps?v=1.4.15&key=f8d835e1abdb0e4355b19aa454f4de65&callback=onAMapLoaded'
+		'https://webapi.amap.com/maps?v=2.0&key=f8d835e1abdb0e4355b19aa454f4de65&callback=onAMapLoaded'
 	const jsapi = document.createElement('script')
 	jsapi.charset = 'utf-8'
 	jsapi.src = url
 	document.head.appendChild(jsapi)
 
-	p.setStatesCode('1|1.145451|2.246192|0.000000|1.04862|0.84000|4.86000')
+	p.setStatesCode('1|119.918672|30.047431|0.000000|0.00000|-0.00000|16.66800')
 })
 
 // ===
