@@ -79,6 +79,9 @@ export class MarkerLayer extends StandardLayer<MarkerLayerProps> {
 		this._markers = []
 
 		this.element.className = 'maker-layer'
+		this.element.style.position = 'absolute'
+		this.element.style.left = '0'
+		this.element.style.top = '0'
 	}
 
 	init(projection) {
