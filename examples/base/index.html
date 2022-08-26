@@ -4,17 +4,30 @@
 		<meta charset="UTF-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Example</title>
+		<title>PolarisExample</title>
 		<link rel="shortcut icon" href="#" />
 		<style>
+			* {
+				margin: 0;
+			}
 			body {
-				background-color: #000000;
+				background-color: #1f1f1f;
 			}
 		</style>
 	</head>
-
 	<body>
 		<div id="container"></div>
-		<script type="module" src="./index.tsx"></script>
+		<script type="module">
+			import { App } from '../../src/App.ts'
+			import { default as DefaultConfig } from '../../src/config/default.ts'
+
+			const container = document.getElementById('container')
+
+			console.log(DefaultConfig)
+
+			const polarisApp = new App(container, DefaultConfig)
+
+			// enjoy✨
+		</script>
 	</body>
 </html>

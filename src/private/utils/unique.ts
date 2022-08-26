@@ -2,6 +2,11 @@
  * 生成本地唯一ID
  * @note 如果生成的 ID 用于硬编码放进配置项，则必须全部硬编码，该生成函数只能用于出码。
  * @warning 不可混用运行时生成的ID和硬编码ID
+ *
+ * @naming
+ * - LOCAL_1001 本地唯一编号
+ * - LOCAL_TYPE_001
+ * - RES_xxx 预留id
  */
 
 /**
@@ -50,3 +55,20 @@ const namespaces = {} as {
 		IDMap: WeakMap<object, string>
 	}
 }
+
+export function checkID(id: string | undefined, shouldThrow = false) {
+	if (id) {
+		if (IDCache.has(id)) {
+			const msg = `checkSingleton: ${id} is already used.`
+			if (shouldThrow) {
+				throw new Error(msg)
+			} else {
+				console.error(msg)
+			}
+		} else {
+			IDCache.add(id)
+		}
+	}
+}
+
+const IDCache = new Set<string>()
