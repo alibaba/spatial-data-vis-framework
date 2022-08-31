@@ -1,6 +1,7 @@
 import { AppBase, AppBaseConfig } from './private/base/AppBase'
 
 import { stages } from './stages/index'
+import { scenes } from './scenes/index'
 
 /**
  * Entry Class. 入口应用
@@ -17,7 +18,7 @@ import { stages } from './stages/index'
  */
 export class App extends AppBase {
 	constructor(container: HTMLDivElement, config?: AppBaseConfig) {
-		super(container, config, stages)
+		super(container, config, stages, scenes)
 	}
 
 	// low-code 生成的成员与方法
@@ -28,12 +29,11 @@ export class App extends AppBase {
 	// pragma: BP_GEN APP_METHODS START
 	// pragma: BP_GEN APP_METHODS END
 
-	// pro-code 编写的成员，在此区域编写代码 🔨
+	// 🌟 pro-code 编写的成员与方法，在此区域编写代码 🔨
 
 	// pragma: BP_CUSTOM APP_MEMBERS START
 	// pragma: BP_CUSTOM APP_MEMBERS END
 
-	// pro-code 编写的方法，在此区域编写代码 🔨
 	// pragma: BP_CUSTOM APP_METHODS START
 	// pragma: BP_CUSTOM APP_METHODS END
 }

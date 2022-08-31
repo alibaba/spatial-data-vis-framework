@@ -1,8 +1,7 @@
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 import { Projection } from '@polaris.gl/projection'
 import Timeline from 'ani-timeline'
-import { checkSingleton } from '../utils/singleton'
-import { checkID } from '../utils/unique'
+import { occupyID } from '../utils/unique'
 
 /**
  * 舞台设定（容器Layer）
@@ -62,8 +61,7 @@ export class StageBase extends StandardLayer {
 		this.name = name || 'New Stage'
 		this.id = id
 
-		checkSingleton(this, true)
-		checkID(id, true)
+		occupyID(id, true)
 
 		this.layers = layers
 
@@ -75,14 +73,22 @@ export class StageBase extends StandardLayer {
 	/**
 	 * 控制stage中layer的显示和隐藏
 	 */
-	filterLayers(layerIDs: string[]) {
-		this.layers.forEach((layer) => {
-			if (layerIDs.includes(layer.id)) {
+	filterLayers(visibleLayerIDs: string[]) {
+		if (visibleLayerIDs.includes('*')) {
+			// 全部显示
+			this.layers.forEach((layer) => {
 				layer.layer.visible = true
-			} else {
-				layer.layer.visible = false
-			}
-		})
+			})
+		} else {
+			// ID 过滤
+			this.layers.forEach((layer) => {
+				if (visibleLayerIDs.includes(layer.id)) {
+					layer.layer.visible = true
+				} else {
+					layer.layer.visible = false
+				}
+			})
+		}
 	}
 }
 

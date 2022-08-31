@@ -1,17 +1,17 @@
 import { AppBaseConfig } from '../private/base/AppBase'
 
-const DefaultConfig: AppBaseConfig = {
-	width: 1000,
+export const DefaultAppConfig: AppBaseConfig = {
+	width: 1400,
 	height: 700,
 
 	fov: 20,
 	antialias: 'msaa',
 
-	background: '#20222b',
+	background: 'transparent',
 
 	autoResize: false,
 
+	pitchLimit: [0, Math.PI * 0.7],
+
 	debug: true,
 }
-
-export default DefaultConfig

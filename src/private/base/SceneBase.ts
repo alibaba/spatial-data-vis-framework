@@ -1,10 +1,10 @@
-import { getNamedID } from '../utils/unique'
+import { ScriptBase } from './ScriptBase'
 
 export class SceneBase {
 	/**
 	 *
 	 */
-	id: string // = getNamedID('SCENE', this)
+	id: string
 
 	/**
 	 *
@@ -25,4 +25,17 @@ export class SceneBase {
 	 * @note filtered by id
 	 */
 	layers: string[] = ['*']
+
+	/**
+	 * default camera state for this scene
+	 */
+	cameraStateCode?: string
+
+	// 待定部分
+
+	/**
+	 * @experimental
+	 * @deprecated
+	 */
+	scripts: ScriptBase[] = []
 }

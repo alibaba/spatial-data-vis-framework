@@ -56,10 +56,10 @@ const namespaces = {} as {
 	}
 }
 
-export function checkID(id: string | undefined, shouldThrow = false) {
+export function occupyID(id: string | undefined, shouldThrow = false) {
 	if (id) {
 		if (IDCache.has(id)) {
-			const msg = `checkSingleton: ${id} is already used.`
+			const msg = `id: ${id} is already used.`
 			if (shouldThrow) {
 				throw new Error(msg)
 			} else {

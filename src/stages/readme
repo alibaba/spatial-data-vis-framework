@@ -1,0 +1,8 @@
+Stage 舞台/阶段
+
+@note 用于复杂场景编排和动态资源加载，暂时不用透出
+
+Stage
+: 舞台或者阶段，是一系列 Layer 的容器，也是 Scene（场景）所在的环境
+: 搭建的主要功能就是将各种元素放置在舞台上
+: 暂时只使用主舞台一个 stage，所有的 layer 实例都放在 mainStage 中，所有的 scene 都使用 mainStage

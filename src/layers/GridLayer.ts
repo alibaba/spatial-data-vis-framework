@@ -1,3 +1,12 @@
+/**
+ * Grid Layer
+ *
+ * 铺在地面上的网格，用于背景装饰或者视觉辅助
+ *
+ * ![效果](https://img.alicdn.com/imgextra/i1/O1CN01G6WcNb1JnTipZnEIs_!!6000000001073-2-tps-926-489.png)
+ *
+ */
+
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 import * as IR from '@gs.i/schema-scene'
 import { specifyGeometry, specifyAttribute } from '@gs.i/utils-specify'
@@ -77,7 +86,7 @@ export type GridLayerProps = StandardLayerProps & typeof defaultGridLayerProps
  * @note grid lines do not align with lng/lat lines
  */
 export class GridLayer extends StandardLayer<GridLayerProps> {
-	matr = new UnlitMaterial({ alphaMode: 'BLEND' })
+	matr = new UnlitMaterial({ alphaMode: 'OPAQUE' })
 	geom: IR.Geometry
 	mesh: Mesh
 

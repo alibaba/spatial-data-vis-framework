@@ -1,0 +1,60 @@
+import { GLTF2Loader } from '@gs.i/frontend-gltf2'
+import { IR } from '@gs.i/schema-scene'
+import { traverse } from '@gs.i/utils-traverse'
+import { specifyUnlitMaterial } from '@gs.i/utils-specify'
+import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
+import { createFromDesc } from '@polaris.gl/projection'
+
+export interface ModelLayerConfig {
+	name?: string
+	glb: string
+	scale?: number
+	projectionDesc: string
+	// transform:
+}
+
+export const isFactory = true
+
+export function createModelLayer(config: ModelLayerConfig): StandardLayer {
+	const projection = createFromDesc(config.projectionDesc)
+
+	const layer = new StandardLayer({
+		projection,
+	})
+
+	const loader = new GLTF2Loader()
+
+	layer.addEventListener('init', async () => {
+		const modelRes = await fetch(config.glb)
+		const bin = await modelRes.arrayBuffer()
+
+		const glm = loader.glbToGLM(bin)
+		const node = loader.parse(glm)
+
+		layer.group.add(node)
+
+		// debugger
+
+		if (config.scale) {
+			layer.group.transform.scale.set(config.scale, config.scale, config.scale)
+		}
+
+		traverse(node, (n) => {
+			if (IR.isRenderable(n)) {
+				const tex = (n.material as IR.PbrMaterial)['emissiveTexture'] as IR.Texture
+				tex.sampler.magFilter = 'LINEAR'
+				tex.sampler.minFilter = 'LINEAR_MIPMAP_LINEAR'
+				tex.sampler.wrapS = 'MIRRORED_REPEAT'
+				tex.sampler.wrapT = 'MIRRORED_REPEAT'
+				tex.sampler.anisotropy = 8
+				// tex.image.extensions = { EXT_image_encoding: 'SRGB' }
+				// n.material = specifyUnlitMaterial({
+				// 	type: 'unlit',
+				// 	baseColorTexture: tex,
+				// })
+			}
+		})
+	})
+
+	return layer
+}
