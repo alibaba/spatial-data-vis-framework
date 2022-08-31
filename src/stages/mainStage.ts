@@ -3,7 +3,7 @@
  * @generated
  */
 
-import { StageBase, LayerList } from '../private/base/StageBase'
+import { StageBase } from '../private/base/StageBase'
 import { MercatorProjection, Projection } from '@polaris.gl/projection'
 import { layerProps } from '../config/layerProps'
 
@@ -13,6 +13,7 @@ import { layerProps } from '../config/layerProps'
 import { GridLayer } from '../layers/GridLayer'
 import { createModelLayer } from '../layers/ModelLayer/ModelLayer'
 import { createBillboardsLayer } from '../layers/BillboardsLayer'
+import { RuntimeWidgetLayer } from '../layers/RuntimeWidget'
 
 const layers = [
 	// pragma: BP_GEN STAGE_LAYERS START
@@ -30,6 +31,11 @@ const layers = [
 		name: 'sparkles',
 		id: 'LOCAL_LAYER_2',
 		layer: createBillboardsLayer(layerProps.LOCAL_LAYER_2),
+	},
+	{
+		name: 'runtime widget demo',
+		id: 'LOCAL_LAYER_3',
+		layer: new RuntimeWidgetLayer({}),
 	},
 	// pragma: BP_GEN STAGE_LAYERS END
 ] as const

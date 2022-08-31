@@ -48,13 +48,13 @@ import { occupyID } from '../utils/unique'
  * 目前看来是个可选的性能优化点，出现需求再作为额外功能，#MPV从简
  */
 
-export class StageBase extends StandardLayer {
+export class StageBase<TLayerList extends LayerList = LayerList> extends StandardLayer {
 	name: string
 	id: string
 
-	layers: LayerList
+	layers: TLayerList
 
-	constructor(props: StageProps) {
+	constructor(props: StageProps<TLayerList>) {
 		const { layers, projection, name, id } = props
 		super({ projection })
 
@@ -73,7 +73,7 @@ export class StageBase extends StandardLayer {
 	/**
 	 * 控制stage中layer的显示和隐藏
 	 */
-	filterLayers(visibleLayerIDs: string[]) {
+	filterLayers(visibleLayerIDs: TLayerList[number]['id'][]) {
 		if (visibleLayerIDs.includes('*')) {
 			// 全部显示
 			this.layers.forEach((layer) => {
@@ -90,10 +90,14 @@ export class StageBase extends StandardLayer {
 			})
 		}
 	}
+
+	getLayer<ID extends TLayerList[number]['id']>(id: ID): GetLayerFromList<TLayerList, ID> {
+		return this.layers.find((l) => l.id === id) as any
+	}
 }
 
-export type StageProps = Pick<StandardLayerProps, 'projection'> & {
-	layers: LayerList
+export type StageProps<TLayerList extends LayerList> = Pick<StandardLayerProps, 'projection'> & {
+	layers: TLayerList
 	name?: string
 	id: string
 }
@@ -103,3 +107,15 @@ export type LayerList = readonly {
 	id: string
 	layer: StandardLayer
 }[]
+
+/**
+ * LayerList to id map
+ */
+type LayerMap<T extends LayerList> = {
+	[Item in T[number] as Item['id']]: Item
+}
+
+/**
+ * find layer from layerList by ID
+ */
+type GetLayerFromList<T extends LayerList, ID extends LayerList[number]['id']> = LayerMap<T>[ID]

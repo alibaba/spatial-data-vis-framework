@@ -18,6 +18,9 @@ export class AppBase {
 
 	protected currentSceneID: string | undefined = undefined
 
+	protected readonly mainStage: StageBase
+	protected readonly defaultScene: SceneBase
+
 	constructor(
 		container: HTMLDivElement,
 		protected readonly config?: AppBaseConfig,
@@ -26,7 +29,7 @@ export class AppBase {
 	) {
 		this.polaris = new PolarisThree({ container, ...config })
 
-		this.polaris.timeline.updateMaxFPS(30)
+		// this.polaris.timeline.updateMaxFPS(30)
 		// @workaround flatten output breaks visibility inheritance
 		this.polaris.renderer.conv.config.keepTopology = true
 		this.polaris.renderer.renderer.outputEncoding = 3001 // sRGB
@@ -38,9 +41,11 @@ export class AppBase {
 
 		const mainStage = this.stages.find((stage) => stage.id === 'LOCAL_STAGE_MAIN')
 		if (!mainStage) throw new Error('AppBase: Can not find main stage')
+		this.mainStage = mainStage
 
 		const defaultScene = this.scenes.find((scene) => scene.id === 'LOCAL_SCENE_DEFAULT')
 		if (!defaultScene) throw new Error('AppBase: Can not find default scene')
+		this.defaultScene = defaultScene
 
 		this.changeScene('LOCAL_SCENE_DEFAULT')
 
@@ -49,7 +54,7 @@ export class AppBase {
 		}
 	}
 
-	changeScene(id: string) {
+	changeScene(id: string, duration?: number) {
 		if (this.currentSceneID !== id) {
 			this.currentSceneID = id
 			const targetScene = this.scenes.find((scene) => scene.id === id)
@@ -73,7 +78,7 @@ export class AppBase {
 
 			// cameraStateCode
 			if (targetScene.cameraStateCode) {
-				this.polaris.setStatesCode(targetScene.cameraStateCode)
+				this.polaris.setStatesCode(targetScene.cameraStateCode, duration)
 			}
 		} else {
 			console.log('Already in target scene.')
@@ -87,6 +92,10 @@ export class AppBase {
 		const currentScene = this.scenes.find((scene) => scene.id === this.currentSceneID)
 
 		return currentScene
+	}
+
+	getCurrentStage() {
+		return this.mainStage
 	}
 
 	// global stats
