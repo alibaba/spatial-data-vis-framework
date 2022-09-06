@@ -98,6 +98,22 @@ export class AppBase {
 		return this.mainStage
 	}
 
+	getLayer(layerID: string, stageID?: string) {
+		if (stageID) {
+			const stage = this.stages.find((stage) => stage.id === stageID)
+			if (!stage) return
+
+			const layer = stage.layers.find((layer) => layer.id === layerID)
+			return layer?.layer
+		} else {
+			for (const stage of this.stages) {
+				const layer = stage.layers.find((layer) => layer.id === layerID)
+				if (layer) return layer.layer
+			}
+			return
+		}
+	}
+
 	// global stats
 	static {}
 }
