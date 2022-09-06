@@ -37,6 +37,12 @@
  *
  * 非静态资产只能通过“创建工具”创建，无法手工创建自动识别（遥远的将来也许可以）。
  * 其中 layer 是多文件资产，应该用固定结构的文件夹保存。
+ *
+ * @sum
+ * 所有的 index.js 都不需要，assets 作为虚拟文件系统才是这个系统work的核心。
+ * Descriptions 部分是固定的，手工编写的，多数是管理员编写的。
+ * Props 是从 Descriptions 配置出的。
+ * Assets 包含了所有的零部件。
  */
 
 import type { SceneBase } from "../base/SceneBase"
