@@ -11,7 +11,7 @@ import { layerProps } from '../config/layerProps'
 // - plan A
 //	- 把所有内部依赖和用户自定义layer全部import，留给 bundler 做 tree-shaking，不需要出码阶段做筛选
 import { GridLayer } from '../layers/GridLayer'
-import { createModelLayer } from '../layers/ModelLayer/ModelLayer'
+import { createModelLayer } from '../layers/ModelLayer'
 import { createBillboardsLayer } from '../layers/BillboardsLayer'
 import { RuntimeWidgetLayer } from '../layers/RuntimeWidget'
 

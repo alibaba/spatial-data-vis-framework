@@ -12,6 +12,14 @@
 			"options": {
 				"printWidth": 200
 			}
+		},
+		{
+			"files": "*-schema.ts",
+			"options": {
+				"quoteProps": "preserve",
+				"singleQuote": false,
+				"printWidth": 200
+			}
 		}
 	]
 }

@@ -81,6 +81,12 @@ const defaultGridLayerProps = {
 
 export type GridLayerProps = StandardLayerProps & typeof defaultGridLayerProps
 
+export function createGridLayer(
+	props: OptionalDefault<GridLayerProps, typeof defaultGridLayerProps>
+) {
+	return new GridLayer(props)
+}
+
 /**
  * planar grid
  * @note grid lines do not align with lng/lat lines
