@@ -42,7 +42,9 @@
  * 所有的 index.js 都不需要，assets 作为虚拟文件系统才是这个系统work的核心。
  * Descriptions 部分是固定的，手工编写的，多数是管理员编写的。
  * Props 是从 Descriptions 配置出的。
- * Assets 包含了所有的零部件。
+ * Assets 包含了所有的零部件。但是assets依然需要一个json形式的表达。这里逻辑上是个坎。
+ * Assets 的存在是 Schema 不完备的地方，这种对不完备的容纳，是 “推迟设计”“开发优先”和“扩展优先”的基础。
+ * 通过简单的文件引用，扩展开发方式。
  */
 
 import type { SceneBase } from "../base/SceneBase"
