@@ -110,35 +110,6 @@ const BPConfig = {
 	 *
 	 * 这部分可以放到 app 里，做一个 getter，而非放到这个配置项里，因为他并不是施加给app的，而是app内在的
 	 */
-
-	/** 所有 layer 的类定义，layer instance 只能从这里选择类 */
-	layerClasses: [
-		{
-			id: 'LOCAL_LC_0',
-			/**
-			 * 可以按照静态语言的方案，要求类名全局唯一
-			 */
-			name: 'GridLayer',
-			propsDescription: [] as PropDescription[],
-		},
-		{
-			id: 'LOCAL_LC_1',
-			name: 'ModelLayer',
-			propsDescription: [] as PropDescription[],
-		},
-		{
-			id: 'LOCAL_LC_2',
-			name: 'SparkleLayer',
-			propsDescription: [] as PropDescription[],
-		},
-		{
-			id: 'LOCAL_LC_3',
-			name: 'RuntimeWidgetLayer',
-			propsDescription: [] as PropDescription[],
-		},
-	],
-	/** 静态资源 */
-	assets: {},
 }
 
 export default BPConfig
@@ -158,13 +129,3 @@ export default BPConfig
  * 需要把所有的工厂函数挂到一个统一的地方，在 private 里根据 stages 和 layers 动态创建。
  * @A 目前使用*用法B*
  */
-
-interface PropDescription {
-	key: string
-	type: 'string' | 'boolean' | 'number' | 'color' | 'vec3' | 'number[]'
-	defaultValue?: any
-	mutable?: boolean
-	info?: string
-	name?: string
-	// needsRefresh: boolean,
-}

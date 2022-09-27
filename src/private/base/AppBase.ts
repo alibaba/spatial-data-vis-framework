@@ -116,6 +116,8 @@ export class AppBase {
 
 	// global stats
 	static {}
+
+	static $getLayerClasses() {}
 }
 
 export interface AppBaseConfig

@@ -14,28 +14,35 @@
  * 能否用decorator集中到一起？似乎没啥意义，因为模版是生成的，不是用户写的
  */
 
-/**
- * Layer类名
- */
-// pragma: BP_GEN STAGE_LAYERS START
-type LayerClassName = 'RuntimeWidgetLayer' | 'GridLayer' | 'BillboardsLayer' | 'ModelLayer'
-// pragma: BP_GEN STAGE_LAYERS END
-
-// pragma: BP_GEN STAGE_LAYERS START
+// pragma: BP_GEN STAGE_LAYERS_IMPORT START
 import { createRuntimeWidgetLayer } from './RuntimeWidgetLayer'
 import { createGridLayer } from './GridLayer'
 import { createBillboardsLayer } from './BillboardsLayer'
 import { createModelLayer } from './ModelLayer'
-// pragma: BP_GEN STAGE_LAYERS END
+// pragma: BP_GEN STAGE_LAYERS_IMPORT END
 
-// pragma: BP_GEN STAGE_LAYERS START
-const FACTORY = {
-	RuntimeWidgetLayer: createRuntimeWidgetLayer,
-	GridLayer: createGridLayer,
-	BillboardsLayer: createBillboardsLayer,
-	ModelLayer: createModelLayer,
+// pragma: BP_GEN STAGE_LAYERS_EXPORT START
+export const LAYERS = {
+	RuntimeWidgetLayer: {
+		factory: createRuntimeWidgetLayer,
+		propsDescription: [] as PropDescription[],
+	},
+	GridLayer: {
+		factory: createGridLayer,
+		propsDescription: [] as PropDescription[],
+	},
+	BillboardsLayer: {
+		factory: createBillboardsLayer,
+		propsDescription: [] as PropDescription[],
+	},
+	ModelLayer: {
+		factory: createModelLayer,
+		propsDescription: [] as PropDescription[],
+	},
 } as const
-// pragma: BP_GEN STAGE_LAYERS END
+// pragma: BP_GEN STAGE_LAYERS_EXPORT END
+
+type LayerClassName = keyof typeof LAYERS
 
 /**
  * Create a layer instance by class name and constructor props
@@ -45,12 +52,21 @@ const FACTORY = {
  */
 export function createLayer<TType extends LayerClassName>(
 	type: TType,
-	props: Parameters<typeof FACTORY[TType]>[0]
-): ReturnType<typeof FACTORY[TType]> {
-	// export function createLayer(type: LayerClassName, props: any) {
-	const factory = FACTORY[type] as typeof FACTORY[TType]
+	props: Parameters<typeof LAYERS[TType]['factory']>[0]
+): ReturnType<typeof LAYERS[TType]['factory']> {
+	const factory = LAYERS[type].factory as typeof LAYERS[TType]['factory']
 
 	if (!factory) throw new Error(`Cannot find layer type: ${name}.`)
 
-	return factory(props as any) as ReturnType<typeof FACTORY[TType]>
+	return factory(props as any) as ReturnType<typeof LAYERS[TType]['factory']>
+}
+
+interface PropDescription {
+	key: string
+	type: 'string' | 'boolean' | 'number' | 'color' | 'vec3' | 'number[]'
+	defaultValue?: any
+	mutable?: boolean
+	info?: string
+	name?: string
+	// needsRefresh: boolean,
 }
