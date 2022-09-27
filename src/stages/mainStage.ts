@@ -13,7 +13,7 @@ import { layerProps } from '../config/layerProps'
 import { GridLayer } from '../layers/GridLayer'
 import { createModelLayer } from '../layers/ModelLayer'
 import { createBillboardsLayer } from '../layers/BillboardsLayer'
-import { RuntimeWidgetLayer } from '../layers/RuntimeWidget'
+import { RuntimeWidgetLayer } from '../layers/RuntimeWidgetLayer'
 
 const layers = [
 	// pragma: BP_GEN STAGE_LAYERS START

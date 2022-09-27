@@ -11,7 +11,16 @@ const BPConfig = {
 	 */
 
 	/** 应用全局配置 */
-	app: {},
+	app: {
+		width: 1400,
+		height: 700,
+		fov: 20,
+		antialias: 'msaa',
+		background: 'transparent',
+		autoResize: false,
+		pitchLimit: [0, Math.PI * 0.7],
+		debug: true,
+	},
 	/** 所有 layer 实例，以及每个的配置项 */
 	layers: [
 		{
@@ -98,6 +107,8 @@ const BPConfig = {
 	 *
 	 * 静态只读配置项，
 	 * 该部分配置项的修改对应着源文件的修改，由本地脚本操作，需要重新打包应用才能生效。
+	 *
+	 * 这部分可以放到 app 里，做一个 getter，而非放到这个配置项里，因为他并不是施加给app的，而是app内在的
 	 */
 
 	/** 所有 layer 的类定义，layer instance 只能从这里选择类 */

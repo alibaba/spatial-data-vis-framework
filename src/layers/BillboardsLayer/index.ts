@@ -34,8 +34,6 @@ interface Props extends StandardLayerProps {
 
 type Data = { lng: number; lat: number }[]
 
-export const isFactory = true
-
 export function createBillboardsLayer(props: Props): StandardLayer {
 	const layer = new StandardLayer(props)
 

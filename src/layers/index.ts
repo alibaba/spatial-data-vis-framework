@@ -11,29 +11,31 @@
  * 总之不在这里考虑 tree shaking。
  * 所有layer的实现代码管理封装在这个文件之下，这个文件的 export 作为 interface
  * @todo
- * 能否用decorator集中到一起？
+ * 能否用decorator集中到一起？似乎没啥意义，因为模版是生成的，不是用户写的
  */
 
 /**
  * Layer类名
  */
-type LayerClassName = 'RuntimeWidget' | 'GridLayer' | 'BillboardsLayer' | 'ModelLayer'
+// pragma: BP_GEN STAGE_LAYERS START
+type LayerClassName = 'RuntimeWidgetLayer' | 'GridLayer' | 'BillboardsLayer' | 'ModelLayer'
+// pragma: BP_GEN STAGE_LAYERS END
 
-// `export * as %{name}Module from ./${name}
-import * as RuntimeWidgetLayerModule from './RuntimeWidget'
-import * as GridLayerModule from './GridLayer'
-import * as BillboardsLayerModule from './BillboardsLayer'
-import * as ModelLayerModule from './ModelLayer'
+// pragma: BP_GEN STAGE_LAYERS START
+import { createRuntimeWidgetLayer } from './RuntimeWidgetLayer'
+import { createGridLayer } from './GridLayer'
+import { createBillboardsLayer } from './BillboardsLayer'
+import { createModelLayer } from './ModelLayer'
+// pragma: BP_GEN STAGE_LAYERS END
 
-const MODULES = {
-	RuntimeWidget: RuntimeWidgetLayerModule,
-	GridLayer: GridLayerModule,
-	BillboardsLayer: BillboardsLayerModule,
-	ModelLayer: ModelLayerModule,
+// pragma: BP_GEN STAGE_LAYERS START
+const FACTORY = {
+	RuntimeWidgetLayer: createRuntimeWidgetLayer,
+	GridLayer: createGridLayer,
+	BillboardsLayer: createBillboardsLayer,
+	ModelLayer: createModelLayer,
 } as const
-
-// @debug
-console.debug(MODULES)
+// pragma: BP_GEN STAGE_LAYERS END
 
 /**
  * Create a layer instance by class name and constructor props
@@ -41,18 +43,14 @@ console.debug(MODULES)
  * @param props
  * @returns
  */
-export function createLayer<TType extends LayerClassName>(type: TType, props: any) {
+export function createLayer<TType extends LayerClassName>(
+	type: TType,
+	props: Parameters<typeof FACTORY[TType]>[0]
+): ReturnType<typeof FACTORY[TType]> {
 	// export function createLayer(type: LayerClassName, props: any) {
-	const module = MODULES[type] as any
+	const factory = FACTORY[type] as typeof FACTORY[TType]
 
-	if (!module) throw new Error(`Cannot find layer type: ${name}.`)
+	if (!factory) throw new Error(`Cannot find layer type: ${name}.`)
 
-	if (module.create) return module.create(props)
-
-	// const creatorHintName = 'create' + type
-	// if (module[creatorHintName]) return module[creatorHintName](props)
-
-	// if (module[type]) return new module[type](props)
-
-	throw new Error(`Cannot find a constructor or creator for ${type}.`)
+	return factory(props as any) as ReturnType<typeof FACTORY[TType]>
 }
