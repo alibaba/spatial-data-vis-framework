@@ -58,3 +58,5 @@ export function createModelLayer(config: ModelLayerConfig): StandardLayer {
 
 	return layer
 }
+
+export const create = createModelLayer

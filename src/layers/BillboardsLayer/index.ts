@@ -125,3 +125,5 @@ export function createBillboardsLayer(props: Props): StandardLayer {
 
 	return layer
 }
+
+export const create = createBillboardsLayer

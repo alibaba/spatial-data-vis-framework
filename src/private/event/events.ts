@@ -10,17 +10,17 @@
  * - $App/$changeScene
  * - $App/$destroy
  *
- * - $Stage(id)/$create
- * - $Stage(id)/$destroy
- * - $Stage(id)/$filterLayers
- * - $Stage(id)/$visibilityChange
+ * - $Stage/$create
+ * - $Stage/$destroy
+ * - $Stage/$filterLayers
+ * - $Stage/$visibilityChange
  *
- * - $Layer(id)/$create
- * - $Layer(id)/$destroy
- * - $Layer(id)/$init
- * - $Layer(id)/$add
- * - $Layer(id)/$remove
- * - $Layer(id)/$visibilityChange
+ * - $Layer/$create
+ * - $Layer/$destroy
+ * - $Layer/$init
+ * - $Layer/$add
+ * - $Layer/$remove
+ * - $Layer/$visibilityChange
  *
  */
 

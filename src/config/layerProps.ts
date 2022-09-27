@@ -14,7 +14,8 @@ export const layerProps = {
 		// glb: '/assets/models/demo.glb',
 		// scale: 100.0,
 		// projectionDesc: 'desc0|MercatorProjection|right|meters|0,0,0',
-		glb: 'https://gw-office.alipayobjects.com/bmw-prod/48a6249a-5136-4777-b44f-1039f4d3ce63.txt',
+		// glb: 'https://gw-office.alipayobjects.com/bmw-prod/48a6249a-5136-4777-b44f-1039f4d3ce63.txt',
+		glb: 'https://gw-office.alipayobjects.com/bmw-prod/e18bcdab-1b5b-416a-9780-be963b2e47a7.svg',
 		projectionDesc: 'desc0|MercatorProjection|right|meters|0,0,0',
 	},
 	LOCAL_LAYER_2: {

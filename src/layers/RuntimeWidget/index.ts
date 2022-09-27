@@ -1,12 +1,14 @@
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 import { MarkerLayer, Marker } from '@polaris.gl/layer-std-marker'
 
+export type RuntimeWidgetLayerProps = StandardLayerProps
+
 export class RuntimeWidgetLayer extends StandardLayer {
 	private markerLayer = new MarkerLayer()
 	private markers = new Map<number, Marker>()
 	private idPointer = 0
 
-	constructor(props: StandardLayerProps) {
+	constructor(props: RuntimeWidgetLayerProps) {
 		super(props)
 
 		this.add(this.markerLayer)
@@ -47,4 +49,10 @@ export interface WidgetConfig {
 	alt?: number
 	offsetX?: number
 	offsetY?: number
+}
+
+export function createRuntimeWidgetLayer(
+	props: ConstructorParameters<typeof RuntimeWidgetLayer>[0]
+) {
+	return new RuntimeWidgetLayer(props)
 }
