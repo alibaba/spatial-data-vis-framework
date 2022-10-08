@@ -140,3 +140,8 @@ dist
 # Custom
 
 /package-lock.json
+
+*/.DS_Store
+
+/intermediate
+!/intermediate/readme
