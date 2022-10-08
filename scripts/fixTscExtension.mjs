@@ -125,7 +125,7 @@ async function editFile(file) {
 
 import glob from 'glob'
 
-glob(path.resolve(__dirname, '../dist') + '/**/*.js', {}, (err, files) => {
+glob(path.resolve(__dirname, '../intermediate/jsm') + '/**/*.js', {}, (err, files) => {
 	// console.log(files)
 	files.forEach(async (file) => {
 		await editFile(path.resolve(__dirname, '../', file))

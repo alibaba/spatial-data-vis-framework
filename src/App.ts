@@ -2,7 +2,7 @@ import { AppBase, AppBaseConfig } from './private/base/AppBase'
 
 import { stages, mainStage } from './stages/index'
 import { scenes } from './scenes/index'
-import type { WidgetConfig } from './layers/RuntimeWidget'
+import type { WidgetConfig } from './layers/RuntimeWidgetLayer'
 
 /**
  * Entry Class. 入口应用
