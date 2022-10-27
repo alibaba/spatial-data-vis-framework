@@ -131,6 +131,17 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+# Polaris Best Practice
+
+# intermediate
+# assets
+# build
+
 # Custom
 
 /package-lock.json
+
+*/.DS_Store
+
+/intermediate
+!/intermediate/readme
