@@ -1,0 +1,4 @@
+脚本系统
+
+- 定义脚本，继承 ScriptBase，监听事件
+- 将脚本挂载到 layer/stage/scene/app 上

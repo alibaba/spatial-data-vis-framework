@@ -56,7 +56,7 @@ async function editFile(file) {
 	// 需要 file 在闭包里
 	function replacement(match, before, moduleName, after) {
 		if (
-			(moduleName.startsWith('.') || moduleName.startsWith('/')) &&
+			isFile(moduleName) &&
 			!(
 				moduleName.endsWith('.js') ||
 				moduleName.endsWith('.mjs') ||
@@ -71,6 +71,8 @@ async function editFile(file) {
 
 			const jsTarget = path.resolve(path.dirname(file), moduleName + '.js')
 			const mjsTarget = path.resolve(path.dirname(file), moduleName + '.mjs')
+			const jsIndexTarget = path.resolve(path.dirname(file), moduleName, 'index.js')
+			const mjsIndexTarget = path.resolve(path.dirname(file), moduleName, 'index.mjs')
 
 			let extension
 
@@ -84,11 +86,25 @@ async function editFile(file) {
 					accessSync(mjsTarget, constants.R_OK)
 					extension = '.mjs'
 				} catch (error) {
-					console.warn(
-						'\x1b[33m%s\x1b[0m',
-						`找不到被引用的模块，将使用 .js 作为后缀：${moduleName} in ${file}`
-					)
-					extension = '.js'
+					// 尝试 文件夹索引（Directory index）
+					try {
+						accessSync(jsIndexTarget, constants.R_OK)
+						extension = '/index.js'
+					} catch (error) {
+						try {
+							accessSync(mjsIndexTarget, constants.R_OK)
+							extension = '/index.mjs'
+						} catch (error) {
+							console.warn(
+								'\x1b[33m%s\x1b[0m',
+								`找不到被引用的模块，将使用 .js 作为后缀：${moduleName} in ${path.relative(
+									path.resolve(__dirname, '../'),
+									file
+								)}`
+							)
+							extension = '.js'
+						}
+					}
 				}
 			}
 
@@ -109,9 +125,24 @@ async function editFile(file) {
 
 import glob from 'glob'
 
-glob(path.resolve(__dirname, '../dist') + '/**/*.js', {}, (err, files) => {
+glob(path.resolve(__dirname, '../intermediate/jsm') + '/**/*.js', {}, (err, files) => {
 	// console.log(files)
 	files.forEach(async (file) => {
 		await editFile(path.resolve(__dirname, '../', file))
 	})
 })
+
+function isFile(moduleName) {
+	if (moduleName.startsWith('.') || moduleName.startsWith('/')) {
+		return true
+	}
+	const slashes = moduleName.split('/').length - 1
+	const hasAt = moduleName.startsWith('@')
+	if (hasAt && slashes > 1) {
+		return true
+	}
+	if (!hasAt && slashes > 0) {
+		return true
+	}
+	return false
+}

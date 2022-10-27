@@ -13,22 +13,17 @@
 			body {
 				background-color: #1f1f1f;
 			}
-			#container {
-				background-color: #20222b;
-			}
 		</style>
 	</head>
 	<body>
 		<div id="container"></div>
 		<script type="module">
-			import { App } from '../../src/apps/App.ts'
-			import { BPConfig } from '../../src/config/template.ts'
+			import { App } from './app.mjs'
 
 			const container = document.getElementById('container')
+			const DefaultConfig = await (await fetch('./config.json')).json()
 
-			console.log(BPConfig)
-
-			const polarisApp = new App(container, BPConfig)
+			const polarisApp = new App(container, DefaultConfig)
 
 			// enjoy✨
 		</script>

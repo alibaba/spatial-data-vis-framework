@@ -1,0 +1,7 @@
+Private 代码，由 Polaris 作者和管理员维护，用户勿修改。
+
+该文件夹是 “不需要用户感知、也不从 LowCode 生成” 的代码。
+
+🚧 Administrators Only.🚧
+
+TODO: 考虑将该部分的代码放到独立的 npm 包中，但是要解决单例模式可能的问题

@@ -61,7 +61,7 @@ function getDemoEntries() {
 			continue
 		}
 
-		if (fileStat.isDirectory() && !filename.startsWith('_')) {
+		if (fileStat.isDirectory()) {
 			entries.push(pageDir[j])
 		}
 	}
