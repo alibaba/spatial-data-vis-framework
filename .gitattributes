@@ -9,3 +9,5 @@
 *.geojson filter=lfs diff=lfs merge=lfs -text
 assets/* filter=lfs diff=lfs merge=lfs -text
 assets/** filter=lfs diff=lfs merge=lfs -text
+assets/readme !filter !diff !merge text 
+assets/models/demo.glb !filter !diff !merge text
