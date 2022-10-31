@@ -42,7 +42,7 @@ import type { AbstractLayer } from './Layer'
  * 		2. `Layer.dispose`
  *
  * A Polaris instance, as a special kind of Layer, is the root of the layer tree.
- * Hence, there are certain events that will never be triggered for it:
+ * Hence, there are certain events that will never be triggered:
  *
  * 		- `AddEvent` & `RemoveEvent` & `RootChangeEvent` (root node doesn't have a parent)
  * 		- `InitEvent` & `AfterInitEvent` (Polaris is inited when instanced)
