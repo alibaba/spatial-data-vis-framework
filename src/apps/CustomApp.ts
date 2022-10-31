@@ -23,11 +23,11 @@ export class CustomApp extends App {
 		const modelLayerConfig = getLayerConfig(BPConfig, 'LOCAL_LAYER_1')
 		modelLayerConfig.props.glb = config.modelURL
 
-		const stageConfig = getStageConfig(BPConfig, 'LOCAL_STAGE_MAIN')
-		stageConfig.layers = []
+		// const stageConfig = getStageConfig(BPConfig, 'LOCAL_STAGE_MAIN')
+		// stageConfig.layers = []
 
-		const sceneConfig = getSceneConfig(BPConfig, 'LOCAL_SCENE_DEFAULT')
-		sceneConfig.layers = []
+		// const sceneConfig = getSceneConfig(BPConfig, 'LOCAL_SCENE_DEFAULT')
+		// sceneConfig.layers = []
 
 		super(container, BPConfig)
 	}
