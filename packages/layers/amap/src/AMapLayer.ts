@@ -23,8 +23,7 @@ export interface AMapLayerProps extends StandardLayerProps {
 }
 
 export const defaultProps: AMapLayerProps = {
-	key: 'f8d835e1abdb0e4355b19aa454f4de65', // 高德API使用key,可以缺省
-	// key: '550dbc967967e5a778337699e04435fa',
+	key: '6bfc5bc9f3037cfc65a0fd282de5d57f', // 高德API使用key,可以缺省（默认key仅用于测试，限制掉用量，不保证可用性）
 	zIndex: -9999,
 	showLogo: true, // 是否显示高德logo
 	showLabel: false, // 是否显示地图标注

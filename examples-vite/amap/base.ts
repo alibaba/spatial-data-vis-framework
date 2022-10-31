@@ -124,7 +124,7 @@ await test(true, 'PolarisLite', () => {
 		console.log(amapLayer)
 	}
 	const url =
-		'https://webapi.amap.com/maps?v=2.0&key=f8d835e1abdb0e4355b19aa454f4de65&callback=onAMapLoaded'
+		'https://webapi.amap.com/maps?v=2.0&key=6bfc5bc9f3037cfc65a0fd282de5d57f&callback=onAMapLoaded'
 	const jsapi = document.createElement('script')
 	jsapi.charset = 'utf-8'
 	jsapi.src = url
