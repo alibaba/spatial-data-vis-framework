@@ -112,7 +112,6 @@ export class Grid {
 				this.points[i * 3 + 2] = p.z
 			}
 		} else if (this.conf.type === 'sandwich') {
-			console.log('sandwich')
 			this.points = getGrid2BezierMonotone(
 				this.conf.pointStart,
 				this.conf.pointEnd,
