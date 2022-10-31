@@ -76,12 +76,13 @@ export abstract class AbstractLayer<
 		 * Once inited, the parent-chain of this layer won't change again.
 		 */
 		this.addEventListener('rootChange', (e) => {
-			if (this.#inited && e.root !== null) {
-				const msg = 'InternalError: This layer has already been inited. cannot move a layer'
-				console.error(msg)
-				this.dispatchEvent({ type: 'error', error: new Error('msg') })
-				return
-			}
+			// @note: When a layer is removed. Child layers will get RootChangeEvent. This warning is useless.
+			// if (this.#inited && e.root !== null) {
+			// 	const msg = 'InternalError: This layer has already been inited. cannot move a layer'
+			// 	console.error(msg)
+			// 	this.dispatchEvent({ type: 'error', error: new Error('msg') })
+			// 	return
+			// }
 
 			// if (isPolaris(e.root)) {
 			if (e.root?.['isPolaris']) {
