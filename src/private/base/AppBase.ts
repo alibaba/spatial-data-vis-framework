@@ -143,17 +143,39 @@ export interface AppBaseConfig {
 function initDebug(this: AppBase) {
 	if (this.disposed) return
 
+	const id = randomString(5)
+	const appID = `APP_${id}`
+	const polarisID = `P_${id}`
+	console.log(
+		`%c👷 Enable Debug Mode.\n>_ globalThis.${appID} for app instance.\n>_ globalThis.${polarisID} for polaris instance. `,
+		'background: rgb(0,0,0); color: #ffffff; font-family: monospace; font-size: 15px; line-height: 20px;'
+	)
+
 	const h = new HelperLayer({ length: 100000000000000 })
 	h.setProps({ box: true })
 	this.polaris.add(h)
 
-	if (globalThis.p) {
-		console.warn('监测到 window 上挂了另外一个 polaris', globalThis.p)
-		console.log('当前实例', this.polaris)
+	if (globalThis[polarisID]) {
+		console.warn(
+			'found debug naming conflict:',
+			'prev:',
+			globalThis[polarisID],
+			'curr:',
+			this.polaris
+		)
 	} else {
-		globalThis.p = this.polaris
-		globalThis.app = this
+		globalThis[polarisID] = this.polaris
+		globalThis[appID] = this
 	}
 
-	console.log(this)
+	console.log('debug: app instance', this)
+}
+
+const dict = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz'
+function randomString(e: number) {
+	e = e || 32
+	const a = dict.length
+	let n = ''
+	for (let i = 0; i < e; i++) n += dict.charAt(Math.floor(Math.random() * a))
+	return n
 }
