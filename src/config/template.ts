@@ -26,7 +26,7 @@ export const BPConfig = {
 	/** 所有 layer 实例，以及每个的配置项 */
 	layers: [
 		{
-			name: 'helper grid' as const,
+			name: 'helper grid',
 			id: 'LOCAL_LAYER_0' as const,
 			class: 'GridLayer' as const,
 			props: {
@@ -40,7 +40,7 @@ export const BPConfig = {
 			},
 		},
 		{
-			name: 'model' as const,
+			name: 'model',
 			id: 'LOCAL_LAYER_1' as const,
 			class: 'ModelLayer' as const,
 			props: {
@@ -50,7 +50,7 @@ export const BPConfig = {
 			},
 		},
 		{
-			name: 'sparkles' as const,
+			name: 'sparkles',
 			id: 'LOCAL_LAYER_2' as const,
 			class: 'BillboardsLayer' as const,
 			props: {
@@ -77,7 +77,7 @@ export const BPConfig = {
 			},
 		},
 		{
-			name: 'runtime widget demo' as const,
+			name: 'runtime widget demo',
 			id: 'LOCAL_LAYER_3' as const,
 			class: 'RuntimeWidgetLayer' as const,
 			props: {},
@@ -89,9 +89,14 @@ export const BPConfig = {
 		 * 注意一个layer实例只能从属于一个stage
 		 */
 		{
-			name: 'MainStage' as const,
+			name: 'MainStage',
 			id: 'LOCAL_STAGE_MAIN' as const,
-			layers: ['LOCAL_LAYER_0', 'LOCAL_LAYER_1', 'LOCAL_LAYER_2', 'LOCAL_LAYER_3'],
+			layers: [
+				'LOCAL_LAYER_0' as const,
+				'LOCAL_LAYER_1' as const,
+				'LOCAL_LAYER_2' as const,
+				'LOCAL_LAYER_3' as const,
+			],
 			projection: undefined,
 		},
 	],
@@ -99,17 +104,17 @@ export const BPConfig = {
 	scenes: [
 		{
 			id: 'LOCAL_SCENE_DEFAULT' as const,
-			name: 'DefaultScene' as const,
+			name: 'DefaultScene',
 			cameraStateCode: '1|-0.000500|0.001524|0.000000|1.06540|0.20000|18.66000',
-			stage: 'LOCAL_STAGE_MAIN',
-			layers: ['*' /* 显示该stage的所有layer */],
+			stage: 'LOCAL_STAGE_MAIN' as const,
+			layers: ['*' as const /* 显示该stage的所有layer */],
 		},
 		{
 			id: 'LOCAL_SCENE_2' as const,
-			name: 'scene2' as const,
+			name: 'scene2',
 			cameraStateCode: '1|0.000200|0.000943|0.000000|0.99540|-0.48000|19.27600',
-			stage: 'LOCAL_STAGE_MAIN',
-			layers: ['LOCAL_LAYER_1', 'LOCAL_LAYER_3'],
+			stage: 'LOCAL_STAGE_MAIN' as const,
+			layers: ['LOCAL_LAYER_1' as const, 'LOCAL_LAYER_3' as const],
 		},
 	],
 

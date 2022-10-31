@@ -5,7 +5,7 @@
 import { App } from './App'
 import { BPConfig } from '../config/template'
 import type { WidgetConfig, RuntimeWidgetLayer } from '../layers/RuntimeWidgetLayer'
-import { getLayerConfig } from '../private/utils/config'
+import { getLayerConfig, getStageConfig, getSceneConfig } from '../private/utils/config'
 
 /**
  * custom config
@@ -22,6 +22,12 @@ export class CustomApp extends App {
 		BPConfig.app.height = config.height
 		const modelLayerConfig = getLayerConfig(BPConfig, 'LOCAL_LAYER_1')
 		modelLayerConfig.props.glb = config.modelURL
+
+		const stageConfig = getStageConfig(BPConfig, 'LOCAL_STAGE_MAIN')
+		stageConfig.layers = []
+
+		const sceneConfig = getSceneConfig(BPConfig, 'LOCAL_SCENE_DEFAULT')
+		sceneConfig.layers = []
 
 		super(container, BPConfig)
 	}

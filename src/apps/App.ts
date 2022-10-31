@@ -66,6 +66,7 @@ export class App extends AppBase {
 
 /**
  * AppConfig Schema Definition
+ * @note 使用 private/schema/config
  */
 export type AppConfig = AppBaseConfig & {
 	layers: LayersConfig
