@@ -269,7 +269,10 @@ export type ListenerOptions =
 /**
  * listener callback type
  */
-export type Callback<TProps, TKey extends keyof TProps = keyof TProps> = (event: {
+export type Callback<
+	TProps extends Record<string, any>,
+	TKey extends keyof TProps = keyof TProps
+> = (event: {
 	/**
 	 * actually changed keys.
 	 */
@@ -294,7 +297,10 @@ export type Callback<TProps, TKey extends keyof TProps = keyof TProps> = (event:
  */
 
 const managerInstances = new Map<any, PropsManager<any>>()
-export function getPropsManager<TProps, TKey extends keyof TProps = keyof TProps>(obj: object) {
+export function getPropsManager<
+	TProps extends Record<string, any>,
+	TKey extends keyof TProps = keyof TProps
+>(obj: object) {
 	let manager = managerInstances.get(obj)
 	if (!manager) {
 		manager = new PropsManager()
