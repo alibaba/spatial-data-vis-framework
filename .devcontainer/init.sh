@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 
-echo -n "Are you located in *mainland China*? (yes/No)"
-read -r inChina
+# echo -n "Are you located in *mainland China*? (yes/No)"
+# read -r inChina
 
-if [ $inChina == "yes" ]
-then
-    echo "Your answer is yes. Will set registry to Chinese mirror"
+# if [ $inChina == "yes" ]
+# then
+#     echo "Your answer is yes. Will set registry to Chinese mirror"
 
-    npm config set registry https://registry.npm.taobao.org
+#     npm config set registry https://registry.npm.taobao.org
     
-else 
-    echo "Your answer is no. Will use original registry."
-fi
+# else 
+#     echo "Your answer is no. Will use original registry."
+# fi
 
-npm i -g lerna
+npm i -g lerna@4
 
 echo -e "\nnode -v # v14 or higher"
 node -v # v14 or higher
