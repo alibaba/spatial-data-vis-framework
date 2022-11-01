@@ -5,22 +5,28 @@ const { defineConfig } = require('vite')
 
 const entries = getDemoEntries()
 
-module.exports = defineConfig({
-	define: {
-		entries,
-	},
-	server: {
-		open: true,
-		host: '0.0.0.0',
-		port: 2000,
-		cors: true,
-		force: true,
-		watch: {
-			// without this, vite will watch all files in node_modules
-			ignored: ['!**/node_modules/@polaris.gl/**'],
+module.exports = defineConfig(
+	/** @type {import('vite').UserConfig} */
+	{
+		define: {
+			entries,
 		},
-	},
-})
+		server: {
+			open: true,
+			host: '0.0.0.0',
+			port: 2000,
+			cors: true,
+			force: true,
+			hmr: {
+				clientPort: process.env['CODESPACE_NAME'] ? 443 : undefined,
+			},
+			watch: {
+				// without this, vite will watch all files in node_modules
+				ignored: ['!**/node_modules/@polaris.gl/**'],
+			},
+		},
+	}
+)
 
 function getDemoEntries() {
 	const dirPath = path.resolve(__dirname, './')
