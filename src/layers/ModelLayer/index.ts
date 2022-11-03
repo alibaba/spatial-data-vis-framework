@@ -1,7 +1,8 @@
 import { GLTF2Loader } from '@gs.i/frontend-gltf2'
 import { IR } from '@gs.i/schema-scene'
-import { traverse } from '@gs.i/utils-traverse'
 import { specifyUnlitMaterial } from '@gs.i/utils-specify'
+import { traverse } from '@gs.i/utils-traverse'
+
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 import { createFromDesc } from '@polaris.gl/projection'
 

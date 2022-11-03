@@ -1,5 +1,5 @@
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
-import { MarkerLayer, Marker } from '@polaris.gl/layer-std-marker'
+import { Marker, MarkerLayer } from '@polaris.gl/layer-std-marker'
 
 export type RuntimeWidgetLayerProps = StandardLayerProps
 

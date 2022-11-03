@@ -1,4 +1,4 @@
-import { Mesh, Geom, Attr } from '@gs.i/frontend-sdk'
+import { Attr, Geom, Mesh } from '@gs.i/frontend-sdk'
 
 type Pos = [number, number, number?]
 

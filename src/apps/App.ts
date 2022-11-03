@@ -5,14 +5,13 @@
  * @note
  * 不要修改该类，如果要增加自定义接口或参数，再该文件夹中创建一个新的类，继承或包裹该标准应用
  */
-
 import { Projection } from '@polaris.gl/projection'
 
-import { AppBase, AppBaseConfig } from '../private/base/AppBase'
-import { StageBase } from '../private/base/StageBase'
-import { SceneBase } from '../private/base/SceneBase'
-import { occupyID } from '../private/utils/unique'
 import { LAYERS, LayerClassName, createLayer } from '../layers'
+import { AppBase, AppBaseConfig } from '../private/base/AppBase'
+import { SceneBase } from '../private/base/SceneBase'
+import { StageBase } from '../private/base/StageBase'
+import { occupyID } from '../private/utils/unique'
 
 /**
  * Entry Class. 入口应用

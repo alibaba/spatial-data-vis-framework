@@ -13,12 +13,11 @@
  * @todo
  * 能否用decorator集中到一起？似乎没啥意义，因为模版是生成的，不是用户写的
  */
-
 // pragma: BP_GEN LAYERS_IMPORT START
-import { createRuntimeWidgetLayer } from './RuntimeWidgetLayer'
-import { createGridLayer } from './GridLayer'
 import { createBillboardsLayer } from './BillboardsLayer'
+import { createGridLayer } from './GridLayer'
 import { createModelLayer } from './ModelLayer'
+import { createRuntimeWidgetLayer } from './RuntimeWidgetLayer'
 // pragma: BP_GEN LAYERS_IMPORT END
 
 export const LAYERS = {

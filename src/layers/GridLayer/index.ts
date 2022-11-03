@@ -6,15 +6,14 @@
  * ![效果](https://img.alicdn.com/imgextra/i1/O1CN01G6WcNb1JnTipZnEIs_!!6000000001073-2-tps-926-489.png)
  *
  */
+import { Attr, Mesh, UnlitMaterial } from '@gs.i/frontend-sdk'
+import * as IR from '@gs.i/schema-scene'
+import { buildCircle } from '@gs.i/utils-geom-builders'
+//
+import { specifyAttribute, specifyGeometry } from '@gs.i/utils-specify'
+import { Color } from '@gs.i/utils-math'
 
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
-import * as IR from '@gs.i/schema-scene'
-import { specifyGeometry, specifyAttribute } from '@gs.i/utils-specify'
-import { UnlitMaterial, Mesh, Attr } from '@gs.i/frontend-sdk'
-import { buildCircle } from '@gs.i/utils-geom-builders'
-
-//
-import { Color } from '@gs.i/utils-math'
 import type { Projection } from '@polaris.gl/projection'
 
 const R = 6378137

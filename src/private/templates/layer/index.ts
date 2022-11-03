@@ -1,7 +1,6 @@
 /**
  * $LAYER_NAME$
  */
-
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 
 /**

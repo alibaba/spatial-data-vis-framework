@@ -1,11 +1,10 @@
 /**
  * 业务类，包含专用的配置项和接口
  */
-
-import { App } from './App'
 import { BPConfig } from '../config/template'
-import type { WidgetConfig, RuntimeWidgetLayer } from '../layers/RuntimeWidgetLayer'
-import { getLayerConfig, getStageConfig, getSceneConfig } from '../private/utils/config'
+import type { RuntimeWidgetLayer, WidgetConfig } from '../layers/RuntimeWidgetLayer'
+import { getLayerConfig, getSceneConfig, getStageConfig } from '../private/utils/config'
+import { App } from './App'
 
 /**
  * custom config

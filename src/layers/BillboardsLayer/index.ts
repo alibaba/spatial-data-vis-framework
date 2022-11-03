@@ -1,10 +1,11 @@
+import { Mesh } from '@gs.i/frontend-sdk'
+import { Texture, isTexture } from '@gs.i/schema-scene'
 import { specifyTexture } from '@gs.i/utils-specify'
-import { isTexture, Texture } from '@gs.i/schema-scene'
+
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 
 import { buildBillboardsGeometry } from './BillboardsGeom'
 import { BillboardsMaterial } from './BillboardsMatr'
-import { Mesh } from '@gs.i/frontend-sdk'
 
 interface Props extends StandardLayerProps {
 	/**
