@@ -1,7 +1,6 @@
-import { PolarisThree, PolarisThreeProps } from '@polaris.gl/three'
 import { StandardLayer } from '@polaris.gl/gsi'
-
 import { HelperLayer } from '@polaris.gl/layer-std-helper'
+import { PolarisThree, PolarisThreeProps } from '@polaris.gl/three'
 
 import type { SceneBase } from './SceneBase'
 import type { ScriptBase } from './ScriptBase'
@@ -112,6 +111,12 @@ export class AppBase {
 			}
 			return
 		}
+	}
+
+	dispose() {
+		// this.stages.forEach((e) => e.layers.forEach((l) => l.layer.dispose()))
+		// this.stages.forEach((e) => e.dispose())
+		this.polaris.dispose()
 	}
 
 	// global stats
