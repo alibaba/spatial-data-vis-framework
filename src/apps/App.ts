@@ -30,11 +30,12 @@ import { occupyID } from '../private/utils/unique'
  */
 export class App extends AppBase {
 	constructor(container: HTMLDivElement, config: AppConfig) {
+		const scope = {} // 用于检查是否有重复的 ID
 		// create layers
 		const layers = config.layers.map((layer) => ({
 			layer: createLayer(layer.class, layer.props),
 			name: layer.name,
-			id: occupyID(layer.id),
+			id: occupyID(scope, layer.id),
 		}))
 
 		// create stages (layer containers)
@@ -50,7 +51,7 @@ export class App extends AppBase {
 		// create scenes (layer filters and camera states)
 		const scenes = config.scenes.map((scene) => {
 			const s = new SceneBase()
-			s.id = occupyID(scene.id)
+			s.id = occupyID(scope, scene.id)
 			s.name = scene.name
 			s.cameraStateCode = scene.cameraStateCode
 			s.layers = scene.layers ?? ['*']

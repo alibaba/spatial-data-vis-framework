@@ -56,9 +56,13 @@ const namespaces = {} as {
 	}
 }
 
-export function occupyID<TID extends string | undefined>(id: TID, shouldThrow = false) {
+/**
+ * 占用一个 ID，如果一个ID调用该函数两次，则不通过
+ * @note 该占用行为是代码生命周期的，不应该在 app 生命周期中调用，否则 app 将只能创建一次
+ */
+export function occupyStaticID<TID extends string | undefined>(id: TID, shouldThrow = false) {
 	if (id) {
-		if (IDCache.has(id)) {
+		if (StaticIDCache.has(id)) {
 			const msg = `id: ${id} is already used.`
 			if (shouldThrow) {
 				throw new Error(msg)
@@ -66,11 +70,45 @@ export function occupyID<TID extends string | undefined>(id: TID, shouldThrow = 
 				console.error(msg)
 			}
 		} else {
-			IDCache.add(id)
+			StaticIDCache.add(id)
 		}
 	}
 
 	return id
 }
 
-const IDCache = new Set<string>()
+const StaticIDCache = new Set<string>()
+
+/**
+ * 占用一个 ID，如果一个ID调用该函数两次，则不通过
+ * @note 该占用行为生命周期为 scope 生命周期的
+ */
+export function occupyID<TID extends string | undefined>(
+	scope: object,
+	id: TID,
+	shouldThrow = false
+) {
+	let idCache = ScopedIDCache.get(scope)
+
+	if (!idCache) {
+		idCache = new Set<string>()
+		ScopedIDCache.set(scope, idCache)
+	}
+
+	if (id) {
+		if (idCache.has(id)) {
+			const msg = `id: ${id} is already used.`
+			if (shouldThrow) {
+				throw new Error(msg)
+			} else {
+				console.error(msg)
+			}
+		} else {
+			idCache.add(id)
+		}
+	}
+
+	return id
+}
+
+const ScopedIDCache = new WeakMap<object, Set<string>>() // new Set<string>()
