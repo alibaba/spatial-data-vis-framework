@@ -1,3 +1,15 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:23c2f871afa31118dba1146cb93baade77b6bd7433b4c0175c2a115118a42ecb
-size 584
+当前项目用到的静态资源，包括：
+
+- official assets
+
+从 official assets 中选择出来，直接使用，不加修改
+
+（除非想要有自动随官方更新的功能，否则，不如复制出来，放进 user 空间并允许修改）
+
+（但是，在 editor 的交互逻辑中，复制到 user 空间是个很不方便的行为，assets 不是 class ，不能“继承”到本地）
+
+（同时，在 editor 中，资源需要下载，与 ue4 不同，这个过程是否本身就不可行）
+
+（官方资源“本地化”这个事情，在 ui 上如何表示）
+
+-

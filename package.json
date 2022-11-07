@@ -8,6 +8,7 @@
   "type": "module",
   "scripts": {
     "start": "npx vite",
+    "prepare": "node scripts/prepare.mjs",
     "build": "npm run tsc && npx rollup -c ./rollup.config.js && node scripts/configToJson.mjs",
     "tsc": "npx tsc -p ./tsconfig.build.json"
   },
