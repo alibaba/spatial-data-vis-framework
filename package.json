@@ -10,7 +10,8 @@
     "start": "npx vite",
     "prepare": "node scripts/prepare.mjs",
     "build": "npm run tsc && npx rollup -c ./rollup.config.js && node scripts/configToJson.mjs",
-    "tsc": "npx tsc -p ./tsconfig.build.json"
+    "tsc": "npx tsc -p ./tsconfig.build.json",
+    "updateScaffold": "git remote add polaris https://github.com/alibaba/spatial-data-vis-framework.git && git pull polaris BP/base && git remote remove polaris"
   },
   "engines": {
     "node": ">=14.17.4"
