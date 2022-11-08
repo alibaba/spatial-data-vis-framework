@@ -13,7 +13,8 @@ const folders = [
 	resolve(__dirname, '../build'),
 ]
 
-folders.forEach(async (p) => {
-	if (existsSync(p)) return
-	await mkdir(p)
-})
+for (let i = 0; i < folders.length; i++) {
+	const folder = folders[i]
+	if (existsSync(folder)) continue
+	await mkdir(folder)
+}
