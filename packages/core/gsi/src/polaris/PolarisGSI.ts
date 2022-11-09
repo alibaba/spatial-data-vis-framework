@@ -301,8 +301,8 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 
 		// Map to canvas coords
 		return [
-			Math.round((deviceCoords[0] + 1) * 0.5 * this.width),
-			Math.round((deviceCoords[1] + 1) * 0.5 * this.height),
+			(deviceCoords[0] + 1) * 0.5 * this.width, //
+			(deviceCoords[1] + 1) * 0.5 * this.height, //
 		]
 	}
 
