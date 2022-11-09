@@ -1,6 +1,6 @@
 {
 	"name": "@polaris.gl/utils-indicator",
-	"version": "0.1.0-alpha.29",
+	"version": "0.1.0-alpha.30",
 	"description": "",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -22,7 +22,7 @@
 		"@gs.i/frontend-gline": "0.2.1-alpha.29",
 		"@gs.i/schema-scene": "0.2.1-alpha.29",
 		"@gs.i/utils-math": "0.2.1-alpha.29",
-		"@polaris.gl/gsi": "0.1.0-alpha.29"
+		"@polaris.gl/gsi": "0.1.0-alpha.30"
 	},
 	"devDependencies": {
 		"@types/is": "^0.0.21",

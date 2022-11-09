@@ -1,6 +1,6 @@
 {
 	"name": "@polaris.gl/layer-std-gltf2",
-	"version": "0.1.0-alpha.29",
+	"version": "0.1.0-alpha.30",
 	"description": "",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -23,7 +23,7 @@
 		"@gs.i/frontend-gltf2": "0.2.1-alpha.29",
 		"@gs.i/schema-scene": "0.2.1-alpha.29",
 		"@gs.i/utils-gltf2": "0.2.1-alpha.29",
-		"@polaris.gl/gsi": "0.1.0-alpha.29"
+		"@polaris.gl/gsi": "0.1.0-alpha.30"
 	},
 	"devDependencies": {
 		"typescript": ">4.4.0"
