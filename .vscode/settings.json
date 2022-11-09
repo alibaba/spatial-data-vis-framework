@@ -43,5 +43,6 @@
 		"**/README": "markdown",
 		"**/*.json.bac": "json",
 		"**/*.json.bac.*": "json"
-	}
+	},
+	"githubPullRequests.ignoredPullRequestBranches": ["dev"]
 }
