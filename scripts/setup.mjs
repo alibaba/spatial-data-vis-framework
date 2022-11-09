@@ -146,7 +146,7 @@ await Promise.all(
 	})
 )
 try {
-	execSync(`lerna bootstrap --force-local`, { stdio: 'inherit' })
+	execSync(`lerna bootstrap --force-local --no-ci`, { stdio: 'inherit' })
 
 	// # https://github.com/lerna/lerna/issues/2352
 	// # lerna link is needed
