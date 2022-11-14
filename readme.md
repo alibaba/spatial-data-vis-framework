@@ -6,6 +6,8 @@
 
 分层空间数据可视化框架，或简称 Polaris.gl
 
+[![build](https://github.com/alibaba/spatial-data-vis-framework/actions/workflows/build.yml/badge.svg?branch=dev)](https://github.com/alibaba/spatial-data-vis-framework/actions/workflows/build.yml)
+
 ## Introduction
 
 Polaris.gl is a meta-framework for spatial data visualization on general 3D engines.
