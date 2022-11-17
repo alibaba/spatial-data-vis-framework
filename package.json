@@ -44,6 +44,7 @@
     "@gs.i/utils-specify": "0.2.1-alpha.29",
     "@gs.i/utils-traverse": "0.2.1-alpha.29",
     "@gs.i/utils-wireframe": "0.2.1-alpha.29",
+    "@polaris.gl/base": "0.1.0-alpha.30",
     "@polaris.gl/coordinator": "0.1.0-alpha.30",
     "@polaris.gl/gsi": "0.1.0-alpha.30",
     "@polaris.gl/layer-amap": "0.1.0-alpha.30",
