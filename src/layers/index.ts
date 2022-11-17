@@ -3,6 +3,8 @@
  * @generated
  */
 
+import type { PropDescription } from '../private/config/schema'
+
 /**
  * 将所有 Layer 类导出
  * @note
@@ -13,6 +15,7 @@
  * @todo
  * 能否用decorator集中到一起？似乎没啥意义，因为模版是生成的，不是用户写的
  */
+
 // pragma: BP_GEN LAYERS_IMPORT START
 import { createBillboardsLayer } from './BillboardsLayer'
 import { createGridLayer } from './GridLayer'
@@ -20,7 +23,7 @@ import { createModelLayer } from './ModelLayer'
 import { createRuntimeWidgetLayer } from './RuntimeWidgetLayer'
 // pragma: BP_GEN LAYERS_IMPORT END
 
-export const LAYERS = {
+export const LayerClasses = {
 	// pragma: BP_GEN LAYERS_EXPORT START
 	// pragma: RuntimeWidgetLayer START
 	RuntimeWidgetLayer: {
@@ -48,38 +51,3 @@ export const LAYERS = {
 	// pragma: ModelLayer END
 	// pragma: BP_GEN LAYERS_EXPORT END
 } as const
-
-export type LayerClassName = keyof typeof LAYERS
-
-/**
- * getLayerFactory by type
- */
-export function getLayerFactory<TType extends LayerClassName>(className: TType) {
-	const factory = LAYERS[className]?.factory as typeof LAYERS[TType]['factory']
-	if (!factory) throw new Error(`Cannot find layer type: ${name}.`)
-	return factory
-}
-
-/**
- * Create a layer instance by class name and constructor props
- * @param {LayerClassName} type  Layer Class Name
- * @param props
- * @returns
- */
-export function createLayer<TType extends LayerClassName>(
-	type: TType,
-	props: Parameters<typeof LAYERS[TType]['factory']>[0]
-): ReturnType<typeof LAYERS[TType]['factory']> {
-	const factory = getLayerFactory(type)
-	return factory(props as any) as ReturnType<typeof LAYERS[TType]['factory']>
-}
-
-interface PropDescription {
-	key: string
-	type: 'string' | 'boolean' | 'number' | 'color' | 'vec3' | 'number[]'
-	defaultValue?: any
-	mutable?: boolean
-	info?: string
-	name?: string
-	// needsRefresh: boolean,
-}

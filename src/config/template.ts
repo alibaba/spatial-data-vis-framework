@@ -90,7 +90,7 @@ export const BPConfig = {
 		 */
 		{
 			name: 'MainStage',
-			id: 'LOCAL_STAGE_MAIN' as const,
+			id: 'LOCAL_STAGE_MAIN',
 			layers: [
 				'LOCAL_LAYER_0' as const,
 				'LOCAL_LAYER_1' as const,
@@ -103,14 +103,14 @@ export const BPConfig = {
 	/** 所有 scene（用户编排的一组状态，用于控制镜位和layer显隐切换） */
 	scenes: [
 		{
-			id: 'LOCAL_SCENE_DEFAULT' as const,
+			id: 'LOCAL_SCENE_DEFAULT',
 			name: 'DefaultScene',
 			cameraStateCode: '1|-0.000500|0.001524|0.000000|1.06540|0.20000|18.66000',
 			stage: 'LOCAL_STAGE_MAIN' as const,
 			layers: ['*' as const /* 显示该stage的所有layer */],
 		},
 		{
-			id: 'LOCAL_SCENE_2' as const,
+			id: 'LOCAL_SCENE_2',
 			name: 'scene2',
 			cameraStateCode: '1|0.000200|0.000943|0.000000|0.99540|-0.48000|19.27600',
 			stage: 'LOCAL_STAGE_MAIN' as const,

@@ -1,7 +1,9 @@
 import { StandardLayer } from '@polaris.gl/gsi'
 import { HelperLayer } from '@polaris.gl/layer-std-helper'
-import { PolarisThree, PolarisThreeProps } from '@polaris.gl/three'
+import { PolarisThree } from '@polaris.gl/three'
 
+import type { AppConfig, LayerClassesShape } from '../config/schema'
+import { randomString } from '../utils/random'
 import type { SceneBase } from './SceneBase'
 import type { ScriptBase } from './ScriptBase'
 import type { StageBase } from './StageBase'
@@ -22,7 +24,7 @@ export class AppBase {
 
 	constructor(
 		container: HTMLDivElement,
-		readonly config: AppBaseConfig,
+		readonly config: AppConfig,
 		readonly stages: readonly StageBase[] = [],
 		readonly scenes: readonly SceneBase[] = []
 	) {
@@ -125,26 +127,6 @@ export class AppBase {
 	static $getLayerClasses() {}
 }
 
-export interface AppBaseConfig {
-	version: '0.0.1'
-	app: Pick<
-		PolarisThreeProps,
-		| 'width'
-		| 'height'
-		| 'antialias'
-		| 'fov'
-		| 'background'
-		| 'autoResize'
-		| 'enablePointer'
-		| 'asyncRendering'
-		| 'pitchLimit'
-		| 'debug'
-	>
-	// stages: { [name: string]: StageBase }
-	// scenes: { [name: string]: SceneBase }
-	// scripts: { [name: string]: ScriptBase }
-}
-
 function initDebug(this: AppBase) {
 	if (this.disposed) return
 
@@ -174,13 +156,4 @@ function initDebug(this: AppBase) {
 	}
 
 	console.log('debug: app instance', this)
-}
-
-const dict = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz'
-function randomString(e: number) {
-	e = e || 32
-	const a = dict.length
-	let n = ''
-	for (let i = 0; i < e; i++) n += dict.charAt(Math.floor(Math.random() * a))
-	return n
 }

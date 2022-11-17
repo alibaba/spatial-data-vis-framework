@@ -5,12 +5,13 @@
  * @note
  * 不要修改该类，如果要增加自定义接口或参数，再该文件夹中创建一个新的类，继承或包裹该标准应用
  */
-import { Projection } from '@polaris.gl/projection'
+import { createFromDesc } from '@polaris.gl/projection'
 
-import { LAYERS, LayerClassName, createLayer } from '../layers'
-import { AppBase, AppBaseConfig } from '../private/base/AppBase'
+import { LayerClasses } from '../layers'
+import { AppBase } from '../private/base/AppBase'
 import { SceneBase } from '../private/base/SceneBase'
 import { StageBase } from '../private/base/StageBase'
+import type { AppConfig, LayerClassesShape } from '../private/config/schema'
 import { occupyID } from '../private/utils/unique'
 
 /**
@@ -29,11 +30,13 @@ import { occupyID } from '../private/utils/unique'
  * @todo 在这里可以把类型静态化
  */
 export class App extends AppBase {
-	constructor(container: HTMLDivElement, config: AppConfig) {
+	declare config: AppConfig<typeof LayerClasses>
+
+	constructor(container: HTMLDivElement, config: AppConfig<typeof LayerClasses>) {
 		const scope = {} // 用于检查是否有重复的 ID
 		// create layers
 		const layers = config.layers.map((layer) => ({
-			layer: createLayer(layer.class, layer.props),
+			layer: createLayer(LayerClasses, layer.class, layer.props),
 			name: layer.name,
 			id: occupyID(scope, layer.id),
 		}))
@@ -41,7 +44,7 @@ export class App extends AppBase {
 		// create stages (layer containers)
 		const stages = config.stages.map((stage) => {
 			return new StageBase({
-				projection: stage.projection,
+				projection: stage.projection ? createFromDesc(stage.projection) : undefined,
 				layers: layers.filter((l) => stage.layers.includes(l.id)),
 				name: stage.name,
 				id: stage.id,
@@ -65,42 +68,18 @@ export class App extends AppBase {
 }
 
 /**
- * AppConfig Schema Definition
- * @note 使用 private/schema/config
+ * Create a layer instance by class name and constructor props
  */
-export type AppConfig = AppBaseConfig & {
-	layers: LayersConfig
-	stages: StagesConfig
-	scenes: ScenesConfig
+export function createLayer<
+	TLayerClasses extends LayerClassesShape,
+	TClassName extends keyof TLayerClasses
+>(
+	classes: TLayerClasses,
+	className: TClassName,
+	props: Parameters<TLayerClasses[TClassName]['factory']>[0]
+): ReturnType<TLayerClasses[TClassName]['factory']> {
+	const factory = classes[className]?.factory as TLayerClasses[TClassName]['factory']
+	if (!factory) throw new Error(`Cannot find layer type: ${name}.`)
+
+	return factory(props as any) as ReturnType<TLayerClasses[TClassName]['factory']>
 }
-
-type LayerConfig<T extends LayerClassName> = {
-	name: string
-	id: string
-	class: T
-	props: any // typeof LAYERS[T]['propsDescription']
-}
-
-type LayersConfig = readonly LayerConfig<LayerClassName>[]
-
-type StageConfig = {
-	name: string
-	id: string
-	layers: string[]
-	projection?: Projection
-}
-
-type StagesConfig = StageConfig[]
-
-type SceneConfig = {
-	name: string
-	id: string
-	stage: string
-	cameraStateCode: string
-	layers: string[]
-	projection?: Projection
-}
-
-type ScenesConfig = SceneConfig[]
-
-export type CustomConfig = {}
