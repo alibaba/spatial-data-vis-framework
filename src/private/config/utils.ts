@@ -1,4 +1,5 @@
-import { ConfigEvents, getEventOrder } from './ConfigManager'
+import { deepEqual, idsEqual } from '../utils/compare'
+import type { ConfigEvents } from './ConfigManager'
 import type { EventDispatcher } from './EventDispatcher'
 import type { AppConfig, LayerClassesShape } from './schema'
 
@@ -194,6 +195,7 @@ export function updateFullConfig<TLayerClasses extends LayerClassesShape = any>(
 				data: {
 					id: nextLayer.id,
 					name: nextLayer.name,
+					// prev: structuredClone(currLayer.name),
 				},
 			})
 		}
@@ -205,6 +207,7 @@ export function updateFullConfig<TLayerClasses extends LayerClassesShape = any>(
 				data: {
 					id: nextLayer.id,
 					props: nextLayer.props,
+					// prev: structuredClone(currLayer.props),
 				},
 			})
 		}
@@ -249,6 +252,7 @@ export function updateFullConfig<TLayerClasses extends LayerClassesShape = any>(
 				data: {
 					id: nextStage.id,
 					name: nextStage.name,
+					// prev: structuredClone(currStage.name),
 				},
 			})
 		}
@@ -260,6 +264,7 @@ export function updateFullConfig<TLayerClasses extends LayerClassesShape = any>(
 				data: {
 					id: nextStage.id,
 					layers: nextStage.layers,
+					// prev: structuredClone(currStage.layers),
 				},
 			})
 		}
@@ -315,6 +320,7 @@ export function updateFullConfig<TLayerClasses extends LayerClassesShape = any>(
 				data: {
 					id: nextScene.id,
 					name: nextScene.name,
+					// prev: structuredClone(currScene.name),
 				},
 			})
 		}
@@ -325,6 +331,7 @@ export function updateFullConfig<TLayerClasses extends LayerClassesShape = any>(
 				data: {
 					id: nextScene.id,
 					stage: nextScene.stage,
+					// prev: structuredClone(currScene.stage),
 				},
 			})
 		}
@@ -336,6 +343,7 @@ export function updateFullConfig<TLayerClasses extends LayerClassesShape = any>(
 				data: {
 					id: nextScene.id,
 					layers: nextScene.layers,
+					// prev: structuredClone(currScene.layers),
 				},
 			})
 		}
@@ -347,6 +355,7 @@ export function updateFullConfig<TLayerClasses extends LayerClassesShape = any>(
 				data: {
 					id: nextScene.id,
 					cameraStateCode: nextScene.cameraStateCode,
+					// prev: structuredClone(currScene.cameraStateCode),
 				},
 			})
 		}
@@ -358,65 +367,6 @@ export function updateFullConfig<TLayerClasses extends LayerClassesShape = any>(
 
 	// these events will trigger `registerConfigSync`, curr will be updated after that
 	batch.flush()
-}
-
-/**
- * deep compare two objects/arrays
- */
-
-function deepEqual(a: any, b: any): boolean {
-	if (a === b) return true
-
-	if (typeof a !== typeof b) return false
-
-	if (typeof a !== 'object') return false
-
-	if (a === null || b === null) return false
-
-	if (Array.isArray(a) !== Array.isArray(b)) return false
-
-	if (Array.isArray(a)) {
-		if (a.length !== b.length) return false
-
-		if (a.length > 10_000)
-			console.warn('deepEqual: array length > 10_000, performance may be degraded')
-
-		for (let i = 0; i < a.length; i++) {
-			if (!deepEqual(a[i], b[i])) return false
-		}
-
-		return true
-	}
-
-	const aKeys = Object.keys(a)
-	const bKeys = Object.keys(b)
-
-	if (aKeys.length !== bKeys.length) return false
-
-	for (const key of aKeys) {
-		if (!bKeys.includes(key)) return false
-
-		if (!deepEqual(a[key], b[key])) return false
-	}
-
-	return true
-}
-
-/**
- * compare two id arrays
- */
-function idsEqual(a: string[], b: string[]): boolean {
-	if (a === b) return true
-
-	if (a.length !== b.length) return false
-
-	const setB = new Set(b)
-
-	for (const item of a) {
-		if (!setB.has(item)) return false
-	}
-
-	return true
 }
 
 class EventBatch<TDispatcher extends EventDispatcher> {
@@ -436,5 +386,47 @@ class EventBatch<TDispatcher extends EventDispatcher> {
 		for (const event of this.events) {
 			this.dispatcher.dispatchEvent(event)
 		}
+	}
+}
+
+/**
+ * 执行顺序，不设定则为0，从小到大执行
+ * - 内存效率
+ * 	- 先删除，后处理修改，最后添加
+ * - 依赖关系
+ * 	- 添加时，自底向上
+ * 	- 删除时，自顶向下
+ *
+ * @note @attention
+ * 无法精确的保证事件触发过程中依赖关系正确：
+ * - 新建一个layer并加到scene和stage中，可能触发三个事件
+ * 		- 如果先触发 scene:change:layers，此时过滤到的 layer 是不存在的
+ * 		- 如果先触发 stage:change:layers，此时layer还没创建，也无法添加
+ * - 删除一个layer，可能触发三个事件
+ * 		- 如果先触发 layer:remove, 会导致scene和stage中出现不存在的layer
+ *
+ * !!实现中必须兼容这些情况的循序不确定性，
+ * 换句话说，stage 和 scene 中的 layers 过滤器的出错和更新都是正常的，不做类型检查
+ */
+export function getEventOrder(name: keyof ConfigEvents): number {
+	switch (name) {
+		// pre
+		case 'scene:remove':
+			return -5
+		case 'stage:remove':
+			return -4
+		case 'layer:remove':
+			return -3
+
+		// post
+		case 'layer:add':
+			return 3
+		case 'stage:add':
+			return 4
+		case 'scene:add':
+			return 5
+
+		default:
+			return 0
 	}
 }

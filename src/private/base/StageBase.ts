@@ -114,8 +114,8 @@ export type StageProps<TLayerList extends LayerList> = Pick<StandardLayerProps, 
 	id: string
 }
 
-export type LayerList = readonly {
-	name?: string
+export type LayerList = {
+	name: string
 	id: string
 	layer: StandardLayer
 }[]

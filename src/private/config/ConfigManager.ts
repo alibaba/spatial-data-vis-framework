@@ -1,19 +1,17 @@
-import { PropsManager } from '@polaris.gl/props-manager'
-
-import { getLayerConfig, getSceneConfig, getStageConfig } from '../utils/config'
+// import { PropsManager } from '@polaris.gl/props-manager'
+// import { getLayerConfig, getSceneConfig, getStageConfig } from '../utils/config'
 import { EventDispatcher } from './EventDispatcher'
 import type {
 	AppConfig,
 	AppPolarisConfig,
 	LayerClassesShape,
 	LayerConfig,
-	PropDescription,
 	SceneConfig,
 	StageConfig,
 } from './schema'
 import { registerConfigSync, updateFullConfig } from './utils'
 
-const CURR_KEY = Symbol('CurrConfigKey')
+const CURR_CONFIG_KEY = Symbol('CurrConfigKey')
 
 /**
  * Polaris App Config Manager. Reacting to config changes.
@@ -53,7 +51,7 @@ const CURR_KEY = Symbol('CurrConfigKey')
 export class ConfigManager<TLayerClasses extends LayerClassesShape> extends EventDispatcher<
 	ConfigEvents<TLayerClasses>
 > {
-	private readonly [CURR_KEY]: AppConfig<TLayerClasses> = {
+	private readonly [CURR_CONFIG_KEY]: AppConfig<TLayerClasses> = {
 		version: '0.0.1',
 		app: {},
 		layers: [],
@@ -66,7 +64,7 @@ export class ConfigManager<TLayerClasses extends LayerClassesShape> extends Even
 
 		if (initialConfig) this.init(initialConfig)
 
-		const curr = this[CURR_KEY]
+		const curr = this[CURR_CONFIG_KEY]
 		registerConfigSync(this, curr)
 	}
 
@@ -74,7 +72,7 @@ export class ConfigManager<TLayerClasses extends LayerClassesShape> extends Even
 	 * set config without trigger change event or dirt-check
 	 */
 	init(config: AppConfig<TLayerClasses>) {
-		const curr = this[CURR_KEY]
+		const curr = this[CURR_CONFIG_KEY]
 		curr.app = config.app
 		curr.layers = config.layers
 		curr.scenes = config.scenes
@@ -84,23 +82,22 @@ export class ConfigManager<TLayerClasses extends LayerClassesShape> extends Even
 	}
 
 	getConfig() {
-		return { ...this[CURR_KEY] }
+		return { ...this[CURR_CONFIG_KEY] }
 	}
 
 	setConfig(next: AppConfig<TLayerClasses>) {
-		const curr = this[CURR_KEY]
+		const curr = this[CURR_CONFIG_KEY]
 		updateFullConfig(this, curr, next)
 	}
 }
 
-type MapType<T extends Record<string, any>> = {
-	[K in keyof T]: { type: K; data: T[K]; source?: any }
-}
+// Events Def
 
 /**
- * 从studio触发这些事件，在App内部相应这些事件，修改场景。
+ * Event type and data type
+ * - [Event.Type]: Event.Data
  */
-export type ConfigEvents<TLayerClasses extends LayerClassesShape = any> = MapType<{
+export type ConfigEventData<TLayerClasses extends LayerClassesShape = any> = {
 	init: AppConfig<TLayerClasses>
 
 	// change: {} // any kind of change (except for init)
@@ -109,51 +106,40 @@ export type ConfigEvents<TLayerClasses extends LayerClassesShape = any> = MapTyp
 
 	'layer:add': LayerConfig<TLayerClasses>
 	'layer:remove': { id: string }
-	'layer:change:name': { id: string; name: string }
+	'layer:change:name': { id: string; name: string /* prev: string */ }
 	// 在callback中对比详细，如果 mutable，就调用layer.setProps，否则就重建layer
-	'layer:change:props': { id: string; props: any }
+	'layer:change:props': { id: string; props: any /* prev: any */ }
 
 	'scene:add': SceneConfig
 	'scene:remove': { id: string }
-	'scene:change:name': { id: string; name: string }
-	'scene:change:stage': { id: string; stage: string }
-	'scene:change:layers': { id: string; layers: string[] }
-	'scene:change:cameraStateCode': { id: string; cameraStateCode: string }
+	'scene:change:name': { id: string; name: string /* prev: string */ }
+	'scene:change:stage': { id: string; stage: string /* prev: string */ }
+	'scene:change:layers': { id: string; layers: string[] /* prev: string[] */ }
+	'scene:change:cameraStateCode': { id: string; cameraStateCode: string /* prev: string */ }
 
 	'stage:add': StageConfig
 	'stage:remove': { id: string }
-	'stage:change:name': { id: string; name: string }
-	'stage:change:layers': { id: string; layers: string[] }
-	'stage:change:projection': { id: string; projection: string | undefined }
-}>
+	'stage:change:name': { id: string; name: string /* prev: string */ }
+	'stage:change:layers': { id: string; layers: string[] /* prev: string[] */ }
+	'stage:change:projection': { id: string; projection?: string /* prev?: string */ }
+}
 
 /**
- * 执行顺序，不设定则为0，从小到大执行
- * - 内存效率
- * 	- 先删除，后处理修改，最后添加
- * - 依赖关系
- * 	- 添加时，自底向上
- * 	- 删除时，自顶向下
+ * 从studio触发这些事件，在App内部相应这些事件，修改场景。
  */
-export function getEventOrder(name: keyof ConfigEvents): number {
-	switch (name) {
-		// pre
-		case 'scene:remove':
-			return -5
-		case 'stage:remove':
-			return -4
-		case 'layer:remove':
-			return -3
-
-		// post
-		case 'layer:add':
-			return 3
-		case 'stage:add':
-			return 4
-		case 'scene:add':
-			return 5
-
-		default:
-			return 0
+export type ConfigEvents<TLayerClasses extends LayerClassesShape = any> = {
+	[K in keyof ConfigEventData<TLayerClasses>]: {
+		/**
+		 * Event Type
+		 */
+		type: K
+		/**
+		 * Event Data
+		 */
+		data: ConfigEventData<TLayerClasses>[K]
+		/**
+		 * Event Source (dispatched by)
+		 */
+		source?: any
 	}
 }

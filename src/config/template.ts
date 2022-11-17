@@ -91,12 +91,7 @@ export const BPConfig = {
 		{
 			name: 'MainStage',
 			id: 'LOCAL_STAGE_MAIN',
-			layers: [
-				'LOCAL_LAYER_0' as const,
-				'LOCAL_LAYER_1' as const,
-				'LOCAL_LAYER_2' as const,
-				'LOCAL_LAYER_3' as const,
-			],
+			layers: ['*'],
 			projection: undefined,
 		},
 	],
@@ -107,14 +102,14 @@ export const BPConfig = {
 			name: 'DefaultScene',
 			cameraStateCode: '1|-0.000500|0.001524|0.000000|1.06540|0.20000|18.66000',
 			stage: 'LOCAL_STAGE_MAIN' as const,
-			layers: ['*' as const /* 显示该stage的所有layer */],
+			layers: ['*' /* 显示该stage的所有layer */],
 		},
 		{
 			id: 'LOCAL_SCENE_2',
 			name: 'scene2',
 			cameraStateCode: '1|0.000200|0.000943|0.000000|0.99540|-0.48000|19.27600',
 			stage: 'LOCAL_STAGE_MAIN' as const,
-			layers: ['LOCAL_LAYER_1' as const, 'LOCAL_LAYER_3' as const],
+			layers: ['LOCAL_LAYER_1', 'LOCAL_LAYER_3'],
 		},
 	],
 
