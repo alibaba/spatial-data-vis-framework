@@ -61,14 +61,14 @@ export const BPConfig = {
 				size: [10, 10],
 				data: (() => {
 					const res = [] as any[]
-					const W = 100
-					const H = 100
-					const scale = 0.001
+					const W = 10
+					const H = 10
+					const scale = 0.0015
 					for (let i = 0; i < W; i++) {
 						for (let j = 0; j < H; j++) {
 							res.push({
-								lng: (-W / 2 + i) * scale,
-								lat: (-H / 2 + j) * scale,
+								lng: +((-W / 2 + i) * scale).toFixed(3),
+								lat: +((-H / 2 + j) * scale).toFixed(3),
 							})
 						}
 					}
