@@ -24,9 +24,9 @@ export class AppBase {
 
 	constructor(
 		container: HTMLDivElement,
-		readonly config: AppConfig,
-		readonly stages: readonly StageBase[] = [],
-		readonly scenes: readonly SceneBase[] = []
+		config: AppConfig,
+		readonly stages: StageBase[] = [],
+		readonly scenes: SceneBase[] = []
 	) {
 		this.polaris = new PolarisThree({ container, ...config.app })
 
@@ -56,33 +56,34 @@ export class AppBase {
 	}
 
 	changeScene(id: string, duration?: number) {
-		if (this.currentSceneID !== id) {
-			this.currentSceneID = id
-			const targetScene = this.scenes.find((scene) => scene.id === id)
-			if (!targetScene) throw new Error(`AppBase: Can not find scene ${id}`)
+		// if (this.currentSceneID === id) {
+		// 	console.log('Already in target scene.')
+		// 	return
+		// }
 
-			const targetStageID = targetScene.stage
-			const targetStage = this.stages.find((stage) => stage.id === targetStageID)
-			if (!targetStage) throw new Error(`AppBase: Can not find stage ${targetStageID}`)
+		this.currentSceneID = id
+		const targetScene = this.scenes.find((scene) => scene.id === id)
+		if (!targetScene) throw new Error(`AppBase: Can not find scene ${id}`)
 
-			// filter stages
-			this.stages.forEach((stage) => {
-				if (stage.id === targetStageID) {
-					stage.visible = true
-				} else {
-					stage.visible = false
-				}
-			})
+		const targetStageID = targetScene.stage
+		const targetStage = this.stages.find((stage) => stage.id === targetStageID)
+		if (!targetStage) throw new Error(`AppBase: Can not find stage ${targetStageID}`)
 
-			// filter layers in the stage
-			targetStage.filterLayers(targetScene.layers)
-
-			// cameraStateCode
-			if (targetScene.cameraStateCode) {
-				this.polaris.setStatesCode(targetScene.cameraStateCode, duration)
+		// filter stages
+		this.stages.forEach((stage) => {
+			if (stage.id === targetStageID) {
+				stage.visible = true
+			} else {
+				stage.visible = false
 			}
-		} else {
-			console.log('Already in target scene.')
+		})
+
+		// filter layers in the stage
+		targetStage.filterLayers(targetScene.layers)
+
+		// cameraStateCode
+		if (targetScene.cameraStateCode) {
+			this.polaris.setStatesCode(targetScene.cameraStateCode, duration)
 		}
 	}
 
@@ -120,11 +121,6 @@ export class AppBase {
 		// this.stages.forEach((e) => e.dispose())
 		this.polaris.dispose()
 	}
-
-	// global stats
-	static {}
-
-	static $getLayerClasses() {}
 }
 
 function initDebug(this: AppBase) {
