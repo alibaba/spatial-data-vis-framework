@@ -1,4 +1,3 @@
-import type { Projection } from '@polaris.gl/projection'
 import type { PolarisThreeProps } from '@polaris.gl/three'
 
 // L0

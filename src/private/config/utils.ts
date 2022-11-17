@@ -1,6 +1,6 @@
-import { deepEqual, idsEqual } from '../utils/compare'
 import type { ConfigEvents } from './ConfigManager'
 import type { EventDispatcher } from './EventDispatcher'
+import { deepEqual, idsEqual } from './compare'
 import type { AppConfig, LayerClassesShape } from './schema'
 
 /**
