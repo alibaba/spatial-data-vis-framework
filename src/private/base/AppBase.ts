@@ -1,4 +1,4 @@
-import { StandardLayer } from '@polaris.gl/gsi'
+import type { StandardLayer } from '@polaris.gl/gsi'
 import { HelperLayer } from '@polaris.gl/layer-std-helper'
 import { PolarisThree } from '@polaris.gl/three'
 
@@ -100,7 +100,7 @@ export class AppBase {
 		return this.mainStage
 	}
 
-	getLayer(layerID: string, stageID?: string) {
+	getLayer(layerID: string, stageID?: string): undefined | StandardLayer {
 		if (stageID) {
 			const stage = this.stages.find((stage) => stage.id === stageID)
 			if (!stage) return
@@ -120,6 +120,10 @@ export class AppBase {
 		// this.stages.forEach((e) => e.layers.forEach((l) => l.layer.dispose()))
 		// this.stages.forEach((e) => e.dispose())
 		this.polaris.dispose()
+	}
+
+	static $getLayerClasses() {
+		return {} as LayerClassesShape
 	}
 }
 

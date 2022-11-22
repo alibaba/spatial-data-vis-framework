@@ -245,7 +245,7 @@ export class App extends AppBase {
 /**
  * Create a layer instance by class name and constructor props
  */
-export function createLayer<
+function createLayer<
 	TLayerClasses extends LayerClassesShape,
 	TClassName extends keyof TLayerClasses
 >(

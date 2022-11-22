@@ -1,11 +1,10 @@
-import { nodeResolve } from '@rollup/plugin-node-resolve'
 import commonjs from '@rollup/plugin-commonjs'
-import sourcemaps from 'rollup-plugin-sourcemaps'
-import dts from 'rollup-plugin-dts'
-
+import { nodeResolve } from '@rollup/plugin-node-resolve'
+import { readdirSync, statSync } from 'fs'
 import * as path from 'path'
-import { statSync, readdirSync } from 'fs'
 import { dirname } from 'path'
+import dts from 'rollup-plugin-dts'
+import sourcemaps from 'rollup-plugin-sourcemaps'
 import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -50,6 +49,15 @@ function getAppEntries() {
 			}
 		)
 	}
+
+	// AppBase type declaration
+
+	entries.push({
+		input: `intermediate/jsm/private/base/AppBase.d.ts`,
+		output: [{ file: `intermediate/bundled/AppBase.d.ts`, format: 'es' }],
+		plugins: [dts()],
+	})
+
 	return entries
 }
 
