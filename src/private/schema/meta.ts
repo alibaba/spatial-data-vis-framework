@@ -65,10 +65,10 @@ type PropTypeMap = {
 	any: any
 
 	// internal structure
-	color: string | { r: number; g: number; b: number } | [number, number, number]
-	vec2: { x: number; y: number } | [number, number]
-	vec3: { x: number; y: number; z: number } | [number, number, number]
-	vec4: { x: number; y: number; z: number; w: number } | [number, number, number, number]
+	color: string | { r: number; g: number; b: number }
+	vec2: { x: number; y: number }
+	vec3: { x: number; y: number; z: number }
+	vec4: { x: number; y: number; z: number; w: number }
 	texture: object | string
 
 	/**

@@ -1,13 +1,13 @@
 import type { PropDescription } from '../../private/schema/meta'
 
 /**
- * Props Description. Used to generate the props editer UI.
+ * Props Description. Used to generate the props editor UI.
  */
 export const propsDesc = [
 	{
 		key: 'pivot' as const,
 		type: 'vec2' as const,
-		defaultValue: [0.5, 0.5],
+		defaultValue: { x: 0.5, y: 0.5 },
 		mutable: true, // 可修改，无需重建layer
 		range: {
 			min: [0, 0],
@@ -37,7 +37,7 @@ export const propsDesc = [
 	{
 		key: 'size' as const,
 		type: 'vec2' as const,
-		defaultValue: [10, 10],
+		defaultValue: { x: 10, y: 10 },
 		mutable: true,
 		range: { min: [0, Infinity], max: [0, Infinity] },
 		name: '尺寸',
