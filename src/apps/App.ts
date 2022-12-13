@@ -297,8 +297,10 @@ export class App extends AppBase {
 	// global stats
 	static {}
 
-	static $getLayerClasses() {
-		return { ...LayerClasses }
+	static $getMeta() {
+		return {
+			layers: { ...LayerClasses },
+		}
 	}
 }
 

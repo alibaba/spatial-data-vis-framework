@@ -123,8 +123,10 @@ export class AppBase {
 		this.polaris.dispose()
 	}
 
-	static $getLayerClasses() {
-		return {} as LayerClassesShape
+	static $getMeta() {
+		return {
+			layers: {} as LayerClassesShape,
+		}
 	}
 }
 
