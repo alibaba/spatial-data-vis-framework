@@ -26,7 +26,7 @@ export const LayerClasses = {
 	// pragma: RuntimeWidgetLayer START
 	RuntimeWidgetLayer: {
 		factory: createRuntimeWidgetLayer,
-		propsDescription: propsDescBillboardsLayer,
+		propsDescription: propsDescRuntimeWidgetLayer,
 	},
 	// pragma: RuntimeWidgetLayer END
 	// pragma: GridLayer START
@@ -38,13 +38,13 @@ export const LayerClasses = {
 	// pragma: BillboardsLayer START
 	BillboardsLayer: {
 		factory: createBillboardsLayer,
-		propsDescription: propsDescModelLayer,
+		propsDescription: propsDescBillboardsLayer,
 	},
 	// pragma: BillboardsLayer END
 	// pragma: ModelLayer START
 	ModelLayer: {
 		factory: createModelLayer,
-		propsDescription: propsDescRuntimeWidgetLayer,
+		propsDescription: propsDescModelLayer,
 	},
 	// pragma: ModelLayer END
 	// pragma: BP_GEN LAYERS_EXPORT END
