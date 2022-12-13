@@ -1,14 +1,8 @@
 // import { PropsManager } from '@polaris.gl/props-manager'
 // import { getLayerConfig, getSceneConfig, getStageConfig } from '../utils/config'
+import type { LayerClassesShape } from '../schema/meta'
 import { EventDispatcher } from './EventDispatcher'
-import type {
-	AppConfig,
-	AppPolarisConfig,
-	LayerClassesShape,
-	LayerConfig,
-	SceneConfig,
-	StageConfig,
-} from './schema'
+import type { AppConfig, AppPolarisConfig, LayerConfig, SceneConfig, StageConfig } from './schema'
 import { registerConfigSync, updateFullConfig } from './utils'
 
 const CURR_CONFIG_KEY = Symbol('CurrConfigKey')
@@ -57,6 +51,7 @@ export class ConfigManager<TLayerClasses extends LayerClassesShape> extends Even
 		layers: [],
 		stages: [],
 		scenes: [],
+		dataStubs: [],
 	}
 
 	constructor(initialConfig?: AppConfig<TLayerClasses>) {
@@ -77,6 +72,7 @@ export class ConfigManager<TLayerClasses extends LayerClassesShape> extends Even
 		curr.layers = config.layers
 		curr.scenes = config.scenes
 		curr.stages = config.stages
+		curr.dataStubs = config.dataStubs || []
 
 		this.dispatchEvent({ type: 'init', data: { ...curr } })
 	}

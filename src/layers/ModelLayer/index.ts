@@ -6,7 +6,9 @@ import { traverse } from '@gs.i/utils-traverse'
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 import { createFromDesc } from '@polaris.gl/projection'
 
-export interface ModelLayerConfig {
+import type { PropDescription } from '../../private/schema/meta'
+
+interface ModelLayerConfig {
 	name?: string
 	glb: string
 	scale?: number
@@ -57,3 +59,8 @@ export function createModelLayer(config: ModelLayerConfig): StandardLayer {
 
 	return layer
 }
+
+/**
+ * Props Description. Used to generate the props editer UI.
+ */
+export const propsDesc = [] as PropDescription[]

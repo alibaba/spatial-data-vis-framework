@@ -1,16 +1,22 @@
 import type { PolarisThreeProps } from '@polaris.gl/three'
 
+import type { LayerClassesShape } from '../schema/meta'
+
 // L0
 
-export type AppConfig<TLayerClasses extends LayerClassesShape = any> = BaseConfig & {
+export type AppConfig<TLayerClasses extends LayerClassesShape = any> = {
+	version: '0.0.1'
+
+	app: AppPolarisConfig
+
 	layers: LayersConfig<TLayerClasses>
 	stages: StagesConfig
 	scenes: ScenesConfig
-}
 
-export interface BaseConfig {
-	version: '0.0.1'
-	app: AppPolarisConfig
+	/**
+	 * @experimental
+	 */
+	dataStubs?: DataStubsConfig
 }
 
 // L1
@@ -38,6 +44,8 @@ export type StagesConfig = StageConfig[]
 
 export type ScenesConfig = SceneConfig[]
 
+export type DataStubsConfig = DataStub[]
+
 // L2
 
 export type LayerConfig<
@@ -48,6 +56,7 @@ export type LayerConfig<
 	id: string
 	class: TLayerClassName
 	props: TLayerClasses[TLayerClassName]['propsDescription']
+	dataProps?: { [name: string]: string }
 }
 
 export type StageConfig = {
@@ -65,48 +74,21 @@ export type SceneConfig = {
 	layers: string[]
 }
 
-// Dependents
-
 /**
- * All Layer Classes Supported by the App
+ * Data Stub (data source)
+ * @experimental
  */
-export type LayerClassesShape = {
-	[LayerClassName: string]: {
-		factory: (props: any) => any
-		propsDescription: PropDescription[]
-	}
-}
+export type DataStub = {
+	id: string
+	name: string
+	initialValue?: any
 
-/**
- * Layer Prop Description
- */
-export interface PropDescription {
-	/**
-	 * key of this value
-	 */
-	key: string
-	/**
-	 * type if this value
-	 */
-	type: 'string' | 'boolean' | 'number' | 'color' | 'vec3' | 'array<number>'
-
-	/**
-	 * default value of this value
-	 */
-	defaultValue?: any
-
-	/**
-	 * if this value can be changed without recreating this layer
-	 */
-	mutable?: boolean
-
-	/**
-	 * text to show in the UI
-	 */
-	info?: string
-
-	/**
-	 * friendly name to show in the UI
-	 */
-	name?: string
+	// @todo 是否是多余的？实际是mutable控制，如果mutable就直接更新，不mutable就重建
+	// 这里更像是个提示，提示的是 App 的最终用户（调用 updateData 的人）
+	// mutable 则是提示 Editor
+	// @todo 这里有个问题：
+	// - mutable 如果只是用于提示 editor，那么编写的 Layer 就只能在 Editor 中安全运行
+	// - 如果 PropsDescription 不是Layer接口的一部分，那 Layer 接口里面是否需要明确提出 那些 props mutable？
+	// - 这似乎是个 Polaris Layer 接口的设计问题，可以先不在这里考虑
+	dynamic?: boolean
 }

@@ -40,6 +40,25 @@ export function deepEqual(a: any, b: any): boolean {
 }
 
 /**
+ * compare two props.
+ * @note only shallow compare 1-level kv pairs.
+ */
+export function propsEqual(propsA: Record<string, any>, propsB: Record<string, any>): boolean {
+	const keysA = Object.keys(propsA)
+	const keysB = Object.keys(propsB)
+
+	if (keysA.length !== keysB.length) return false
+
+	for (const key of keysA) {
+		if (!keysB.includes(key)) return false
+
+		if (propsA[key] !== propsB[key]) return false
+	}
+
+	return true
+}
+
+/**
  * compare two id arrays
  * (strings without order)
  */
@@ -60,7 +79,7 @@ export function idsEqual(a: string[], b: string[]): boolean {
 /**
  * find keys with different values with deep compare
  */
-export function deepDiff(a: any, b: any) {
+export function deepDiff(a: Record<any, any>, b: Record<any, any>) {
 	const keys = new Set([...Object.keys(a), ...Object.keys(b)])
 	const diff: string[] = []
 	for (const key of keys) {

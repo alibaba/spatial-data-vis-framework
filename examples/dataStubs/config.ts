@@ -118,21 +118,6 @@ export const BPConfig = {
 		{
 			id: 'LOCAL_DATA_0',
 			name: 'sparkle positions',
-			initialValue: (() => {
-				const res = [] as any[]
-				const W = 10
-				const H = 10
-				const scale = 0.0015
-				for (let i = 0; i < W; i++) {
-					for (let j = 0; j < H; j++) {
-						res.push({
-							lng: +((-W / 2 + i) * scale).toFixed(3),
-							lat: +((-H / 2 + j) * scale).toFixed(3),
-						})
-					}
-				}
-				return res
-			})(),
 			dynamic: false,
 		},
 		{

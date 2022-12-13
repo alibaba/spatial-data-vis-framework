@@ -1,7 +1,8 @@
+import type { LayerClassesShape } from '../schema/meta'
 import type { ConfigEvents } from './ConfigManager'
 import type { EventDispatcher } from './EventDispatcher'
-import { deepEqual, idsEqual } from './compare'
-import type { AppConfig, LayerClassesShape } from './schema'
+import { deepEqual, idsEqual, propsEqual } from './compare'
+import type { AppConfig } from './schema'
 
 /**
  * 监听局部更新事件，维护全量配置
@@ -136,7 +137,9 @@ export function registerConfigSync<TLayerClasses extends LayerClassesShape = any
 }
 
 /**
- *  compare new config with the old one, dispatch events to update the old one
+ * compare new config with the old one, dispatch events to update the old one
+ * @note deep-compare `config.app`
+ * @note shallow-compare first level of `config.layer.props`
  */
 export function updateFullConfig<TLayerClasses extends LayerClassesShape = any>(
 	dispatcher: EventDispatcher<ConfigEvents<TLayerClasses>>,
@@ -201,7 +204,7 @@ export function updateFullConfig<TLayerClasses extends LayerClassesShape = any>(
 		}
 
 		// props
-		if (!deepEqual(currLayer.props, nextLayer.props)) {
+		if (!propsEqual(currLayer.props, nextLayer.props)) {
 			batch.dispatchEvent({
 				type: 'layer:change:props',
 				data: {

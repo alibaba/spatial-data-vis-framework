@@ -1,14 +1,11 @@
-import { argv } from 'process'
-
+import { existsSync } from 'fs'
+import { copyFile, mkdir, readFile, rm, writeFile } from 'fs/promises'
 import { dirname, resolve } from 'path'
+import prettier from 'prettier'
+import { argv } from 'process'
 import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-
-import { accessSync, constants, existsSync } from 'fs'
-import { readFile, writeFile, copyFile, mkdir, rmdir, rm } from 'fs/promises'
-
-import prettier from 'prettier'
 
 // console.log(argv)
 const action = argv[2]
@@ -36,7 +33,11 @@ if (action === 'add') {
 
 	let codeText = await readFile(layerIndexFile, 'utf-8')
 
+	// 替换名字
 	codeText = codeText.replace(/\$LAYER_NAME\$/g, layerName)
+
+	// 删除 REMOVE 中间的多行代码
+	codeText = codeText.replace(/\/\/ \$REMOVE_START\$[\s\S]*\/\/ \$REMOVE_END\$/g, '')
 
 	const prettierConfig = await prettier.resolveConfig(layerIndexFile)
 
@@ -65,9 +66,11 @@ lines = lines.map((line) => line.trim())
 	let LAYERS_IMPORT = lines.slice(START + 1, END)
 
 	if (action === 'add') {
-		LAYERS_IMPORT.push(`import { create${layerName} } from './${layerName}'`)
+		LAYERS_IMPORT.push(
+			`import { create${layerName}, propsDesc as propsDesc${layerName} } from './${layerName}'`
+		)
 	} else {
-		LAYERS_IMPORT = LAYERS_IMPORT.filter((l) => !l.includes(`create${layerName}`))
+		LAYERS_IMPORT = LAYERS_IMPORT.filter((l) => !l.includes(`'./${layerName}'`))
 	}
 
 	lines.splice(START + 1, END - START - 1, LAYERS_IMPORT)
@@ -128,7 +131,7 @@ lines = lines.map((line) => line.trim())
 			`// pragma: ${layerName} START`,
 			`${layerName}: {`,
 			`factory: create${layerName},`,
-			`propsDescription: [] as PropDescription[],`,
+			`propsDescription: propsDesc${layerName},`,
 			'},',
 			`// pragma: ${layerName} END`,
 		])

@@ -2,7 +2,8 @@ import type { StandardLayer } from '@polaris.gl/gsi'
 import { HelperLayer } from '@polaris.gl/layer-std-helper'
 import { PolarisThree } from '@polaris.gl/three'
 
-import type { AppConfig, LayerClassesShape } from '../config/schema'
+import type { AppConfig } from '../config/schema'
+import type { LayerClassesShape } from '../schema/meta'
 import { randomString } from '../utils/random'
 import type { SceneBase } from './SceneBase'
 import type { ScriptBase } from './ScriptBase'
@@ -157,3 +158,16 @@ function initDebug(this: AppBase) {
 
 	console.log('debug: app instance', this)
 }
+
+/**
+ * find all the layers that use this data and call their `updateData` method if provided.
+ */
+// function dispatchDataToLayers(dataValue: any, dataID: string, app: AppBase) {
+// 	const layers = app.stages.flatMap((stage) => stage.layers)
+// 	layers.forEach((layer) => {
+// 		const dataStubs = layer.dataStubs
+// 		if (layer.layer['updateDataStub'] && layer.layer['dataStubs']) {
+// 			layer.layer['updateDataStub'](dataValue, dataID)
+// 		}
+// 	})
+// }

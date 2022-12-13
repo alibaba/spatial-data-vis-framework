@@ -124,3 +124,5 @@ export function createBillboardsLayer(props: Props): StandardLayer {
 
 	return layer
 }
+
+export { propsDesc } from './propsDesc'

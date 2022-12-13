@@ -6,17 +6,17 @@
  * ![效果](https://img.alicdn.com/imgextra/i1/O1CN01G6WcNb1JnTipZnEIs_!!6000000001073-2-tps-926-489.png)
  *
  */
-import { Attr, Mesh, UnlitMaterial } from '@gs.i/frontend-sdk'
-import * as IR from '@gs.i/schema-scene'
+import { Mesh, UnlitMaterial } from '@gs.i/frontend-sdk'
+import type * as IR from '@gs.i/schema-scene'
 import { buildCircle } from '@gs.i/utils-geom-builders'
-//
-import { specifyAttribute, specifyGeometry } from '@gs.i/utils-specify'
 import { Color } from '@gs.i/utils-math'
+//
+import { specifyGeometry } from '@gs.i/utils-specify'
 
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 import type { Projection } from '@polaris.gl/projection'
 
-const R = 6378137
+import type { PropDescription } from '../../private/schema/meta'
 
 const defaultGridLayerProps = {
 	/**
@@ -78,7 +78,7 @@ const defaultGridLayerProps = {
 	circleOpacity: 1,
 }
 
-export type GridLayerProps = StandardLayerProps & typeof defaultGridLayerProps
+type GridLayerProps = StandardLayerProps & typeof defaultGridLayerProps
 
 export function createGridLayer(
 	props: OptionalDefault<GridLayerProps, typeof defaultGridLayerProps>
@@ -90,7 +90,7 @@ export function createGridLayer(
  * planar grid
  * @note grid lines do not align with lng/lat lines
  */
-export class GridLayer extends StandardLayer<GridLayerProps> {
+class GridLayer extends StandardLayer<GridLayerProps> {
 	matr = new UnlitMaterial({ alphaMode: 'OPAQUE' })
 	geom: IR.Geometry
 	mesh: Mesh
@@ -477,3 +477,8 @@ export type OptionalDefault<TFull extends Record<string, any>, TDefault extends 
 	keyof TDefault
 > &
 	Partial<TDefault>
+
+/**
+ * Props Description. Used to generate the props editer UI.
+ */
+export const propsDesc = [] as PropDescription[]

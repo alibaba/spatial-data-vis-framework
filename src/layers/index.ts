@@ -3,8 +3,6 @@
  * @generated
  */
 
-import type { PropDescription } from '../private/config/schema'
-
 /**
  * 将所有 Layer 类导出
  * @note
@@ -17,10 +15,10 @@ import type { PropDescription } from '../private/config/schema'
  */
 
 // pragma: BP_GEN LAYERS_IMPORT START
-import { createBillboardsLayer } from './BillboardsLayer'
-import { createGridLayer } from './GridLayer'
-import { createModelLayer } from './ModelLayer'
-import { createRuntimeWidgetLayer } from './RuntimeWidgetLayer'
+import { createBillboardsLayer, propsDesc as propsDescBillboardsLayer } from './BillboardsLayer'
+import { createGridLayer, propsDesc as propsDescGridLayer } from './GridLayer'
+import { createModelLayer, propsDesc as propsDescModelLayer } from './ModelLayer'
+import { createRuntimeWidgetLayer, propsDesc as propsDescRuntimeWidgetLayer } from './RuntimeWidgetLayer'
 // pragma: BP_GEN LAYERS_IMPORT END
 
 export const LayerClasses = {
@@ -28,25 +26,25 @@ export const LayerClasses = {
 	// pragma: RuntimeWidgetLayer START
 	RuntimeWidgetLayer: {
 		factory: createRuntimeWidgetLayer,
-		propsDescription: [] as PropDescription[],
+		propsDescription: propsDescBillboardsLayer,
 	},
 	// pragma: RuntimeWidgetLayer END
 	// pragma: GridLayer START
 	GridLayer: {
 		factory: createGridLayer,
-		propsDescription: [] as PropDescription[],
+		propsDescription: propsDescGridLayer,
 	},
 	// pragma: GridLayer END
 	// pragma: BillboardsLayer START
 	BillboardsLayer: {
 		factory: createBillboardsLayer,
-		propsDescription: [] as PropDescription[],
+		propsDescription: propsDescModelLayer,
 	},
 	// pragma: BillboardsLayer END
 	// pragma: ModelLayer START
 	ModelLayer: {
 		factory: createModelLayer,
-		propsDescription: [] as PropDescription[],
+		propsDescription: propsDescRuntimeWidgetLayer,
 	},
 	// pragma: ModelLayer END
 	// pragma: BP_GEN LAYERS_EXPORT END

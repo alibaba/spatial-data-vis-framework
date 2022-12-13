@@ -13,7 +13,8 @@ import { AppBase } from '../private/base/AppBase'
 import { SceneBase } from '../private/base/SceneBase'
 import { StageBase } from '../private/base/StageBase'
 import { ConfigManager } from '../private/config/ConfigManager'
-import type { AppConfig, LayerClassesShape } from '../private/config/schema'
+import type { AppConfig } from '../private/config/schema'
+import type { LayerClassesShape } from '../private/schema/meta'
 import { occupyID } from '../private/utils/unique'
 
 const SCOPE_KEY = Symbol('scopeKey')
@@ -42,11 +43,33 @@ export class App extends AppBase {
 	constructor(container: HTMLDivElement, config: AppConfig<typeof LayerClasses>) {
 		const scope = {} // 用于检查是否有重复的 ID
 		// create layers
-		const layers = config.layers.map((layer) => ({
-			layer: createLayer(LayerClasses, layer.class, layer.props),
-			name: layer.name,
-			id: occupyID(scope, layer.id),
-		}))
+		const layers = config.layers.map((layer) => {
+			// 如果 有 dataProps 而且对应的 dataStub 有初始值，则创建的时候直接带上初始值
+
+			const initialProps = { ...layer.props }
+
+			if (layer.dataProps) {
+				Object.entries(layer.dataProps).forEach(([propKey, dataStubID]) => {
+					const dataStub = config.dataStubs?.find((stub) => stub.id === dataStubID)
+
+					if (!dataStub)
+						throw new Error(`dataStub (${dataStubID}) required by layer (${layer.id}) not found.`)
+
+					if (initialProps[propKey] !== undefined)
+						throw new Error(`prop and dataProp can't have the same key (${propKey}).`)
+
+					if (dataStub.initialValue !== undefined) {
+						initialProps[propKey] = dataStub.initialValue
+					}
+				})
+			}
+
+			return {
+				layer: createLayer(LayerClasses, layer.class, initialProps),
+				name: layer.name,
+				id: occupyID(scope, layer.id),
+			}
+		})
 
 		// create stages (layer containers)
 		const stages = config.stages.map((stage) => {
@@ -169,7 +192,7 @@ export class App extends AppBase {
 
 			const index = this.scenes.findIndex((s) => s.id === e.data.id)
 			if (index >= 0) {
-				const scene = this.scenes[index]
+				// const scene = this.scenes[index]
 				this.scenes.splice(index, 1)
 			}
 		})
@@ -231,6 +254,43 @@ export class App extends AppBase {
 			for (const layer of addedLayers) {
 				stage.add(layer.layer)
 			}
+		}
+	}
+
+	/**
+	 * 更新一个 data stub 的 value
+	 * @experimental
+	 */
+	updateDataStub(id: string, value: any) {
+		const config = this.configManager.getConfig()
+		const stub = config.dataStubs?.find((s) => s.id === id)
+
+		if (!stub) throw new Error(`data stub (id: ${id}) not found.`)
+
+		// @todo dynamic limit
+
+		// @todo @perf cache this
+		const affectedLayers = config.layers.filter(
+			(l) => l.dataProps && Object.values(l.dataProps).includes(id)
+		)
+
+		for (const layerConfig of affectedLayers) {
+			// @note 直接调用 setProps，config 是静态的，data updating should not touch config
+
+			const layerInstance = this.layers.find((l) => l.id === layerConfig.id)
+
+			if (!layerInstance) throw new Error(`layer (id: ${layerConfig.id}) not found.`)
+
+			const affectedProps = {}
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			Object.entries(layerConfig.dataProps!).forEach(([propKey, dataStubID]) => {
+				if (dataStubID === id) {
+					affectedProps[propKey] = value
+				}
+			})
+
+			// @todo check mutability (rebuild layer if not mutable)
+			layerInstance.layer.setProps(affectedProps)
 		}
 	}
 

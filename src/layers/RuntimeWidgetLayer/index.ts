@@ -1,6 +1,8 @@
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 import { Marker, MarkerLayer } from '@polaris.gl/layer-std-marker'
 
+import type { PropDescription } from '../../private/schema/meta'
+
 export type RuntimeWidgetLayerProps = StandardLayerProps
 
 export class RuntimeWidgetLayer extends StandardLayer {
@@ -56,3 +58,8 @@ export function createRuntimeWidgetLayer(
 ) {
 	return new RuntimeWidgetLayer(props)
 }
+
+/**
+ * Props Description. Used to generate the props editor UI.
+ */
+export const propsDesc = [] as PropDescription[]
