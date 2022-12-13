@@ -9,10 +9,7 @@ export const propsDesc = [
 		type: 'vec2' as const,
 		defaultValue: { x: 0.5, y: 0.5 },
 		mutable: true, // 可修改，无需重建layer
-		range: {
-			min: [0, 0],
-			max: [1, 1],
-		},
+		range: { min: { x: 0, y: 0 }, max: { x: 1, y: 1 } },
 		name: '锚点',
 		info: '变换的相对中心',
 	},
@@ -39,7 +36,7 @@ export const propsDesc = [
 		type: 'vec2' as const,
 		defaultValue: { x: 10, y: 10 },
 		mutable: true,
-		range: { min: [0, Infinity], max: [0, Infinity] },
+		range: { min: { x: 0, y: Infinity }, max: { x: 0, y: Infinity } },
 		name: '尺寸',
 		info: '尺寸，单位米',
 	},

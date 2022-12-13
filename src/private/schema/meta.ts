@@ -40,8 +40,8 @@ export interface PropDescription {
 	 * valid range of this value
 	 */
 	range?: {
-		min: number | number[] | { x: number; y: number; z?: number; w?: number }
-		max: number | number[] | { x: number; y: number; z?: number; w?: number }
+		min: number | { x: number; y: number; z?: number; w?: number }
+		max: number | { x: number; y: number; z?: number; w?: number }
 	}
 
 	/**
