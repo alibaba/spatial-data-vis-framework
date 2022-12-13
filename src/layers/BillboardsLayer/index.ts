@@ -10,9 +10,8 @@ import { BillboardsMaterial } from './BillboardsMatr'
 interface Props extends StandardLayerProps {
 	/**
 	 * 锚点，0-1
-	 * [number, number]
 	 */
-	pivot?: number[]
+	pivot?: { x: number; y: number }
 
 	/**
 	 * 闪烁速度
@@ -24,9 +23,8 @@ interface Props extends StandardLayerProps {
 	density?: number
 	/**
 	 * 尺寸，单位米
-	 * [number, number]
 	 */
-	size?: number[]
+	size?: { x: number; y: number }
 
 	texture: Texture | string
 
@@ -47,7 +45,7 @@ export function createBillboardsLayer(props: Props): StandardLayer {
 			if (props.flickerSpeed !== undefined) mater.uniforms.flickerSpeed.value = props.flickerSpeed
 			if (props.density !== undefined) mater.uniforms.density.value = props.density
 			if (props.size !== undefined)
-				mater.uniforms.size = { value: { x: props.size[0], y: props.size[1] } }
+				mater.uniforms.size = { value: { x: props.size.x, y: props.size.y } }
 
 			if (props.texture !== undefined) {
 				const texture = props.texture as any

@@ -5,15 +5,14 @@ type Pos = [number, number, number?]
 type Options = {
 	/**
 	 * 锚点，0-1
-	 * [number, number]
 	 */
-	pivot?: number[]
+	pivot?: { x: number; y: number }
 }
 
 export function buildBillboardsGeometry(positions: Pos[], options?: Options): Geom {
-	const pivot = options?.pivot ?? [0.5, 0.5]
-	const pivotX = pivot[0]
-	const pivotY = pivot[1]
+	const pivot = options?.pivot ?? { x: 0.5, y: 0.5 }
+	const pivotX = pivot.x
+	const pivotY = pivot.y
 
 	const posTArray = new Float32Array(positions.length * 3 * 4)
 	const uvTArray = new Float32Array(positions.length * 2 * 4)
