@@ -18,7 +18,7 @@ export function getID(o?: object): string {
 
 	if (IDMap.has(o)) return IDMap.get(o) as string
 
-	let id = `LOCAL_${currID++}`
+	const id = `LOCAL_${currID++}`
 	IDMap.set(o, id)
 	return id
 }
@@ -44,7 +44,7 @@ export function getNamedID(namespace: string, o?: object): string {
 
 	if (space.IDMap.has(o)) return space.IDMap.get(o) as string
 
-	let id = `LOCAL_${namespace}_${space.currID++}`
+	const id = `LOCAL_${namespace}_${space.currID++}`
 	space.IDMap.set(o, id)
 	return id
 }

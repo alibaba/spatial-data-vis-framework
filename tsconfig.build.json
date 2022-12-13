@@ -10,5 +10,12 @@
 		"composite": false
 	},
 	"include": ["src", "typings"],
-	"exclude": ["intermediate", "build", "dist", "**/node_modules", "**/.*/"]
+	"exclude": [
+		"intermediate",
+		"build",
+		"dist",
+		"**/node_modules",
+		"**/.*/",
+		"src/private/templates/**/*"
+	]
 }

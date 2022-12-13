@@ -27,8 +27,9 @@ module.exports = {
 			},
 		},
 		{
-			files: '*index.ts',
+			files: '*/layers/index.ts',
 			options: {
+				printWidth: 200,
 				// disable importOrder plugin (by disable all plugins)
 				pluginSearchDirs: false,
 				plugins: [],

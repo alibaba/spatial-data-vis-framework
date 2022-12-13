@@ -1,6 +1,5 @@
 import { App } from '../../src/apps/App'
-import { BPConfig } from '../../src/config/template'
-import { getLayerConfig } from '../../src/private/utils/config'
+import { BPConfig } from './config'
 
 const CONFIG_ORI = structuredClone(BPConfig)
 

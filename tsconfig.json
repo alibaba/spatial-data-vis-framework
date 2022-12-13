@@ -7,6 +7,6 @@
 		"incremental": true
 	},
 	"include": [".", "typings"],
-	"exclude": ["node_modules", "*.js"],
+	"exclude": ["node_modules", "*.js", "src/private/templates/**/*"],
 	"references": []
 }

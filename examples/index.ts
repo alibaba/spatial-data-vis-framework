@@ -5,7 +5,7 @@ const links = document.querySelector('#links') as HTMLUListElement
 globalThis.entries.forEach((entry) => {
 	const li = document.createElement('li')
 	const link = document.createElement('a')
-	link.href = `./${entry}/`
+	link.href = `./${entry}/?entryName=${entry}`
 	link.text = entry
 	// link.target = '_blank'
 	li.appendChild(link)
