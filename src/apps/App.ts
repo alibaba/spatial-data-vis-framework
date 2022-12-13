@@ -13,7 +13,7 @@ import { AppBase } from '../private/base/AppBase'
 import { SceneBase } from '../private/base/SceneBase'
 import { StageBase } from '../private/base/StageBase'
 import { ConfigManager } from '../private/config/ConfigManager'
-import type { AppConfig } from '../private/config/schema'
+import type { AppConfig } from '../private/schema/config'
 import type { LayerClassesShape } from '../private/schema/meta'
 import { occupyID } from '../private/utils/unique'
 

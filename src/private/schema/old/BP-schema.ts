@@ -46,7 +46,7 @@
  * Assets 的存在是 Schema 不完备的地方，这种对不完备的容纳，是 “推迟设计”“开发优先”和“扩展优先”的基础。
  * 通过简单的文件引用，扩展开发方式。
  */
-import type { SceneBase } from "../base/SceneBase"
+import type { SceneBase } from "../../base/SceneBase"
 import type { ExternalComponent } from "./dep"
 
 type Version = "0.0.1"

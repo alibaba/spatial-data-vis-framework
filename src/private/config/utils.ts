@@ -1,8 +1,8 @@
+import type { AppConfig } from '../schema/config'
 import type { LayerClassesShape } from '../schema/meta'
 import type { ConfigEvents } from './ConfigManager'
 import type { EventDispatcher } from './EventDispatcher'
 import { deepEqual, idsEqual, propsEqual } from './compare'
-import type { AppConfig } from './schema'
 
 /**
  * 监听局部更新事件，维护全量配置

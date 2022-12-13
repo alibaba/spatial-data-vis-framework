@@ -70,15 +70,6 @@ export const BPConfig = {
 			class: 'RuntimeWidgetLayer' as const,
 			props: {},
 		},
-		{
-			name: 'chinese map',
-			id: 'LOCAL_LAYER_4' as const,
-			class: 'GeoJsonLayer' as const,
-			props: {},
-			dataProps: {
-				geojson: 'LOCAL_DATA_1',
-			},
-		},
 	],
 	/** 所有 stage（layer 实例的容器） */
 	stages: [
@@ -119,18 +110,6 @@ export const BPConfig = {
 			id: 'LOCAL_DATA_0',
 			name: 'sparkle positions',
 			dynamic: false,
-		},
-		{
-			id: 'LOCAL_DATA_1',
-			name: 'china map geojson',
-			initialValue: '$get("https://geojson.cn/api/data/100000.json")',
-			dynamic: false,
-		},
-		{
-			id: 'LOCAL_DATA_2',
-			name: 'heat map texture',
-			initialValue: null,
-			dynamic: true,
 		},
 	],
 

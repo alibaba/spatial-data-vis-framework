@@ -1,6 +1,6 @@
 import type { PolarisThreeProps } from '@polaris.gl/three'
 
-import type { LayerClassesShape } from '../schema/meta'
+import type { LayerClassesShape } from './meta'
 
 // L0
 

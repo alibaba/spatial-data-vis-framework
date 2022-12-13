@@ -2,7 +2,7 @@ import type { StandardLayer } from '@polaris.gl/gsi'
 import { HelperLayer } from '@polaris.gl/layer-std-helper'
 import { PolarisThree } from '@polaris.gl/three'
 
-import type { AppConfig } from '../config/schema'
+import type { AppConfig } from '../schema/config'
 import type { LayerClassesShape } from '../schema/meta'
 import { randomString } from '../utils/random'
 import type { SceneBase } from './SceneBase'

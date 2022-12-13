@@ -1,8 +1,14 @@
 // import { PropsManager } from '@polaris.gl/props-manager'
 // import { getLayerConfig, getSceneConfig, getStageConfig } from '../utils/config'
+import type {
+	AppConfig,
+	AppPolarisConfig,
+	LayerConfig,
+	SceneConfig,
+	StageConfig,
+} from '../schema/config'
 import type { LayerClassesShape } from '../schema/meta'
 import { EventDispatcher } from './EventDispatcher'
-import type { AppConfig, AppPolarisConfig, LayerConfig, SceneConfig, StageConfig } from './schema'
 import { registerConfigSync, updateFullConfig } from './utils'
 
 const CURR_CONFIG_KEY = Symbol('CurrConfigKey')

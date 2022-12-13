@@ -7,8 +7,8 @@
  */
 import produce from 'immer'
 
+import type { AppConfig } from '../schema/config'
 import type { ConfigEventData } from './ConfigManager'
-import type { AppConfig } from './schema'
 
 // map event types to a union
 type ConfigEventActions = {
