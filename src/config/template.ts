@@ -56,9 +56,9 @@ export const BPConfig = {
 			props: {
 				texture: 'https://img.alicdn.com/tfs/TB1tvfvMlr0gK0jSZFnXXbRRXXa-512-512.png',
 				flickerSpeed: 0.1,
-				pivot: [0.5, -1],
+				pivot: { x: 0.5, y: -1 },
 				density: 0.5,
-				size: [10, 10],
+				size: { x: 10, y: 10 },
 			},
 			dataProps: {
 				data: 'LOCAL_DATA_0',
