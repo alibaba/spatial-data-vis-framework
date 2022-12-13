@@ -3,7 +3,7 @@ import { HelperLayer } from '@polaris.gl/layer-std-helper'
 import { PolarisThree } from '@polaris.gl/three'
 
 import type { AppConfig } from '../schema/config'
-import type { LayerClassesShape } from '../schema/meta'
+import type { AppMeta } from '../schema/meta'
 import { randomString } from '../utils/random'
 import type { SceneBase } from './SceneBase'
 import type { ScriptBase } from './ScriptBase'
@@ -123,10 +123,8 @@ export class AppBase {
 		this.polaris.dispose()
 	}
 
-	static $getMeta() {
-		return {
-			layers: {} as LayerClassesShape,
-		}
+	static $getMeta(): AppMeta {
+		return { layers: {} }
 	}
 }
 

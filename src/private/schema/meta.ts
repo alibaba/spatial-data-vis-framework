@@ -101,3 +101,7 @@ export type LayerClassesShape = {
 		propsDescription: PropDescription[]
 	}
 }
+
+export type AppMeta = {
+	layers: LayerClassesShape
+}

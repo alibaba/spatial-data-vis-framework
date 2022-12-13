@@ -14,7 +14,7 @@ import { SceneBase } from '../private/base/SceneBase'
 import { StageBase } from '../private/base/StageBase'
 import { ConfigManager } from '../private/config/ConfigManager'
 import type { AppConfig } from '../private/schema/config'
-import type { LayerClassesShape } from '../private/schema/meta'
+import type { AppMeta, LayerClassesShape } from '../private/schema/meta'
 import { occupyID } from '../private/utils/unique'
 
 const SCOPE_KEY = Symbol('scopeKey')
@@ -297,7 +297,7 @@ export class App extends AppBase {
 	// global stats
 	static {}
 
-	static $getMeta() {
+	static $getMeta(): AppMeta {
 		return {
 			layers: { ...LayerClasses },
 		}
