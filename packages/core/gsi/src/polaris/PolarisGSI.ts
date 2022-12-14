@@ -190,14 +190,6 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 							const height = container.clientHeight
 							if (width !== this.width || height !== this.height) {
 								this.resize(width, height, this.ratio)
-								this.dispatchEvent({
-									type: 'viewChange',
-									cameraProxy: this.cameraProxy,
-									polaris: this,
-								})
-								if (this.getProp('asyncRendering')) {
-									this.render()
-								}
 							}
 						}, 200)
 					}
@@ -272,6 +264,8 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 			this.renderer.resize(width, height, ratio)
 			this.renderer.updateCamera(this.cameraProxy)
 		}
+
+		this.tick()
 	}
 
 	/**
@@ -325,6 +319,10 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 
 		if (this.view.html.element.parentElement) {
 			this.view.html.element.parentElement.removeChild(this.view.html.element)
+		}
+
+		if (this._resizeListener) {
+			clearInterval(this._resizeListener)
 		}
 
 		super.dispose()
