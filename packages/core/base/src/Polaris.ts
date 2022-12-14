@@ -105,10 +105,6 @@ export abstract class AbstractPolaris<
 		 * init html / canvas
 		 */
 
-		// 物理像素
-		const canvasWidth = this.canvasWidth
-		const canvasHeight = this.canvasWidth
-
 		/**
 		 * init CameraProxy
 		 * proxy Renderer.camera
@@ -119,8 +115,9 @@ export abstract class AbstractPolaris<
 			timeline: timeline as any, // AnimatedCameraProxy use old version of timeline but only unchanged api
 			/** @LIMIT 开启inert会影响的部分：SphereProject同步，Animations的结束时间，暂时关闭inert */
 			inert: false,
-			canvasWidth,
-			canvasHeight,
+			canvasWidth: this.#width,
+			canvasHeight: this.#height,
+			ratio: this.#ratio,
 			onUpdate: () => {},
 		})
 
