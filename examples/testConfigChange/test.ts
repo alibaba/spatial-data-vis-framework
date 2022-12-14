@@ -96,7 +96,7 @@ test('change layer props', () => {
 		data: {
 			id: 'LOCAL_LAYER_2',
 			props: {
-				size: [20, 30],
+				size: { x: 20, y: 30 },
 			},
 		},
 	})
