@@ -16,8 +16,6 @@ import { specifyGeometry } from '@gs.i/utils-specify'
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 import type { Projection } from '@polaris.gl/projection'
 
-import type { PropDescription } from '../../private/schema/meta'
-
 const defaultGridLayerProps = {
 	/**
 	 * width of the grid
@@ -35,12 +33,12 @@ const defaultGridLayerProps = {
 	 * how many segments in the horizontal direction
 	 * @default 100
 	 */
-	segmentWidth: 100,
+	widthSegments: 100,
 	/**
 	 * how many segments in the vertical direction
 	 * @default 100
 	 */
-	segmentHeight: 100,
+	heightSegments: 100,
 
 	/**
 	 * lineWidth
@@ -62,7 +60,7 @@ const defaultGridLayerProps = {
 	/**
 	 * the center of grids
 	 */
-	lnglatalt: [0, 0, 0],
+	centerLLA: [0, 0, 0],
 
 	/**
 	 * Grid circles
@@ -117,22 +115,22 @@ class GridLayer extends StandardLayer<GridLayerProps> {
 
 			// construct geometry
 			this.watchProps(
-				['width', 'height', 'segmentWidth', 'segmentHeight', 'lineWidth'],
+				['width', 'height', 'widthSegments', 'heightSegments', 'lineWidth'],
 				(e) => {
 					if (this.getProp('fixOverlap')) {
 						this.geom = generateGrid(
 							this.getProp('width'),
 							this.getProp('height'),
-							this.getProp('segmentWidth'),
-							this.getProp('segmentHeight'),
+							this.getProp('widthSegments'),
+							this.getProp('heightSegments'),
 							this.getProp('lineWidth')
 						)
 					} else {
 						this.geom = generateGridFast(
 							this.getProp('width'),
 							this.getProp('height'),
-							this.getProp('segmentWidth'),
-							this.getProp('segmentHeight'),
+							this.getProp('widthSegments'),
+							this.getProp('heightSegments'),
 							this.getProp('lineWidth')
 						)
 					}
@@ -159,8 +157,8 @@ class GridLayer extends StandardLayer<GridLayerProps> {
 				[
 					'width',
 					'height',
-					'segmentWidth',
-					'segmentHeight',
+					'widthSegments',
+					'heightSegments',
 					'showCircles',
 					'circleRadius',
 					'circleSegments',
@@ -176,8 +174,8 @@ class GridLayer extends StandardLayer<GridLayerProps> {
 					this.circleGeom = generateCircles(
 						this.getProp('width'),
 						this.getProp('height'),
-						this.getProp('segmentWidth'),
-						this.getProp('segmentHeight'),
+						this.getProp('widthSegments'),
+						this.getProp('heightSegments'),
 						this.getProp('circleRadius'),
 						this.getProp('circleSegments')
 					)
@@ -193,7 +191,7 @@ class GridLayer extends StandardLayer<GridLayerProps> {
 			)
 
 			this.watchProps(
-				['lnglatalt'],
+				['centerLLA'],
 				(e) => {
 					this.setLngLatPosition(projection)
 				},
@@ -203,8 +201,8 @@ class GridLayer extends StandardLayer<GridLayerProps> {
 	}
 
 	setLngLatPosition(projection: Projection) {
-		const lnglatalt = this.getProp('lnglatalt')
-		const xyz = projection.project(lnglatalt[0] ?? 0, lnglatalt[1] ?? 0, lnglatalt[2] ?? 0)
+		const centerLLA = this.getProp('centerLLA')
+		const xyz = projection.project(centerLLA[0] ?? 0, centerLLA[1] ?? 0, centerLLA[2] ?? 0)
 		this.group.transform.position.set(...xyz)
 		this.group.transform.version++
 	}
@@ -217,16 +215,16 @@ class GridLayer extends StandardLayer<GridLayerProps> {
  *
  * @param width
  * @param height
- * @param segmentWidth
- * @param segmentHeight
+ * @param widthSegments
+ * @param heightSegments
  * @param lineWidth
  * @returns
  */
 function generateGridFast(
 	width: number,
 	height: number,
-	segmentWidth: number,
-	segmentHeight: number,
+	widthSegments: number,
+	heightSegments: number,
 	lineWidth: number
 ): IR.IR.Geometry {
 	const position = [] as [number, number, number][]
@@ -234,11 +232,11 @@ function generateGridFast(
 	// const uv = [] as [number, number][]
 
 	const halfWidth = lineWidth / 2
-	const stepWidth = width / segmentWidth
-	const stepHeight = height / segmentHeight
+	const stepWidth = width / widthSegments
+	const stepHeight = height / heightSegments
 
 	// 纵向线条
-	for (let i = 1; i < segmentWidth; i++) {
+	for (let i = 1; i < widthSegments; i++) {
 		const centerX = stepWidth * i
 		// 左上 x,y,z
 		const idxLT = position.push([centerX - halfWidth, height, 0]) - 1
@@ -257,7 +255,7 @@ function generateGridFast(
 	}
 
 	// 横向
-	for (let i = 1; i < segmentHeight; i++) {
+	for (let i = 1; i < heightSegments; i++) {
 		const centerY = stepHeight * i
 		// 左上 x,y,z
 		const idxLT = position.push([0, centerY + halfWidth, -0.3]) - 1
@@ -305,16 +303,16 @@ function generateGridFast(
  *
  * @param width
  * @param height
- * @param segmentWidth
- * @param segmentHeight
+ * @param widthSegments
+ * @param heightSegments
  * @param lineWidth
  * @returns
  */
 function generateGrid(
 	width: number,
 	height: number,
-	segmentWidth: number,
-	segmentHeight: number,
+	widthSegments: number,
+	heightSegments: number,
 	lineWidth: number
 ): IR.IR.Geometry {
 	const position = [] as [number, number, number][]
@@ -322,11 +320,11 @@ function generateGrid(
 	// const uv = [] as [number, number][]
 
 	const halfWidth = lineWidth / 2
-	const stepWidth = width / segmentWidth
-	const stepHeight = height / segmentHeight
+	const stepWidth = width / widthSegments
+	const stepHeight = height / heightSegments
 
 	// 纵向线条
-	for (let i = 1; i < segmentWidth; i++) {
+	for (let i = 1; i < widthSegments; i++) {
 		const centerX = stepWidth * i
 		// 左上 x,y,z
 		const idxLT = position.push([centerX - halfWidth, height, 0]) - 1
@@ -345,10 +343,10 @@ function generateGrid(
 	}
 
 	// 横向
-	for (let j = 1; j < segmentHeight; j++) {
-		for (let i = 0; i < segmentWidth; i++) {
+	for (let j = 1; j < heightSegments; j++) {
+		for (let i = 0; i < widthSegments; i++) {
 			const isStart = i === 0
-			const isEnd = i === segmentWidth
+			const isEnd = i === widthSegments
 			const centerX = stepWidth * i
 			const centerY = stepHeight * j
 			// 左上 x,y,z
@@ -409,8 +407,8 @@ function generateGrid(
 function generateCircles(
 	width: number,
 	height: number,
-	segmentWidth: number,
-	segmentHeight: number,
+	widthSegments: number,
+	heightSegments: number,
 	radius: number,
 	segments: number
 ) {
@@ -423,11 +421,11 @@ function generateCircles(
 	const positions: number[] = []
 	const indices: number[] = []
 
-	const stepWidth = width / segmentWidth
-	const stepHeight = height / segmentHeight
+	const stepWidth = width / widthSegments
+	const stepHeight = height / heightSegments
 
-	for (let i = 1; i < segmentWidth; i++) {
-		for (let j = 1; j < segmentHeight; j++) {
+	for (let i = 1; i < widthSegments; i++) {
+		for (let j = 1; j < heightSegments; j++) {
 			const centerX = stepWidth * i
 			const centerY = stepHeight * j
 
@@ -472,13 +470,10 @@ function generateCircles(
 	return geom
 }
 
-export type OptionalDefault<TFull extends Record<string, any>, TDefault extends TFull> = Omit<
+type OptionalDefault<TFull extends Record<string, any>, TDefault extends TFull> = Omit<
 	TFull,
 	keyof TDefault
 > &
 	Partial<TDefault>
 
-/**
- * Props Description. Used to generate the props editer UI.
- */
-export const propsDesc = [] as PropDescription[]
+export { propsDesc } from './desc'

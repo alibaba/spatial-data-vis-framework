@@ -72,6 +72,12 @@ type PropTypeMap = {
 	texture: object | string
 
 	/**
+	 * complicated structure that can be represented by a JSON string
+	 * @experimental
+	 */
+	json: any
+
+	/**
 	 * url string
 	 * @experimental
 	 */
