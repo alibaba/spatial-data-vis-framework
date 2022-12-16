@@ -35,7 +35,7 @@ export const propsDesc = [
 		mutable: true,
 		range: {
 			min: 1,
-			max: 1000000,
+			max: 1000,
 		},
 		name: 'Horizontal Segment Number',
 	},
@@ -46,7 +46,7 @@ export const propsDesc = [
 		mutable: true,
 		range: {
 			min: 1,
-			max: 1000000,
+			max: 1000,
 		},
 		name: 'Vertical Segment Number',
 	},
