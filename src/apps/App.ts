@@ -15,7 +15,7 @@ import { StageBase } from '../private/base/StageBase'
 import { ConfigManager } from '../private/config/ConfigManager'
 import type { AppConfig } from '../private/schema/config'
 import type { AppMeta, LayerClassesShape } from '../private/schema/meta'
-import { occupyID } from '../private/utils/unique'
+import { freeID, occupyID } from '../private/utils/unique'
 
 const SCOPE_KEY = Symbol('scopeKey')
 
@@ -120,6 +120,7 @@ export class App extends AppBase {
 		})
 
 		m.addEventListener('layer:remove', (e) => {
+			freeID(this[SCOPE_KEY], e.data.id)
 			const index = this.layers.findIndex((l) => l.id === e.data.id)
 			if (index >= 0) {
 				const layer = this.layers[index].layer
@@ -177,7 +178,7 @@ export class App extends AppBase {
 
 		m.addEventListener('scene:add', (e) => {
 			const scene = new SceneBase()
-			scene.id = e.data.id
+			scene.id = occupyID(this[SCOPE_KEY], e.data.id)
 			scene.name = e.data.name
 			scene.cameraStateCode = e.data.cameraStateCode
 			scene.layers = e.data.layers ?? ['*']
@@ -189,6 +190,8 @@ export class App extends AppBase {
 			if (e.data.id === 'LOCAL_SCENE_DEFAULT') {
 				throw new Error('cannot remove default scene')
 			}
+
+			freeID(this[SCOPE_KEY], e.data.id)
 
 			const index = this.scenes.findIndex((s) => s.id === e.data.id)
 			if (index >= 0) {

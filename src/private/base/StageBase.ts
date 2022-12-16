@@ -1,7 +1,5 @@
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 
-import { occupyID } from '../utils/unique'
-
 // import { Projection } from '@polaris.gl/projection'
 // import Timeline from 'ani-timeline'
 
@@ -72,8 +70,6 @@ export class StageBase<TLayerList extends LayerList = LayerList> extends Standar
 
 		this.name = name
 		this.id = id
-
-		occupyID(this, id, true)
 
 		this.layers = layers
 

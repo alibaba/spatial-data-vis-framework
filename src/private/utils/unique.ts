@@ -82,6 +82,7 @@ const StaticIDCache = new Set<string>()
 /**
  * 占用一个 ID，如果一个ID调用该函数两次，则不通过
  * @note 该占用行为生命周期为 scope 生命周期的
+ * @note 如果动态增减 ID，需要使用 freeID 主动释放删除的 ID，不然不能重复使用
  */
 export function occupyID<TID extends string | undefined>(
 	scope: object,
@@ -111,4 +112,33 @@ export function occupyID<TID extends string | undefined>(
 	return id
 }
 
+export function freeID(scope: object, id: string) {
+	const idCache = ScopedIDCache.get(scope)
+
+	if (idCache) idCache.delete(id)
+}
+
 const ScopedIDCache = new WeakMap<object, Set<string>>() // new Set<string>()
+
+/**
+ * check if a id is occupied in the given objects
+ */
+export function checkID<TID extends string | undefined>(
+	objects: { id: string }[],
+	id: TID,
+	shouldThrow = false
+) {
+	if (id) {
+		const occupied = objects.find((o) => o.id === id)
+		if (occupied) {
+			const msg = `id: ${id} is already used by ${occupied}.`
+			if (shouldThrow) {
+				throw new Error(msg)
+			} else {
+				console.error(msg)
+			}
+		}
+	}
+
+	return id
+}
