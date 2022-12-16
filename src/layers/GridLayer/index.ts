@@ -89,7 +89,7 @@ export function createGridLayer(
  * @note grid lines do not align with lng/lat lines
  */
 class GridLayer extends StandardLayer<GridLayerProps> {
-	matr = new UnlitMaterial({ alphaMode: 'OPAQUE' })
+	matr = new UnlitMaterial({ alphaMode: 'BLEND' })
 	geom: IR.Geometry
 	mesh: Mesh
 
