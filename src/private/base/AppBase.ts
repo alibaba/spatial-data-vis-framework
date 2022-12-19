@@ -106,12 +106,12 @@ export class AppBase {
 			const stage = this.stages.find((stage) => stage.id === stageID)
 			if (!stage) return
 
-			const layer = stage.layers.find((layer) => layer.id === layerID)
-			return layer?.layer
+			const layer = stage.getLayer(layerID)
+			return layer
 		} else {
 			for (const stage of this.stages) {
-				const layer = stage.layers.find((layer) => layer.id === layerID)
-				if (layer) return layer.layer
+				const layer = stage.getLayer(layerID)
+				if (layer) return layer
 			}
 			return
 		}

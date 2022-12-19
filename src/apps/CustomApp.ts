@@ -33,13 +33,13 @@ export class CustomApp extends App {
 
 	// custom methods...
 	addRuntimeWidget(element: HTMLDivElement, config: WidgetConfig) {
-		const runtimeWidgetLayer = this.mainStage.getLayer('LOCAL_LAYER_3').layer as RuntimeWidgetLayer
+		const runtimeWidgetLayer = this.mainStage.getLayer('LOCAL_LAYER_3') as RuntimeWidgetLayer
 		if (!runtimeWidgetLayer) throw new Error(`Cannot find runtime widget layer`)
 
 		runtimeWidgetLayer.addWidget(element, config)
 	}
 	removeRuntimeWidget(id: number) {
-		const runtimeWidgetLayer = this.mainStage.getLayer('LOCAL_LAYER_3').layer as RuntimeWidgetLayer
+		const runtimeWidgetLayer = this.mainStage.getLayer('LOCAL_LAYER_3') as RuntimeWidgetLayer
 		if (!runtimeWidgetLayer) throw new Error(`Cannot find runtime widget layer`)
 	}
 }

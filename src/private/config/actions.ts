@@ -24,6 +24,20 @@ export type ConfigActions =
 	| {
 			type: 'cleanUpLayerFilters'
 	  }
+	| {
+			type: 'addLayerToScene'
+			payload: {
+				layerId: string
+				sceneId: string
+			}
+	  }
+	| {
+			type: 'removeLayerFromScene'
+			payload: {
+				layerId: string
+				sceneId: string
+			}
+	  }
 
 /**
  * This reducer is used for config management in React.
@@ -64,14 +78,29 @@ export function configReducer(
 				return action.payload(draft)
 			}
 
-			// cleanup
+			// 复合行为
+			// composed methods
 
 			case 'cleanUpLayerFilters': {
 				cleanUpLayerFilters(draft)
 				return
 			}
+			case 'addLayerToScene': {
+				const scene = draft.stages.find((stage) => stage.id === action.payload.sceneId)
+				if (!scene) throw new Error(`Scene id ${action.payload.sceneId} not found`)
+				if (scene.layers.includes('*')) return
+				scene.layers.push(action.payload.layerId)
+				return
+			}
+			case 'removeLayerFromScene': {
+				const scene = draft.stages.find((stage) => stage.id === action.payload.sceneId)
+				if (!scene) throw new Error(`Scene id ${action.payload.sceneId} not found`)
+				scene.layers = specifyIds(draft, action.payload.sceneId) // handle '*'
+				scene.layers.filter((id) => id !== action.payload.layerId)
+				return
+			}
 
-			// PolarisAppConfig 标准操作:
+			// PolarisAppConfig 标准原子操作:
 			// @from ConfigManager::registerConfigSync
 
 			case 'app:change': {
@@ -238,4 +267,20 @@ function cleanUpLayerFilters(config: AppConfig) {
 			stage.layers = ['*']
 		}
 	}
+}
+
+function specifyIds(config: AppConfig, sceneID: string): string[] {
+	const scene = config.scenes.find((s) => s.id === sceneID)
+
+	if (!scene) return []
+	if (!scene.layers.length) return []
+	if (!scene.layers.includes('*')) return [...scene.layers]
+
+	const stage = config.stages.find((s) => s.id === scene.stage)
+
+	if (!stage) return []
+
+	if (stage.layers.includes('*')) return config.layers.map((l) => l.id)
+
+	return [...stage.layers]
 }

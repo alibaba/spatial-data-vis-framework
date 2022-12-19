@@ -120,11 +120,14 @@ export class App extends AppBase {
 		})
 
 		m.addEventListener('layer:remove', (e) => {
-			freeID(this[SCOPE_KEY], e.data.id)
-			const index = this.layers.findIndex((l) => l.id === e.data.id)
+			const id = e.data.id
+			freeID(this[SCOPE_KEY], id)
+			const index = this.layers.findIndex((l) => l.id === id)
 			if (index >= 0) {
 				const layer = this.layers[index].layer
-				if (layer.parent) layer.parent.remove(layer)
+				// @todo 注意，未来允许多个 Stage 后，这里会出现 parent 为 null 的情况
+				const stage = layer.parent as StageBase
+				stage.removeLayer(id)
 				layer.dispose()
 				this.layers.splice(index, 1)
 			}
@@ -233,6 +236,7 @@ export class App extends AppBase {
 
 	/**
 	 * re-filter layers in stages and scenes
+	 * @todo 未来允许多Stage后，当心一个layer被多个stage包含，应该从 layers 开始遍历，而非从 stages 开始
 	 */
 	private updateLayerFilters() {
 		const config = this.configManager.getConfig()
@@ -241,21 +245,24 @@ export class App extends AppBase {
 
 			if (!stageConfig) throw new Error('stage exist but not found in config')
 
-			const currLayers = stage.layers
+			const currLayers = stage.getLayerList()
 			const nextLayers = this.layers.filter(
 				(l) => stageConfig.layers.includes('*') || stageConfig.layers.includes(l.id)
 			)
 
+			const currentLayerIDs = currLayers.map((l) => l.id)
+			const nextLayerIDs = nextLayers.map((l) => l.id)
+
 			// find added and removed layers
-			const addedLayers = nextLayers.filter((l) => !currLayers.includes(l))
-			const removedLayers = currLayers.filter((l) => !nextLayers.includes(l))
+			const addedLayers = nextLayers.filter((l) => !currentLayerIDs.includes(l.id))
+			const removedLayers = currLayers.filter((l) => !nextLayerIDs.includes(l.id))
 
 			for (const layer of removedLayers) {
-				stage.remove(layer.layer)
+				stage.removeLayer(layer.id)
 			}
 
 			for (const layer of addedLayers) {
-				stage.add(layer.layer)
+				stage.addLayer(layer.id, layer.layer, layer.name)
 			}
 		}
 	}
