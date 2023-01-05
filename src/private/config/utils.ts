@@ -47,6 +47,14 @@ export function registerConfigSync<TLayerClasses extends LayerClassesShape = any
 		layer.props = e.data.props
 	})
 
+	dispatcher.addEventListener('layer:change:dataProps', (e) => {
+		const layer = target.layers.find((layer) => layer.id === e.data.id)
+
+		if (!layer) throw new Error(`Layer id ${e.data.id} not found`)
+
+		layer.dataProps = e.data.dataProps
+	})
+
 	dispatcher.addEventListener('stage:add', (e) => {
 		if (target.stages.some((stage) => stage.id === e.data.id))
 			throw new Error(`Stage id ${e.data.id} already exists`)
@@ -134,6 +142,52 @@ export function registerConfigSync<TLayerClasses extends LayerClassesShape = any
 
 		scene.cameraStateCode = e.data.cameraStateCode
 	})
+
+	dispatcher.addEventListener('data:add', (e) => {
+		if (!target.dataStubs) {
+			target.dataStubs = [e.data]
+		} else if (target.dataStubs.some((stub) => stub.id === e.data.id)) {
+			throw new Error(`DataStub id ${e.data.id} already exists`)
+		} else {
+			target.dataStubs.push(e.data)
+		}
+	})
+
+	dispatcher.addEventListener('data:remove', (e) => {
+		if (!target.dataStubs) {
+			throw new Error(`DataStub id ${e.data.id} not found`)
+		} else {
+			const index = target.dataStubs.findIndex((stub) => stub.id === e.data.id)
+
+			if (index === -1) throw new Error(`DataStub id ${e.data.id} not found`)
+
+			target.dataStubs.splice(index, 1)
+		}
+	})
+
+	dispatcher.addEventListener('data:change:name', (e) => {
+		if (!target.dataStubs) {
+			throw new Error(`DataStub id ${e.data.id} not found`)
+		} else {
+			const stub = target.dataStubs.find((stub) => stub.id === e.data.id)
+
+			if (!stub) throw new Error(`DataStub id ${e.data.id} not found`)
+
+			stub.name = e.data.name
+		}
+	})
+
+	dispatcher.addEventListener('data:change:initialValue', (e) => {
+		if (!target.dataStubs) {
+			throw new Error(`DataStub id ${e.data.id} not found`)
+		} else {
+			const stub = target.dataStubs.find((stub) => stub.id === e.data.id)
+
+			if (!stub) throw new Error(`DataStub id ${e.data.id} not found`)
+
+			stub.initialValue = e.data.initialValue
+		}
+	})
 }
 
 /**
@@ -211,6 +265,23 @@ export function updateFullConfig<TLayerClasses extends LayerClassesShape = any>(
 					id: nextLayer.id,
 					props: nextLayer.props,
 					// prev: structuredClone(currLayer.props),
+				},
+			})
+		}
+
+		// props
+		if (
+			// @note @todo @fixme 这里会有问题
+			currLayer.dataProps &&
+			nextLayer.dataProps &&
+			!propsEqual(currLayer.dataProps, nextLayer.dataProps)
+		) {
+			batch.dispatchEvent({
+				type: 'layer:change:dataProps',
+				data: {
+					id: nextLayer.id,
+					dataProps: nextLayer.dataProps,
+					// prev: structuredClone(currLayer.dataProps),
 				},
 			})
 		}
@@ -364,6 +435,62 @@ export function updateFullConfig<TLayerClasses extends LayerClassesShape = any>(
 		}
 	}
 
+	// data stubs
+	const currDataStubIds = curr.dataStubs?.map((dataStub) => dataStub.id) || []
+	const nextDataStubIds = next.dataStubs?.map((dataStub) => dataStub.id) || []
+
+	// remove data stubs
+	for (const currDataStubId of currDataStubIds) {
+		if (!nextDataStubIds.includes(currDataStubId)) {
+			batch.dispatchEvent({
+				type: 'data:remove',
+				data: {
+					id: currDataStubId,
+				},
+			})
+		}
+	}
+
+	// add data stubs
+	for (const nextDataStub of next.dataStubs || []) {
+		if (!currDataStubIds.includes(nextDataStub.id)) {
+			batch.dispatchEvent({
+				type: 'data:add',
+				data: nextDataStub,
+			})
+		}
+	}
+
+	// update data stubs
+	for (const nextDataStub of next.dataStubs || []) {
+		const currDataStub = curr.dataStubs?.find((dataStub) => dataStub.id === nextDataStub.id)
+		if (!currDataStub) continue
+
+		// name
+		if (currDataStub.name !== nextDataStub.name) {
+			batch.dispatchEvent({
+				type: 'data:change:name',
+				data: {
+					id: nextDataStub.id,
+					name: nextDataStub.name,
+					// prev: structuredClone(currDataStub.name),
+				},
+			})
+		}
+
+		// initialValue
+		if (currDataStub.initialValue !== nextDataStub.initialValue) {
+			batch.dispatchEvent({
+				type: 'data:change:initialValue',
+				data: {
+					id: nextDataStub.id,
+					initialValue: nextDataStub.initialValue,
+					// prev: structuredClone(currDataStub.initialValue),
+				},
+			})
+		}
+	}
+
 	// 按照依赖顺序触发事件
 
 	batch.events.sort((a, b) => getEventOrder(a.type) - getEventOrder(b.type))
@@ -409,7 +536,7 @@ class EventBatch<TDispatcher extends EventDispatcher> {
  * 		- 如果先触发 layer:remove, 会导致scene和stage中出现不存在的layer
  *
  * !!实现中必须兼容这些情况的循序不确定性，
- * 换句话说，stage 和 scene 中的 layers 过滤器的出错和更新都是正常的，不做类型检查
+ * 换句话说，stage 和 scene 中的 layers 过滤器的出错和更新都是正常的，不做类      型检查
  */
 export function getEventOrder(name: keyof ConfigEvents): number {
 	switch (name) {

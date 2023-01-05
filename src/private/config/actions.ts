@@ -143,6 +143,15 @@ export function configReducer(
 				break
 			}
 
+			case 'layer:change:dataProps': {
+				const layer = draft.layers.find((layer) => layer.id === action.payload.id)
+
+				if (!layer) throw new Error(`Layer id ${action.payload.id} not found`)
+
+				layer.dataProps = action.payload.dataProps
+				break
+			}
+
 			case 'stage:add': {
 				if (draft.stages.some((stage) => stage.id === action.payload.id))
 					throw new Error(`Stage id ${action.payload.id} already exists`)
@@ -239,6 +248,56 @@ export function configReducer(
 				if (!scene) throw new Error(`Scene id ${action.payload.id} not found`)
 
 				scene.cameraStateCode = action.payload.cameraStateCode
+				break
+			}
+
+			case 'data:add': {
+				if (!draft.dataStubs) {
+					draft.dataStubs = [action.payload]
+				} else if (draft.dataStubs.some((stub) => stub.id === action.payload.id)) {
+					throw new Error(`DataStub id ${action.payload.id} already exists`)
+				} else {
+					draft.dataStubs.push(action.payload)
+				}
+				break
+			}
+
+			case 'data:remove': {
+				if (!draft.dataStubs) {
+					throw new Error(`DataStub id ${action.payload.id} not found`)
+				} else {
+					const index = draft.dataStubs.findIndex((stub) => stub.id === action.payload.id)
+
+					if (index === -1) throw new Error(`DataStub id ${action.payload.id} not found`)
+
+					draft.dataStubs.splice(index, 1)
+				}
+				break
+			}
+
+			case 'data:change:name': {
+				if (!draft.dataStubs) {
+					throw new Error(`DataStub id ${action.payload.id} not found`)
+				} else {
+					const stub = draft.dataStubs.find((stub) => stub.id === action.payload.id)
+
+					if (!stub) throw new Error(`DataStub id ${action.payload.id} not found`)
+
+					stub.name = action.payload.name
+				}
+				break
+			}
+
+			case 'data:change:initialValue': {
+				if (!draft.dataStubs) {
+					throw new Error(`DataStub id ${action.payload.id} not found`)
+				} else {
+					const stub = draft.dataStubs.find((stub) => stub.id === action.payload.id)
+
+					if (!stub) throw new Error(`DataStub id ${action.payload.id} not found`)
+
+					stub.initialValue = action.payload.initialValue
+				}
 				break
 			}
 

@@ -3,6 +3,7 @@
 import type {
 	AppConfig,
 	AppPolarisConfig,
+	DataStub,
 	LayerConfig,
 	SceneConfig,
 	StageConfig,
@@ -111,6 +112,7 @@ export type ConfigEventData<TLayerClasses extends LayerClassesShape = any> = {
 	'layer:change:name': { id: string; name: string /* prev: string */ }
 	// 在callback中对比详细，如果 mutable，就调用layer.setProps，否则就重建layer
 	'layer:change:props': { id: string; props: any /* prev: any */ }
+	'layer:change:dataProps': { id: string; dataProps: any /* prev: any */ }
 
 	'scene:add': SceneConfig
 	'scene:remove': { id: string }
@@ -124,6 +126,12 @@ export type ConfigEventData<TLayerClasses extends LayerClassesShape = any> = {
 	'stage:change:name': { id: string; name: string /* prev: string */ }
 	'stage:change:layers': { id: string; layers: string[] /* prev: string[] */ }
 	'stage:change:projection': { id: string; projection?: string /* prev?: string */ }
+
+	'data:add': DataStub
+	'data:remove': { id: string }
+	'data:change': DataStub
+	'data:change:name': { id: string; name: string /* prev: string */ }
+	'data:change:initialValue': { id: string; initialValue: any /* prev: any */ }
 }
 
 /**

@@ -33,7 +33,7 @@ export const BPConfig = {
 				width: 10000,
 				height: 10000,
 				lineWidth: 3,
-				depthTest: false,
+				depthTest: true,
 				depthWrite: false,
 				renderOrder: -10000,
 				color: '#004a75',
