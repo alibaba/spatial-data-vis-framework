@@ -1,4 +1,4 @@
-import { EventDispatcher, EventMapBase } from './EventDispatcher'
+import { EventDispatcher, EventMapBase } from '../config/EventDispatcher'
 
 const ORIGINAL_DISPATCH_METHOD = Symbol('ORIGINAL_DISPATCH_METHOD')
 

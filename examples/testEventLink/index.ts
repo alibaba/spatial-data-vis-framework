@@ -1,5 +1,5 @@
 import { EventDispatcher } from '../../src/private/config/EventDispatcher'
-import { EventLink } from '../../src/private/config/EventLink'
+import { EventLink } from '../../src/private/utils/EventLink'
 import { randomString } from '../../src/private/utils/random'
 
 const params = new URL(document.location.href).searchParams
