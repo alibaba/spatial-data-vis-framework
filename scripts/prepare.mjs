@@ -3,6 +3,10 @@ import { mkdir } from 'fs/promises'
 import { dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
 
+import { genLayerIndex } from './utils/genLayerIndex.mjs'
+
+await genLayerIndex()
+
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const folders = [
