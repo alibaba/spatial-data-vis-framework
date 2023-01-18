@@ -158,7 +158,7 @@ export abstract class AbstractLayer<
 		ndc: CoordV2
 	): PickInfo | undefined
 
-	// TODO: Is is necessary to dispose propsManager and event Listeners
+	// @todo Is it necessary to dispose propsManager and event Listeners?
 	abstract dispose(): void
 
 	/**

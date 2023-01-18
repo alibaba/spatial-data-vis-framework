@@ -133,7 +133,10 @@ export class PolarisThree extends PolarisGSI {
 			_threeRaycaster.ray.origin as Vec3, // safe to assert here
 			_threeRaycaster.ray.direction as Vec3 // safe to assert here
 		)
-		this.raycaster.near = cam.near
+
+		// @note near does not work for perspective camera
+		// @link {https://github.com/mrdoob/three.js/blob/master/src/core/Raycaster.js}
+		this.raycaster.near = 0
 		this.raycaster.far = Infinity
 
 		if (object.geometry.mode !== 'TRIANGLES') {
