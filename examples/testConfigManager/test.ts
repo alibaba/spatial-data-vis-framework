@@ -1,5 +1,6 @@
 import { LayerClasses } from '../../src/layers'
 import { ConfigManager } from '../../src/private/config/ConfigManager'
+import type { AppConfig } from '../../src/private/schema/config'
 
 let testIndex = 0
 function test(name: string, f: () => void) {
@@ -125,6 +126,11 @@ const m = new ConfigManager<typeof LayerClasses>()
 	)
 	m.addEventListener('scene:change:stage', (e) => console.log('scene:change:stage', e))
 	m.addEventListener('scene:change:layers', (e) => console.log('scene:change:layers', e))
+
+	m.addEventListener('data:add', (e) => console.log('data:add', e))
+	m.addEventListener('data:remove', (e) => console.log('data:remove', e))
+	m.addEventListener('data:change:name', (e) => console.log('data:change:name', e))
+	m.addEventListener('data:change:initialValue', (e) => console.log('data:change:initialValue', e))
 }
 
 // dirt check
@@ -187,4 +193,88 @@ test('remove layer', () => {
 	const CONFIG2 = structuredClone(CONFIG1)
 	CONFIG2.layers.pop()
 	m.setConfig(structuredClone(CONFIG2))
+})
+
+test('dataStub: add', () => {
+	m.init(structuredClone(CONFIG1))
+	const CONFIG2 = structuredClone(CONFIG1) as AppConfig
+	CONFIG2.dataStubs = [
+		{
+			id: 'LOCAL_DATA_1',
+			name: 'china map geojson',
+			initialValue: '$get("https://geojson.cn/api/data/100000.json")',
+			dynamic: false,
+		},
+	]
+	m.setConfig(structuredClone(CONFIG2))
+})
+
+test('dataStub: remove', () => {
+	const CONFIG2 = structuredClone(CONFIG1) as AppConfig
+	CONFIG2.dataStubs = [
+		{
+			id: 'LOCAL_DATA_1',
+			name: 'china map geojson',
+			initialValue: '$get("https://geojson.cn/api/data/100000.json")',
+			dynamic: false,
+		},
+	]
+	m.init(structuredClone(CONFIG2))
+
+	const CONFIG3 = structuredClone(CONFIG1) as AppConfig
+	CONFIG3.dataStubs = []
+	m.setConfig(structuredClone(CONFIG3))
+
+	m.setConfig(structuredClone(CONFIG2))
+	const CONFIG4 = structuredClone(CONFIG1) as AppConfig
+	delete CONFIG4.dataStubs
+	m.setConfig(structuredClone(CONFIG4))
+})
+
+test('dataStub: change name', () => {
+	const CONFIG2 = structuredClone(CONFIG1) as AppConfig
+	CONFIG2.dataStubs = [
+		{
+			id: 'LOCAL_DATA_1',
+			name: 'china map geojson',
+			initialValue: '$get("https://geojson.cn/api/data/100000.json")',
+			dynamic: false,
+		},
+	]
+	m.init(structuredClone(CONFIG2))
+
+	const CONFIG3 = structuredClone(CONFIG1) as AppConfig
+	CONFIG3.dataStubs = [
+		{
+			id: 'LOCAL_DATA_1',
+			name: 'china map geojson (copy)',
+			initialValue: '$get("https://geojson.cn/api/data/100000.json")',
+			dynamic: false,
+		},
+	]
+	m.setConfig(structuredClone(CONFIG3))
+})
+
+test('dataStub: change initialValue', () => {
+	const CONFIG2 = structuredClone(CONFIG1) as AppConfig
+	CONFIG2.dataStubs = [
+		{
+			id: 'LOCAL_DATA_1',
+			name: 'china map geojson',
+			initialValue: '$get("https://geojson.cn/api/data/100000.json")',
+			dynamic: false,
+		},
+	]
+	m.init(structuredClone(CONFIG2))
+
+	const CONFIG3 = structuredClone(CONFIG1) as AppConfig
+	CONFIG3.dataStubs = [
+		{
+			id: 'LOCAL_DATA_1',
+			name: 'china map geojson',
+			initialValue: null,
+			dynamic: false,
+		},
+	]
+	m.setConfig(structuredClone(CONFIG3))
 })

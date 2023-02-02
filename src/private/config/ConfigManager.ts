@@ -129,7 +129,6 @@ export type ConfigEventData<TLayerClasses extends LayerClassesShape = any> = {
 
 	'data:add': DataStub
 	'data:remove': { id: string }
-	'data:change': DataStub
 	'data:change:name': { id: string; name: string /* prev: string */ }
 	'data:change:initialValue': { id: string; initialValue: any /* prev: any */ }
 }

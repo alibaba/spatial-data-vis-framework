@@ -269,7 +269,7 @@ export function updateFullConfig<TLayerClasses extends LayerClassesShape = any>(
 			})
 		}
 
-		// props
+		// data props
 		if (
 			// @note @todo @fixme 这里会有问题
 			currLayer.dataProps &&
