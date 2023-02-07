@@ -20,9 +20,8 @@ const [config, dispatch] = useReducer(configReducer, null)
 如果你是 editor 开发者，你可能只关心 `ConfigManager` 的接口，而用不到这部分的代码
 
 - `ConfigManager.ts` 是 PolarisApp 内部使用的，用于管理 config 状态，脏检查、响应 config 变化。
-  - `compare.ts ` 是 ConfigManager 用到的脏检查算法
-  - `utils.ts` 是 ConfigManager 的内部逻辑
   - `EventDispatcher.ts` 是 ConfigManager 的 parent
+  - `utils/*` 是工具函数
 
 ## 最佳实践
 

@@ -101,7 +101,8 @@ export class App extends AppBase {
 		m.addEventListener('layer:add', (e) => {
 			const initialProps = getInitialProps(e.data, m.getConfig().dataStubs)
 			const layer = createLayer(LayerClasses, e.data.class, initialProps)
-			this.layers.push({ layer, name: e.data.name, id: occupyID(this[SCOPE_KEY], e.data.id) })
+			this.layers.push({ layer, name: e.data.name, id: occupyID(this[SCOPE_KEY], e.data.id, true) })
+
 			// @note 目前仅支持 default stage
 			const defaultStage = this.stages.find((s) => s.id === 'LOCAL_STAGE_MAIN')
 			if (!defaultStage) throw new Error('default stage not found')
@@ -177,7 +178,7 @@ export class App extends AppBase {
 
 		m.addEventListener('scene:add', (e) => {
 			const scene = new SceneBase()
-			scene.id = occupyID(this[SCOPE_KEY], e.data.id)
+			scene.id = occupyID(this[SCOPE_KEY], e.data.id, true)
 			scene.name = e.data.name
 			scene.cameraStateCode = e.data.cameraStateCode
 			scene.layers = e.data.layers ?? ['*']
@@ -240,7 +241,9 @@ export class App extends AppBase {
 			const layers = this.layers.filter((l) => ids.includes(l.id))
 			// throw or warn
 			layers.forEach((l) => {
-				console.error(`layer ${l.id} is using a removed data stub ${e.data.id}`)
+				const err = new Error(`layer ${l.id} is using a removed data stub ${e.data.id}`)
+				// console.error(err)
+				throw err
 			})
 		})
 

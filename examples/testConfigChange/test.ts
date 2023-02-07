@@ -1,8 +1,6 @@
 import { App } from '../../src/apps/App'
 import { BPConfig } from './config'
 
-const CONFIG_ORI = structuredClone(BPConfig)
-
 const container = document.getElementById('container') as HTMLDivElement
 
 const polarisApp = new App(container, BPConfig)
@@ -62,20 +60,20 @@ const m = polarisApp.configManager
 }
 
 test('resize', () => {
-	m.dispatchEvent({ type: 'app:change', data: { width: 500, height: 500 } })
+	m.action({ type: 'app:change', payload: { width: 500, height: 500 } })
 })
 test('resize', () => {
-	m.dispatchEvent({ type: 'app:change', data: { width: 1000, height: 1000 } })
+	m.action({ type: 'app:change', payload: { width: 1000, height: 1000 } })
 })
 
 test('remove layer', () => {
-	m.dispatchEvent({ type: 'layer:remove', data: { id: 'LOCAL_LAYER_1' } })
+	m.action({ type: 'layer:remove', payload: { id: 'LOCAL_LAYER_1' } })
 })
 
 test('add layer', () => {
-	m.dispatchEvent({
+	m.action({
 		type: 'layer:add',
-		data: {
+		payload: {
 			name: 'model',
 			id: 'LOCAL_LAYER_4' as const,
 			class: 'ModelLayer' as const,
@@ -89,9 +87,9 @@ test('add layer', () => {
 })
 
 test('rename layer', () => {
-	m.dispatchEvent({
+	m.action({
 		type: 'layer:change:name',
-		data: { id: 'LOCAL_LAYER_4', name: 'LOCAL_LAYER_4_RENAMED' },
+		payload: { id: 'LOCAL_LAYER_4', name: 'LOCAL_LAYER_4_RENAMED' },
 	})
 })
 
@@ -99,9 +97,9 @@ test('change layer props', () => {
 	const layerConfig = m.getConfig().layers.find((l) => l.id === 'LOCAL_LAYER_2')
 	if (!layerConfig) throw new Error('layer not found')
 	const oldProps = layerConfig.props
-	m.dispatchEvent({
+	m.action({
 		type: 'layer:change:props',
-		data: {
+		payload: {
 			id: 'LOCAL_LAYER_2',
 			props: {
 				// @note 由于这里直接替代，会导致config中的props不完整，重建时才会显现
@@ -114,9 +112,9 @@ test('change layer props', () => {
 
 test('add stage', () => {
 	shouldThrow(() => {
-		m.dispatchEvent({
+		m.action({
 			type: 'stage:add',
-			data: {
+			payload: {
 				id: '223455',
 			} as any,
 		})
@@ -125,9 +123,9 @@ test('add stage', () => {
 
 test('add scene', () => {
 	shouldThrow(() => {
-		m.dispatchEvent({
+		m.action({
 			type: 'scene:add',
-			data: {
+			payload: {
 				id: 'LOCAL_SCENE_2',
 				name: 'scene2',
 				cameraStateCode: '1|0.000200|0.000943|0.000000|0.99540|-0.48000|19.27600',
@@ -139,9 +137,9 @@ test('add scene', () => {
 })
 
 test('add scene', () => {
-	m.dispatchEvent({
+	m.action({
 		type: 'scene:add',
-		data: {
+		payload: {
 			id: 'LOCAL_SCENE_3',
 			name: 'scene3',
 			cameraStateCode: '1|0.000200|0.000943|0.000000|0.99540|-0.48000|19.27600',
@@ -159,9 +157,9 @@ test('change to new scene', () => {
 })
 
 test('change current scene layers', () => {
-	m.dispatchEvent({
+	m.action({
 		type: 'scene:change:layers',
-		data: {
+		payload: {
 			id: 'LOCAL_SCENE_DEFAULT',
 			layers: ['LOCAL_LAYER_1', 'LOCAL_LAYER_3'],
 		},
@@ -169,9 +167,9 @@ test('change current scene layers', () => {
 })
 
 test('change current scene layers (back)', () => {
-	m.dispatchEvent({
+	m.action({
 		type: 'scene:change:layers',
-		data: {
+		payload: {
 			id: 'LOCAL_SCENE_DEFAULT',
 			layers: ['*'],
 		},
@@ -179,9 +177,9 @@ test('change current scene layers (back)', () => {
 })
 
 test('change current scene cam', () => {
-	m.dispatchEvent({
+	m.action({
 		type: 'scene:change:cameraStateCode',
-		data: {
+		payload: {
 			id: 'LOCAL_SCENE_DEFAULT',
 			cameraStateCode: '1|-0.000193|-0.000708|0.000000|0.88540|-0.37000|17.47600',
 		},
@@ -189,17 +187,17 @@ test('change current scene cam', () => {
 })
 
 test('add a layer that uses a data stub', () => {
-	m.dispatchEvent({
+	m.action({
 		type: 'data:add',
-		data: {
+		payload: {
 			id: 'LOCAL_DATA_0',
 			name: 'data0',
 			initialValue: [{ lng: 0, lat: 0.001 }],
 		},
 	})
-	m.dispatchEvent({
+	m.action({
 		type: 'layer:add',
-		data: {
+		payload: {
 			name: 'sparkles',
 			id: 'LOCAL_LAYER_5' as const,
 			class: 'BillboardsLayer' as const,
@@ -218,19 +216,108 @@ test('add a layer that uses a data stub', () => {
 	})
 })
 
-test('change the data stub', () => {
-	m.dispatchEvent({
+test('add a layer and a related data stub (together)', () => {
+	m.actions([
+		{
+			type: 'data:add',
+			payload: {
+				id: 'LOCAL_DATA_1',
+				name: 'data0',
+				initialValue: [{ lng: 0, lat: 0.001 }],
+			},
+		},
+		{
+			type: 'layer:add',
+			payload: {
+				name: 'sparkles',
+				id: 'LOCAL_LAYER_6' as const,
+				class: 'BillboardsLayer' as const,
+				props: {
+					texture:
+						'https://img.alicdn.com/imgextra/i2/O1CN011m2m5e1ge4nqQrNQy_!!6000000004166-2-tps-160-160.png',
+					flickerSpeed: 0.1,
+					pivot: { x: 0.5, y: 0 },
+					density: 1,
+					size: { x: 50, y: 50 },
+				},
+				dataProps: {
+					data: 'LOCAL_DATA_1',
+				},
+			},
+		},
+	])
+})
+
+test('rm a layer and its related data stub (together)', () => {
+	m.actions([
+		{
+			type: 'data:remove',
+			payload: {
+				id: 'LOCAL_DATA_1',
+			},
+		},
+		{
+			type: 'layer:remove',
+			payload: {
+				id: 'LOCAL_LAYER_6' as const,
+			},
+		},
+	])
+})
+
+test('change a layer to use a non-existent data stub', () => {
+	shouldThrow(() => {
+		m.action({
+			type: 'layer:change:dataProps',
+			payload: {
+				id: 'LOCAL_LAYER_5' as const,
+				dataProps: {
+					data: 'LOCAL_DATA_1',
+				},
+			},
+		})
+	})
+
+	console.log('change back')
+
+	m.action({
+		type: 'layer:change:dataProps',
+		payload: {
+			id: 'LOCAL_LAYER_5' as const,
+			dataProps: {
+				data: 'LOCAL_DATA_0',
+			},
+		},
+	})
+})
+
+test('change a data stub name', () => {
+	m.action({
 		type: 'data:change:name',
-		data: {
+		payload: {
 			id: 'LOCAL_DATA_0',
 			name: 'data2',
 		},
 	})
-	m.dispatchEvent({
+})
+
+test('change a used data stub initialValue', () => {
+	m.action({
 		type: 'data:change:initialValue',
-		data: {
+		payload: {
 			id: 'LOCAL_DATA_0',
 			initialValue: [{ lng: 0, lat: -0.001 }],
 		},
+	})
+})
+
+test('rm a used data stub', () => {
+	shouldThrow(() => {
+		m.action({
+			type: 'data:remove',
+			payload: {
+				id: 'LOCAL_DATA_0',
+			},
+		})
 	})
 })

@@ -14,15 +14,6 @@ function test(name: string, f: () => void) {
 	}, testIndex * 300)
 }
 
-function shouldThrow(f: () => void) {
-	try {
-		f()
-		console.error('should throw, but did not')
-	} catch (e: any) {
-		console.log('throws as expected: \n\t', e.message)
-	}
-}
-
 const CONFIG0 = {
 	version: '0.0.1' as const,
 	app: {},
@@ -176,16 +167,6 @@ test('add layer', () => {
 	const CONFIG2 = structuredClone(CONFIG1)
 	CONFIG2.layers.push({ id: '123456', name: '123456', class: 'GridLayer', props: {} as any })
 	m.setConfig(structuredClone(CONFIG2))
-})
-
-test('add layer twice', () => {
-	m.init(structuredClone(CONFIG1))
-	const CONFIG2 = structuredClone(CONFIG1)
-	CONFIG2.layers.push({ id: '123456', name: '123456', class: 'GridLayer', props: {} as any })
-	CONFIG2.layers.push({ id: '123456', name: '123456', class: 'GridLayer', props: {} as any })
-	shouldThrow(() => {
-		m.setConfig(structuredClone(CONFIG2))
-	})
 })
 
 test('remove layer', () => {

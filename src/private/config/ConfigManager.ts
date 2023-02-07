@@ -1,5 +1,3 @@
-// import { PropsManager } from '@polaris.gl/props-manager'
-// import { getLayerConfig, getSceneConfig, getStageConfig } from '../utils/config'
 import type {
 	AppConfig,
 	AppPolarisConfig,
@@ -10,7 +8,9 @@ import type {
 } from '../schema/config'
 import type { LayerClassesShape } from '../schema/meta'
 import { EventDispatcher } from './EventDispatcher'
-import { registerConfigSync, updateFullConfig } from './utils'
+import { ConfigActions, configReducer } from './actions'
+import { deepFreeze } from './utils/deepFreeze'
+import { digest } from './utils/digest'
 
 const CURR_CONFIG_KEY = Symbol('CurrConfigKey')
 
@@ -52,45 +52,81 @@ const CURR_CONFIG_KEY = Symbol('CurrConfigKey')
 export class ConfigManager<TLayerClasses extends LayerClassesShape> extends EventDispatcher<
 	ConfigEvents<TLayerClasses>
 > {
-	private readonly [CURR_CONFIG_KEY]: AppConfig<TLayerClasses> = {
+	private [CURR_CONFIG_KEY]: AppConfig<TLayerClasses> = deepFreeze({
 		version: '0.0.1',
 		app: {},
 		layers: [],
 		stages: [],
 		scenes: [],
 		dataStubs: [],
-	}
+	})
 
 	constructor(initialConfig?: AppConfig<TLayerClasses>) {
 		super()
 
 		if (initialConfig) this.init(initialConfig)
 
-		const curr = this[CURR_CONFIG_KEY]
-		registerConfigSync(this, curr)
+		// const curr = this[CURR_CONFIG_KEY]
+		// registerConfigSync(this, curr)
 	}
 
 	/**
 	 * set config without trigger change event or dirt-check
 	 */
 	init(config: AppConfig<TLayerClasses>) {
-		const curr = this[CURR_CONFIG_KEY]
-		curr.app = config.app
-		curr.layers = config.layers
-		curr.scenes = config.scenes
-		curr.stages = config.stages
-		curr.dataStubs = config.dataStubs || []
+		this[CURR_CONFIG_KEY] = { ...config }
 
-		this.dispatchEvent({ type: 'init', data: { ...curr } })
+		if (!this[CURR_CONFIG_KEY].dataStubs) {
+			this[CURR_CONFIG_KEY].dataStubs = []
+		}
+
+		deepFreeze(this[CURR_CONFIG_KEY])
+
+		this.dispatchEvent({ type: 'init', data: this[CURR_CONFIG_KEY] })
 	}
 
+	/**
+	 * get full config
+	 * @note the config is frozen and readonly. do not modify it.
+	 */
 	getConfig() {
-		return { ...this[CURR_CONFIG_KEY] }
+		return this[CURR_CONFIG_KEY]
 	}
 
+	/**
+	 * update the full config and trigger change event
+	 * @note the input config will be frozen. do not reuse it.
+	 */
 	setConfig(next: AppConfig<TLayerClasses>) {
-		const curr = this[CURR_CONFIG_KEY]
-		updateFullConfig(this, curr, next)
+		const prev = this[CURR_CONFIG_KEY]
+
+		this[CURR_CONFIG_KEY] = { ...next }
+
+		if (!this[CURR_CONFIG_KEY].dataStubs) {
+			this[CURR_CONFIG_KEY].dataStubs = []
+		}
+
+		deepFreeze(this[CURR_CONFIG_KEY])
+
+		digest(this, prev, this[CURR_CONFIG_KEY])
+	}
+
+	/**
+	 * partial update config. react/reducer style.
+	 * @note will call `setConfig` internally. not efficient.
+	 */
+	action(action: ConfigActions) {
+		const nextConfig = configReducer(this[CURR_CONFIG_KEY], action) as AppConfig
+		this.setConfig(nextConfig)
+	}
+
+	/**
+	 * partial update config. react/reducer style.
+	 * @note will call `setConfig` internally. not efficient.
+	 */
+	actions(actions: ConfigActions[]) {
+		const nextConfig = actions.reduce(configReducer, this[CURR_CONFIG_KEY]) as AppConfig
+		this.setConfig(nextConfig)
 	}
 }
 
