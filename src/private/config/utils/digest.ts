@@ -285,7 +285,7 @@ export function digest<TLayerClasses extends LayerClassesShape = any>(
 		}
 
 		// initialValue
-		if (prevDataStub.initialValue !== nextDataStub.initialValue) {
+		if (!deepEqual(prevDataStub.initialValue, nextDataStub.initialValue)) {
 			batch.dispatchEvent({
 				type: 'data:change:initialValue',
 				data: {
