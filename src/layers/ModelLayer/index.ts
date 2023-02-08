@@ -43,11 +43,13 @@ export function createModelLayer(config: ModelLayerConfig): StandardLayer {
 		traverse(node, (n) => {
 			if (IR.isRenderable(n)) {
 				const tex = (n.material as IR.PbrMaterial)['emissiveTexture'] as IR.Texture
-				tex.sampler.magFilter = 'LINEAR'
-				tex.sampler.minFilter = 'LINEAR_MIPMAP_LINEAR'
-				tex.sampler.wrapS = 'MIRRORED_REPEAT'
-				tex.sampler.wrapT = 'MIRRORED_REPEAT'
-				tex.sampler.anisotropy = 8
+				if (tex) {
+					tex.sampler.magFilter = 'LINEAR'
+					tex.sampler.minFilter = 'LINEAR_MIPMAP_LINEAR'
+					tex.sampler.wrapS = 'MIRRORED_REPEAT'
+					tex.sampler.wrapT = 'MIRRORED_REPEAT'
+					tex.sampler.anisotropy = 8
+				}
 				// tex.image.extensions = { EXT_image_encoding: 'SRGB' }
 				// n.material = specifyUnlitMaterial({
 				// 	type: 'unlit',

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Example</title>
+		<link rel="shortcut icon" href="#" />
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+			body {
+				background-color: #1f1f1f;
+				height: 100vh;
+				width: 100vw;
+				position: relative;
+			}
+
+			.wrapper {
+				height: 100%;
+				width: 100%;
+
+				display: grid;
+				grid-template-columns: 2fr 3fr;
+				gap: 10px;
+			}
+
+			.wrapper > section {
+				/* @fix: 允许 item 比 content 小 */
+				min-height: 0;
+				min-width: 0;
+
+				position: relative;
+
+				display: grid;
+				grid-template-rows: 1fr;
+				grid-template-columns: 1fr;
+			}
+
+			button {
+				padding: 0 10px;
+				font-size: 14px;
+
+				position: absolute;
+				top: 10px;
+				right: 10px;
+			}
+
+			#configViewer {
+				/* width: 100%;
+				height: 100%; */
+
+				border: none;
+				outline: none;
+				background-color: transparent;
+				-webkit-box-shadow: none;
+				-moz-box-shadow: none;
+				box-shadow: none;
+
+				resize: none; /*remove the resize handle on the bottom right*/
+
+				/* 横向滚动 */
+				white-space: pre;
+				overflow-wrap: normal;
+				overflow-x: scroll;
+
+				background-color: rgb(43, 43, 43);
+				color: rgb(226, 226, 226);
+				font-weight: bolder;
+				font-size: 12px;
+
+				padding: 5px 10px;
+				tab-size: 4;
+			}
+
+			#container {
+				background-color: #20222b;
+				transform: scale(0.75);
+				transform-origin: top left;
+			}
+
+			#container::after {
+				content: 'scale(0.75)';
+				position: absolute;
+				right: 0;
+				bottom: 0;
+				color: white;
+				font-size: 17px;
+			}
+		</style>
+		<script>
+			const entryName = new URL(location.href).searchParams.get('entryName')
+			if (entryName) document.title += `: ${entryName}`
+		</script>
+	</head>
+	<body>
+		<div class="wrapper">
+			<section>
+				<button id="applyConfig">使用该配置</button>
+				<textarea id="configViewer"></textarea>
+			</section>
+			<section>
+				<div id="container"></div>
+			</section>
+		</div>
+		<script type="module">
+			import { App } from '../../src/apps/App.ts'
+			import { BPConfig } from '../../src/config/template.ts'
+
+			const container = document.getElementById('container')
+
+			console.log(BPConfig)
+
+			const polarisApp = new App(container, BPConfig)
+
+			// 现实 config json
+			configViewer.value = JSON.stringify(BPConfig, null, '\t')
+
+			// 调试用，手工修改 FBI 侧配置
+			applyConfig.onclick = () => {
+				try {
+					JSON.parse(configViewer.value)
+				} catch (error) {
+					console.error(error)
+					alert('配置格式错误')
+				}
+				const newConfig = JSON.parse(configViewer.value)
+				// root.render(ReactApp(newConfig))
+				polarisApp.configManager.setConfig(newConfig)
+			}
+
+			// enjoy✨
+		</script>
+	</body>
+</html>

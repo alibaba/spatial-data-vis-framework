@@ -59,6 +59,34 @@ export function propsEqual(propsA: Record<string, any>, propsB: Record<string, a
 }
 
 /**
+ * compare two props. return the keys with different values.
+ * @note return null if equal.
+ * @note only shallow compare 1-level kv pairs.
+ */
+export function propsDiff(
+	propsA: Record<string, any>,
+	propsB: Record<string, any>
+): string[] | null {
+	const keysA = Object.keys(propsA)
+	const keysB = Object.keys(propsB)
+
+	const keys = new Set([...keysA, ...keysB])
+
+	const diff: string[] = []
+
+	for (const key of keys) {
+		const valueA = propsA[key]
+		const valueB = propsB[key]
+
+		if (valueA !== valueB) {
+			diff.push(key)
+		}
+	}
+
+	return diff.length ? diff : null
+}
+
+/**
  * compare two id arrays
  * (strings without order)
  */

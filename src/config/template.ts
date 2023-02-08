@@ -14,7 +14,7 @@ export const BPConfig = {
 
 	/** 应用全局配置 @note 命名待定: 'app' or 'polaris' ? */
 	app: {
-		width: 1400,
+		width: 1000,
 		height: 700,
 		fov: 20,
 		antialias: 'msaa' as const,
@@ -111,8 +111,8 @@ export const BPConfig = {
 			name: 'sparkle positions',
 			initialValue: (() => {
 				const res = [] as any[]
-				const W = 10
-				const H = 10
+				const W = 3
+				const H = 3
 				const scale = 0.0015
 				for (let i = 0; i < W; i++) {
 					for (let j = 0; j < H; j++) {

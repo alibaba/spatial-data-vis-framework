@@ -132,8 +132,21 @@ export class App extends AppBase {
 
 		m.addEventListener('layer:change:props', (e) => {
 			const layer = this.layers.find((l) => l.id === e.data.id)
-			if (layer) layer.layer.setProps(e.data.props)
-			// TODO: 区分 可变 与 不可变的 props
+			const changedKeys = e.data.changedKeys
+
+			// 区分 可变 与 不可变的 props
+
+			const layerConfig = this.getLayerConfigById(e.data.id)
+
+			if (!layerConfig) throw new Error('layer config not found')
+
+			const layerClassName = layerConfig.class
+
+			if (changedKeys && layerShouldRecreate(LayerClasses, layerClassName, changedKeys)) {
+				this.recreateLayer(e.data.id)
+			} else {
+				if (layer) layer.layer.setProps(e.data.props)
+			}
 		})
 
 		m.addEventListener('layer:change:dataProps', (e) => {
@@ -358,6 +371,11 @@ export class App extends AppBase {
 		// @todo
 	}
 
+	getLayerConfigById(id: string) {
+		const config = this.configManager.getConfig()
+		return config.layers.find((l) => l.id === id)
+	}
+
 	// global stats
 	static {}
 
@@ -380,7 +398,7 @@ function createLayer<
 	props: Parameters<TLayerClasses[TClassName]['factory']>[0]
 ): ReturnType<TLayerClasses[TClassName]['factory']> {
 	const factory = classes[className]?.factory as TLayerClasses[TClassName]['factory']
-	if (!factory) throw new Error(`Cannot find layer type: ${name}.`)
+	if (!factory) throw new Error(`Cannot find layer type: ${String(className)}.`)
 
 	return factory(props as any) as ReturnType<TLayerClasses[TClassName]['factory']>
 }
@@ -411,4 +429,18 @@ function getInitialProps(layerConfig: LayerConfig, dataStubs?: DataStub[]) {
 	}
 
 	return initialProps
+}
+
+function layerShouldRecreate<
+	TLayerClasses extends LayerClassesShape,
+	TClassName extends keyof TLayerClasses
+>(classes: TLayerClasses, className: TClassName, changedKeys: string[]): boolean {
+	const layerClass = classes[className]
+	if (!layerClass) throw new Error(`Cannot find layer type:  ${String(className)}.`)
+
+	const { propsDescription } = layerClass
+
+	const immutableKeys = propsDescription.filter((p) => !p.mutable).map((p) => p.key)
+
+	return changedKeys.some((key) => immutableKeys.includes(key))
 }
