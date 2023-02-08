@@ -87,16 +87,17 @@ export function digest<TLayerClasses extends LayerClassesShape = any>(
 
 		// data props
 		if (
-			// @note @todo @fixme 这里会有问题
-			prevLayer.dataProps &&
-			nextLayer.dataProps &&
-			!propsEqual(prevLayer.dataProps, nextLayer.dataProps)
+			(!prevLayer.dataProps && nextLayer.dataProps) ||
+			(prevLayer.dataProps && !nextLayer.dataProps) ||
+			(prevLayer.dataProps &&
+				nextLayer.dataProps &&
+				!propsEqual(prevLayer.dataProps, nextLayer.dataProps))
 		) {
 			batch.dispatchEvent({
 				type: 'layer:change:dataProps',
 				data: {
 					id: nextLayer.id,
-					dataProps: nextLayer.dataProps,
+					dataProps: nextLayer.dataProps || {},
 				},
 			})
 		}
