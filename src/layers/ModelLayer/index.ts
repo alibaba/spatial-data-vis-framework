@@ -63,4 +63,23 @@ export function createModelLayer(config: ModelLayerConfig): StandardLayer {
 /**
  * Props Description. Used to generate the props editer UI.
  */
-export const propsDesc = [] as PropDescription[]
+export const propsDesc = [
+	{
+		name: 'glb 模型地址',
+		key: 'glb',
+		type: 'string',
+		mutable: false,
+	},
+	{
+		name: 'scale',
+		key: 'scale',
+		type: 'number',
+		mutable: true,
+	},
+	{
+		name: '投影描述',
+		key: 'projectionDesc',
+		type: 'string',
+		mutable: false,
+	},
+] as PropDescription[]

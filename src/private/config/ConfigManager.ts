@@ -95,7 +95,7 @@ export class ConfigManager<TLayerClasses extends LayerClassesShape> extends Even
 
 	/**
 	 * update the full config and trigger change event
-	 * @note the input config will be frozen. do not reuse it.
+	 * @note the input config will be frozen. do not modify it after.
 	 */
 	setConfig(next: AppConfig<TLayerClasses>) {
 		const prev = this[CURR_CONFIG_KEY]
