@@ -147,7 +147,7 @@ export type ConfigEventData<TLayerClasses extends LayerClassesShape = any> = {
 	'layer:remove': { id: string }
 	'layer:change:name': { id: string; name: string /* prev: string */ }
 	// 在callback中对比详细，如果 mutable，就调用layer.setProps，否则就重建layer
-	'layer:change:props': { id: string; props: any; changedKeys: string[] /* prev: any */ }
+	'layer:change:props': { id: string; props: any; changedKeys?: string[] /* prev: any */ }
 	'layer:change:dataProps': { id: string; dataProps: any /* prev: any */ }
 
 	'scene:add': SceneConfig
