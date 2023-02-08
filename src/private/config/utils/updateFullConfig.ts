@@ -12,7 +12,7 @@ import type { AppConfig } from '../../schema/config'
 import type { LayerClassesShape } from '../../schema/meta'
 import type { ConfigEvents } from '../ConfigManager'
 import type { EventDispatcher } from '../EventDispatcher'
-import { deepEqual, idsEqual, propsEqual } from './compare'
+import { deepEqual, idsEqual, propsDiff, propsEqual } from './compare'
 
 /**
  * compare new config with the old one, dispatch events to update the old one
@@ -87,13 +87,14 @@ export function updateFullConfig<TLayerClasses extends LayerClassesShape = any>(
 		}
 
 		// props
-		if (!propsEqual(currLayer.props, nextLayer.props)) {
+		const diff = propsDiff(currLayer.props, nextLayer.props)
+		if (diff) {
 			batch.dispatchEvent({
 				type: 'layer:change:props',
 				data: {
 					id: nextLayer.id,
 					props: nextLayer.props,
-					// prev: structuredClone(currLayer.props),
+					changedKeys: diff,
 				},
 			})
 		}
