@@ -43,7 +43,7 @@ export const propsDesc = [
 	{
 		key: 'texture' as const,
 		type: 'texture' as const,
-		defaultValue: '',
+		defaultValue: 'https://img.alicdn.com/tfs/TB1tvfvMlr0gK0jSZFnXXbRRXXa-512-512.png',
 		mutable: true,
 		name: '纹理',
 		info: '纹理',
