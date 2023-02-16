@@ -63,25 +63,28 @@ export function createModelLayer(config: ModelLayerConfig): StandardLayer {
 }
 
 /**
- * Props Description. Used to generate the props editer UI.
+ * Props Description. Used to generate the props editor UI.
  */
 export const propsDesc = [
 	{
 		name: 'glb 模型地址',
 		key: 'glb',
 		type: 'string',
+		defaultValue: 'https://polar-public.oss-cn-hangzhou.aliyuncs.com/demo.glb',
 		mutable: false,
 	},
 	{
 		name: 'scale',
 		key: 'scale',
 		type: 'number',
-		mutable: true,
+		defaultValue: 1,
+		mutable: false,
 	},
 	{
 		name: '投影描述',
 		key: 'projectionDesc',
 		type: 'string',
+		defaultValue: 'desc0|MercatorProjection|right|meters|0,0,0',
 		mutable: false,
 	},
 ] as PropDescription[]
