@@ -6,39 +6,84 @@ import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-function getConfigEntries() {
-	const dirPath = path.resolve(__dirname, '../', './intermediate/jsm/config')
-	const entries = []
-	const files = readdirSync(dirPath) || []
+// conv js module to json
 
-	for (let j = 0; j < files.length; j++) {
-		const filePath = path.resolve(dirPath, files[j])
-		const fileStat = statSync(filePath)
-		const filename = path.basename(filePath)
-		const extension = path.extname(filePath)
+{
+	const getConfigEntries = () => {
+		const dirPath = path.resolve(__dirname, '../', './intermediate/jsm/config')
+		const entries = []
+		const files = readdirSync(dirPath) || []
 
-		if (fileStat.isDirectory() || (extension !== '.js' && extension !== '.mjs')) {
-			continue
+		for (let j = 0; j < files.length; j++) {
+			const filePath = path.resolve(dirPath, files[j])
+			const fileStat = statSync(filePath)
+			const filename = path.basename(filePath)
+			const extension = path.extname(filePath)
+
+			if (fileStat.isDirectory() || (extension !== '.js' && extension !== '.mjs')) {
+				continue
+			}
+
+			const stem = path.basename(filePath, extension)
+
+			entries.push({
+				input: `intermediate/jsm/config/${filename}`,
+				output: `intermediate/bundled/${stem}.json`,
+			})
 		}
-
-		const stem = path.basename(filePath, extension)
-
-		entries.push({
-			input: `intermediate/jsm/config/${filename}`,
-			output: `intermediate/bundled/${stem}.json`,
-		})
+		return entries
 	}
-	return entries
+
+	const entries = getConfigEntries()
+	entries.forEach(async ({ input, output }) => {
+		console.log(`config ==> ${input} -> ${output}`)
+
+		// console.log(path.resolve(input))
+		const module = await import(path.resolve(input))
+		// console.log(module.default)
+		const json = JSON.stringify(module.default)
+		// console.log(json)
+		await writeFile(path.resolve(output), json)
+	})
 }
 
-const entries = getConfigEntries()
-entries.forEach(async ({ input, output }) => {
-	console.log(`config ==> ${input} -> ${output}`)
+// move json
 
-	// console.log(path.resolve(input))
-	const module = await import(path.resolve(input))
-	// console.log(module.default)
-	const json = JSON.stringify(module.default)
-	// console.log(json)
-	await writeFile(path.resolve(output), json)
-})
+{
+	const getConfigEntries = () => {
+		const dirPath = path.resolve(__dirname, '../', './src/config')
+		const entries = []
+		const files = readdirSync(dirPath) || []
+
+		for (let j = 0; j < files.length; j++) {
+			const filePath = path.resolve(dirPath, files[j])
+			const fileStat = statSync(filePath)
+			const filename = path.basename(filePath)
+			const extension = path.extname(filePath)
+
+			if (fileStat.isDirectory() || extension !== '.json') {
+				continue
+			}
+
+			const stem = path.basename(filePath, extension)
+
+			entries.push({
+				input: `src/config/${filename}`,
+				output: `intermediate/bundled/${stem}.json`,
+			})
+		}
+		return entries
+	}
+
+	const entries = getConfigEntries()
+	entries.forEach(async ({ input, output }) => {
+		console.log(`config ==> ${input} -> ${output}`)
+
+		// console.log(path.resolve(input))
+		const module = await import(path.resolve(input),{ assert: { type: "json" } }) 
+		// console.log(module.default)
+		const json = JSON.stringify(module.default)
+		// console.log(json)
+		await writeFile(path.resolve(output), json)
+	})
+}

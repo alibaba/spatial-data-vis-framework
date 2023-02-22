@@ -9,7 +9,8 @@ import colors from 'colors/safe.js'
 import cors from 'cors'
 import express from 'express'
 import { existsSync } from 'fs'
-import { dirname, resolve } from 'path'
+import { readdir, writeFile } from 'fs/promises'
+import { dirname, extname, resolve } from 'path'
 import { argv as rawArgv } from 'process'
 import { fileURLToPath } from 'url'
 import yargs from 'yargs'
@@ -27,6 +28,11 @@ if (!argv.port) console.log(colors.bgYellow('No port specified, using 3000'))
 const host = argv.host || 'localhost'
 const port = argv.port || 3000
 
+const vitePort = argv.vitePort
+if (!vitePort) {
+	console.log(colors.bgYellow('No vite port specified. Certain scripts may not work.'))
+}
+
 /**
  * Daemon Status
  * @type {null | 'idle' | 'busy' | 'stopped' | 'error'}
@@ -41,6 +47,20 @@ let job = null
 
 const app = express()
 app.use(cors())
+app.use(express.json())
+app.use(express.text())
+app.use(express.raw())
+app.use(function (error, req, res, next) {
+	if (error instanceof SyntaxError) {
+		// body parser error
+		res.send({
+			success: false,
+			error,
+		})
+	} else {
+		next()
+	}
+})
 
 // root
 app.get('/', (req, res) => {
@@ -105,6 +125,78 @@ app.get('/scripts/:script', async (req, res) => {
 			command,
 		})
 	}
+})
+
+// get config preset list
+app.get('/config', async (req, res) => {
+	const configPresetsPath = resolve(__dirname, 'src/config')
+	const configPresetFiles = await readdir(configPresetsPath)
+
+	res.send({
+		success: true,
+		configPresets: configPresetFiles,
+	})
+})
+
+// create a new one
+app.post('/config/:preset', async (req, res) => {
+	if (extname(req.params.preset) !== '.json') {
+		res.send({
+			success: false,
+			message: 'Invalid config preset name. Only *.json is supported.',
+		})
+
+		return
+	}
+
+	const configPresetPath = resolve(__dirname, 'src/config', `${req.params.preset}`)
+
+	if (existsSync(configPresetPath)) {
+		res.send({
+			success: false,
+			message: 'Config preset already exists.',
+		})
+
+		return
+	}
+
+	const newConfigPreset = req.body
+
+	await writeFile(configPresetPath, JSON.stringify(newConfigPreset, null, 2))
+
+	res.send({
+		success: true,
+	})
+})
+
+// edit an existing config preset
+app.put('/config/:preset', async (req, res) => {
+	if (extname(req.params.preset) !== '.json') {
+		res.send({
+			success: false,
+			message: 'Invalid config preset name. Only *.json is supported.',
+		})
+
+		return
+	}
+
+	if (!existsSync(configPresetPath)) {
+		res.send({
+			success: false,
+			message: 'Config preset does not exist.',
+		})
+
+		return
+	}
+
+	const configPresetPath = resolve(__dirname, 'src/config', `${req.params.preset}`)
+	const newConfigPreset = req.body
+
+	await writeFile(configPresetPath, JSON.stringify(newConfigPreset, null, 2))
+
+	res.send({
+		success: true,
+	})
 })
 
 app.listen(port, host, () => {
