@@ -2,6 +2,7 @@ import type { StandardLayer } from '@polaris.gl/gsi'
 import { HelperLayer } from '@polaris.gl/layer-std-helper'
 import { PolarisThree } from '@polaris.gl/three'
 
+import { EventDispatcher } from '../config/EventDispatcher'
 import type { AppConfig } from '../schema/config'
 import type { AppMeta } from '../schema/meta'
 import { randomString } from '../utils/random'
@@ -9,10 +10,16 @@ import type { SceneBase } from './SceneBase'
 import type { ScriptBase } from './ScriptBase'
 import type { StageBase } from './StageBase'
 
+type LifeCycleEvent = {
+	afterInit: { type: 'afterInit' }
+	dispose: { type: 'dispose' }
+	sceneChange: { type: 'sceneChange'; sceneID: string }
+}
+
 /**
  * Entry class
  */
-export class AppBase {
+export class AppBase extends EventDispatcher<LifeCycleEvent> {
 	readonly polaris: PolarisThree
 	// readonly layers = [] as StandardLayer[]
 
@@ -29,6 +36,8 @@ export class AppBase {
 		readonly stages: StageBase[] = [],
 		readonly scenes: SceneBase[] = []
 	) {
+		super()
+
 		this.polaris = new PolarisThree({ container, ...config.app })
 
 		// this.polaris.timeline.updateMaxFPS(30)
@@ -54,6 +63,8 @@ export class AppBase {
 		if (config.app?.debug) {
 			initDebug.call(this)
 		}
+
+		this.dispatchEvent({ type: 'afterInit' })
 	}
 
 	changeScene(id: string, duration?: number) {
@@ -86,6 +97,8 @@ export class AppBase {
 		if (targetScene.cameraStateCode) {
 			this.polaris.setStatesCode(targetScene.cameraStateCode, duration)
 		}
+
+		this.dispatchEvent({ type: 'sceneChange', sceneID: id })
 	}
 
 	// getSceneList() {}
@@ -121,6 +134,8 @@ export class AppBase {
 		// this.stages.forEach((e) => e.layers.forEach((l) => l.layer.dispose()))
 		// this.stages.forEach((e) => e.dispose())
 		this.polaris.dispose()
+
+		this.dispatchEvent({ type: 'dispose' })
 	}
 
 	static $getMeta(): AppMeta {
@@ -154,9 +169,14 @@ function initDebug(this: AppBase) {
 	} else {
 		globalThis[polarisID] = this.polaris
 		globalThis[appID] = this
+
+		this.addEventListener('dispose', () => {
+			delete globalThis[polarisID]
+			delete globalThis[appID]
+		})
 	}
 
-	console.log('debug: app instance', this)
+	// console.log('debug: app instance', this)
 }
 
 /**

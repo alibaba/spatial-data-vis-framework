@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-labels */
+
 /**
  * @file PolarisApp
  * @description
@@ -87,6 +89,43 @@ export class App extends AppBase {
 		this.configManager.init(config)
 
 		this.watchConfig()
+
+		ViteHot: if (import.meta.hot) {
+			// @note 仅在开发环境下启用热更新, label 用于让 rollup 删除这段代码
+
+			// 处理自身更新
+			import.meta.hot.accept((newModule) => {
+				if (newModule) {
+					// newModule is undefined when SyntaxError happened
+					const reloadAppMod = globalThis.__Polaris_Dev_Reload_App_Module
+
+					if (reloadAppMod) {
+						console.log('received newModule. will call reloadAppMod.')
+						reloadAppMod(newModule)
+					} else {
+						console.warn('refreshApp not found. should reload page.')
+						location.reload()
+					}
+				} else {
+					console.warn('newModule is undefined. Check SyntaxErrors in your code.')
+					// location.reload()
+				}
+			})
+
+			// 处理 layer 更新
+			// import.meta.hot.accept('../layers/index.ts', (newModule) => {
+			// 	console.log('updated: layers', newModule)
+			// 	if (newModule) {
+			// 		const newLayerClasses = newModule.LayerClasses
+			// 		// find whats changed
+			// 		const changed = Object.keys(LayerClasses).filter((key) => {
+			// 			return LayerClasses[key] !== newLayerClasses[key]
+			// 		})
+			// 		console.log('changed', changed)
+			// 	}
+			// 	// @todo 重新创建 layers
+			// })
+		}
 	}
 
 	/**

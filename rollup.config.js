@@ -1,5 +1,6 @@
 import commonjs from '@rollup/plugin-commonjs'
 import { nodeResolve } from '@rollup/plugin-node-resolve'
+import strip from '@rollup/plugin-strip'
 import { readdirSync, statSync } from 'fs'
 import * as path from 'path'
 import { dirname } from 'path'
@@ -39,7 +40,7 @@ function getAppEntries() {
 					format: 'esm',
 					sourcemap: true,
 				},
-				plugins: [nodeResolve(), commonjs(), sourcemaps()],
+				plugins: [nodeResolve(), commonjs(), sourcemaps(), strip({ labels: ['ViteHot'] })],
 			},
 			// ts declaration
 			{
