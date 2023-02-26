@@ -88,3 +88,23 @@ function absolutifyPaths(options = {}) {
 		},
 	}
 }
+
+function handleKill() {
+	console.warn(`Vite-backend service killed by parent.`)
+	process.exit()
+}
+
+// catches ctrl+c event
+process.on('SIGINT', () => {
+	console.warn(`Vite-backend service stopped by user.`)
+	process.exit()
+})
+// catches "kill pid" (for example: nodemon restart)
+process.on('SIGUSR1', handleKill)
+process.on('SIGUSR2', handleKill)
+process.on('SIGTERM', handleKill)
+//catches uncaught exceptions
+process.on('uncaughtException', () => {
+	console.error(`Vite-backend service stopped by uncaught exception.`)
+	process.exit()
+})

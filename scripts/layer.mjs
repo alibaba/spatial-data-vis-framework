@@ -2,18 +2,26 @@ import { existsSync } from 'fs'
 import { copyFile, mkdir, readFile, rm, writeFile } from 'fs/promises'
 import { dirname, resolve } from 'path'
 import prettier from 'prettier'
-import { argv } from 'process'
+import process, { argv as rawArgv } from 'process'
 import { fileURLToPath } from 'url'
+import yargs from 'yargs'
+import { hideBin } from 'yargs/helpers'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-// console.log(argv)
-const action = argv[2]
-if (action !== 'add' && action !== 'delete') throw new Error('需要制定 add 还是 delete 操作')
+const argv = yargs(hideBin(rawArgv)).argv
+console.log(__dirname, argv)
 
-const layerName = argv[3]
+const action = argv.action
+const layerName = argv.layerName
+
+if (action !== 'add' && action !== 'delete') throw new Error('需要指定 add 还是 delete 操作')
+
 if (layerName[0] !== layerName[0].toUpperCase())
 	throw new Error('Layer Name 应使用大驼峰(class 命名)')
+
+// 检查只包含字母和数字
+if (!/^[a-zA-Z0-9]+$/.test(layerName)) throw new Error('Layer Name 只能包含字母和数字')
 
 console.log('action', action, 'layerName', layerName)
 

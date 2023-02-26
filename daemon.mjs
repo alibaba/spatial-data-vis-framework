@@ -11,7 +11,7 @@ import express from 'express'
 import { existsSync } from 'fs'
 import { readdir, writeFile } from 'fs/promises'
 import { dirname, extname, resolve } from 'path'
-import { argv as rawArgv } from 'process'
+import process, { argv as rawArgv } from 'process'
 import { fileURLToPath } from 'url'
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
@@ -28,10 +28,10 @@ if (!argv.port) console.log(colors.bgYellow('No port specified, using 3000'))
 const host = argv.host || 'localhost'
 const port = argv.port || 3000
 
-const vitePort = argv.vitePort
-if (!vitePort) {
-	console.log(colors.bgYellow('No vite port specified. Certain scripts may not work.'))
-}
+// const vitePort = argv.vitePort
+// if (!vitePort) {
+// 	console.log(colors.bgYellow('No vite port specified. Certain scripts may not work.'))
+// }
 
 /**
  * Daemon Status
@@ -171,36 +171,69 @@ app.post('/config/:preset', async (req, res) => {
 
 // edit an existing config preset
 app.put('/config/:preset', async (req, res) => {
-	if (extname(req.params.preset) !== '.json') {
+	try {
+		if (extname(req.params.preset) !== '.json') {
+			res.send({
+				success: false,
+				message: 'Invalid config preset name. Only *.json is supported.',
+			})
+
+			return
+		}
+
+		const configPresetPath = resolve(__dirname, 'src/config', `${req.params.preset}`)
+
+		if (!existsSync(configPresetPath)) {
+			res.send({
+				success: false,
+				message: 'Config preset does not exist.',
+			})
+
+			return
+		}
+
+		const newConfigPreset = req.body
+
+		await writeFile(configPresetPath, JSON.stringify(newConfigPreset, null, 2))
+
+		res.send({
+			success: true,
+		})
+	} catch (error) {
 		res.send({
 			success: false,
-			message: 'Invalid config preset name. Only *.json is supported.',
+			error,
+			name: error.name,
+			errorMessage: error.message,
+			stack: error.stack,
+
+			message: 'Failed to edit config preset.(Unknown error)',
 		})
-
-		return
 	}
-
-	if (!existsSync(configPresetPath)) {
-		res.send({
-			success: false,
-			message: 'Config preset does not exist.',
-		})
-
-		return
-	}
-
-	const configPresetPath = resolve(__dirname, 'src/config', `${req.params.preset}`)
-	const newConfigPreset = req.body
-
-	await writeFile(configPresetPath, JSON.stringify(newConfigPreset, null, 2))
-
-	res.send({
-		success: true,
-	})
 })
 
 app.listen(port, host, () => {
-	console.log(colors.green(`PolarisApp Project Daemon listening on ${host}:${port}`))
+	console.log(colors.green(`PolarisApp Project Daemon listening on http://${host}:${port}`))
 
 	status = 'idle'
+})
+
+function handleKill() {
+	console.warn(`Daemon service killed by parent.`)
+	process.exit()
+}
+
+// catches ctrl+c event
+process.on('SIGINT', () => {
+	console.warn(`Daemon service stopped by user.`)
+	process.exit()
+})
+// catches "kill pid" (for example: nodemon restart)
+process.on('SIGUSR1', handleKill)
+process.on('SIGUSR2', handleKill)
+process.on('SIGTERM', handleKill)
+//catches uncaught exceptions
+process.on('uncaughtException', () => {
+	console.error(`Daemon service stopped by uncaught exception.`)
+	process.exit()
 })

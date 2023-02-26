@@ -12,7 +12,7 @@
  */
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 
-import type { PropDescription } from '../../private/schema/layers'
+import type { PropDescription } from '../../private/schema/meta'
 
 /**
  * $LAYER_NAME$ Props
