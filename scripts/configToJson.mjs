@@ -2,7 +2,7 @@ import { readdirSync, statSync } from 'fs'
 import { copyFile, writeFile } from 'fs/promises'
 import * as path from 'path'
 import { dirname } from 'path'
-import { fileURLToPath } from 'url'
+import { fileURLToPath, pathToFileURL } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -39,7 +39,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 		console.log(`config ==> ${input} -> ${output}`)
 
 		// console.log(path.resolve(input))
-		const module = await import(path.resolve(input))
+		// NOTE
+		const module = await import(pathToFileURL(path.resolve(input)))
 		// console.log(module.default)
 		const json = JSON.stringify(module.default)
 		// console.log(json)
