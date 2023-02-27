@@ -1,5 +1,5 @@
 import { readdirSync, statSync } from 'fs'
-import { writeFile } from 'fs/promises'
+import { copyFile, writeFile } from 'fs/promises'
 import * as path from 'path'
 import { dirname } from 'path'
 import { fileURLToPath } from 'url'
@@ -78,12 +78,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 	const entries = getConfigEntries()
 	entries.forEach(async ({ input, output }) => {
 		console.log(`config ==> ${input} -> ${output}`)
-
-		// console.log(path.resolve(input))
-		const module = await import(path.resolve(input),{ assert: { type: "json" } }) 
-		// console.log(module.default)
-		const json = JSON.stringify(module.default)
-		// console.log(json)
-		await writeFile(path.resolve(output), json)
+		await copyFile(path.resolve(input), path.resolve(output))
 	})
 }
