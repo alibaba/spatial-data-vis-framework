@@ -32,6 +32,9 @@ module.exports = defineConfig({
 		cors: true,
 		// https: true,
 		strictPort: true,
+		hmr: {
+			protocol: 'ws',
+		},
 	},
 	worker: {
 		format: 'es',
