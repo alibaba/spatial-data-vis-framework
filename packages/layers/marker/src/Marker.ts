@@ -216,7 +216,7 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 			this.watchProps(
 				['lng', 'lat', 'alt'],
 				() => {
-					this._lnglatalt = [this.getProp('lng'), this.getProp('lat'), this.getProp('alt')]
+					this._lnglatalt = [this.getProp('lng'), this.getProp('lat'), this.getProp('alt') ?? 0]
 					this.updateLnglatPosition(projection)
 					this.updateWorldPosition()
 					this.updateVisibility(polaris.cameraProxy, projection)
@@ -512,7 +512,7 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 	private updateLnglatPosition(projection) {
 		this._lnglatalt[0] = this.getProp('lng')
 		this._lnglatalt[1] = this.getProp('lat')
-		this._lnglatalt[2] = this.getProp('alt')
+		this._lnglatalt[2] = this.getProp('alt') ?? 0
 
 		// position
 		this._position.fromArray(
@@ -538,7 +538,7 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 		this.group.transform.version++
 
 		// 夹角阈值，用来判断visibility
-		this._altAngleThres = Math.acos(R / (R + this.getProp('alt')))
+		this._altAngleThres = Math.acos(R / (R + this.getProp('alt') ?? 0))
 	}
 
 	/**
