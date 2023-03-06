@@ -13,9 +13,9 @@ import inside from 'point-in-polygon'
 // import classifyPoint from 'robust-point-in-polygon'
 
 // jsts
-import ConformingDelaunayTriangulationBuilder from 'jsts/org/locationtech/jts/triangulate/ConformingDelaunayTriangulationBuilder'
-import GeometryFactory from 'jsts/org/locationtech/jts/geom/GeometryFactory'
-import Coordinate from 'jsts/org/locationtech/jts/geom/Coordinate'
+import ConformingDelaunayTriangulationBuilder from 'jsts-esm/esm/org/locationtech/jts/triangulate/ConformingDelaunayTriangulationBuilder'
+import GeometryFactory from 'jsts-esm/esm/org/locationtech/jts/geom/GeometryFactory'
+import Coordinate from 'jsts-esm/esm/org/locationtech/jts/geom/Coordinate'
 import { patchPreReturnedMessage } from '@polaris.gl/utils-worker-manager'
 
 const _self: Worker = self as any

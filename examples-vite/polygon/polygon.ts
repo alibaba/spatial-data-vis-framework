@@ -6,7 +6,7 @@ import { IndicatorProcessor } from '@gs.i/processor-indicator'
 import { HelperLayer } from '@polaris.gl/layer-std-helper'
 import { LodLineStringLayer, PolygonLayer } from '@polaris.gl/layer-geojson'
 
-import { EquirectangularProjection } from '@polaris.gl/projection'
+import { EquirectangularProjection, SphereProjection } from '@polaris.gl/projection'
 import { AMapLayer } from '@polaris.gl/layer-amap'
 
 const indicator = new IndicatorProcessor({
@@ -106,7 +106,7 @@ geojson.features.forEach((feature) => {
 
 // Polygons
 const polygonLayer1 = (window['layer1'] = new PolygonLayer({
-	// projection: new SphereProjection({}),
+	projection: new SphereProjection({}),
 	getFillColor: (feature) => {
 		// const r = Math.floor(Math.random() * 255).toString(16)
 		// const color = `#${r}66${r}`
@@ -154,8 +154,8 @@ polygonLayer1.addEventListener('pick', (event) => {
 })
 
 // console.log('polygonLayer1', polygonLayer1)
-// indicator.traverse(polygonLayer1.sideLayer.mesh)
-// indicator.traverse(polygonLayer1.surfaceLayer.mesh)
+indicator.traverse(polygonLayer1.sideLayer.mesh)
+indicator.traverse(polygonLayer1.surfaceLayer.mesh)
 
 // line
 const lineLayer2 = (window['line'] = new LodLineStringLayer({

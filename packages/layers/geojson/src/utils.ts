@@ -15,9 +15,9 @@ import inside from 'point-in-polygon'
 // import classifyPoint from 'robust-point-in-polygon'
 
 // jsts
-import ConformingDelaunayTriangulationBuilder from 'jsts/org/locationtech/jts/triangulate/ConformingDelaunayTriangulationBuilder'
-import GeometryFactory from 'jsts/org/locationtech/jts/geom/GeometryFactory'
-import Coordinate from 'jsts/org/locationtech/jts/geom/Coordinate'
+import ConformingDelaunayTriangulationBuilder from 'jsts-esm/esm/org/locationtech/jts/triangulate/ConformingDelaunayTriangulationBuilder'
+import GeometryFactory from 'jsts-esm/esm/org/locationtech/jts/geom/GeometryFactory'
+import Coordinate from 'jsts-esm/esm/org/locationtech/jts/geom/Coordinate'
 import polygonToLine from '@turf/polygon-to-line'
 
 export function triangulateGeoJSON(geojson: any): any {
