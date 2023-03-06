@@ -196,7 +196,7 @@ export abstract class AbstractPolaris<
 	// #region width and height
 
 	/**
-	 * with of content @pixel
+	 * width of the content @pixel
 	 * @note change this by calling resize
 	 * @default 500
 	 * @readonly
@@ -205,7 +205,7 @@ export abstract class AbstractPolaris<
 		return this.#width
 	}
 	/**
-	 * height of content @pixel
+	 * height of the content @pixel
 	 * @note change this by calling resize
 	 * @default 500
 	 * @readonly
