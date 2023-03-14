@@ -1,5 +1,3 @@
-import type { PropDescription } from '../../private/schema/meta'
-
 /**
  * Props Description. Used to generate the props editor UI.
  */
@@ -132,4 +130,4 @@ export const propsDesc = [
 			max: 1,
 		},
 	},
-] as PropDescription[]
+] as const

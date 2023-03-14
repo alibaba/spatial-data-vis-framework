@@ -6,6 +6,9 @@ import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 
 import { buildBillboardsGeometry } from './BillboardsGeom'
 import { BillboardsMaterial } from './BillboardsMatr'
+import { propsDesc } from './propsDesc'
+
+export { propsDesc }
 
 interface Props extends StandardLayerProps {
 	/**
@@ -122,5 +125,3 @@ export function createBillboardsLayer(props: Props): StandardLayer {
 
 	return layer
 }
-
-export { propsDesc } from './propsDesc'

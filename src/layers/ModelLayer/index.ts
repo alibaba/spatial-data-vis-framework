@@ -1,31 +1,59 @@
 import { GLTF2Loader } from '@gs.i/frontend-gltf2'
 import { IR } from '@gs.i/schema-scene'
-import { specifyUnlitMaterial } from '@gs.i/utils-specify'
 import { traverse } from '@gs.i/utils-traverse'
 
-import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
+import { StandardLayer } from '@polaris.gl/gsi'
 import { createFromDesc } from '@polaris.gl/projection'
 
-import type { PropDescription } from '../../private/schema/meta'
+import { DescToParsedType, DescToType, parseProps } from '../../private/utils/props'
 
-interface ModelLayerConfig {
-	name?: string
-	glb: string
-	scale?: number
-	projectionDesc: string
-	// transform:
-}
+/**
+ * Props Description. Used to generate the props editor UI.
+ */
+export const propsDesc = [
+	{
+		name: 'glb 模型地址',
+		key: 'glb',
+		type: 'string',
+		defaultValue: '',
+		mutable: false,
+	},
+	{
+		name: 'scale',
+		key: 'scale',
+		type: 'number',
+		defaultValue: 1,
+		range: { min: 0, max: 1000 },
+		mutable: false,
+	},
+	{
+		name: '投影描述',
+		key: 'projectionDesc',
+		type: 'string',
+		defaultValue: 'desc0|MercatorProjection|right|meters|0,0,0',
+		mutable: false,
+	},
+] as const
 
-export function createModelLayer(config: ModelLayerConfig): StandardLayer {
+type ModelLayerConfig = DescToType<typeof propsDesc>
+
+const loader = new GLTF2Loader()
+
+export function createModelLayer(_config: ModelLayerConfig): StandardLayer {
+	const config = parseProps(_config, propsDesc)
+
 	const projection = createFromDesc(config.projectionDesc)
 
 	const layer = new StandardLayer({
 		projection,
 	})
 
-	const loader = new GLTF2Loader()
-
 	layer.addEventListener('init', async () => {
+		if (!config.glb) {
+			console.log('no glb provided, skip')
+			return
+		}
+
 		const modelRes = await fetch(config.glb)
 		const bin = await modelRes.arrayBuffer()
 
@@ -34,11 +62,7 @@ export function createModelLayer(config: ModelLayerConfig): StandardLayer {
 
 		layer.group.add(node)
 
-		// debugger
-
-		if (config.scale) {
-			layer.group.transform.scale.set(config.scale, config.scale, config.scale)
-		}
+		layer.group.transform.scale.set(config.scale, config.scale, config.scale)
 
 		traverse(node, (n) => {
 			if (IR.isRenderable(n)) {
@@ -61,30 +85,3 @@ export function createModelLayer(config: ModelLayerConfig): StandardLayer {
 
 	return layer
 }
-
-/**
- * Props Description. Used to generate the props editor UI.
- */
-export const propsDesc = [
-	{
-		name: 'glb 模型地址',
-		key: 'glb',
-		type: 'string',
-		defaultValue: 'https://polar-public.oss-cn-hangzhou.aliyuncs.com/demo.glb',
-		mutable: false,
-	},
-	{
-		name: 'scale',
-		key: 'scale',
-		type: 'number',
-		defaultValue: 1,
-		mutable: false,
-	},
-	{
-		name: '投影描述',
-		key: 'projectionDesc',
-		type: 'string',
-		defaultValue: 'desc0|MercatorProjection|right|meters|0,0,0',
-		mutable: false,
-	},
-] as PropDescription[]

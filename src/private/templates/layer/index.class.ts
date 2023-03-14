@@ -43,6 +43,6 @@ export function create$LAYER_NAME$(props: ConstructorParameters<typeof $LAYER_NA
 }
 
 /**
- * Props Description. Used to generate the props editer UI.
+ * Props Description. Used to generate the props editor UI.
  */
 export const propsDesc = [] as PropDescription[]

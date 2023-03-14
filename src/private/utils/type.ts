@@ -18,3 +18,9 @@ export type MapType<T extends Record<string, any>> = {
 		source?: any
 	}
 }
+
+type OptionalDefault<TFull extends Record<string, any>, TDefault extends TFull> = Omit<
+	TFull,
+	keyof TDefault
+> &
+	Partial<TDefault>

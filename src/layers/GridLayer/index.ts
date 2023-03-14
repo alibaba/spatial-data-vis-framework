@@ -16,71 +16,14 @@ import { specifyGeometry } from '@gs.i/utils-specify'
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 import type { Projection } from '@polaris.gl/projection'
 
-const defaultGridLayerProps = {
-	/**
-	 * width of the grid
-	 * @unit meter
-	 * @default 100000
-	 */
-	width: 100000,
-	/**
-	 * height of the grid
-	 * @unit meter
-	 * @default 100000
-	 */
-	height: 100000,
-	/**
-	 * how many segments in the horizontal direction
-	 * @default 100
-	 */
-	widthSegments: 100,
-	/**
-	 * how many segments in the vertical direction
-	 * @default 100
-	 */
-	heightSegments: 100,
+import { DescToParsedType, DescToType, parseProps } from '../../private/utils/props'
+import { propsDesc } from './desc'
 
-	/**
-	 * lineWidth
-	 * @unit meter
-	 * @default 10
-	 */
-	lineWidth: 10,
+export { propsDesc }
 
-	/**
-	 * whether to fix overlapping fragments
-	 *
-	 * @note this will add overhead but opacity will be correct
-	 */
-	fixOverlap: true,
+type GridLayerProps = DescToType<typeof propsDesc>
 
-	color: 'red',
-	opacity: 1,
-
-	/**
-	 * the center of grids
-	 */
-	centerLLA: [0, 0, 0],
-
-	/**
-	 * Grid circles
-	 */
-	showCircles: false,
-
-	circleRadius: 10,
-
-	circleSegments: 20,
-
-	circleColor: 'green',
-
-	circleOpacity: 1,
-}
-
-type GridLayerProps = StandardLayerProps & typeof defaultGridLayerProps
-
-export function createGridLayer(
-	props: OptionalDefault<GridLayerProps, typeof defaultGridLayerProps>
-) {
+export function createGridLayer(props: GridLayerProps) {
 	return new GridLayer(props)
 }
 
@@ -88,7 +31,7 @@ export function createGridLayer(
  * planar grid
  * @note grid lines do not align with lng/lat lines
  */
-class GridLayer extends StandardLayer<GridLayerProps> {
+class GridLayer extends StandardLayer<StandardLayerProps & DescToParsedType<typeof propsDesc>> {
 	matr = new UnlitMaterial({ alphaMode: 'BLEND' })
 	geom: IR.Geometry
 	mesh: Mesh
@@ -97,8 +40,9 @@ class GridLayer extends StandardLayer<GridLayerProps> {
 	circleGeom: IR.Geometry
 	circleMesh: Mesh
 
-	constructor(props: OptionalDefault<GridLayerProps, typeof defaultGridLayerProps>) {
-		super({ ...defaultGridLayerProps, ...props })
+	constructor(props: GridLayerProps) {
+		const parsedProps = parseProps(props, propsDesc)
+		super(parsedProps)
 
 		// debugger
 		this.addEventListener('init', (e) => {
@@ -107,7 +51,7 @@ class GridLayer extends StandardLayer<GridLayerProps> {
 			this.watchProps(
 				['color', 'opacity'],
 				(e) => {
-					this.matr.baseColorFactor = new Color(this.getProp('color'))
+					this.matr.baseColorFactor = new Color(this.getProp('color') as any)
 					this.matr.opacity = this.getProp('opacity')
 				},
 				true
@@ -146,7 +90,7 @@ class GridLayer extends StandardLayer<GridLayerProps> {
 			this.watchProps(
 				['circleColor', 'circleOpacity'],
 				(e) => {
-					this.circleMatr.baseColorFactor = new Color(this.getProp('circleColor'))
+					this.circleMatr.baseColorFactor = new Color(this.getProp('circleColor') as any)
 					this.circleMatr.opacity = this.getProp('circleOpacity')
 				},
 				true
@@ -164,10 +108,11 @@ class GridLayer extends StandardLayer<GridLayerProps> {
 					'circleSegments',
 				],
 				(e) => {
+					if (this.circleMesh) {
+						this.group.remove(this.circleMesh)
+					}
+
 					if (!this.getProp('showCircles')) {
-						if (this.circleMesh) {
-							this.group.remove(this.circleMesh)
-						}
 						return
 					}
 
@@ -469,11 +414,3 @@ function generateCircles(
 
 	return geom
 }
-
-type OptionalDefault<TFull extends Record<string, any>, TDefault extends TFull> = Omit<
-	TFull,
-	keyof TDefault
-> &
-	Partial<TDefault>
-
-export { propsDesc } from './desc'

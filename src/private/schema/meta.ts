@@ -38,6 +38,7 @@ export interface PropDescription {
 
 	/**
 	 * valid range of this value
+	 * @note do not use Infinity for json safety
 	 */
 	range?: {
 		min: number | { x: number; y: number; z?: number; w?: number }
@@ -57,7 +58,10 @@ export interface PropDescription {
 	info?: string
 }
 
-type PropTypeMap = {
+/**
+ * Map of prop type to its type in typescript
+ */
+export type PropTypeToTsType = {
 	// basic data type
 	string: string
 	boolean: boolean
@@ -90,13 +94,10 @@ type PropTypeMap = {
 	data: any
 }
 
-type PropType = keyof PropTypeMap
-
-type TsType<T extends PropType> = PropTypeMap[T]
-
-export type DescToType<T extends readonly PropDescription[]> = {
-	[Desc in T[number] as Desc['key']]: TsType<Desc['type']>
-}
+/**
+ * All prop types supported by the app
+ */
+export type PropType = keyof PropTypeToTsType
 
 /**
  * All Layer Classes Supported by the App
@@ -104,7 +105,7 @@ export type DescToType<T extends readonly PropDescription[]> = {
 export type LayerClassesShape = {
 	[LayerClassName: string]: {
 		factory: (props: any) => any
-		propsDescription: PropDescription[]
+		propsDescription: readonly PropDescription[]
 	}
 }
 
