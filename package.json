@@ -21,6 +21,9 @@
   "engines": {
     "node": ">=14.17.4"
   },
+  "polarisApp": {
+    "version": "0.1.0"
+  },
   "resolutions": {},
   "dependencies": {
     "@gs.i/backend-gltf2": "0.2.1-alpha.29",
