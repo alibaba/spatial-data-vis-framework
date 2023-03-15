@@ -278,7 +278,8 @@ export class App extends AppBase {
 
 			// 如果处于这个scene，则立即生效
 			if (this.currentSceneID === scene.id) {
-				this.changeScene(scene.id)
+				// 这里不改变相机机位（skipCamera）
+				this.changeScene(scene.id, 0, true)
 			}
 		})
 

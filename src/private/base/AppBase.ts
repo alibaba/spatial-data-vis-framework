@@ -67,7 +67,7 @@ export class AppBase extends EventDispatcher<LifeCycleEvent> {
 		this.dispatchEvent({ type: 'afterInit' })
 	}
 
-	changeScene(id: string, duration?: number) {
+	changeScene(id: string, duration?: number, skipCamera?: boolean) {
 		// if (this.currentSceneID === id) {
 		// 	console.log('Already in target scene.')
 		// 	return
@@ -94,7 +94,7 @@ export class AppBase extends EventDispatcher<LifeCycleEvent> {
 		targetStage.filterLayers(targetScene.layers)
 
 		// cameraStateCode
-		if (targetScene.cameraStateCode) {
+		if (!skipCamera && targetScene.cameraStateCode) {
 			this.polaris.setStatesCode(targetScene.cameraStateCode, duration)
 		}
 
