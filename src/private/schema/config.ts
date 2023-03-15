@@ -36,7 +36,9 @@ export type AppPolarisConfig = Pick<
 	| 'asyncRendering'
 	| 'pitchLimit'
 	| 'debug'
->
+> & {
+	initialScene?: string
+}
 
 export type LayersConfig<TLayerClasses extends LayerClassesShape> = LayerConfig<TLayerClasses>[]
 

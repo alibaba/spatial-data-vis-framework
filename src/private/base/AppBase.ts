@@ -58,7 +58,8 @@ export class AppBase extends EventDispatcher<LifeCycleEvent> {
 		if (!defaultScene) throw new Error('AppBase: Can not find default scene')
 		this.defaultScene = defaultScene
 
-		this.changeScene('LOCAL_SCENE_DEFAULT')
+		const initialScene = config.app?.initialScene ?? 'LOCAL_SCENE_DEFAULT'
+		this.changeScene(initialScene)
 
 		if (config.app?.debug) {
 			initDebug.call(this)
