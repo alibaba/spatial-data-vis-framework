@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>WebPreviewer</title>
+		<link rel="shortcut icon" href="#" />
+		<style>
+			* {
+				margin: 0;
+			}
+			body {
+				background-color: #1f1f1f;
+			}
+			#container {
+				background-color: #20222b;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="container"></div>
+		<script type="module">
+			import { App } from '../../src/apps/App.ts'
+
+			const params = new URL(location.href).searchParams
+			const preset = params.get('preset') || 'template.ts'
+			const sceneID = params.get('sceneID') || 'LOCAL_SCENE_DEFAULT'
+
+			console.log('preset', preset, 'sceneID', sceneID)
+
+			let config
+			if (preset.endsWith('.json')) {
+				config = await import(`../../src/config/${preset.split('.json')[0]}.json`)
+			} else {
+				const mod = await import(`../../src/config/${preset.split('.ts')[0]}.ts`)
+				config = mod.default
+			}
+
+			console.log(config)
+
+			const container = document.getElementById('container')
+
+			const polarisApp = new App(container, config)
+
+			polarisApp.changeScene(sceneID)
+
+			// enjoy✨
+		</script>
+	</body>
+</html>
