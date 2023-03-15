@@ -21,6 +21,7 @@ export const BPConfig = {
 		background: 'transparent',
 		autoResize: false,
 		pitchLimit: [0, Math.PI * 0.7],
+		initialScene: 'LOCAL_SCENE_DEFAULT' as const,
 		debug: true,
 	},
 	/** 所有 layer 实例，以及每个的配置项 */
@@ -124,12 +125,6 @@ export const BPConfig = {
 				}
 				return res
 			})(),
-			dynamic: false,
-		},
-		{
-			id: 'LOCAL_DATA_1',
-			name: 'china map geojson',
-			initialValue: '$get("https://geojson.cn/api/data/100000.json")',
 			dynamic: false,
 		},
 	],
