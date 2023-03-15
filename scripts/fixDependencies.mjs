@@ -1,3 +1,5 @@
+/*eslint-env node*/
+
 import { argv } from 'process'
 import * as fs from 'fs'
 import path from 'path'

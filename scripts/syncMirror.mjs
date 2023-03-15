@@ -18,7 +18,7 @@ if (!hasClient) {
 
 const client = clientArg.split('=')[1]
 
-const packagesJSON = execSync('npx lerna ls --json --all').toString()
+const packagesJSON = execSync('npx lerna ls --json --all --no-private').toString()
 const packageALL = JSON.parse(packagesJSON)
 
 packageALL.forEach((pkg) => {
