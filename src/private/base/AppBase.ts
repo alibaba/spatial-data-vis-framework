@@ -68,7 +68,23 @@ export class AppBase extends EventDispatcher<LifeCycleEvent> {
 		this.dispatchEvent({ type: 'afterInit' })
 	}
 
-	changeScene(id: string, duration?: number, skipCamera?: boolean) {
+	/**
+	 * 切换场景
+	 */
+	changeScene(
+		/**
+		 * 场景ID
+		 */
+		id: string,
+		/**
+		 * 切换动画时间
+		 */
+		duration?: number,
+		/**
+		 * 是否跳过机位控制
+		 */
+		skipCamera?: boolean
+	) {
 		// if (this.currentSceneID === id) {
 		// 	console.log('Already in target scene.')
 		// 	return

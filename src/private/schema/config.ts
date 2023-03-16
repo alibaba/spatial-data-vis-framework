@@ -5,6 +5,9 @@ import type { LayerClassesShape } from './meta'
 // L0
 
 export type AppConfig<TLayerClasses extends LayerClassesShape = any> = {
+	/**
+	 * Polaris Config Schema Version
+	 */
 	version: '0.0.1'
 
 	app: AppPolarisConfig
@@ -37,6 +40,9 @@ export type AppPolarisConfig = Pick<
 	| 'pitchLimit'
 	| 'debug'
 > & {
+	/**
+	 * 启动时默认进入的场景
+	 */
 	initialScene?: string
 }
 
