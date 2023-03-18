@@ -369,16 +369,21 @@ export class App extends AppBase {
 
 			if (!layerInstance) throw new Error(`layer (id: ${layerConfig.id}) not found.`)
 
-			const affectedProps = {}
+			const affectedProps = {} as Record<string, any>
+			const affectedPropsKeys = [] as string[]
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			Object.entries(layerConfig.dataProps!).forEach(([propKey, dataStubID]) => {
 				if (dataStubID === id) {
 					affectedProps[propKey] = value
+					affectedPropsKeys.push(propKey)
 				}
 			})
 
-			// @todo check mutability (rebuild layer if not mutable)
-			layerInstance.layer.setProps(affectedProps)
+			if (layerShouldRecreate(LayerClasses, layerConfig.class, affectedPropsKeys)) {
+				this.recreateLayer(layerConfig.id)
+			} else {
+				layerInstance.layer.setProps(affectedProps)
+			}
 		}
 	}
 
