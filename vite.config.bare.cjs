@@ -1,6 +1,7 @@
 /*eslint-env node*/
 
 const yargs = require('yargs')
+const fs = require('fs')
 const { hideBin } = require('yargs/helpers')
 const colors = require('colors/safe.js')
 
@@ -44,6 +45,7 @@ module.exports = defineConfig({
 	},
 	plugins: [
 		// basicSsl(),
+		importGlsl(),
 		absolutifyPaths({
 			strings: [
 				['url(/src', `url(${origin}/src/`],
@@ -87,6 +89,24 @@ function absolutifyPaths(options = {}) {
 			return {
 				code: transformedCode,
 				map: null,
+			}
+		},
+	}
+}
+
+function importGlsl() {
+	return {
+		name: 'vite-plugin-import-glsl',
+		async transform(_, id) {
+			const isGlsl = id.endsWith('.glsl')
+
+			if (isGlsl) {
+				const text = await fs.promises.readFile(id, 'utf-8')
+				return {
+					code: `export default \`${text}\``,
+				}
+			} else {
+				return {}
 			}
 		},
 	}

@@ -28,7 +28,7 @@ module.exports = defineConfig({
 	esbuild: {
 		target: 'esnext',
 	},
-	plugins: [basicSsl()],
+	plugins: [basicSsl(), importGlsl()],
 	clearScreen: false,
 	optimizeDeps: {
 		force: true,
@@ -66,4 +66,22 @@ function getDemoEntries() {
 		}
 	}
 	return entries
+}
+
+function importGlsl() {
+	return {
+		name: 'vite-plugin-import-glsl',
+		async transform(_, id) {
+			const isGlsl = id.endsWith('.glsl')
+
+			if (isGlsl) {
+				const text = await fs.promises.readFile(id, 'utf-8')
+				return {
+					code: `export default \`${text}\``,
+				}
+			} else {
+				return {}
+			}
+		},
+	}
 }

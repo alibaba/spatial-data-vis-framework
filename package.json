@@ -14,7 +14,7 @@
     "start": "npx vite",
     "backend": "npx vite -c ./vite.config.bare.cjs",
     "prebuild": "npm run genLayerIndex",
-    "build": "npm run tsc && npx rollup -c ./rollup.config.js && node scripts/configToJson.mjs",
+    "build": "npm run tsc && node ./scripts/glsl-processor.cjs && npx rollup -c ./rollup.config.js && node scripts/configToJson.mjs",
     "tsc": "npx tsc -p ./tsconfig.build.json",
     "updateScaffold": "git remote add polaris https://github.com/alibaba/spatial-data-vis-framework.git && git pull polaris BP/base && git remote remove polaris"
   },
