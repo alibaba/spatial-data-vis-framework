@@ -412,6 +412,13 @@ export class App extends AppBase {
 
 		layer.layer = newLayerInstance
 		this.mainStage.addLayer(layer.id, newLayerInstance, layer.name)
+
+		// refilter to make sure new layers follow the scene filter
+		const currentSceneConfig = config.scenes.find((s) => s.id === this.currentSceneID)
+		if (!currentSceneConfig) {
+			throw new Error(`scene (id: ${this.currentSceneID}) not found.`)
+		}
+		this.mainStage.filterLayers(currentSceneConfig.layers)
 	}
 
 	/**

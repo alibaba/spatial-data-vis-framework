@@ -29,16 +29,20 @@ const [config, dispatch] = useReducer(configReducer, null)
 
 - 使用 null 来初始化 reducer
 - 获取到 初始 config 后，实例化 PolarisApp，并 dispatch 一个 `init` action 来同步
-- 之后都通过 dispatch 来修改 config，每次修改后调用 `polarisApp.configManager.setConfig(structuredClone(config))` 来同步 polarisApp 内部的 config
+- 之后都通过 dispatch 来修改 config，每次修改后调用 `polarisApp.configManager.setConfig(config)` 来同步 polarisApp 内部的 config
+- 如果你不能保证 config 是 immutable ，那么每次传入前应进行 structureClone 或等效操作
 
 注意：
 
-- configManager.getConfig 可以拿到其内部的 config，不要修改这个对象的任何部分，以免逃过脏检查
-  - 日后可能会删掉这个接口
-- setConfig 传入的 config 应该先深拷贝，并且可写（不能是 freeze 过的或者 immutable 的）
-- 你可以假设 PolarisApp 可以响应任何 config 修改，但该过程可能很慢，并且可能是异步的。
-  - 不应该利用 setConfig 来实现任何动画效果
-- 所有的 config 修改都是 你的 editor 进行的，并通过 setConfig 同步给 polarisApp，polarisApp 不会主动修改 config
+- configManager.getConfig 可以拿到完整的 config，应被视为 immutable，不要修改这个对象
+- setConfig 传入新 config 的原则：
+  - 传入的 config 应被视为 immutable（不能原地修改其中的值或者引用）
+  - 不要求传入的 config 是全新的（可以重复使用其中没有变化的子树）
+- 你可以假设 PolarisApp 可以响应任何 config 修改，包括整个场景的重建
+- 你应该假设 setConfig 可能很慢，包含许多冗余计算，无法彻底的回收内存，并且可能是异步的。
+  - 不可用 setConfig 来实现任何运行时动画效果
+- 单向数据流
+  - 你的 editor 生成、维护、修改 config，通过 setConfig 同步给 polarisApp，polarisApp 不会修改 config
 
 ## 实例代码
 
