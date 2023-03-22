@@ -182,7 +182,7 @@ export class App extends AppBase {
 			const layerClassName = layerConfig.class
 
 			if (changedKeys && layerShouldRecreate(LayerClasses, layerClassName, changedKeys)) {
-				this.recreateLayer(e.data.id)
+				this.recreateLayer(e.data.id, 'layer:change:props')
 			} else {
 				if (layer) layer.layer.setProps(e.data.props)
 			}
@@ -190,7 +190,7 @@ export class App extends AppBase {
 
 		m.addEventListener('layer:change:dataProps', (e) => {
 			// recreate layer
-			this.recreateLayer(e.data.id)
+			this.recreateLayer(e.data.id, 'layer:change:dataProps')
 		})
 
 		m.addEventListener('stage:add', (e) => {
@@ -307,7 +307,7 @@ export class App extends AppBase {
 			const ids = findLayerIDsRelatedToDataStub(config.layers, e.data.id)
 			// recreate related layers
 			ids.forEach((id) => {
-				this.recreateLayer(id)
+				this.recreateLayer(id, 'data:change:initialValue')
 			})
 		})
 	}
@@ -380,18 +380,24 @@ export class App extends AppBase {
 			})
 
 			if (layerShouldRecreate(LayerClasses, layerConfig.class, affectedPropsKeys)) {
-				this.recreateLayer(layerConfig.id)
+				this.recreateLayer(layerConfig.id, 'updateDataStub')
 			} else {
 				layerInstance.layer.setProps(affectedProps)
 			}
 		}
 	}
 
-	recreateLayer(id: string) {
+	recreateLayer(id: string, cause?: string) {
 		const config = this.configManager.getConfig()
 		const layerConfig = config.layers.find((l) => l.id === id)
 
 		if (!layerConfig) throw new Error(`layer (id: ${id}) not found.`)
+
+		console.log(
+			`%cPolarisApp: recreating layer(${id},${layerConfig.name})`,
+			'background: #222; color: #ffff33'
+		)
+		if (cause) console.log(' \\_caused by', cause)
 
 		// create a new instance of this layer
 		const initialProps = getInitialProps(layerConfig, config.dataStubs)
