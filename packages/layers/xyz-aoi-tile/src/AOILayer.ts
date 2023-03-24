@@ -444,6 +444,7 @@ export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof
 	}
 
 	dispose() {
+		super.dispose()
 		this._featureCount = 0
 		this.info.times = new Map()
 		this._renderableFeatureMap = new Map()

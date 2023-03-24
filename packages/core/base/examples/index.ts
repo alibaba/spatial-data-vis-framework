@@ -133,10 +133,9 @@ await test(false, 'AbstractLayer', () => {
 				console.log('visibilityChange', e)
 			})
 		}
-		dispose() {}
-		updateAlignmentMatrix() {
-			// console.log('updateAlignmentMatrix called')
-		}
+		// necessary override
+		raycast(): any {}
+		updateAlignmentMatrix() {}
 	}
 
 	const root = new L({
@@ -230,7 +229,6 @@ await test(false, 'AbstractPolaris', () => {
 			throw new Error('not implemented')
 			return [0, 0]
 		}
-		dispose() {}
 	}
 
 	const p = new L({
@@ -308,10 +306,9 @@ await test(false, 'Polaris+Layer', () => {
 		init(projection: Projection, timeline: Timeline, polaris: AbstractPolaris) {
 			console.log(`${this.name} init method`, projection, timeline, polaris)
 		}
-		dispose() {}
-		updateAlignmentMatrix() {
-			// console.log('updateAlignmentMatrix called')
-		}
+		// necessary override
+		raycast(): any {}
+		updateAlignmentMatrix() {}
 	}
 	const inode = new L({
 		name: 'inode',
@@ -366,7 +363,6 @@ await test(false, 'Polaris+Layer', () => {
 			throw new Error('not implemented')
 			return [0, 0]
 		}
-		dispose() {}
 	}
 
 	const p = new P({
@@ -387,7 +383,8 @@ await test(false, 'RootChange', () => {
 				console.log(`${this.getProp('name')} rootChange ${e.root?.name}`)
 			})
 		}
-		dispose() {}
+		// necessary override
+		raycast(): any {}
 		updateAlignmentMatrix() {}
 	}
 
@@ -424,7 +421,8 @@ await test(true, 'AddSubWhenInit', () => {
 				console.log('root rootChange')
 			})
 		}
-		dispose() {}
+		// necessary override
+		raycast(): any {}
 		updateAlignmentMatrix() {}
 	}
 	class Parent extends AbstractLayer {
@@ -436,7 +434,8 @@ await test(true, 'AddSubWhenInit', () => {
 				this.add(new Child({}))
 			})
 		}
-		dispose() {}
+		// necessary override
+		raycast(): any {}
 		updateAlignmentMatrix() {}
 	}
 	class Child extends AbstractLayer {
@@ -447,7 +446,8 @@ await test(true, 'AddSubWhenInit', () => {
 				console.log('child rootChange')
 			})
 		}
-		dispose() {}
+		// necessary override
+		raycast(): any {}
 		updateAlignmentMatrix() {}
 	}
 

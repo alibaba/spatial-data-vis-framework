@@ -39,7 +39,11 @@ import type { AbstractLayer } from './Layer'
  *
  * 		@stage_2 deconstruction
  * 		1. `RemoveEvent` (once, only if you implicitly remove a layer from its parent)
- * 		2. `Layer.dispose`
+ * 		2. @deprecated `Layer.dispose` overload
+ * 		3. `DisposeEvent` (once, only if you implicitly called `Layer.dispose`)
+ * 		@todo Replace `.dispose` with `DisposeEvent`, deconstruction method shouldn't be overloaded.
+ *            It's also much easier to add a cleanup callback right after something is created.
+ *            Instead of keeping the ref on `this` and check it in `.dispose`.
  *
  * A Polaris instance, as a special kind of Layer, is the root of the layer tree.
  * Hence, there are certain events that will never be triggered:
@@ -62,8 +66,10 @@ import type { AbstractLayer } from './Layer'
  * 		before any lifecycle events.
  * - Events do not `flow` like DOMEvent. An Event will be dispatched to THE
  * 		corresponding layer directly. 不存在冒泡与捕获行为.
- * - If a Layer is never added to a polaris scene, `InitEvent` will never be
- * 		triggered. So you may want to check `Layer.inited` in `Layer.dispose`
+ * - Instead of overloading the `dispose` method. It's recommended to add cleanup logic with a
+ *      `DisposeEvent` listener right after something is created. But if you do so. Remember that:
+ *        - You should call `super.dispose()`.
+ *        - A layer can be disposed before inited. Check `this.inited` if necessary.
  *
  * @suggestion
  * Write everything in the `InitEvent` listener, including watchProps, to avoid mistakes.
@@ -119,9 +125,8 @@ type AddEvent = { type: 'add'; parent: AbstractLayer }
  */
 type RemoveEvent = { type: 'remove'; parent: AbstractLayer }
 /**
- * the event when this layer is removed from its parent layer
- * @note will only happen once, because layer can only be added once.
- * @note if the layer is already removed. this event will not fire
+ * the event when this layer's root layer is changed.
+ * @note can happen multiple times if you assemble the tree from leaves to root.
  */
 type RootChangeEvent = { type: 'rootChange'; root: AbstractLayer | null }
 
@@ -181,6 +186,14 @@ type AfterInitEvent = {
 	timeline: Timeline
 	polaris: AbstractPolaris
 }
+/**
+ * the event when this layer is disposed.
+ * @note can only be triggered once
+ * @note a layer can be disposed before init
+ */
+type DisposeEvent = {
+	type: 'dispose'
+}
 
 export type AbstractLayerEvents = {
 	error: ErrorEvent
@@ -195,6 +208,7 @@ export type AbstractLayerEvents = {
 	hover: HoverEvent
 	init: InitEvent
 	afterInit: AfterInitEvent
+	dispose: DisposeEvent
 }
 
 /**

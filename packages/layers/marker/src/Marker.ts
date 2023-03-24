@@ -400,6 +400,7 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 	}
 
 	dispose(): void {
+		super.dispose()
 		this.group.children.forEach((child) => {
 			this.group.children.delete(child)
 		})

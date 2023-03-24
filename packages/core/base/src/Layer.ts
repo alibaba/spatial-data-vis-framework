@@ -158,8 +158,14 @@ export abstract class AbstractLayer<
 		ndc: CoordV2
 	): PickInfo | undefined
 
-	// @todo Is it necessary to dispose propsManager and event Listeners?
-	abstract dispose(): void
+	dispose() {
+		// trigger before deconstruction incase use needs some of them in the callback
+		this.dispatchEvent({ type: 'dispose' })
+
+		// @todo Is it necessary?
+		// this.#propsManager.dispose()
+		// this.removeAllEventListeners()
+	}
 
 	/**
 	 * update geographic alignment matrix
@@ -182,10 +188,11 @@ export abstract class AbstractLayer<
 	/**
 	 * listen to changes of a series of props.
 	 * @note callback will be fired if any of these keys changed
+	 * @note event.props only contains changed keys.
 	 */
 	watchProps<TKeys extends ReadonlyArray<keyof TProps>>(
 		keys: TKeys,
-		callback: Callback<TProps, TKeys[number]>,
+		callback: Callback<Partial<TProps>, TKeys[number]>,
 		options?: ListenerOptions
 	): void {
 		this.#propsManager.addListener(keys, callback, options)

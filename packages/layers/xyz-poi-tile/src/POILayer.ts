@@ -454,6 +454,7 @@ export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof
 	}
 
 	dispose() {
+		super.dispose()
 		this._featureCount = 0
 		this._pointImgElem = new Image()
 		this._renderableFeatureMap = new Map()

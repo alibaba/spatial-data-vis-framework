@@ -251,8 +251,6 @@ export class StandardLayer<
 		}
 	}
 
-	override dispose(): void {}
-
 	raycast(polaris: AbstractPolaris, canvasCoord: CoordV2, ndc: CoordV2): PickInfo | undefined {
 		// Leave the method to be implemented by subclass
 		return

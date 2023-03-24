@@ -212,16 +212,6 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 		)
 	}
 
-	raycast(
-		polaris: AbstractPolaris<any, AbstractPolarisEvents>,
-		canvasCoord: CoordV2,
-		ndc: CoordV2
-	): PickInfo | undefined {
-		throw new Error(
-			'Raycast cannot be called directly on Polaris, it should be implemented by layers. '
-		)
-	}
-
 	/**
 	 * Method for a layer to perform a raycast test for its renderableNode
 	 */

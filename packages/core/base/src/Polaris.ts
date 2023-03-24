@@ -408,6 +408,7 @@ export abstract class AbstractPolaris<
 	 * 销毁，尽可能多的释放资源
 	 */
 	dispose() {
+		super.dispose()
 		this.timeline.dispose()
 		this.cameraProxy.dispose()
 	}
@@ -471,6 +472,12 @@ export abstract class AbstractPolaris<
 	// polaris is the root of projection tree. no need to updateAlignmentMatrix
 	override updateAlignmentMatrix(m: never): never {
 		throw new Error('polaris do not updateAlignmentMatrix')
+	}
+
+	override raycast(): never {
+		throw new Error(
+			'Raycast cannot be called directly on Polaris, it should be implemented by layers. '
+		)
 	}
 	// #endregion
 }
