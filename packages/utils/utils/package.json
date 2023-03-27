@@ -1,6 +1,6 @@
 {
 	"name": "@polaris.gl/utils",
-	"version": "0.1.0-alpha.35",
+	"version": "0.1.0-alpha.36",
 	"description": "",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -22,8 +22,8 @@
 		"@gs.i/frontend-sdk": "0.2.1-alpha.31",
 		"@gs.i/schema-scene": "0.2.1-alpha.31",
 		"@gs.i/utils-math": "0.2.1-alpha.31",
-		"@polaris.gl/base": "0.1.0-alpha.35",
-		"@polaris.gl/projection": "0.1.0-alpha.35",
+		"@polaris.gl/base": "0.1.0-alpha.36",
+		"@polaris.gl/projection": "0.1.0-alpha.36",
 		"is-touch-device": "^1.0.1"
 	},
 	"devDependencies": {
