@@ -42,6 +42,7 @@ export function deepEqual(a: any, b: any): boolean {
 /**
  * compare two props.
  * @note only shallow compare 1-level kv pairs.
+ * @todo support simple 2-level object like vec3
  */
 export function propsEqual(propsA: Record<string, any>, propsB: Record<string, any>): boolean {
 	const keysA = Object.keys(propsA)
@@ -62,6 +63,7 @@ export function propsEqual(propsA: Record<string, any>, propsB: Record<string, a
  * compare two props. return the keys with different values.
  * @note return null if equal.
  * @note only shallow compare 1-level kv pairs.
+ * @todo support simple 2-level object like vec3
  */
 export function propsDiff(
 	propsA: Record<string, any>,

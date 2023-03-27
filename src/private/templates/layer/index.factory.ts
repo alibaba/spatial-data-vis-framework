@@ -78,7 +78,8 @@ export function create$LAYER_NAME$(props: $LAYER_NAME$Props) {
 		...parsedProps,
 	})
 
-	layer.addEventListener('init', async () => {
+	layer.addEventListener('init', async (e) => {
+		const { projection, timeline, polaris } = e
 		// immutable props
 
 		const foo = document.createElement('div')

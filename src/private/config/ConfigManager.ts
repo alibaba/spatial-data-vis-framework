@@ -96,6 +96,10 @@ export class ConfigManager<TLayerClasses extends LayerClassesShape> extends Even
 	/**
 	 * update the full config and trigger change event
 	 * @note the input config will be frozen. do not modify it after.
+	 * @semantic
+	 * - 传入的 config 应视为 immutable（传入后，不能再原地修改其中的值或者引用）
+	 * - 不要求传入的 config 是全新的（可以重复使用其中没有变化的子树）
+	 * - 该接口不能用来做实时动画，不保证更新过程的性能，可能进行无意义的重建来保证正确性
 	 */
 	setConfig(next: AppConfig<TLayerClasses>) {
 		const prev = this[CURR_CONFIG_KEY]
