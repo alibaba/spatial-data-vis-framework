@@ -20,7 +20,6 @@ export const propsDesc = [
 		mutable: true,
 		range: { min: 0, max: 10 },
 		name: '闪烁速度',
-		info: '闪烁速度',
 	},
 	{
 		key: 'density' as const,
@@ -29,24 +28,23 @@ export const propsDesc = [
 		mutable: true,
 		range: { min: 0, max: 1 },
 		name: '闪烁密度',
-		info: '闪烁密度，0: 全部隐藏（不显示），1: 全部显示（不闪烁）， 0.5: 一半显示',
+		info: '0: 全部隐藏（不显示），1: 全部显示（不闪烁）， 0.5: 一半显示',
 	},
 	{
 		key: 'size' as const,
 		type: 'vec2' as const,
 		defaultValue: { x: 10, y: 10 },
 		mutable: true,
-		range: { min: { x: -1, y: -1 }, max: { x: Infinity, y: Infinity } },
+		range: { min: { x: -1, y: -1 }, max: { x: 1000000, y: 1000000 } },
 		name: '尺寸',
-		info: '尺寸，单位米',
+		info: '单位米',
 	},
 	{
 		key: 'texture' as const,
-		type: 'texture' as const,
+		type: 'string' as const,
 		defaultValue: 'https://img.alicdn.com/tfs/TB1tvfvMlr0gK0jSZFnXXbRRXXa-512-512.png',
 		mutable: true,
 		name: '纹理',
-		info: '纹理',
 	},
 
 	// data
