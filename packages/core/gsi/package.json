@@ -34,8 +34,7 @@
 		"@polaris.gl/projection": "0.1.0-alpha.35",
 		"@polaris.gl/utils": "0.1.0-alpha.35",
 		"ani-timeline": "alpha",
-		"camera-proxy": "alpha",
-		"hammerjs": "^2.0.8"
+		"camera-proxy": "alpha"
 	},
 	"devDependencies": {
 		"typescript": ">4.4.0"

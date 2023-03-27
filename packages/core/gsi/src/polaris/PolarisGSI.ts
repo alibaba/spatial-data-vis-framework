@@ -18,7 +18,6 @@ import { PointerControl, TouchControl, Cameraman } from 'camera-proxy'
 import { isTouchDevice } from '@polaris.gl/utils'
 import { HtmlView, GSIView } from '../layer/index'
 import type { StandardLayer } from '../layer/index'
-import Hammer from 'hammerjs'
 import { MatProcessor } from '@gs.i/processor-matrix'
 import { BoundingProcessor } from '@gs.i/processor-bound'
 import { GraphProcessor } from '@gs.i/processor-graph'
@@ -110,11 +109,6 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 	reflectionTexture?: IR.Texture
 	reflectionTextureBlur?: IR.Texture
 	reflectionMatrix?: IR.Matrix
-
-	/**
-	 * pointer 事件封装
-	 */
-	private hammer
 
 	/**
 	 * Container resize listener
@@ -298,10 +292,6 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 			this.renderer.dispose()
 		}
 
-		// Remove event listeners
-		this.hammer.off('tap')
-		this.hammer.destroy()
-
 		// Dispose layers
 		this.traverse((base) => {
 			base !== this && base.dispose && base.dispose()
@@ -332,24 +322,18 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 			e.preventDefault()
 		})
 
-		// Pointer event registration
-		this.hammer = new Hammer.Manager(element)
-		const tap = new Hammer.Tap({
-			event: 'tap',
-			pointers: 1,
-			taps: 1,
-		})
-		this.hammer.add(tap)
-
-		// Handle `tap` event
-		this.hammer.on('tap', (e) => {
+		const onClick = (e: MouseEvent) => {
 			if (this.getProp('enablePicking')) {
 				const bbox = element.getBoundingClientRect()
 				const left = bbox.left
 				const top = bbox.top
-				const canvasCoords = { x: e.center.x - left, y: e.center.y - top }
+				const canvasCoords = { x: e.x - left, y: e.y - top }
 				this._handlePointerEvent(canvasCoords, 'pick')
 			}
+		}
+		element.addEventListener('click', onClick)
+		this.addEventListener('dispose', () => {
+			element.removeEventListener('click', onClick)
 		})
 
 		// Use flag & timer to prevent [touchend, mousemove] linked events triggering
@@ -398,6 +382,9 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 			this
 		)
 		element.addEventListener('mousemove', mouseMoveHandler)
+		this.addEventListener('dispose', () => {
+			element.removeEventListener('mousemove', mouseMoveHandler)
+		})
 	}
 
 	private _handlePointerEvent(
