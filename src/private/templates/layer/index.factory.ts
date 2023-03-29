@@ -27,8 +27,6 @@ import {
  * - generate default props.
  * - check props type and range.
  * - generate the props editor UI.
- *
- * @note depthTest, renderOrder 等标准属性不需要声明
  */
 export const propsDesc = [
 	{
