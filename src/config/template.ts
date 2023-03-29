@@ -46,7 +46,7 @@ export const BPConfig = {
 			class: 'ModelLayer' as const,
 			props: {
 				scale: 50,
-				glb: '/assets/models/demo.glb',
+				glb: 'https://raw.githubusercontent.com/alibaba/spatial-data-vis-framework/BP/base/assets/models/demo.glb',
 				projectionDesc: 'desc0|MercatorProjection|right|meters|0,0,0',
 			},
 		},
