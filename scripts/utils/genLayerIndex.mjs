@@ -38,21 +38,20 @@ export async function genLayerIndex() {
 	 */
 	
 	// pragma: BP_GEN LAYERS_IMPORT START
-	${layerNames
-		.map((name) => `import { create${name}, propsDesc as propsDesc${name} } from './${name}'`)
-		.join('\n')}
+	${layerNames.map((name) => `import * as ${name}Module from './${name}'`).join('\n')}
 	// pragma: BP_GEN LAYERS_IMPORT END
 	
 	export const LayerClasses = {
 		// pragma: BP_GEN LAYERS_EXPORT START
 		${layerNames
-			.map((layerName) => [
-				`// pragma: ${layerName} START`,
-				`${layerName}: {`,
-				`factory: create${layerName},`,
-				`propsDescription: propsDesc${layerName},`,
+			.map((name) => [
+				`// pragma: ${name} START`,
+				`${name}: {`,
+				`factory: ${name}Module.create${name},`,
+				`propsDescription: ${name}Module.propsDesc,`,
+				`info: (${name}Module['info'] ?? {}) as Record<string, any>,`,
 				'},',
-				`// pragma: ${layerName} END`,
+				`// pragma: ${name} END`,
 			])
 			.flat()
 			.join('\n')}

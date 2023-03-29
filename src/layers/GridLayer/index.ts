@@ -21,6 +21,13 @@ import { propsDesc } from './desc'
 
 export { propsDesc }
 
+export const info = {
+	name: 'GridLayer',
+	nameCN: '地面网格',
+	description: 'A grid layer that can be used as a background or visual aid',
+	descriptionCN: '铺在地面上的网格，用于背景装饰或者视觉辅助',
+}
+
 type GridLayerProps = DescToType<typeof propsDesc>
 
 export function createGridLayer(props: GridLayerProps) {
