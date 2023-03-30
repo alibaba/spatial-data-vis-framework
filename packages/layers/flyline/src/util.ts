@@ -50,46 +50,6 @@ function lerpArray(from, to, a) {
 	return result
 }
 
-/**
- * 经纬度坐标到平面 xyz 转换方法
- *
- * @param {float} lng 经度
- * @param {float} lat 纬度
- * @param {Array} center 平面中心的经纬度
- * @param {float} 缩放比
- * @return {Object} 返回球面 xyz 坐标的对象
- */
-export function ll2xyzPlane(lng, lat, center, scale) {
-	return {
-		x: (lng - center[0]) * scale,
-		y: (lat - center[1]) * scale,
-		z: 0,
-	}
-}
-
-/**
- * 经纬度坐标到球面 xyz 转换方法
- *
- * @param {float} lng 经度
- * @param {float} lat 纬度
- * @param {float} radius 球半径
- * @return {Object} 返回球面 xyz 坐标的对象
- */
-export function ll2xyz(lng, lat, radius) {
-	const phi = (lat * Math.PI) / 180
-	const theta = ((lng - 180) * Math.PI) / 180
-
-	const x = -radius * Math.cos(phi) * Math.cos(theta)
-	const y = radius * Math.sin(phi)
-	const z = radius * Math.cos(phi) * Math.sin(theta)
-
-	return {
-		x,
-		y,
-		z,
-	}
-}
-
 // 数组降维
 export function dimReduce(array) {
 	let linearArray

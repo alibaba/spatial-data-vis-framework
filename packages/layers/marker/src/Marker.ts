@@ -218,7 +218,7 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 				() => {
 					this._lnglatalt = [this.getProp('lng'), this.getProp('lat'), this.getProp('alt') ?? 0]
 					this.updateLnglatPosition(projection)
-					this.updateWorldPosition()
+					this.updateWorldPosition(true) // @note: updateLnglatPosition 会修改 group 位置
 					this.updateVisibility(polaris.cameraProxy, projection)
 					this.updateScreenXY()
 					this.updateElement()
