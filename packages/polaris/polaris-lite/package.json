@@ -22,17 +22,17 @@
 		"build:umd": "npx webpack"
 	},
 	"dependencies": {
-		"@gs.i/backend-threelite": "0.2.1-alpha.31",
-		"@gs.i/frontend-sdk": "0.2.1-alpha.31",
-		"@gs.i/processor-raycast": "0.2.1-alpha.31",
-		"@gs.i/schema-scene": "0.2.1-alpha.31",
+		"@gs.i/backend-threelite": "0.2.1-alpha.32",
+		"@gs.i/frontend-sdk": "0.2.1-alpha.32",
+		"@gs.i/processor-raycast": "0.2.1-alpha.32",
+		"@gs.i/schema-scene": "0.2.1-alpha.32",
 		"@polaris.gl/base": "0.1.0-alpha.36",
 		"@polaris.gl/gsi": "0.1.0-alpha.36",
 		"three-lite": "0.0.139-alpha"
 	},
 	"devDependencies": {
-		"@gs.i/processor-indicator": "0.2.1-alpha.31",
-		"@gs.i/utils-random-scene": "0.2.1-alpha.31",
+		"@gs.i/processor-indicator": "0.2.1-alpha.32",
+		"@gs.i/utils-random-scene": "0.2.1-alpha.32",
 		"@types/offscreencanvas": "latest",
 		"@types/webvr-api": "latest",
 		"typescript": ">4.4.0"
