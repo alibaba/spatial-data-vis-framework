@@ -20,10 +20,10 @@
 		"build:umd": "npx webpack"
 	},
 	"dependencies": {
-		"@gs.i/frontend-sdk": "0.2.1-alpha.32",
-		"@gs.i/schema-scene": "0.2.1-alpha.32",
-		"@gs.i/utils-geometry": "0.2.1-alpha.32",
-		"@gs.i/utils-math": "0.2.1-alpha.32",
+		"@gs.i/frontend-sdk": "0.2.1-alpha.33",
+		"@gs.i/schema-scene": "0.2.1-alpha.33",
+		"@gs.i/utils-geometry": "0.2.1-alpha.33",
+		"@gs.i/utils-math": "0.2.1-alpha.33",
 		"@polaris.gl/base": "0.1.0-alpha.38",
 		"@polaris.gl/gsi": "0.1.0-alpha.38",
 		"@polaris.gl/projection": "0.1.0-alpha.38",

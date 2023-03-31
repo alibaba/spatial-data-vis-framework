@@ -20,7 +20,7 @@
 		"rebuild": "npm run clean && npm run build"
 	},
 	"dependencies": {
-		"@gs.i/utils-math": "0.2.1-alpha.32",
+		"@gs.i/utils-math": "0.2.1-alpha.33",
 		"@polaris.gl/projection": "0.1.0-alpha.38"
 	},
 	"devDependencies": {
