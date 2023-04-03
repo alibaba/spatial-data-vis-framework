@@ -29,12 +29,14 @@ import {
  * - generate the props editor UI.
  */
 export const propsDesc = [
+	// example: mutable prop
 	{
 		name: 'foo',
 		key: 'foo',
 		type: 'string',
 		defaultValue: 'foo-0',
 	},
+	// example: immutable prop
 	{
 		name: 'bar',
 		key: 'bar',
@@ -56,13 +58,14 @@ type $LAYER_NAME$MutableProps = DescToTypeMutable<typeof propsDesc>
  *
  * @description 工厂函数模式说明
  *
- * @note 参考 React 的函数式编程
+ * @note 函数式编程
  * - propsDesc 中的所有属性，没有指明 mutable 的，默认都为 immutable
- * - immutable 属性变化，会触发 `layer.dispose()` ，然后用全新的 props 重新执行工厂函数
+ * - immutable 属性变化，会销毁Layer，然后用全新的 props 重新执行工厂函数
+ * - 工厂函数无状态，但是可以通过闭包自行缓存一些计算
  *
- * @legacy 兼容经典的监听-响应模式
+ * @legacy 兼容经典的监听模式
  * - 如果希望某个属性可以运行时频繁变化
- * - - 将其标为 `mutable: true`
+ * - - propsDesc 中将其标为 `mutable: true`
  * - - 通过 `layer.watchProps()` / `layer.watchProp()` 监听变化并响应
  */
 export function create$LAYER_NAME$(props: $LAYER_NAME$Props) {
@@ -78,13 +81,14 @@ export function create$LAYER_NAME$(props: $LAYER_NAME$Props) {
 
 	layer.addEventListener('init', async (e) => {
 		const { projection, timeline, polaris } = e
-		// immutable props
+
+		// example: immutable props
 
 		const foo = document.createElement('div')
 		layer.element.appendChild(foo)
 		foo.innerHTML = `Hello from $LAYER_NAME$. 🎉 foo:${parsedProps.foo}`
 
-		// mutable props
+		// example: mutable props
 
 		const bar = document.createElement('div')
 		layer.element.appendChild(bar)
@@ -94,7 +98,7 @@ export function create$LAYER_NAME$(props: $LAYER_NAME$Props) {
 			(event) => {
 				bar.innerHTML = `Hello from $LAYER_NAME$. 🎉 bar:${event.props.bar}`
 			},
-			true // immediate callback with initial props
+			true // immediate callback with current props
 		)
 
 		// 🔨 your stuffs
