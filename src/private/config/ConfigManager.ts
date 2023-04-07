@@ -61,6 +61,14 @@ export class ConfigManager<TLayerClasses extends LayerClassesShape> extends Even
 		dataStubs: [],
 	})
 
+	/**
+	 * Whether to deepFreeze the config.
+	 * - recommended to enable in dev mode.
+	 * 	- if config is edited in place by mistake, it may break dirt check and cause unexpected behavior
+	 * - significant performance impact
+	 */
+	useDeepFreeze = true
+
 	constructor(initialConfig?: AppConfig<TLayerClasses>) {
 		super()
 
@@ -80,7 +88,7 @@ export class ConfigManager<TLayerClasses extends LayerClassesShape> extends Even
 			this[CURR_CONFIG_KEY].dataStubs = []
 		}
 
-		deepFreeze(this[CURR_CONFIG_KEY])
+		if (this.useDeepFreeze) deepFreeze(this[CURR_CONFIG_KEY])
 
 		this.dispatchEvent({ type: 'init', data: this[CURR_CONFIG_KEY] })
 	}
@@ -110,7 +118,7 @@ export class ConfigManager<TLayerClasses extends LayerClassesShape> extends Even
 			this[CURR_CONFIG_KEY].dataStubs = []
 		}
 
-		deepFreeze(this[CURR_CONFIG_KEY])
+		if (this.useDeepFreeze) deepFreeze(this[CURR_CONFIG_KEY])
 
 		digest(this, prev, this[CURR_CONFIG_KEY])
 	}
