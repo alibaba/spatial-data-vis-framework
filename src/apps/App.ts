@@ -86,6 +86,11 @@ export class App extends AppBase {
 
 		this.layers = layers
 
+		if (config.app.debug) {
+			// safe check. throw if config not immutable
+			this.configManager.useDeepFreeze = true
+		}
+
 		this.configManager.init(config)
 
 		this.watchConfig()
