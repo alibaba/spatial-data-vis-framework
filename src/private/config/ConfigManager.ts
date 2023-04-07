@@ -67,7 +67,7 @@ export class ConfigManager<TLayerClasses extends LayerClassesShape> extends Even
 	 * 	- if config is edited in place by mistake, it may break dirt check and cause unexpected behavior
 	 * - significant performance impact
 	 */
-	useDeepFreeze = true
+	useDeepFreeze = false
 
 	constructor(initialConfig?: AppConfig<TLayerClasses>) {
 		super()
