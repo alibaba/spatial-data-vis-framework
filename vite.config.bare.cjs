@@ -59,7 +59,7 @@ module.exports = defineConfig({
 	],
 	clearScreen: false,
 	optimizeDeps: {
-		force: true,
+		// force: true,
 		esbuildOptions: {
 			// splitting: false,
 			// external: 'workers/*',
