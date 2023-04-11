@@ -115,8 +115,8 @@ export abstract class AbstractPolaris<
 			timeline: timeline as any, // AnimatedCameraProxy use old version of timeline but only unchanged api
 			/** @LIMIT 开启inert会影响的部分：SphereProject同步，Animations的结束时间，暂时关闭inert */
 			inert: false,
-			canvasWidth: this.#width,
-			canvasHeight: this.#height,
+			canvasWidth: this.canvasWidth,
+			canvasHeight: this.canvasHeight,
 			ratio: this.#ratio,
 			onUpdate: () => {},
 		})
