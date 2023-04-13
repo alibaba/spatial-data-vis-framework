@@ -32,6 +32,9 @@ export const propsDesc = [
 		type: 'string',
 		defaultValue: 'desc0|MercatorProjection|right|meters|0,0,0',
 		mutable: false,
+		$editor: {
+			subtype: 'projection',
+		},
 	},
 ] as const
 

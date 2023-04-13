@@ -56,6 +56,14 @@ export interface PropDescription {
 	 * if not provided, will use name as the description
 	 */
 	info?: string
+
+	/**
+	 * extra options for the editor
+	 */
+	$editor?: {
+		subtype?: string
+		options?: { label: string; value: any }[]
+	}
 }
 
 /**
@@ -73,19 +81,6 @@ export type PropTypeToTsType = {
 	vec2: { x: number; y: number }
 	vec3: { x: number; y: number; z: number }
 	vec4: { x: number; y: number; z: number; w: number }
-	texture: object | string
-
-	/**
-	 * complicated structure that can be represented by a JSON string
-	 * @experimental
-	 */
-	json: any
-
-	/**
-	 * url string
-	 * @experimental
-	 */
-	url: string
 
 	/**
 	 * runtime data
