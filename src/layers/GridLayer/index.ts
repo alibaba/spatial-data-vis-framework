@@ -154,9 +154,17 @@ class GridLayer extends StandardLayer<StandardLayerProps & DescToParsedType<type
 
 	setLngLatPosition(projection: Projection) {
 		const centerLLA = this.getProp('centerLLA')
-		const xyz = projection.project(centerLLA[0] ?? 0, centerLLA[1] ?? 0, centerLLA[2] ?? 0)
-		this.group.transform.position.set(...xyz)
-		this.group.transform.version++
+		try {
+			const lla = JSON.parse(centerLLA)
+
+			const xyz = projection.project(lla[0] ?? 0, lla[1] ?? 0, lla[2] ?? 0)
+			this.group.transform.position.set(...xyz)
+			this.group.transform.version++
+		} catch (error) {
+			const msg = `failed to parse invalid centerLLA: ${centerLLA}`
+			console.error(msg)
+			console.error(error)
+		}
 	}
 }
 

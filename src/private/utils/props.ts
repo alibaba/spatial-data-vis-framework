@@ -99,12 +99,6 @@ function checkType(value: any, type: PropType) {
 				value.b !== undefined)
 		)
 
-	if (type === 'texture') return typeof value === 'object' || typeof value === 'string'
-
-	if (type === 'json') return typeof value === 'object'
-
-	if (type === 'url') return typeof value === 'string'
-
 	if (type === 'data') return typeof value === 'object'
 
 	throw new Error(`Unknown prop type: ${type}`)
