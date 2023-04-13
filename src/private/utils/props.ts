@@ -2,7 +2,7 @@
  * Layer Props related utils
  */
 import type { PropDescription, PropType } from '../schema/meta'
-import type { PropTypeToTsType } from '../schema/meta'
+import type { PropTypeMap } from '../schema/meta'
 
 /**
  * 检查、整理 Props
@@ -186,7 +186,7 @@ function checkRange(value: any, desc: PropDescription) {
 /**
  * Get the typescript type of a prop type
  */
-type TsType<T extends PropType> = PropTypeToTsType[T]
+type TsType<T extends PropType> = PropTypeMap[T]
 
 /**
  * Convert a prop descriptions array to a props interface
