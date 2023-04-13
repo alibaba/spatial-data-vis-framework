@@ -86,17 +86,17 @@ export function configReducer(
 				return
 			}
 			case 'addLayerToScene': {
-				const scene = draft.stages.find((stage) => stage.id === action.payload.sceneId)
+				const scene = draft.scenes.find((scene) => scene.id === action.payload.sceneId)
 				if (!scene) throw new Error(`Scene id ${action.payload.sceneId} not found`)
 				if (scene.layers.includes('*')) return
 				scene.layers.push(action.payload.layerId)
 				return
 			}
 			case 'removeLayerFromScene': {
-				const scene = draft.stages.find((stage) => stage.id === action.payload.sceneId)
+				const scene = draft.scenes.find((scene) => scene.id === action.payload.sceneId)
 				if (!scene) throw new Error(`Scene id ${action.payload.sceneId} not found`)
 				scene.layers = specifyIds(draft, action.payload.sceneId) // handle '*'
-				scene.layers.filter((id) => id !== action.payload.layerId)
+				scene.layers = scene.layers.filter((id) => id !== action.payload.layerId)
 				return
 			}
 

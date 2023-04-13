@@ -16,10 +16,14 @@ export type AppConfig<TLayerClasses extends LayerClassesShape = any> = {
 	stages: StagesConfig
 	scenes: ScenesConfig
 
+	dataStubs?: DataStubsConfig
+
 	/**
 	 * @experimental
+	 * 编辑器存储的UI状态
+	 * @note 不影响运行时行为
 	 */
-	dataStubs?: DataStubsConfig
+	$editor?: any
 }
 
 // L1
