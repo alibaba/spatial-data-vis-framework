@@ -69,7 +69,7 @@ export interface PropDescription {
 /**
  * Map of prop type to its type in typescript
  */
-export type PropTypeToTsType = {
+export type PropTypeMap = {
 	// basic data type
 	string: string
 	boolean: boolean
@@ -92,7 +92,13 @@ export type PropTypeToTsType = {
 /**
  * All prop types supported by the app
  */
-export type PropType = keyof PropTypeToTsType
+export type PropType = keyof PropTypeMap
+
+export type TsType<T extends PropType> = PropTypeMap[T]
+
+export type DescToType<T extends readonly PropDescription[]> = {
+	[Desc in T[number] as Desc['key']]: TsType<Desc['type']>
+}
 
 /**
  * All Layer Classes Supported by the App
@@ -101,6 +107,7 @@ export type LayerClassesShape = {
 	[LayerClassName: string]: {
 		factory: (props: any) => any
 		propsDescription: readonly PropDescription[]
+		info?: Record<string, any>
 	}
 }
 
