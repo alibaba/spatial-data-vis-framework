@@ -62,7 +62,7 @@ export interface PropDescription {
 	 */
 	$editor?: {
 		subtype?: string
-		options?: { label: string; value: any }[]
+		options?: readonly { label: string; value: any }[]
 	}
 }
 
