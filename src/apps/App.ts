@@ -18,6 +18,7 @@ import { StageBase } from '../private/base/StageBase'
 import { ConfigManager } from '../private/config/ConfigManager'
 import type { AppConfig, DataStub, LayerConfig } from '../private/schema/config'
 import type { AppMeta, LayerClassesShape } from '../private/schema/meta'
+import { getErrorMask } from '../private/utils/getErrorMask'
 import { freeID, occupyID } from '../private/utils/unique'
 
 const SCOPE_KEY = Symbol('scopeKey')
@@ -98,9 +99,20 @@ export class App extends AppBase {
 		ViteHot: if (import.meta.hot) {
 			// @note 仅在开发环境下启用热更新, label 用于让 rollup 删除这段代码
 
+			// 用于显示错误信息的mask
+			const { errorMask, errorMaskText } = getErrorMask()
+			container.appendChild(errorMask)
+
+			// 处理bug @note not working
+			// import.meta.hot.on('vite:error', (e) => {
+			// 	console.error('vite syntax error', e)
+			// })
+
 			// 处理自身更新
 			import.meta.hot.accept((newModule) => {
 				if (newModule) {
+					errorMask.style.display = 'none'
+
 					// newModule is undefined when SyntaxError happened
 					const reloadAppMod = globalThis.__Polaris_Dev_Reload_App_Module
 
@@ -112,8 +124,8 @@ export class App extends AppBase {
 						location.reload()
 					}
 				} else {
-					console.warn('newModule is undefined. Check SyntaxErrors in your code.')
-					// location.reload()
+					errorMask.style.display = 'flex'
+					errorMaskText.innerText = 'SyntaxError. Check console for details.'
 				}
 			})
 

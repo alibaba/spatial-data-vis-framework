@@ -20,5 +20,9 @@ declare global {
 		dispose(cb: (data: any) => void): void
 		prune(cb: (data: any) => void): void
 		invalidate(message?: string): void
+
+		// `InferCustomEventPayload` provides types for built-in Vite events
+		on<T extends string>(event: T, cb: (payload: any) => void): void
+		send<T extends string>(event: T, data?: any): void
 	}
 }
