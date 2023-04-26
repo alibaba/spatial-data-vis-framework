@@ -42,6 +42,8 @@ export type AppPolarisConfig = Pick<
 	| 'enablePointer'
 	| 'asyncRendering'
 	| 'pitchLimit'
+	| 'zoomLimit'
+	| 'lights'
 	| 'debug'
 > & {
 	/**
