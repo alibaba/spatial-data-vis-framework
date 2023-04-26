@@ -88,7 +88,7 @@ export const propsDesc = [
 	{
 		key: 'centerLLA',
 		type: 'string',
-		defaultValue: [0, 0, 0],
+		defaultValue: '[0, 0, 0]',
 		mutable: true,
 		name: 'Center lng/lat/alt',
 	},
