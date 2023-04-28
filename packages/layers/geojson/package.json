@@ -23,12 +23,12 @@
 		"bundleWorker": "npx rollup ./dist/workers/LineGeomWorkerFactory.js --file ./dist/workers/LineGeomWorkerFactory.js -c rollup.config.js && npx rollup ./dist/workers/PolygonGeomWorkerFactory.js --file ./dist/workers/PolygonGeomWorkerFactory.js -c rollup.config.js"
 	},
 	"dependencies": {
-		"@gs.i/frontend-gline": "0.2.1-alpha.33",
-		"@gs.i/frontend-sdk": "0.2.1-alpha.33",
-		"@gs.i/schema-scene": "0.2.1-alpha.33",
-		"@gs.i/utils-geometry": "0.2.1-alpha.33",
-		"@gs.i/utils-math": "0.2.1-alpha.33",
-		"@gs.i/utils-specify": "0.2.1-alpha.33",
+		"@gs.i/frontend-gline": "0.2.1-alpha.34",
+		"@gs.i/frontend-sdk": "0.2.1-alpha.34",
+		"@gs.i/schema-scene": "0.2.1-alpha.34",
+		"@gs.i/utils-geometry": "0.2.1-alpha.34",
+		"@gs.i/utils-math": "0.2.1-alpha.34",
+		"@gs.i/utils-specify": "0.2.1-alpha.34",
 		"@polaris.gl/base": "0.1.0-alpha.40",
 		"@polaris.gl/gsi": "0.1.0-alpha.40",
 		"@polaris.gl/utils-indicator": "0.1.0-alpha.40",
