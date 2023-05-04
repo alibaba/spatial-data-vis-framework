@@ -29,27 +29,42 @@ module.exports = defineConfig(
 )
 
 function getDemoEntries() {
-	const dirPath = path.resolve(__dirname, './')
-	const entries = []
-	const pageDir = fs.readdirSync(dirPath) || []
+	return getAllPageDirs(path.resolve(__dirname, './')).map((dir) => {
+		return path.relative(__dirname, dir)
+	})
+}
+
+function getAllPageDirs(root) {
+	const dirs = []
+	const pageDir = fs.readdirSync(root) || []
 
 	for (let j = 0; j < pageDir.length; j++) {
-		const filePath = path.resolve(dirPath, pageDir[j])
+		const filePath = path.resolve(root, pageDir[j])
 		const fileStat = fs.statSync(filePath)
 		const filename = path.basename(filePath)
 
 		if (
+			fileStat.isSymbolicLink() ||
 			filename === 'node_modules' ||
 			filename === 'typings' ||
 			filename === 'proxy' ||
-			filename.startsWith('__')
+			filename.startsWith('__') ||
+			filename.startsWith('.') ||
+			filename.startsWith('_')
 		) {
 			continue
 		}
 
-		if (fileStat.isDirectory() && !filename.startsWith('_')) {
-			entries.push(pageDir[j])
+		if (fileStat.isDirectory()) {
+			const files = fs.readdirSync(filePath)
+			if (files.includes('index.html')) {
+				dirs.push(filePath)
+			} else {
+				for (let i = 0; i < files.length; i++) {
+					dirs.push(...getAllPageDirs(filePath, files[i]))
+				}
+			}
 		}
 	}
-	return entries
+	return dirs
 }
