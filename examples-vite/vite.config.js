@@ -56,13 +56,11 @@ function getAllPageDirs(root) {
 		}
 
 		if (fileStat.isDirectory()) {
-			const files = fs.readdirSync(filePath)
+			const files = fs.readdirSync(filePath) || []
 			if (files.includes('index.html')) {
 				dirs.push(filePath)
 			} else {
-				for (let i = 0; i < files.length; i++) {
-					dirs.push(...getAllPageDirs(filePath, files[i]))
-				}
+				dirs.push(...getAllPageDirs(filePath))
 			}
 		}
 	}

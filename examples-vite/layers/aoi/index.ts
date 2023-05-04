@@ -145,8 +145,5 @@ function getAOIUrl(x, y, z) {
 			},
 		},
 	}
-	return (
-		'EXAMPLE' +
-		JSON.stringify(params)
-	)
+	return 'EXAMPLE' + JSON.stringify(params)
 }

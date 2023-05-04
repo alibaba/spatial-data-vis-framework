@@ -3,6 +3,8 @@
 	"compilerOptions": {
 		"rootDir": ".",
 		"composite": true,
+		"module": "esnext",
+		"target": "es2017",
 		"incremental": true
 	},
 	"include": [".", "typings"],
