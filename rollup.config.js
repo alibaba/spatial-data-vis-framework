@@ -1,11 +1,11 @@
 import commonjs from '@rollup/plugin-commonjs'
 import { nodeResolve } from '@rollup/plugin-node-resolve'
+import replace from '@rollup/plugin-replace'
 import strip from '@rollup/plugin-strip'
 import { readdirSync, statSync } from 'fs'
 import * as path from 'path'
 import { dirname } from 'path'
 import dts from 'rollup-plugin-dts'
-import sourcemaps from 'rollup-plugin-sourcemaps'
 import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -25,10 +25,6 @@ function getAppEntries() {
 			continue
 		}
 
-		// if (fileStat.isDirectory()) {
-		// entries.push(files[j])
-		// }
-
 		const stem = path.basename(filePath, extension)
 
 		entries.push(
@@ -40,7 +36,15 @@ function getAppEntries() {
 					format: 'esm',
 					sourcemap: true,
 				},
-				plugins: [nodeResolve(), commonjs(), sourcemaps(), strip({ labels: ['ViteHot'] })],
+				plugins: [
+					nodeResolve(),
+					commonjs(),
+					strip({ labels: ['ViteHot'] }),
+					replace({
+						preventAssignment: true,
+						'process.env.NODE_ENV': JSON.stringify('production'),
+					}),
+				],
 			},
 			// ts declaration
 			{

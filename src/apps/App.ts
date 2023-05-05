@@ -103,10 +103,10 @@ export class App extends AppBase {
 			const { errorMask, errorMaskText } = getErrorMask()
 			container.appendChild(errorMask)
 
-			// 处理bug @note not working
-			// import.meta.hot.on('vite:error', (e) => {
-			// 	console.error('vite syntax error', e)
-			// })
+			// 处理bug
+			import.meta.hot.on('vite:error', (e) => {
+				console.error('vite syntax error', e)
+			})
 
 			// 处理自身更新
 			import.meta.hot.accept((newModule) => {
