@@ -5,7 +5,7 @@
  * @note this reducer use immer. Config should be treated as immutable.
  * @note you need to understand react.reducer.hook and immer to use this reducer.
  */
-import produce from 'immer'
+import { produce } from 'immer'
 
 import type { AppConfig } from '../schema/config'
 import type { ConfigEventData } from './ConfigManager'
