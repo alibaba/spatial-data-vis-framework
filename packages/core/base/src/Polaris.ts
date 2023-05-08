@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /**
  * Copyright (C) 2021 Alibaba Group Holding Limited
  * All rights reserved.
@@ -79,15 +80,19 @@ export abstract class AbstractPolaris<
 
 		/**
 		 * 等到全部初始化完成后再开始计时运行
-		 * @TODO not safe for input timeline
 		 */
-		_props.autoplay &&
-			setTimeout(() => {
-				if (this.timeline.playing)
-					throw new Error('Polaris:: Timeline is already playing. Autoplay may restart timeline.')
+		if (_props.autoplay) {
+			if (_props.timeline) {
+				console.warn('Polaris:: autoplay will be ignored for custom timeline.')
+			} else {
+				setTimeout(() => {
+					if (this.timeline.playing)
+						throw new Error('Polaris:: Timeline is already playing. Autoplay may restart timeline.')
 
-				this.timeline.play()
-			})
+					this.timeline.play()
+				})
+			}
+		}
 
 		/**
 		 * init projection
@@ -121,11 +126,12 @@ export abstract class AbstractPolaris<
 			onUpdate: () => {},
 		})
 
-		// @todo not a good practice, order dependent
 		// cameraProxy config props listener
 		this.watchProps(
 			['zoomLimit', 'pitchLimit'],
-			() => {
+			(e) => {
+				if (!e.initial) console.warn('Changing camera limit after init is deprecated.')
+
 				cameraProxy['limit'].zoom = this.getProp('zoomLimit')
 				cameraProxy['limit'].pitch = this.getProp('pitchLimit')
 			},
@@ -153,8 +159,8 @@ export abstract class AbstractPolaris<
 				// projection alignment
 				// skip root
 				if (layer.parent) {
-					const parentProjection = resolveProjection(layer.parent) as Projection
-					const projection = resolveProjection(layer) as Projection
+					const parentProjection = resolveProjection(layer.parent)!
+					const projection = resolveProjection(layer)!
 
 					const visualCenter = this.getGeoCenter()
 					const alignmentMatrix = Coordinator.getRelativeMatrix(parentProjection, projection, [
