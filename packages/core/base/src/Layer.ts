@@ -61,7 +61,7 @@ export abstract class AbstractLayer<
 	constructor(props?: TProps) {
 		super()
 
-		this.name = props?.name || 'abstract-layer'
+		this.name = props?.name || 'layer'
 
 		// 本地投影和时间线
 		this.#projectionLocal = props?.projection

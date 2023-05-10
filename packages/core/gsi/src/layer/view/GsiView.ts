@@ -50,6 +50,11 @@ export class GSIView extends View {
 	}
 
 	init(layer: StandardLayer<any>): this {
+		// naming
+		const name = layer.name || 'layer'
+		this.alignmentWrapper.name = `LAYER-ALIGN-WRAPPER<${name}>`
+		this.group.name = `LAYER-GROUP<${name}>`
+
 		/**
 		 * 根据自身可视状态决定具体视觉元素的显示隐藏
 		 */
