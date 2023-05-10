@@ -18,13 +18,17 @@ export class PolarisLite extends PolarisGSI {
 
 	constructor(props: PolarisLiteProps) {
 		super(props)
-		this.renderer = new LiteRenderer(this.getRendererConfig())
+		this.renderer = new LiteRenderer({
+			...this.getRendererConfig(),
+			root: this.view.gsi.alignmentWrapper,
+		})
 
 		this.cameraProxy.config.onUpdate = (cam) => this.renderer.updateCamera(cam)
 		this.cameraProxy['onUpdate'] = (cam) => this.renderer.updateCamera(cam)
 		// 这里立刻update
 		this.renderer.updateCamera(this.cameraProxy)
 		this.renderer.resize(this.width, this.height, this.ratio)
+
 		this.view.html.element.appendChild(this.renderer.canvas)
 
 		this.raycaster = new Raycaster({
@@ -128,8 +132,7 @@ export class PolarisLite extends PolarisGSI {
 		}
 
 		Object.keys(config).forEach((key) => {
-			const value = config[key]
-			if (value === undefined) {
+			if (config[key] === undefined) {
 				console.error(
 					`PolarisThree:getRendererConfig: ${key} is undefined. May cause renderer error.`
 				)

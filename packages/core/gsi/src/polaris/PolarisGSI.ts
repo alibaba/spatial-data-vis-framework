@@ -219,8 +219,7 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 		if (!this.renderer) {
 			throw new Error('PolarisGSI - set .renderer first. ')
 		}
-		// TODO 这里 不应该 允许 view 引用变化
-		this.renderer.render(this.view.gsi)
+		this.renderer.render()
 	}
 
 	capture() {

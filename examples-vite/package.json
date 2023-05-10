@@ -11,6 +11,7 @@
 		"@gs.i/utils-random-scene": "0.2.1-alpha.34",
 		"@gs.i/utils-specify": "0.2.1-alpha.34",
 		"@gs.i/utils-traverse": "0.2.1-alpha.34",
+		"@gs.i/utils-geom-builders": "0.2.1-alpha.34",
 		"@polaris.gl/gsi": "0.1.0-alpha.41",
 		"@polaris.gl/layer-amap": "0.1.0-alpha.41",
 		"@polaris.gl/layer-flyline": "0.1.0-alpha.41",

@@ -28,6 +28,13 @@ import { calcCamNearFar, colorToString } from './utils'
 import { Raycaster } from '@gs.i/processor-raycast'
 
 export type RendererConfig = {
+	/**
+	 * root node the scene.
+	 * aka Polaris.view.gsi.alignmentWrapper.
+	 * will be added to rootWrapper which correspond to the camera view center.
+	 */
+	root: IR.Node
+
 	enableReflection?: boolean
 	reflectionRatio?: number
 	castShadow?: boolean
@@ -78,12 +85,6 @@ export class LiteRenderer extends Renderer {
 	 * 外部进行后处理使用的 fbo
 	 */
 	frame: WebGLRenderTarget
-
-	/**
-	 * GSI - Scene 保留引用，应当不允许更改
-	 * 每帧根据cameraProxy修改scene的偏移
-	 */
-	private polarisViewWrapper: IR.BaseNode
 
 	/**
 	 * 转换后的  group
@@ -216,14 +217,18 @@ export class LiteRenderer extends Renderer {
 
 		/**
 		 * gsi three conv 不开启 decomposeMatrix ，不然性能很差。
-		 * 这样做的问题是，conv 得到的 object3d 无法再 transform，即使加在 three.group 中，
-		 * 也不会被父的 transform 影响。
+		 * 这样做的问题是，conv 得到的 object3d 虽然 matrix 正确，但是 pos/rot/scale 是初始值，因此必须关掉 autoUpdate
+		 * 副作用：
+		 * - 如果要在场景中加入 three native object，必须手动调用 updateMatrix
+		 * @note 应该在 standard layer 中提示这一点
 		 */
 		this.scene.autoUpdate = false
 		this.scene.matrixAutoUpdate = false
 
 		this.rootWrapper = new SDK.Mesh()
 		this.rootWrapper.name = 'rootWrapper'
+
+		this.rootWrapper.add(this.config.root)
 
 		/**
 		 * init lights
@@ -282,14 +287,7 @@ export class LiteRenderer extends Renderer {
 		// this.initPostprocessing()
 	}
 
-	render(view: GSIView) {
-		if (this.polarisViewWrapper === undefined) {
-			this.polarisViewWrapper = view.alignmentWrapper
-			this.rootWrapper.add(this.polarisViewWrapper)
-		} else if (this.polarisViewWrapper !== view.alignmentWrapper) {
-			throw new Error('Lite Renderer: Sharing renderer between polaris instances is not supported')
-		}
-
+	render() {
 		if (!this.threeRoot) {
 			this.threeRoot = this.conv.convert(this.rootWrapper)
 			this.scene.add(this.threeRoot)

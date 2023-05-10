@@ -40,7 +40,7 @@ export abstract class Renderer {
 	/**
 	 * render one frame to canvas
 	 */
-	abstract render(view: any): void
+	abstract render(): void
 
 	abstract updateCamera(cam: CameraProxy): void
 
