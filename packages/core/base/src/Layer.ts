@@ -44,7 +44,7 @@ export abstract class AbstractLayer<
 	/**
 	 * readable name of this layer
 	 */
-	readonly name: string
+	declare readonly name: string
 
 	#inited = false
 	#visible = true

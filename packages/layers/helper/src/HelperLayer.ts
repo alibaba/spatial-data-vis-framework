@@ -35,7 +35,7 @@ export type HelperLayerProps = StandardLayerProps & typeof defaultProps
  * 辅助Layer，显示坐标轴等
  */
 export class HelperLayer extends StandardLayer<HelperLayerProps> {
-	axises: Mesh
+	axises!: Mesh
 	box?: Mesh
 
 	constructor(props: Partial<HelperLayerProps> = {}) {

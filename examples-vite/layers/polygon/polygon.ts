@@ -201,8 +201,8 @@ const polygonLayer2 = (window['layer2'] = new PolygonLayer({
 	depthTest: true,
 	// pickable: true,
 	// workersCount: 8,
-	// projection: new SphereProjection({}),
-	workersCount: 0,
+	projection: new SphereProjection({}),
+	workersCount: 4,
 }))
 
 // ATTENTION 这里如果把 add 放在 data fetch 之后，就可以渲染

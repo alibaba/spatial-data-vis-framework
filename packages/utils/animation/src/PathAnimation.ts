@@ -27,9 +27,9 @@ export class PathAnimation {
 	paths: Path[]
 	loop = false
 
-	private _managerTrack: Track | undefined
-	private _currPathIndex: number
-	private _currTrackStopFn: { (): void } | undefined
+	private declare _managerTrack: Track | undefined
+	private declare _currPathIndex: number
+	private declare _currTrackStopFn: { (): void } | undefined
 	private _stoped = true
 	private _paused = true
 

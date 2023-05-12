@@ -49,9 +49,9 @@ const defaultProps = {
  */
 export class PolygonSideLayer extends StandardLayer<PolygonSideLayerProps> {
 	props: any
-	geom: Geom
-	matr: PbrMaterial
-	mesh: Mesh
+	declare geom: Geom
+	declare matr: PbrMaterial
+	declare mesh: Mesh
 	// featIndexRangeMap: Map<any, number[]>
 	// featVertRangeMap: Map<any, number[]>
 

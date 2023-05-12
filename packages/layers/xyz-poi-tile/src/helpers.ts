@@ -12,9 +12,9 @@ export class PointsMeshPickHelper {
 	polaris: any
 	sizeAttrName: string
 	offset: readonly [number, number]
-	private _imgAlphaData: Uint8Array
-	private _imgWidth: number
-	private _imgHeight: number
+	private declare _imgAlphaData: Uint8Array
+	private declare _imgWidth: number
+	private declare _imgHeight: number
 	private _worldMatrix = new Matrix4()
 	private _position = new Vector3()
 	private _vec3 = new Vector3()

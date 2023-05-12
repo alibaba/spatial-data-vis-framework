@@ -87,20 +87,20 @@ export class StandardLayer<
 > extends Layer<TProps, TEventTypes> {
 	readonly isStandardLayer = true
 
-	view: { gsi: GSIView; html: HtmlView }
+	declare view: { gsi: GSIView; html: HtmlView }
 
 	/**
 	 * only available after init. check .inited first
 	 */
-	protected polaris: PolarisGSI
+	protected declare polaris: PolarisGSI
 	/**
 	 * only available after init. check .inited first
 	 */
-	protected timeline: Timeline
+	protected declare timeline: Timeline
 	/**
 	 * only available after init. check .inited first
 	 */
-	protected projection: Projection
+	protected declare projection: Projection
 
 	constructor(props: TProps) {
 		super(props)
@@ -228,7 +228,7 @@ export class StandardLayer<
 		})
 	}
 
-	setProps: (props: Partial<TProps | StandardLayerProps>) => void
+	declare setProps: (props: Partial<TProps | StandardLayerProps>) => void
 
 	/**
 	 * 该方法用来被外部使用者调用

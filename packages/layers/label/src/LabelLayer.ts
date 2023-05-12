@@ -117,7 +117,7 @@ export class LabelLayer extends StandardLayer<LabelLayerProps> {
 	/**
 	 * Canvas drawing 2d context
 	 */
-	ctx: CanvasRenderingContext2D
+	declare ctx: CanvasRenderingContext2D
 
 	/**
 	 * Marker locators

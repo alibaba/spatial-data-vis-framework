@@ -19,7 +19,7 @@ export class HtmlView extends View {
 	 * @note 按需创建，可能根本用不到
 	 * @todo onAdd 回调中的检测会导致这里失效
 	 */
-	private _element: HTMLDivElement
+	private declare _element: HTMLDivElement
 
 	public get element(): HTMLDivElement {
 		if (!this._element) this._element = _DIV.cloneNode(false) as HTMLDivElement

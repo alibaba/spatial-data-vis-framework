@@ -15,7 +15,7 @@ export const defaultConfig = {
 }
 
 export class XYZTileManager extends CommonTileManager {
-	readonly config: CommonTileManagerConfig & Required<XYZTileManagerConfig>
+	declare readonly config: CommonTileManagerConfig & Required<XYZTileManagerConfig>
 
 	constructor(config: XYZTileManagerConfig) {
 		super({

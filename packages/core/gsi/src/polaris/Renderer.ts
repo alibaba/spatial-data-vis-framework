@@ -36,7 +36,7 @@ import type { CameraProxy } from 'camera-proxy'
 export abstract class Renderer {
 	readonly isRenderer = true
 
-	canvas: HTMLCanvasElement
+	declare canvas: HTMLCanvasElement
 	/**
 	 * render one frame to canvas
 	 */

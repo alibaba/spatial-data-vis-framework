@@ -83,7 +83,7 @@ const textDecoder = new TextDecoder('utf-8')
 export class LodLineStringLayer extends StandardLayer<LodLineStringProps> {
 	glineGroup: LineLodGroup
 
-	private _workerManager: WorkerManager
+	private declare _workerManager: WorkerManager
 
 	constructor(props: OptionalDefault<LodLineStringProps, typeof defaultProps> = {}) {
 		const _props = {

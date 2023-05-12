@@ -70,7 +70,7 @@ export class ScatterLayer extends StandardLayer<ScatterLayerProps> {
 
 	mesh: Mesh
 	geom: Geom
-	matr: ScatterMatr
+	matr!: ScatterMatr
 
 	track: any
 

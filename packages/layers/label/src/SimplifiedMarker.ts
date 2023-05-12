@@ -23,11 +23,11 @@ export class SimplifiedMarker extends Marker {
 		this.labelVisible = false
 		this.labelBox = new Box2()
 		this.alpha = 1.0
-		this.label = _props.label ?? this.label
-		this.style = _props.style ?? this.style
-		this.feature = _props.feature ?? this.feature
-		this.translateX = this.style.text_translate_x ?? this.translateX
-		this.translateY = this.style.text_translate_y ?? this.translateY
+		this.label = _props.label
+		this.style = _props.style
+		this.feature = _props.feature
+		this.translateX = this.style.text_translate_x
+		this.translateY = this.style.text_translate_y
 	}
 
 	update(props) {

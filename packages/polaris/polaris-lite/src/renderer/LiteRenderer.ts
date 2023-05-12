@@ -20,12 +20,12 @@ import {
 	DirectionalLight,
 	PointLight,
 } from 'three-lite'
-import { Renderer, GSIView, PolarisGSIProps } from '@polaris.gl/gsi'
+import { Renderer, PolarisGSIProps } from '@polaris.gl/gsi'
 import { ThreeLiteConverter } from '@gs.i/backend-threelite'
 import { CameraProxy } from 'camera-proxy'
 import * as SDK from '@gs.i/frontend-sdk'
 import { calcCamNearFar, colorToString } from './utils'
-import { Raycaster } from '@gs.i/processor-raycast'
+// import { Raycaster } from '@gs.i/processor-raycast'
 
 export type RendererConfig = {
 	/**
@@ -120,7 +120,7 @@ export class LiteRenderer extends Renderer {
 	/**
 	 * Picking
 	 */
-	raycaster: Raycaster
+	// raycaster: Raycaster
 
 	/**
 	 * capabilities object

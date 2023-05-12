@@ -7,11 +7,11 @@ export class PolarisProps implements Partial<PolarisGSIProps> {
 	/**
 	 * Any subclass' constructor of PolarisGSI
 	 */
-	PolarisClass: PolarisGSICtor
+	declare PolarisClass: PolarisGSICtor
 
-	width: number
+	declare width: number
 
-	height: number
+	declare height: number
 }
 
 export class PolarisState {
@@ -30,7 +30,7 @@ export class LayerProps implements StandardLayerProps {
 	/**
 	 * Any subclass' constructor of StandardLayer
 	 */
-	LayerClass: LayerCtor
+	declare LayerClass: LayerCtor
 
 	depthTest?: boolean
 

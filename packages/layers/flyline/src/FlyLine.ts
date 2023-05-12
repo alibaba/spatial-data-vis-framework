@@ -80,24 +80,24 @@ export const DefaultFlyLineProps: FlyLineProps = {
 export class FlyLine {
 	props: FlyLineProps
 
-	sampler: IR.LooseSampler
-	mesh: GLine
-	gline: GLine
-	matr: GLineMatr | GLinePointMatr
-	timeline: Timeline
-	track: any
-	trackID: string
-	flySegments: number // 每条飞线的飞行部分点数
-	flightLength: number // 飞行总长度
-	flightLength_1: number // 飞行总长度1
-	flightLength_2: number // 飞行总长度2
-	landingP: number // 着地时间
-	useColors: boolean
+	declare sampler: IR.LooseSampler
+	declare mesh: GLine
+	declare gline: GLine
+	declare matr: GLineMatr | GLinePointMatr
+	declare timeline: Timeline
+	declare track: any
+	declare trackID: string
+	declare flySegments: number // 每条飞线的飞行部分点数
+	declare flightLength: number // 飞行总长度
+	declare flightLength_1: number // 飞行总长度1
+	declare flightLength_2: number // 飞行总长度2
+	declare landingP: number // 着地时间
+	declare useColors: boolean
 
-	private pointer: number // 飞线数组pointer, <= config.pool
-	private frameCounting: number
-	private frameValid: boolean
-	private colorBuffer: Float32Array
+	private declare pointer: number // 飞线数组pointer, <= config.pool
+	private declare frameCounting: number
+	private declare frameValid: boolean
+	private declare colorBuffer: Float32Array
 
 	constructor(props: Partial<FlyLineProps> = {}) {
 		const _props = {

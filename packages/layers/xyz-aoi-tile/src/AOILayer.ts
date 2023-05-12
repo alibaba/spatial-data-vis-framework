@@ -213,56 +213,56 @@ type IndicatorRangeInfo = {
 }
 
 export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof defaultProps>> {
-	matr: UnlitMaterial
+	declare matr: UnlitMaterial
 
-	requestManager: XYZTileRequestManager
+	declare requestManager: XYZTileRequestManager
 
-	tileManager: XYZTileManager
+	declare tileManager: XYZTileManager
 
 	/**
 	 * Performance info
 	 */
-	info: { times: Map<number | string, { reqTime: number; genTime: number }> }
+	declare info: { times: Map<number | string, { reqTime: number; genTime: number }> }
 
 	/**
 	 * WorkerManager
 	 */
-	private _workerManager: WorkerManager
+	private declare _workerManager: WorkerManager
 
 	/**
 	 * For feature.index counter
 	 * @NOTE this count will always increment even tiles may be released from memory, also means it will not decrease in any cases.
 	 */
-	private _featureCount: number
+	private declare _featureCount: number
 
 	/**
 	 * Map for Mesh <-> Feature relations
 	 */
-	private _renderableFeatureMap: Map<MeshDataType, any[]>
+	private declare _renderableFeatureMap: Map<MeshDataType, any[]>
 
 	/**
 	 * Map for Feature <-> GeomIndexRange in the current Mesh
 	 * RangeType: [start, end]
 	 */
-	private _featureIndexRangeMap: Map<any, Uint8Array | Uint16Array | Uint32Array>
+	private declare _featureIndexRangeMap: Map<any, Uint8Array | Uint16Array | Uint32Array>
 
 	/**
 	 * LineIndicators list
 	 */
-	private _indicators: Set<LineIndicator>
+	private declare _indicators: Set<LineIndicator>
 
 	/**
 	 * Map for hover/pick styles
 	 */
-	private _idIndicatorRangeMap: Map<number | string, IndicatorRangeInfo[]>
+	private declare _idIndicatorRangeMap: Map<number | string, IndicatorRangeInfo[]>
 
 	/**
 	 * Map for storing styled feature ids
 	 * for setting styles among different tiles for the same geo
 	 */
-	private _hoveredIds: Set<number | string>
+	private declare _hoveredIds: Set<number | string>
 
-	private _selectedIds: Set<number | string>
+	private declare _selectedIds: Set<number | string>
 
 	constructor(props: Partial<AOILayerProps> = {}) {
 		const _props = {
@@ -279,7 +279,7 @@ export class AOILayer extends StandardLayer<RequireDefault<AOILayerProps, typeof
 	/**
 	 * highlight api for TileLayers
 	 */
-	highlightByIds: (idsArr: number[], style: { [name: string]: any }) => void
+	declare highlightByIds: (idsArr: number[], style: { [name: string]: any }) => void
 
 	private _init(projection, timeline, polaris) {
 		const p = polaris as AbstractPolaris

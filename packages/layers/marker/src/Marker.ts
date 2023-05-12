@@ -65,7 +65,7 @@ export const defaultMarkerProps = {
 export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProps> {
 	readonly isMarker = true
 
-	private _lnglatalt: [number, number, number]
+	private declare _lnglatalt: [number, number, number]
 	get lnglatalt() {
 		return this._lnglatalt
 	}
@@ -105,14 +105,14 @@ export class Marker extends StandardLayer<MarkerProps & typeof defaultMarkerProp
 	}
 
 	// Visibility vars
-	private _camPosition: Vector3
-	private _camRotationEuler: Euler
-	private _inScreen: boolean
-	private _onEarthFrontSide: boolean
-	private _altAngleThres: number
-	private _angleThres: number
-	private _earthCenter: Vector3
-	private _framesAfterInit: number
+	private declare _camPosition: Vector3
+	private declare _camRotationEuler: Euler
+	private declare _inScreen: boolean
+	private declare _onEarthFrontSide: boolean
+	private declare _altAngleThres: number
+	private declare _angleThres: number
+	private declare _earthCenter: Vector3
+	private declare _framesAfterInit: number
 
 	// Animation
 	private _meshAlphaModes = new Map<IR.RenderableNode, IR.Material['alphaMode']>()

@@ -108,18 +108,18 @@ const defaultConfig = {
 
 export class CommonTileManager implements TileManager {
 	readonly config: Required<CommonTileManagerConfig>
-	private _timeline: Timeline
-	private _polaris: Polaris
-	private _projection: Projection
-	private _updateTrack: any
-	private _tileMap: Map<string, CachedTileRenderables>
-	private _promiseMap: Map<string, CachedTilePromise>
-	private _currVisibleTiles: CachedTileRenderables[]
-	private _currVisibleKeys: string[]
-	private _tiles: CachedTileRenderables[]
-	private _lastStatesCode: string
-	private _stableFrames: number
-	private _currZoomLevel: number
+	private declare _timeline: Timeline
+	private declare _polaris: Polaris
+	private declare _projection: Projection
+	private declare _updateTrack: any
+	private declare _tileMap: Map<string, CachedTileRenderables>
+	private declare _promiseMap: Map<string, CachedTilePromise>
+	private declare _currVisibleTiles: CachedTileRenderables[]
+	private declare _currVisibleKeys: string[]
+	private declare _tiles: CachedTileRenderables[]
+	private declare _lastStatesCode: string
+	private declare _stableFrames: number
+	private declare _currZoomLevel: number
 
 	constructor(config: CommonTileManagerConfig) {
 		this.config = { ...defaultConfig, ...config }

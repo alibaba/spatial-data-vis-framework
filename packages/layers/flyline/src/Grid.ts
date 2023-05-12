@@ -52,13 +52,13 @@ const confDefault = {
 export class Grid {
 	isGrid = true
 	conf: any
-	points: number[]
-	padding: number
-	pointsBuffer: Float32Array | Float64Array
+	declare points: number[]
+	declare padding: number
+	declare pointsBuffer: Float32Array | Float64Array
 
-	onStart: () => void
-	onEnd: () => void
-	onLand: () => void
+	declare onStart: () => void
+	declare onEnd: () => void
+	declare onLand: () => void
 
 	constructor(config) {
 		this.conf = { ...confDefault, ...config }

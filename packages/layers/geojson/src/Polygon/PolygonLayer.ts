@@ -74,8 +74,8 @@ export interface SelectionDataType {
 export class PolygonLayer extends StandardLayer<PolygonLayerProps> {
 	props: any
 
-	surfaceLayer: PolygonSurfaceLayer
-	sideLayer: PolygonSideLayer
+	declare surfaceLayer: PolygonSurfaceLayer
+	declare sideLayer: PolygonSideLayer
 
 	selectColor: Color | undefined
 	hoverColor: Color | undefined

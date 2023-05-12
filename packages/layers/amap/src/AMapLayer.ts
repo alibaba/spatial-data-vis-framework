@@ -46,7 +46,6 @@ export const defaultProps: AMapLayerProps = {
 }
 
 export class AMapLayer extends StandardLayer<AMapLayerProps> {
-	projection
 	cam
 	map
 	isWarning = false //高德参数是否正常
@@ -288,7 +287,7 @@ export class AMapLayer extends StandardLayer<AMapLayerProps> {
 		cam['update']()
 
 		// 稍微改变经纬度触发同步
-		const amapCenter = this.projection.unproject(...cam.center)
+		const amapCenter = this.projection.unproject(...(cam.center as [number, number, number]))
 		const { pitch, rotation, zoom } = cam
 		const statesCode =
 			'1|' +

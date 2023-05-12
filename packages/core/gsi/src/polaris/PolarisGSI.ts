@@ -88,7 +88,7 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 	/**
 	 * top view layer
 	 */
-	view: {
+	declare view: {
 		html: HtmlView
 		gsi: GSIView
 	}
@@ -96,24 +96,24 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 	/**
 	 * Renderer
 	 */
-	renderer: Renderer
+	declare renderer: Renderer
 
-	readonly cameraControl?: PointerControl | TouchControl
-	readonly cameraman: Cameraman
+	declare readonly cameraControl?: PointerControl | TouchControl
+	declare readonly cameraman: Cameraman
 
-	readonly matrixProcessor: MatProcessor
-	readonly boundingProcessor: BoundingProcessor
-	readonly graphProcessor: GraphProcessor
-	readonly cullingProcessor: CullingProcessor
+	declare readonly matrixProcessor: MatProcessor
+	declare readonly boundingProcessor: BoundingProcessor
+	declare readonly graphProcessor: GraphProcessor
+	declare readonly cullingProcessor: CullingProcessor
 
-	reflectionTexture?: IR.Texture
-	reflectionTextureBlur?: IR.Texture
-	reflectionMatrix?: IR.Matrix
+	declare reflectionTexture?: IR.Texture
+	declare reflectionTextureBlur?: IR.Texture
+	declare reflectionMatrix?: IR.Matrix
 
 	/**
 	 * Container resize listener
 	 */
-	private _resizeListener: any
+	private declare _resizeListener: any
 
 	constructor(props: PolarisGSIProps) {
 		const mergedProps = {

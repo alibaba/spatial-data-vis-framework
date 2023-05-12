@@ -10,7 +10,7 @@ export interface XYZTileRequestManagerConfig extends ConfigType {
 }
 
 export class XYZTileRequestManager extends CommonRequestManager<XYZTileArgs> {
-	readonly config: XYZTileRequestManagerConfig
+	declare readonly config: XYZTileRequestManagerConfig
 
 	constructor(config: XYZTileRequestManagerConfig) {
 		super(config)

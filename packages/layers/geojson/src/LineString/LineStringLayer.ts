@@ -42,8 +42,8 @@ export type LineStringProps = StandardLayerProps &
 	}
 
 export class LineStringLayer extends StandardLayer<LineStringProps> {
-	gline: GLine
-	mesh: GLine
+	declare gline: GLine
+	declare mesh: GLine
 
 	constructor(props: OptionalDefault<LineStringProps, typeof defaultProps> = {}) {
 		super({

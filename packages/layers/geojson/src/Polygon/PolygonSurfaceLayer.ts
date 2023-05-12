@@ -89,28 +89,28 @@ const defaultProps = {
  */
 export class PolygonSurfaceLayer extends StandardLayer<PolygonSurfaceLayerProps> {
 	props: any
-	geom: Geom
-	matr: PbrMaterial
-	mesh: Mesh
+	declare geom: Geom
+	declare matr: PbrMaterial
+	declare mesh: Mesh
 
 	/**
 	 * Select/Hover objects
 	 */
-	hoverIndicator: LineIndicator
-	selectIndicator: LineIndicator
+	declare hoverIndicator: LineIndicator
+	declare selectIndicator: LineIndicator
 	// 记录Polygon中feature的Index range
-	featIndexRangeMap: Map<any, Uint32Array>
+	declare featIndexRangeMap: Map<any, Uint32Array>
 	// 记录Polygon中feature的Color attr range
-	featColorRangeMap: Map<any, Uint32Array>
+	declare featColorRangeMap: Map<any, Uint32Array>
 	// 记录feature的ColorUint信息
-	featColorMap: Map<any, Uint32Array>
+	declare featColorMap: Map<any, Uint32Array>
 	// 记录LineIndicator中feature的偏移信息
-	featLineInfoMap: Map<any, { offset: number; count: number }[]>
+	declare featLineInfoMap: Map<any, { offset: number; count: number }[]>
 
 	/**
 	 * Worker Manager
 	 */
-	private _workerManager: WorkerManager
+	private declare _workerManager: WorkerManager
 
 	/**
 	 * Mem cache
@@ -122,7 +122,7 @@ export class PolygonSurfaceLayer extends StandardLayer<PolygonSurfaceLayerProps>
 	 */
 	private _storeName: string
 
-	private _tessellation: number
+	private declare _tessellation: number
 
 	constructor(props: OptionalDefault<PolygonSurfaceLayerProps, typeof defaultProps> = {}) {
 		const _props = {

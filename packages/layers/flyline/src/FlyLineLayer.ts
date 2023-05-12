@@ -40,14 +40,12 @@ export const defaultLayerProps = {
 export class FlyLineLayer extends StandardLayer<FlyLineLayerProps> {
 	props: FlyLineLayerProps
 
-	flyline: FlyLine
-	projection: Projection
-	geoWrapProjection: Projection
-	timeline: Timeline
-	geocentricLayer: StandardLayer
-	sid: number
-	grids: FlyInfo[]
-	data: any[]
+	declare flyline: FlyLine
+	declare geoWrapProjection: Projection
+	declare geocentricLayer: StandardLayer
+	declare sid: number
+	declare grids: FlyInfo[]
+	declare data: any[]
 
 	constructor(props: OptionalDefault<FlyLineLayerProps, typeof defaultLayerProps> = {}) {
 		const _props = {

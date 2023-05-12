@@ -25,7 +25,7 @@ import { Converter } from '@gs.i/backend-three'
 import type { CameraProxy } from 'camera-proxy'
 import * as SDK from '@gs.i/frontend-sdk'
 import { calcCamNearFar, colorToString } from './utils'
-import { Raycaster } from '@gs.i/processor-raycast'
+// import { Raycaster } from '@gs.i/processor-raycast'
 
 export type RendererConfig = {
 	/**
@@ -89,22 +89,22 @@ export class ThreeRenderer extends Renderer {
 	/**
 	 * 转换后的  group
 	 */
-	private threeRoot: Object3D
+	private declare threeRoot: Object3D
 
 	/**
 	 * used to do camera transformation for whole scene
 	 */
-	private rootWrapper: SDK.Mesh
+	private declare rootWrapper: SDK.Mesh
 
 	/**
 	 * 顶层 scene，由 scene props 生成，在 polaris-renderer 中管理
 	 */
-	private scene: Scene
+	private declare scene: Scene
 
 	/**
 	 * 场景光源
 	 */
-	private lights: Object3D
+	private declare lights: Object3D
 
 	/**
 	 * 场景相机
@@ -120,7 +120,7 @@ export class ThreeRenderer extends Renderer {
 	/**
 	 * Picking
 	 */
-	raycaster: Raycaster
+	// raycaster: Raycaster
 
 	/**
 	 * capabilities object

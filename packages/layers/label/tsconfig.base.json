@@ -9,26 +9,22 @@
 		// ES2019 flat trim
 		// ES2020 BigInt Dynamic-import ?? ?. allSettled import.meta
 		// @see https://github.com/tsconfig/bases/blob/main/bases/node14.json
-		"target": "es2020",
-		"lib": ["ES2020", "DOM"],
+		"target": "es2022",
+		"lib": ["es2022", "DOM"],
 		"moduleResolution": "node",
-		"module": "ES2020", // @see https://www.typescriptlang.org/tsconfig#module
-		"declaration": true,
-		"declarationMap": true,
-		"sourceMap": false,
+		"module": "es2022", // @see https://www.typescriptlang.org/tsconfig#module
 		"strict": true,
 		"esModuleInterop": true, // import React from 'react'
-		"strictPropertyInitialization": false,
+		"strictPropertyInitialization": true, // 有利于避免 es2022 public filed 造成的问题
 		//
 		"forceConsistentCasingInFileNames": true,
 		//
 		"noImplicitAny": false, // TODO 改成 true，所有 any 必须显式
 		"noImplicitThis": true,
-		"noImplicitReturns": true, // TODO 改成 true，
+		"noImplicitReturns": true,
 		"noFallthroughCasesInSwitch": true,
-		"exactOptionalPropertyTypes": false, // TODO 改成 true，
 		"alwaysStrict": true,
-		"noImplicitOverride": false, // TODO 改成 true，
+		"noImplicitOverride": false, // TODO 改成 true，所有 override 应该显式
 		"strictNullChecks": true,
 		//
 		"experimentalDecorators": true,

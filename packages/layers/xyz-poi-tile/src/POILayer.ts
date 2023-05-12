@@ -227,37 +227,37 @@ export const defaultProps = {
 defaultProps as POILayerProps
 
 export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof defaultProps>> {
-	matr: PointMaterial
+	declare matr: PointMaterial
 
-	requestManager: XYZTileRequestManager
+	declare requestManager: XYZTileRequestManager
 
-	tileManager: XYZTileManager
+	declare tileManager: XYZTileManager
 
 	private _ratio: number
 
-	private _featureCount: number
+	private declare _featureCount: number
 
 	/**
 	 * Element for point picking test
 	 */
-	private _pointImgElem: HTMLImageElement
+	private declare _pointImgElem: HTMLImageElement
 
 	/**
 	 * cache
 	 */
-	private _clusterImgUrl: string
+	private declare _clusterImgUrl: string
 
 	/**
 	 * Map for storing Mesh/Marker <-> Feature relations
 	 */
-	private _renderableFeatureMap: Map<Mesh | Marker, any>
+	private declare _renderableFeatureMap: Map<Mesh | Marker, any>
 
 	/**
 	 * 'index' is unique for every feature in tiles
 	 * even if there are features stands for the same geo
 	 * they will be assigned different index
 	 */
-	private _indexMeshMap: Map<number, { obj: Mesh | Marker; objIdx: number }>
+	private declare _indexMeshMap: Map<number, { obj: Mesh | Marker; objIdx: number }>
 
 	/**
 	 * 'id' property is unique for every valid geo feature in tiles
@@ -265,13 +265,13 @@ export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof
 	 * because they are the same geo in real world
 	 * so the map will store id <-> Meshes(Markers) for further usage
 	 */
-	private _idMeshesMap: Map<number | string, { obj: Mesh | Marker; objIdx: number }[]>
+	private declare _idMeshesMap: Map<number | string, { obj: Mesh | Marker; objIdx: number }[]>
 
 	/**
 	 * Map for storing styled feature ids
 	 * for setting styles among different tiles for the same geo poi
 	 */
-	private _idStyleMap: Map<number | string, { [name: string]: any }>
+	private declare _idStyleMap: Map<number | string, { [name: string]: any }>
 
 	constructor(props: Partial<POILayerProps> = {}) {
 		const _props = {
@@ -289,7 +289,7 @@ export class POILayer extends StandardLayer<RequireDefault<POILayerProps, typeof
 	/**
 	 * highlight api for TileLayers
 	 */
-	highlightByIds: (idsArr: number[], style: { [name: string]: any }) => void
+	declare highlightByIds: (idsArr: number[], style: { [name: string]: any }) => void
 
 	_init(projection, timeline, polaris) {
 		const p = polaris as PolarisGSI
