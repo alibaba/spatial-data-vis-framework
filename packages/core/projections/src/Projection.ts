@@ -21,25 +21,23 @@ export interface ProjectionProps {
 }
 
 export default class Projection {
-	type: string
-	orientation: string
-	units: string
+	declare type: string
+	declare readonly orientation: string
+	declare readonly units: string
+	declare readonly center: number[]
 
-	isPlaneProjection: boolean
-	isSphereProjection: boolean
-	isGeocentricProjection: boolean
+	declare isPlaneProjection: boolean
+	declare isSphereProjection: boolean
+	declare isGeocentricProjection: boolean
 
-	protected _useRightHand: boolean
-	protected _center: number[]
+	protected declare _useRightHand: boolean
 
-	protected scale: number
+	protected declare scale: number
 
 	constructor(props: ProjectionProps) {
 		this.type = 'Projection'
 
-		this._center = []
-
-		this.center = props.center
+		this.center = props.center || [0, 0, 0]
 
 		this.orientation = props.orientation || 'right'
 		this._useRightHand = this.orientation === 'right'
@@ -47,14 +45,6 @@ export default class Projection {
 		this.units = props.units || 'meters'
 
 		this.scale = this.units === 'kilometers' ? 0.001 : 1
-	}
-
-	get center() {
-		return this._center
-	}
-
-	set center(center) {
-		this._center = center
 	}
 
 	// 经纬度（海拔）投影为三维坐标
@@ -69,7 +59,7 @@ export default class Projection {
 
 	// 用于相似性判断
 	llEqualTo(projection: Projection): boolean {
-		return this._center[0] === projection._center[0] && this._center[1] === projection._center[1]
+		return this.center[0] === projection.center[0] && this.center[1] === projection.center[1]
 	}
 
 	//

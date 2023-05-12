@@ -14,7 +14,7 @@ const R = 6378137
 const defaultProps = { center: [0, 0, 0] }
 
 export default class GallStereoGraphicProjection extends Projection {
-	private _xyz0: number[]
+	private declare _xyz0: number[]
 
 	constructor(props) {
 		props = { ...defaultProps, ...props }
@@ -23,17 +23,9 @@ export default class GallStereoGraphicProjection extends Projection {
 		this.type = 'GallStereoGraphicProjection'
 
 		this.isPlaneProjection = true
-	}
 
-	get center() {
-		return this._center
-	}
-
-	set center(center) {
-		this._center = center
-		this._xyz0 = projRaw([center[0] * DEG2RAD, center[1] * DEG2RAD])
-
-		this._xyz0.push(center[2] || 0)
+		this._xyz0 = projRaw([this.center[0] * DEG2RAD, this.center[1] * DEG2RAD])
+		this._xyz0.push(this.center[2] || 0)
 	}
 
 	project(lng: number, lat: number, alt = 0): [number, number, number] {

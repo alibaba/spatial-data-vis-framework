@@ -13,8 +13,8 @@ const R = 6378137
 const defaultProps = { center: [0, 0, 0] }
 
 export default class SphereProjection extends Projection {
-	protected _xyz0: number[]
-	private R: number
+	protected declare _xyz0: number[]
+	private declare R: number
 
 	constructor(props) {
 		props = { ...defaultProps, ...props }
@@ -25,19 +25,12 @@ export default class SphereProjection extends Projection {
 		this.type = 'SphereProjection'
 
 		this.isSphereProjection = true
-	}
 
-	get center() {
-		return this._center
-	}
-
-	set center(center) {
-		this._center = center
 		this._xyz0 = projRaw(
 			[
 				// (center[0]) * DEG2RAD,
-				(90 - center[0]) * DEG2RAD,
-				center[1] * DEG2RAD,
+				(90 - this.center[0]) * DEG2RAD,
+				this.center[1] * DEG2RAD,
 			],
 			R
 		)

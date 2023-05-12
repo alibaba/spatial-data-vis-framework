@@ -27,7 +27,7 @@ const atan = Math.atan
 const defaultProps = { center: [0, 0] }
 
 export default class AzimuthalEquidistantProjection extends Projection {
-	private _centerRad: number[]
+	private declare _centerRad: number[]
 
 	constructor(props) {
 		props = { ...defaultProps, ...props }
@@ -36,15 +36,8 @@ export default class AzimuthalEquidistantProjection extends Projection {
 		this.type = 'AzimuthalEquidistantProjection'
 
 		this.isPlaneProjection = true
-	}
 
-	get center() {
-		return this._center
-	}
-
-	set center(center) {
-		this._center = center
-		this._centerRad = [center[0] * DEG2RAD, center[1] * DEG2RAD]
+		this._centerRad = [this.center[0] * DEG2RAD, this.center[1] * DEG2RAD]
 	}
 
 	project(lng: number, lat: number, alt = 0): [number, number, number] {
