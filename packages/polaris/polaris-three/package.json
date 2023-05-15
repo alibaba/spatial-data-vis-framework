@@ -18,8 +18,7 @@
 		"build": "./scripts/build.sh",
 		"prebuild": "node ./scripts/glsl-processor.cjs",
 		"clean": "./scripts/clean.sh",
-		"rebuild": "npm run clean && npm run build",
-		"build:umd": "npx webpack"
+		"rebuild": "npm run clean && npm run build"
 	},
 	"dependencies": {
 		"@gs.i/backend-three": "0.2.1-alpha.34",

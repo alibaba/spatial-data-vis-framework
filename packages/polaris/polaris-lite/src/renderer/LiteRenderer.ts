@@ -19,9 +19,9 @@ import {
 	AmbientLight,
 	DirectionalLight,
 	PointLight,
-} from 'three-lite'
+} from 'three'
 import { Renderer, PolarisGSIProps } from '@polaris.gl/gsi'
-import { ThreeLiteConverter } from '@gs.i/backend-threelite'
+import { Converter } from '@gs.i/backend-three'
 import { CameraProxy } from 'camera-proxy'
 import * as SDK from '@gs.i/frontend-sdk'
 import { calcCamNearFar, colorToString } from './utils'
@@ -70,9 +70,9 @@ export class LiteRenderer extends Renderer {
 	private config: Required<RendererConfig>
 
 	/**
-	 * GSI - threelite 转换器
+	 * GSI - 转换器
 	 */
-	conv: ThreeLiteConverter
+	conv: Converter
 
 	/**
 	 * GL2 渲染器
@@ -89,7 +89,7 @@ export class LiteRenderer extends Renderer {
 	/**
 	 * 转换后的  group
 	 */
-	private threeRoot: Object3D
+	private declare threeRoot: Object3D
 
 	/**
 	 * used to do camera transformation for whole scene
@@ -169,7 +169,7 @@ export class LiteRenderer extends Renderer {
 		this.canvas = canvas
 
 		// Converter
-		this.conv = new ThreeLiteConverter({
+		this.conv = new Converter({
 			matrixProcessor: this.config.matrixProcessor,
 			boundingProcessor: this.config.boundingProcessor,
 			graphProcessor: this.config.graphProcessor,

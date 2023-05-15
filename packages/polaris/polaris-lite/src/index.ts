@@ -6,7 +6,7 @@
 import { isRenderable, RenderableNode, Vec3 } from '@gs.i/schema-scene'
 import { PolarisGSI, PolarisGSIProps } from '@polaris.gl/gsi'
 import { LiteRenderer } from './renderer/LiteRenderer'
-import { Raycaster as ThreeLiteRaycaster } from 'three-lite'
+import { Raycaster as ThreeRaycaster } from 'three'
 import { Raycaster, RaycastInfo } from '@gs.i/processor-raycast'
 
 export interface PolarisLiteProps extends PolarisGSIProps {}
@@ -79,10 +79,10 @@ export class PolarisLite extends PolarisGSI {
 
 		const cam = this.renderer.camera
 
-		_threeLiteRaycaster.setFromCamera(ndcCoords, cam)
+		_threeRaycaster.setFromCamera(ndcCoords, cam)
 		this.raycaster.set(
-			_threeLiteRaycaster.ray.origin as Vec3, // safe to assert here
-			_threeLiteRaycaster.ray.direction as Vec3 // safe to assert here
+			_threeRaycaster.ray.origin as Vec3, // safe to assert here
+			_threeRaycaster.ray.direction as Vec3 // safe to assert here
 		)
 
 		// @note near does not work for perspective camera
@@ -146,6 +146,6 @@ export class PolarisLite extends PolarisGSI {
 /**
  * used for calculate ray from camera
  */
-const _threeLiteRaycaster = new ThreeLiteRaycaster()
+const _threeRaycaster = new ThreeRaycaster()
 
 type NonNullableObject<T> = { [K in keyof T]: NonNullable<T[K]> }

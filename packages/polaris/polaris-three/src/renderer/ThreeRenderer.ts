@@ -70,7 +70,7 @@ export class ThreeRenderer extends Renderer {
 	private config: Required<RendererConfig>
 
 	/**
-	 * GSI - threelite 转换器
+	 * GSI - 转换器
 	 */
 	conv: Converter
 

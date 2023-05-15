@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import { ShaderMaterial, Texture, Vector2 } from 'three-lite'
+import { ShaderMaterial, Texture, Vector2 } from 'three'
 // import * as postprocessing from 'postprocessing'
 
 const R = 6378137 // 常量 - 地球半径
