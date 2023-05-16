@@ -1,4 +1,7 @@
 /**
+ * @outdated
+ * @to_be_deleted
+ *
  * 老本版的 updateFullConfig
  * @change
  * 老版本逻辑是：
@@ -6,7 +9,7 @@
  * 虽然形式整洁，但是会造成回调事件拿到的 config 不是最新的，
  * 需要额外的工作来保证回调的正确性。
  * 因此暂时弃用。
- * 新版本在藏检查之前完成 config 的全量替换，派发的事件仅用于响应配置变更，不在回调中修改配置。
+ * 新的方案(./digest)在藏检查之前完成 config 的全量替换，派发的事件仅用于响应配置变更，不在回调中修改配置。
  */
 import type { AppConfig } from '../../schema/config'
 import type { LayerClassesShape } from '../../schema/meta'
@@ -18,6 +21,8 @@ import { deepEqual, idsEqual, propsDiff, propsEqual } from './compare'
  * compare new config with the old one, dispatch events to update the old one
  * @note deep-compare `config.app`
  * @note shallow-compare first level of `config.layer.props`
+ *
+ * @deprecated use `digest` instead
  */
 export function updateFullConfig<TLayerClasses extends LayerClassesShape = any>(
 	dispatcher: EventDispatcher<ConfigEvents<TLayerClasses>>,

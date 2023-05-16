@@ -103,3 +103,25 @@ export default function Editor() {
 }
 
 ```
+
+## 维护指南
+
+- config 的类型定义在 [../schema/config](../schema/config) 中，在其他项目中时应同时复制这两个文件夹。
+- config 的修改应该是向后兼容的，实验性的 字段 用 $开头，实验性字段不保证兼容性
+
+### 更新 config 的步骤
+
+- 修改 [../schema/config](../schema/config) 中的类型定义
+- 对应添加 [./ConfigManager.ts](./ConfigManager.ts) 中的 `ConfigEventData` 接口
+  - 该接口表明，config 变化时，会触发的事件
+  - 这些事件也是脏检查的最小单元
+- 在 [./utils/digest.ts](./utils/digest.ts) 中添加脏检查逻辑，触发以上事件
+- 在 [./utils/registerConfigSync.ts](./utils/registerConfigSync.ts) 中添加 config 同步逻辑
+  - 该函数表明，如何从以上事件来更新 config （相当于脏检查的逆向过程）
+- 在 [./actions.ts](./actions.ts) 中添加 新增事件对应的 action
+  - 每个事件对应一个相同名字、相同功能的 action
+  - 直接从 registerConfigSync 中 copy 过来即可，改一下变量名
+
+最后，在 [../../apps/App.ts](../../apps/App.ts#App.watchConfig) 中，监听事件，更新 polaris app
+
+polaris app 响应 config 变化需要保证结果正确，但是不保证过程高效（我们假设该过程只在开发环节触发，不在运行时触发）。因此如果很难增量响应，就直接重建整个 Polaris app 即可。

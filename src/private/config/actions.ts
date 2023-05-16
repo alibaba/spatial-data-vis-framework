@@ -100,8 +100,12 @@ export function configReducer(
 				return
 			}
 
-			// PolarisAppConfig 标准原子操作:
-			// @from ConfigManager::registerConfigSync
+			/**
+			 * PolarisAppConfig 标准原子操作:
+			 * @note
+			 * copy from registerConfigSync.
+			 * replace 'target' with 'draft', 'e.data' with 'action.payload'
+			 */
 
 			case 'app:change': {
 				draft.app = action.payload

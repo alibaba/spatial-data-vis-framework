@@ -29,9 +29,6 @@ const CURR_CONFIG_KEY = Symbol('CurrConfigKey')
  * - 通过局部更新配置，维护全量配置
  * - RPC 增量或全量同步
  *
- * @non_feature
- * - 不支持merge更新，操作的所有数据都是对应区域的全量数据，直接替换
- *
  * @todo
  * - ? 是否支持全量更新配置，通过藏检查触发局部更新事件 ?
  * 		- 进程内直接用事件系统更方便
@@ -149,7 +146,7 @@ export class ConfigManager<TLayerClasses extends LayerClassesShape> extends Even
  * - [Event.Type]: Event.Data
  */
 export type ConfigEventData<TLayerClasses extends LayerClassesShape = any> = {
-	init: AppConfig<TLayerClasses>
+	'init': AppConfig<TLayerClasses>
 
 	// change: {} // any kind of change (except for init)
 

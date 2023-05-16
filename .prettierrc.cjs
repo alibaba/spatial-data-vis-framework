@@ -6,6 +6,7 @@ module.exports = {
 	printWidth: 100,
 	trailingComma: 'es5',
 	eslintIntegration: true,
+	quoteProps: 'consistent',
 
 	importOrder: ['^@gs.i/*', '^@polaris.gl/*', '<THIRD_PARTY_MODULES>', '^[./].*(?<!css)$', '.css$'],
 	importOrderSeparation: true,
