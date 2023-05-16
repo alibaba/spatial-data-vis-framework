@@ -11,11 +11,11 @@
  * 因此暂时弃用。
  * 新的方案(./digest)在藏检查之前完成 config 的全量替换，派发的事件仅用于响应配置变更，不在回调中修改配置。
  */
-import type { AppConfig } from '../../schema/config'
-import type { LayerClassesShape } from '../../schema/meta'
-import type { ConfigEvents } from '../ConfigManager'
-import type { EventDispatcher } from '../EventDispatcher'
-import { deepEqual, idsEqual, propsDiff, propsEqual } from './compare'
+import type { AppConfig } from '../../../schema/config'
+import type { LayerClassesShape } from '../../../schema/meta'
+import type { ConfigEvents } from '../../ConfigManager'
+import type { EventDispatcher } from '../../EventDispatcher'
+import { deepEqual, idsEqual, propsDiff, propsEqual } from '../compare'
 
 /**
  * compare new config with the old one, dispatch events to update the old one

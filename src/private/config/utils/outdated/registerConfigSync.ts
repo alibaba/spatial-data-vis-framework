@@ -1,7 +1,7 @@
-import type { AppConfig } from '../../schema/config'
-import type { LayerClassesShape } from '../../schema/meta'
-import type { ConfigEvents } from '../ConfigManager'
-import type { EventDispatcher } from '../EventDispatcher'
+import type { AppConfig } from '../../../schema/config'
+import type { LayerClassesShape } from '../../../schema/meta'
+import type { ConfigEvents } from '../../ConfigManager'
+import type { EventDispatcher } from '../../EventDispatcher'
 
 /**
  * @outdated
