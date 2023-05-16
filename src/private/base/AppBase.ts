@@ -64,8 +64,6 @@ export class AppBase extends EventDispatcher<LifeCycleEvent> {
 		if (config.app?.debug) {
 			initDebug.call(this)
 		}
-
-		this.dispatchEvent({ type: 'afterInit' })
 	}
 
 	/**

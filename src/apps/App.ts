@@ -96,6 +96,8 @@ export class App extends AppBase {
 
 		this.watchConfig()
 
+		this.dispatchEvent({ type: 'afterInit' })
+
 		ViteHot: if (import.meta.hot) {
 			// @note 仅在开发环境下启用热更新, label 用于让 rollup 删除这段代码
 
