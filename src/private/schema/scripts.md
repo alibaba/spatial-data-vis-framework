@@ -166,7 +166,7 @@ const entry = /* javascript */ `
 
 这个 entry 实际上就是 ScriptClass 的 constructor 里的一段代码。
 
-这样看来，和 Plan A 是等效的。
+这样看来，和 Plan A 是等效的，可以放回一个事件里，来做更好的封装：
 
 ### Back to Plan A：
 
@@ -175,23 +175,27 @@ const eventType = 'scriptInit'
 const handler = /* javascript */ `
 	console.log('I am a init-ing script!')
 
-	const eventType = event.type // 'scriptInit'
+	// 该脚本也是个事件回调，有自己的 event 对象
+	// 由于所有额外的事件都在这里实现，因此可以直接用闭包，而不用暴露 this
 
-	this.local = {
+	const eventType = event.type // 'scriptInit'
+	const busAgent = event.busAgent
+
+	const local = {
 		foo: 'bar',
 	}
 
-	this.busAgent.on('custom:foo', (event) => {
+	busAgent.on('custom:foo', (event) => {
 		const currentTarget = event.currentTarget
-		const bus = this.busAgent
 	})
 
-	this.busAgent.on('beforeSceneChange', (event) => {
+	busAgent.on('beforeSceneChange', (event) => {
 		const prevScene = event.prevScene
 		const nextScene = event.nextScene
 		const currentTarget = event.currentTarget
-		const bus = this.busAgent
 	})
+
+	busAgent.on('tick', (event) => {})
 `
 ```
 
@@ -269,16 +273,136 @@ type AppConfig = {
 
 缺点：设计特殊
 
-影响：
-
-- attachments 成为
-
 无论如何：
 
 - 对 script 的任何修改都应该重建整个 App
 
 ## 脚本自身的生命周期
 
+暂时不保证脚本自身的生命周期，也不保证运行时机，
+
+当前的实现：
+
+- “app 所有元素创建后，首次渲染前” 进行脚本初始化和挂载
+  - 每个脚本实例化一个脚本对象，挂多个元素？
+  - 每组挂载实例化一个脚本对象？
+  - 同类脚本不提供共享空间的话，两种方案没区别
+  - 共享空间也可以靠额外的方案实现，不需要共享脚本实例
+
+这样回调里才总是能拿到 currentTarget，代价是不能拦截元素的创建，是否要向前调生命周期以后再说
+
+- “app 所有元素销毁前” 进行脚本销毁？
+- 不提供脚本销毁事件，直接用 app 的销毁比较好，弱化脚本存在感
+
+## 事件列表
+
+全局事件
+
+- tick
+  - 每帧 render 前的某个时刻
+  - target: PolarisApp
+- afterInit
+- dispose
+- beforeSceneChange
+  - 场景切换前，可以拦截切换效果
+  - （是否包括初始化场景切换？）
+  - target: PolarisApp
+- afterSceneChange
+  - 场景切换后
+  - target: PolarisApp
+- beforeUpdateData
+  - 数据输入，但是传给 Layer 前，可以拦截数据并修改
+  - target: PolarisApp
+- $xxx
+  - 自定义事件，可以在脚本里自由触发
+  - 需要与内置事件隔离，避免用户触发内部事件，检查关键字或者加前缀？
+  - target: 触发事件的脚本所挂载的对象
+
+config change 相关的事件不再额外设计，在 afterInit 中获取 configManager 即可
+
+## 外部交互
+
+Polaris App 实例的所有者（例如 大屏搭建平台），要通过事件总线与 Polaris App 相互交互。
+
+（这里的"事件总线"对一个 Polaris App 来说是全局的，但在运行上下文中可以有多个 Polaris App 实例，每个拥有独立的总线，而非公用）
+
+考虑到 Polaris App 已经继承自 EventDispatcher，因此直接用它作为事件总线。
+
+（该做法与 vue 相同）
+
+```typescript
+const app = new App()
+
+app.addEventListener('afterInit', (event) => {
+	console.log('app init-ed', event)
+})
+
+app.addEventListener('tick', (event) => {
+	console.log('app tick', event)
+})
+
+app.addEventListener('$custom:foo', (event) => {
+	console.log('$custom:foo', event)
+})
+
+app.dispatchEvent({ type: '$custom:bar', bar: 123 })
 ```
 
+这样的问题是，外部用户将可以直接触发内部事件。
+
+拦截方案是封装一层，对外也提供 busAgent
+
+```typescript
+const app = new App()
+
+function checkEventType(type) {
+	if (!type.startsWith('$')) {
+		throw new Error(`event type "${type}" is internal, cannot be triggered by user`)
+	}
+}
+
+function getEventBusAgent(currentTarget) {
+	const handlerWrappers = new WeakMap<Function, Function>()
+
+	return {
+		on: (type, handler) => {
+			const handlerWrapper = (e) => handler({ ...e, currentTarget })
+			handlerWrappers.set(handler, handlerWrapper)
+
+			app.addEventListener(type, handlerWrapper)
+
+			// 自动清除
+			app.addEventListener('dispose', () => {
+				app.removeEventListener(type, handlerWrapper)
+			})
+		},
+		off: (type, handler) => {
+			const handlerWrapper = handlerWrappers.get(handler)
+			if (!handlerWrapper) {
+				console.warn(`handler ${handler} is not registered`)
+			}
+			app.removeEventListener(type, handler)
+		},
+		emit: (type, data) => {
+			checkEventType(type)
+			app.dispatchEvent({ ...data, type, target: currentTarget })
+		},
+	}
+}
+
+const eventBus = app.getEventBusAgent(this) // 调用 emit 时，this 将作为 target 传给监听者
+
+eventBus.on('afterInit', (event) => {
+	console.log('app init-ed', event)
+})
+
+eventBus.on('tick', (event) => {
+	console.log('app tick', event)
+})
+
+eventBus.on('$custom:foo', (event) => {
+	console.log('$custom:foo', event)
+})
+
+eventBus.emit('$custom:bar', { bar: 123 })
 ```
