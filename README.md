@@ -125,4 +125,4 @@ TODO
 
 ## Polaris App Class API
 
-- CN [顶层 API](./docs/顶层API)
+- CN [顶层 API](./docs/顶层API.md)
