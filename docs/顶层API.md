@@ -299,10 +299,10 @@ eventBus.on('$stop', (event) => {
 eventBus.emit('$custom:bar', { bar: 123 })
 // 监听者将收到如下Event对象
 // {
-//		type: '$custom:bar',
-//		target: me,
-//		currentTarget: 监听器的挂载对象,
-//		bar: 123
+//     type: '$custom:bar',
+//     target: me,
+//     currentTarget: 监听器的挂载对象,
+//     bar: 123
 // }
 ```
 
