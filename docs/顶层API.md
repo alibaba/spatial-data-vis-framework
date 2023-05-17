@@ -1,23 +1,23 @@
-# Polaris App Class Usage
+# Polaris App Usage
 
-这里假设你已经有一个开发好、打包好的 `Polaris App`，包含一个 `App.mjs` 文件和若干个 `config json` 文件。本文介绍如何使用。
+这里假设你已经有一个开发好、打包好的 `Polaris App`，包含一个 `App.mjs` 文件和若干个 `config.json` 文件。本文介绍如何使用。
 
 ## 引入
 
-Polaris App 的打包系统默认提供符合 ESM 标准的 `.mjs` 文件，使用较新的语法特性，包含所有外部依赖。
+Polaris App 的打包系统提供 ESM 标准的 `.mjs` 文件，使用较新的语法特性，包含所有外部依赖。
 
 在现代浏览器中，可以用原生 import 动态引入，方便快捷，无需转译、打包、polyfill 等：
 
 ```html
 <script type="module">
-	const { App } = await import('PATH_TO/App.mjs')
+	const { App } = await import('REMOTE_PATH_TO/App.mjs')
 </script>
 ```
 
 如果你的应用使用 webpack 进行打包，可以要求 webpack 使用原生 import：
 
 ```js
-const { App } = await import(/* webpackIgnore: true */ 'PATH_TO/App.mjs')
+const { App } = await import(/* webpackIgnore: true */ 'REMOTE_PATH_TO/App.mjs')
 ```
 
 你也可以将 App.mjs 放入你的项目代码库中，或者发布成 npm 包，通过你的打包系统引入到你的最终应用中，以此来添加 polyfill。
@@ -26,10 +26,10 @@ const { App } = await import(/* webpackIgnore: true */ 'PATH_TO/App.mjs')
 // as npm
 import { App } from 'YOUR_NPM_PACKAGE_NAME'
 // as local file
-import { App } from './App.mjs'
+import { App } from '../bin/App.mjs'
 ```
 
-## 实例化
+## 实例化与销毁
 
 ```js
 const app = new App({
@@ -40,32 +40,30 @@ const app = new App({
 })
 ```
 
-## 销毁
-
 ```js
 app.dispose()
 ```
 
 ## 切换场景
 
-场景(scene)是 Polaris App 的核心概念，一个 Polaris App 可以包含多个场景，每个场景控制其开启的 Layer 实例和相机状态。
+`场景(scene)`是 Polaris App 的核心概念，一个 Polaris App 可以包含多个场景，每个场景控制其开启的 Layer 实例和相机状态。
 
 可用的场景配置在 config 的 `scenes` 字段中:
 
 ```js
 // config
 {
-	scenes: [
-		// LOCAL_SCENE_DEFAULT 是 config 中必须包含的默认场景
-		{id: 'LOCAL_SCENE_DEFAULT', name: 'Default Scene', ...},
-		{id: 'LOCAL_SCENE_2', name: 'Scene 2', ...},
-	]
+    scenes: [
+        // LOCAL_SCENE_DEFAULT 是 config 中必须包含的默认场景
+        {id: 'LOCAL_SCENE_DEFAULT', name: 'Default Scene', ...},
+        {id: 'LOCAL_SCENE_2', name: 'Scene 2', ...},
+    ]
 }
 
 app.changeScene('LOCAL_SCENE_2')
 ```
 
-初始化 PolarisApp 后切换到初始化场景，该场景 ID 配置在 `config.app.initialScene` 中。
+初始化 PolarisApp 后切换到`初始化场景`，配置在 `config.app.initialScene` 中。
 若未设置，将使用 `'LOCAL_SCENE_DEFAULT'` 作为初始化场景。
 
 ## 配置管理
@@ -77,7 +75,7 @@ const currentConfig = app.configManager.getConfig()
 ```
 
 > **注意 ⚠️**
-> 返回的 config 应被视为 readonly，修改这个对象的任何部分，都可能会破坏之后的脏检查。
+> 返回的 config 应被视为 readonly，修改这个对象的任何部分都可能会破坏之后的脏检查。
 
 ### 更新配置
 
@@ -89,9 +87,9 @@ app.configManager.setConfig(newConfig)
 
 #### 注意 ⚠️
 
-构造函数和 setConfig 传入的 config 对象都应该被视为 `immutable`:
+构造函数和 setConfig 传入的 config 对象都应该被视为 `immutable`，即:
 
-- 传入后，不要再原地修改其中的值或者引用
+- 传入后，不可再原地修改其中的值或者引用
 - 你可以复用其中未变的子树，但是变化的部分应该同时更新所有父节点
 
 该要求与 react 和 vue 相似. 你也可以使用 `immutable.js` 或者 `immer.js` 来管理 config 对象。
@@ -105,11 +103,11 @@ app.configManager.setConfig(config)
 // ✅ good
 const config = app.configManager.getConfig()
 const newConfig = {
-	...config,
-	app: {
-		...config.app,
-		debug: true,
-	},
+    ...config,
+    app: {
+        ...config.app,
+        debug: true,
+    },
 }
 app.configManager.setConfig(newConfig)
 
@@ -117,8 +115,14 @@ app.configManager.setConfig(newConfig)
 import { produce } from 'immer'
 const config = app.configManager.getConfig()
 const newConfig = produce(config, draft => {
-	draft.app.debug = true
+    draft.app.debug = true
 })
+app.configManager.setConfig(newConfig)
+
+// ✅ good, 使用 structuredClone 会造成性能损失，但可保证结果正确
+const config = app.configManager.getConfig()
+const newConfig = structuredClone(config)
+newConfig.app.debug = true
 app.configManager.setConfig(newConfig)
 ```
 
@@ -137,27 +141,27 @@ app.configManager.setConfig(newConfig)
 - 永远不要用 setConfig 来做动画.
 - 如果 config 彻底修改，建议销毁掉 PolarisApp 实例，重新实例化。
 
-## 动态数据
+## 数据接入
 
-Polaris App 使用 “数据插槽” (DataStub) 的模式来接受动态数据。
+Polaris App 使用 `“数据插槽” (DataStub)` 的概念来接入数据。
 
-App Config 的 `dataStubs` 字段中配置了所有数据插槽及其初始值，`layers` 字段中将这些数据插槽绑定到 layer prop 上。
+App Config 的 `dataStubs` 字段中配置了所有数据插槽及其初始值，`layers` 配置中会将这些数据插槽绑定到 layer prop 上。
 
-这种机制将数据的提供和使用完全隔离开。对于 PolarisApp 的使用者来说，不需要关心每个数据如何使用、被谁使用、有没有使用，只需要关心为每个插槽灌入数据。
+数据的提供和使用完全隔离。对于 PolarisApp 的使用者来说，不需要关心每个数据如何使用、被谁使用、有没有使用，只需要关心为每个插槽灌入数据。
 
 ```js
 {
-	dataStubs: [
-		{
-			id: 'LOCAL_DATA_0',
-			name: '全球热力点数据',
-			initialValue: null, // 初始值
-		},
-	],
+    dataStubs: [
+        {
+            id: 'LOCAL_DATA_0',
+            name: '全球热力点数据',
+            initialValue: null, // 初始值
+        },
+    ],
 }
 ```
 
-#### 动态数据
+### 动态数据
 
 对于会频繁更新的数据，可以多次调用 `updateDataStub`:
 
@@ -168,7 +172,7 @@ setInterval(async () => {
 }, 1000)
 ```
 
-#### 静态数据
+### 静态数据
 
 对于不会更新的数据，你可以直接作为 `initialValue` 配置到数据插槽中。
 
@@ -178,7 +182,7 @@ setInterval(async () => {
 app.updateDataStub('LOCAL_DATA_0', staticData)
 ```
 
-#### 注意
+### 注意
 
 初始化数据和每次 updateDataStub 传入的数据都会直接交给数据的使用者（通常是 layer），PolarisApp 不会做额外处理和过滤，数据变化、传入 null/undefined 等特殊值的影响完全由使用者自行处理。
 
@@ -197,7 +201,7 @@ const eventBus = app.getEventBusAgent(me)
 
 目前所有事件都在总线上广播，在 PolarisApp 实例范围内是全局可见的。
 
-#### 事件格式
+### 事件格式
 
 ```typescript
 interface EventBase {
@@ -223,7 +227,7 @@ interface EventBase {
 }
 ```
 
-#### 事件类型
+### 事件类型
 
 事件分为“内部事件”（`internal event`）和“自定义事件”（`custom event`）.
 
@@ -252,7 +256,7 @@ interface EventBase {
   - target: 触发事件的脚本所挂载的对象 / 触发事件的 Layer / 触发事件的外部应用
   - currentTarget: 监听事件的脚本挂载的对象 / 监听事件的 Layer / 监听事件的外部应用
 
-#### 事件监听
+### 事件监听
 
 ```js
 eventBus.on('afterInit', (event) => {
@@ -268,13 +272,13 @@ eventBus.on('$custom:foo', (event) => {
 })
 ```
 
-#### 事件触发
+### 事件触发
 
 ```js
 eventBus.emit('$custom:bar', { bar: 123 })
 ```
 
-#### 注意 ⚠️
+### 注意 ⚠️
 
 - 为了避免用户触发内部事件，自定义事件名必须以 `$` 开头（暂定）
 - `EventBusAgent.emit` 只能触发自定义事件，否则将直接抛错
