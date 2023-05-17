@@ -10,7 +10,7 @@ Polaris App 的打包系统提供 ESM 标准的 `.mjs` 文件，使用较新的�
 
 ```html
 <script type="module">
-	const { App } = await import('REMOTE_PATH_TO/App.mjs')
+    const { App } = await import('REMOTE_PATH_TO/App.mjs')
 </script>
 ```
 
@@ -33,10 +33,10 @@ import { App } from '../bin/App.mjs'
 
 ```js
 const app = new App({
-	container: document.getElementById('container'),
-	config: {
-		// initial app config json
-	},
+    container: document.getElementById('container'),
+    config: {
+        // initial app config json
+    },
 })
 ```
 
@@ -46,7 +46,7 @@ app.dispose()
 
 ## 切换场景
 
-`场景(scene)`是 Polaris App 的核心概念，一个 Polaris App 可以包含多个场景，每个场景控制其开启的 Layer 实例和相机状态。
+`场景(scene)`是 Polaris App 的核心概念，一个 App 实例可以包含多个场景，每个场景控制其开启的 Layer 实例和相机参数。
 
 可用的场景配置在 config 的 `scenes` 字段中:
 
@@ -89,8 +89,8 @@ app.configManager.setConfig(newConfig)
 
 构造函数和 setConfig 传入的 config 对象都应该被视为 `immutable`，即:
 
-- 传入后，不可再原地修改其中的值或者引用
-- 你可以复用其中未变的子树，但是变化的部分应该同时更新所有父节点
+-   传入后，不可再原地修改其中的值或者引用
+-   你可以复用其中未变的子树，但是变化的部分应该同时更新所有父节点
 
 该要求与 react 和 vue 相似. 你也可以使用 `immutable.js` 或者 `immer.js` 来管理 config 对象。
 
@@ -100,7 +100,7 @@ const config = app.configManager.getConfig()
 config.app.debug = true
 app.configManager.setConfig(config)
 
-// ✅ good
+// ✅ good，满足 immutable 要求
 const config = app.configManager.getConfig()
 const newConfig = {
     ...config,
@@ -111,7 +111,7 @@ const newConfig = {
 }
 app.configManager.setConfig(newConfig)
 
-// ✅ good, 使用 immutable 类库管理 config 对象
+// ✅ good, 使用三方库确保 immutable
 import { produce } from 'immer'
 const config = app.configManager.getConfig()
 const newConfig = produce(config, draft => {
@@ -119,7 +119,7 @@ const newConfig = produce(config, draft => {
 })
 app.configManager.setConfig(newConfig)
 
-// ✅ good, 使用 structuredClone 会造成性能损失，但可保证结果正确
+// ✅ ok, 使用 structuredClone 会造成性能损失，但可保证结果正确
 const config = app.configManager.getConfig()
 const newConfig = structuredClone(config)
 newConfig.app.debug = true
@@ -130,24 +130,25 @@ app.configManager.setConfig(newConfig)
 
 **PolarisApp 保证响应 config 的任何变化，尽最大努力得到正确的结果。但不保证该过程的性能和时效。**
 
-实现上，PolarisApp 为了响应配置变化，默认会重建所有受影响的对象，需要开发者主动标出可以复用的资源和计算过程。
+实现上，PolarisApp 为了响应配置变化，默认会重建所有受影响的对象，需要开发者主动标出可以复用的资源和计算过程。因此：
 
-- 你**可以**假设 PolarisApp 可以响应任何 config 修改，包括整个场景的重建
-- 你**应该**假设每次 setConfig 都会很慢，包含许多冗余计算和内存溢出，并且包含异步流程。
+-   你**可以**假设 PolarisApp 能响应任何 config 修改，包括整个场景的重建
+-   你**应该**假设 setConfig 都会很慢，包含许多冗余计算和内存溢出，并且包含异步流程。
 
-我们建议：
+建议：
 
-- setConfig 只应出现在开发和设计阶段，而非生产环境运行时（除非你确信该操作足够高效）。
-- 永远不要用 setConfig 来做动画.
-- 如果 config 彻底修改，建议销毁掉 PolarisApp 实例，重新实例化。
+-   setConfig 只应出现在开发和设计阶段，而非生产环境运行时（除非你确信该操作足够高效）。
+-   永远不要用 setConfig 来做动画.
+-   如果 config 变动巨大，建议销毁掉 PolarisApp 实例，重新实例化。
+-   setConfig 后，一些操作过程可能需要重做，例如切换场景、更新数据、监听事件等，来保证结果正确。
 
 ## 数据接入
 
-Polaris App 使用 `“数据插槽” (DataStub)` 的概念来接入数据。
+PolarisApp 使用 `“数据插槽” (DataStub)` 的概念来接入数据，将数据的提供和使用完全隔离。
 
-App Config 的 `dataStubs` 字段中配置了所有数据插槽及其初始值，`layers` 配置中会将这些数据插槽绑定到 layer prop 上。
+Config 的 `dataStubs` 字段中配置了所有数据插槽及其初始值，`layers` 配置中会将这些数据插槽绑定到 prop 上，传入 layer 使用。
 
-数据的提供和使用完全隔离。对于 PolarisApp 的使用者来说，不需要关心每个数据如何使用、被谁使用、有没有使用，只需要关心为每个插槽灌入数据。
+对于 PolarisApp 的使用者来说，不需要关心每个数据如何使用、被谁使用、有没有使用，只需要关心为每个插槽灌入数据。
 
 ```js
 {
@@ -167,8 +168,8 @@ App Config 的 `dataStubs` 字段中配置了所有数据插槽及其初始值�
 
 ```js
 setInterval(async () => {
-	const dynamicData = await fetchDynamicData()
-	app.updateDataStub('LOCAL_DATA_0', dynamicData)
+    const dynamicData = await fetchDynamicData()
+    app.updateDataStub('LOCAL_DATA_0', dynamicData)
 }, 1000)
 ```
 
@@ -184,9 +185,9 @@ app.updateDataStub('LOCAL_DATA_0', staticData)
 
 ### 注意
 
-初始化数据和每次 updateDataStub 传入的数据都会直接交给数据的使用者（通常是 layer），PolarisApp 不会做额外处理和过滤，数据变化、传入 null/undefined 等特殊值的影响完全由使用者自行处理。
+传入的数据都会直接交给数据的使用者（通常是 layer），PolarisApp 不会做额外处理和过滤，数据变化、传入 null/undefined 的影响完全由使用者决定。
 
-所有传入的数据都应视为 readonly，不得再修改。
+所有传入的数据都应视为 readonly，传入后不得再修改。
 
 ## 事件系统
 
@@ -199,31 +200,31 @@ PolarisApp 通过事件系统与外部应用进行高级交互。每个 PolarisA
 const eventBus = app.getEventBusAgent(me)
 ```
 
-目前所有事件都在总线上广播，在 PolarisApp 实例范围内是全局可见的。
+目前所有事件都在总线上广播，在 PolarisApp 实例范围内全局可见。
 
 ### 事件格式
 
 ```typescript
 interface EventBase {
-	/**
-	 * 事件类型（事件名）
-	 */
-	type: string
+    /**
+     * 事件类型（事件名）
+     */
+    type: string
 
-	/**
-	 * 事件触发者的引用
-	 */
-	target: any
+    /**
+     * 事件触发者的引用
+     */
+    target: any
 
-	/**
-	 * 事件监听器挂载的对象应用
-	 */
-	currentTarget: any
+    /**
+     * 事件监听器挂载的对象应用
+     */
+    currentTarget: any
 
-	/**
-	 * 每种事件可规定其他专用字段
-	 */
-	[key: string]: any
+    /**
+     * 每种事件可规定其他专用字段
+     */
+    [key: string]: any
 }
 ```
 
@@ -233,43 +234,49 @@ interface EventBase {
 
 内部事件代表 PolarisApp 的标准行为，target 都是 PolarisApp 实例，目前包括:
 
-- tick
-  - 每帧 render 前的某个时刻
-- afterInit
-  - 实例构造完成后
-- dispose
-- beforeSceneChange
-  - 场景切换前，用于拦截切换效果
-  - 包括初始化场景切换
-- afterSceneChange
-  - 场景切换后
-  - 包括初始化场景切换
-- beforeUpdateData
-  - 数据输入后，传给数据使用者前，用于拦截数据并修改
-  - ？是否处理初始化数据？
+-   tick
+    -   每帧 render 前的某个时刻
+-   afterInit
+    -   实例构造完成后
+-   dispose
+-   beforeSceneChange
+    -   场景切换前，用于拦截切换效果
+    -   包括初始化场景切换
+-   afterSceneChange
+    -   场景切换后
+    -   包括初始化场景切换
+-   beforeUpdateData
+    -   数据输入后，传给数据使用者前，用于拦截数据并修改
+    -   ？是否处理初始化数据？
 
 自定义事件是用户自己规定、自己触发的，可以用来实现自定义交互。事件名以 `$` 开头（暂定），例如 `$custom:foo`。
 
-- $xxx
-  - 自定义事件，可以由 Layer、脚本、或 PolarisApp 的使用者 自由触发
-  - 需要与内置事件隔离，避免用户触发内部事件，（校验 $ 前缀）
-  - target: 触发事件的脚本所挂载的对象 / 触发事件的 Layer / 触发事件的外部应用
-  - currentTarget: 监听事件的脚本挂载的对象 / 监听事件的 Layer / 监听事件的外部应用
+-   $xxx
+    -   自定义事件，可以由 Layer、脚本、或 PolarisApp 的使用者 自由触发
+    -   需要与内置事件隔离，避免用户触发内部事件，（校验 $ 前缀）
+    -   target: 触发事件的脚本所挂载的对象 / 触发事件的 Layer / 触发事件的外部应用
+    -   currentTarget: 监听事件的脚本挂载的对象 / 监听事件的 Layer / 监听事件的外部应用
 
 ### 事件监听
 
 ```js
 eventBus.on('afterInit', (event) => {
-	console.log('app init-ed', event)
+    console.log('app init-ed', event)
 })
 
 eventBus.on('tick', (event) => {
-	console.log('app tick', event)
+    console.log('app tick', event)
 })
 
 eventBus.on('$custom:foo', (event) => {
-	console.log('$custom:foo', event)
+    console.log('$custom:foo', event)
 })
+```
+
+监听器会自动回收，但是如果有必要，也可以手动移除：
+
+```js
+eventBus.off('tick', listener)
 ```
 
 ### 事件触发
@@ -278,12 +285,13 @@ eventBus.on('$custom:foo', (event) => {
 eventBus.emit('$custom:bar', { bar: 123 })
 ```
 
+`EventBusAgent.emit` 只能触发自定义事件，否则将直接抛错
+
 ### 注意 ⚠️
 
-- 为了避免用户触发内部事件，自定义事件名必须以 `$` 开头（暂定）
-- `EventBusAgent.emit` 只能触发自定义事件，否则将直接抛错
-- 事件总线是发布/订阅模式
-  - 发布者并不知道事件被谁接收、是否被接收
-  - 事件可以被多个监听者接收
-  - 不应该假设接收的先后顺序，不应该假设接收行为是同步的
-  - 事件总线不会记录事件，因此监听者必须在事件触发前订阅，不然会错过
+-   为了避免用户触发内部事件，自定义事件名必须以 `$` 开头（暂定）
+-   事件总线使用`发布/订阅模式`:
+    -   发布者并不知道事件被谁接收、是否被接收
+    -   事件可以被多个监听者接收
+    -   不应该假设接收的先后顺序
+    -   总线不会记录历史事件，因此监听者必须在事件触发前订阅，不然会错过

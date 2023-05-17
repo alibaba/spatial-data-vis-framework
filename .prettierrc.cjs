@@ -14,6 +14,13 @@ module.exports = {
 
 	overrides: [
 		{
+			files: 'docs/*.md',
+			options: {
+				useTabs: false,
+				tabWidth: 4,
+			},
+		},
+		{
 			files: '*.gen.ts',
 			options: {
 				printWidth: 200,
