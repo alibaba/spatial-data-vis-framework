@@ -19,6 +19,7 @@ import { ConfigManager } from '../private/config/ConfigManager'
 import type { AppConfig, DataStub, LayerConfig } from '../private/schema/config'
 import type { AppMeta, LayerClassesShape } from '../private/schema/meta'
 import { getErrorMask } from '../private/utils/getErrorMask'
+import { partialFreeze } from '../private/utils/partialFreeze'
 import { freeID, occupyID } from '../private/utils/unique'
 
 const SCOPE_KEY = Symbol('scopeKey')
@@ -40,7 +41,7 @@ const SCOPE_KEY = Symbol('scopeKey')
  */
 export class App extends AppBase {
 	readonly configManager = new ConfigManager<typeof LayerClasses>()
-	readonly layers = [] as { layer: StandardLayer; name: string; id: string }[]
+	private readonly layers = [] as { layer: StandardLayer; name: string; id: string }[]
 
 	private readonly [SCOPE_KEY] = {}
 
@@ -96,7 +97,8 @@ export class App extends AppBase {
 
 		this.watchConfig()
 
-		this.dispatchEvent({ type: 'afterInit' })
+		// event
+		this.dispatchEvent(Object.freeze({ type: 'afterInit', target: this }))
 
 		ViteHot: if (import.meta.hot) {
 			// @note 仅在开发环境下启用热更新, label 用于让 rollup 删除这段代码
@@ -374,6 +376,18 @@ export class App extends AppBase {
 
 		if (!stub) throw new Error(`data stub (id: ${id}) not found.`)
 
+		// event: beforeUpdateData
+		// 该事件允许在更新 data stub 之前，对 value 进行校验和修改
+		// 相当于 DataStub 粒度的数据过滤器
+		// 注意，如果有多个回调，所修改的是同一份数据，该事件的影响并不区分currentTarget
+		const event = partialFreeze(
+			{ type: 'beforeUpdateData' as const, target: this, dataStubID: id, value },
+			['type', 'target', 'dataStubID']
+		)
+		this.dispatchEvent(event)
+
+		const newValue = event.value
+
 		// @todo dynamic limit
 
 		// @todo @perf cache this
@@ -393,7 +407,7 @@ export class App extends AppBase {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			Object.entries(layerConfig.dataProps!).forEach(([propKey, dataStubID]) => {
 				if (dataStubID === id) {
-					affectedProps[propKey] = value
+					affectedProps[propKey] = newValue
 					affectedPropsKeys.push(propKey)
 				}
 			})
@@ -406,7 +420,7 @@ export class App extends AppBase {
 		}
 	}
 
-	recreateLayer(id: string, cause?: string) {
+	private recreateLayer(id: string, cause?: string) {
 		const config = this.configManager.getConfig()
 		const layerConfig = config.layers.find((l) => l.id === id)
 
@@ -444,17 +458,14 @@ export class App extends AppBase {
 	 * dispose polaris and all layers and re-create them
 	 * - used when config has breaking changes
 	 */
-	recreatePolaris() {
+	private recreatePolaris() {
 		// @todo
 	}
 
-	getLayerConfigById(id: string) {
+	private getLayerConfigById(id: string) {
 		const config = this.configManager.getConfig()
 		return config.layers.find((l) => l.id === id)
 	}
-
-	// global stats
-	static {}
 
 	static $getMeta(): AppMeta {
 		return {

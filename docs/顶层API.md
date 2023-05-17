@@ -250,8 +250,13 @@ interface EventBase {
 -   `tick`
     -   每帧 render 前的某个时刻触发
 -   `afterInit`
-    -   实例构造完成后触发
+    -   实例构造完成时触发
+-   `start`
+    -   App 开始运行后、首次 tick 前触发
+    -   该事件不会错过，在 App 开始运行后添加监听，将**立刻触发**该事件
+    -   用于广义的表达 应用、layer 或脚本 生命周期的开始
 -   `dispose`
+    -   实例销毁过程中触发
 -   `beforeSceneChange`
     -   场景切换前触发，用于拦截切换效果
     -   包括初始化场景切换
@@ -261,6 +266,8 @@ interface EventBase {
 -   `beforeUpdateData`
     -   数据输入后、传给数据使用者前触发，用于拦截数据并修改
     -   初始化数据不会触发
+
+> 最新列表与语义解释请参考 [src/private/event/events.ts](../src/private/event/events.ts)
 
 自定义事件由用户自己规定、自己触发，可以用来实现自定义交互。事件名以 `$` 开头（暂定），例如 `$custom:foo`。
 
@@ -285,7 +292,7 @@ eventBus.on('$custom:foo', (event) => {
 })
 ```
 
-监听器会被自动回收，如有必要也可以主动移除：
+监听器会随 PolarisApp 的销毁而自动清除，如有必要也可以提前清除：
 
 ```js
 eventBus.on('tick', listener)
@@ -311,6 +318,8 @@ eventBus.emit('$custom:bar', { bar: 123 })
 
 ### 注意 ⚠️
 
+-   TODO: setConfig 后可能会造成事件总线重建，需要重新调用 getEventBusAgent 更新代理
+    -   需要修复掉该行为
 -   为了避免用户触发内部事件，自定义事件名必须以 `$` 开头（暂定）
 -   事件总线使用`发布/订阅模式`:
     -   发布者并不知道事件被谁接收、是否被接收

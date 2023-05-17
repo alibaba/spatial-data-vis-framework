@@ -3,27 +3,25 @@ import { HelperLayer } from '@polaris.gl/layer-std-helper'
 import { PolarisThree } from '@polaris.gl/three'
 
 import { EventDispatcher } from '../config/EventDispatcher'
+import { EventBusAgent } from '../event/bus'
+import type { EventMap } from '../event/events'
 import type { AppConfig } from '../schema/config'
 import type { AppMeta } from '../schema/meta'
+import { partialFreeze } from '../utils/partialFreeze'
 import { randomString } from '../utils/random'
 import type { SceneBase } from './SceneBase'
 import type { ScriptBase } from './ScriptBase'
 import type { StageBase } from './StageBase'
 
-type LifeCycleEvent = {
-	afterInit: { type: 'afterInit' }
-	dispose: { type: 'dispose' }
-	sceneChange: { type: 'sceneChange'; sceneID: string }
-}
-
 /**
  * Entry class
  */
-export class AppBase extends EventDispatcher<LifeCycleEvent> {
+export class AppBase extends EventDispatcher<EventMap> {
 	readonly polaris: PolarisThree
 	// readonly layers = [] as StandardLayer[]
 
 	disposed = false
+	started = false
 
 	currentSceneID: string | undefined = undefined
 
@@ -60,6 +58,15 @@ export class AppBase extends EventDispatcher<LifeCycleEvent> {
 
 		const initialScene = config.app?.initialScene ?? 'LOCAL_SCENE_DEFAULT'
 		this.changeScene(initialScene)
+
+		// event: start & tick
+		this.polaris.addEventListener('beforeRender', () => {
+			if (!this.started) {
+				this.started = true
+				this.dispatchEvent(partialFreeze({ type: 'start', target: this }))
+			}
+			this.dispatchEvent(partialFreeze({ type: 'tick', target: this }))
+		})
 
 		if (config.app?.debug) {
 			initDebug.call(this)
@@ -108,12 +115,35 @@ export class AppBase extends EventDispatcher<LifeCycleEvent> {
 		// filter layers in the stage
 		targetStage.filterLayers(targetScene.layers)
 
-		// cameraStateCode
-		if (!skipCamera && targetScene.cameraStateCode) {
-			this.polaris.setStatesCode(targetScene.cameraStateCode, duration)
+		// event: beforeSceneChange
+		// 该事件可以拦截并修改 duration 和 skipCamera
+		const event = partialFreeze(
+			{
+				type: 'beforeSceneChange' as const,
+				target: this,
+				prevScene: this.currentSceneID,
+				nextScene: id,
+				duration,
+				skipCamera,
+			},
+			['type', 'target', 'prevScene', 'nextScene']
+		)
+		this.dispatchEvent(event)
+
+		// set camera
+		if (!event.skipCamera && targetScene.cameraStateCode) {
+			this.polaris.setStatesCode(targetScene.cameraStateCode, event.duration)
 		}
 
-		this.dispatchEvent({ type: 'sceneChange', sceneID: id })
+		// event: afterSceneChange
+		this.dispatchEvent(
+			partialFreeze({
+				type: 'afterSceneChange',
+				target: this,
+				prevScene: this.currentSceneID,
+				nextScene: id,
+			})
+		)
 	}
 
 	// getSceneList() {}
@@ -145,12 +175,21 @@ export class AppBase extends EventDispatcher<LifeCycleEvent> {
 		}
 	}
 
+	/**
+	 * 获取 EventBus 代理对象
+	 */
+	getEventBusAgent(target: any) {
+		return new EventBusAgent(this, target)
+	}
+
 	dispose() {
 		// this.stages.forEach((e) => e.layers.forEach((l) => l.layer.dispose()))
 		// this.stages.forEach((e) => e.dispose())
+		// PolarisGSI 会遍历所有 layer 调用 dispose
 		this.polaris.dispose()
 
-		this.dispatchEvent({ type: 'dispose' })
+		// event
+		this.dispatchEvent(partialFreeze({ type: 'dispose', target: this }))
 	}
 
 	static $getMeta(): AppMeta {

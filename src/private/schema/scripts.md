@@ -355,9 +355,9 @@ app.dispatchEvent({ type: '$custom:bar', bar: 123 })
 ```typescript
 const app = new App()
 
-function checkEventType(type) {
+function validateCustomEventType(type: string) {
 	if (!type.startsWith('$')) {
-		throw new Error(`event type "${type}" is internal, cannot be triggered by user`)
+		throw new Error(`event type "${type}" is not valid custom event type`)
 	}
 }
 
@@ -384,7 +384,7 @@ function getEventBusAgent(currentTarget) {
 			app.removeEventListener(type, handler)
 		},
 		emit: (type, data) => {
-			checkEventType(type)
+			validateCustomEventType(type)
 			app.dispatchEvent({ ...data, type, target: currentTarget })
 		},
 	}
