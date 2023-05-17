@@ -2,6 +2,8 @@
 
 这里假设你已经有一个开发好、打包好的 `Polaris App`，包含一个 `App.mjs` 文件和若干个 `config.json` 文件。本文介绍如何使用。
 
+---
+
 ## 引入
 
 Polaris App 的打包系统提供 ESM 标准的 `.mjs` 文件，使用较新的语法特性，包含所有外部依赖。
@@ -29,6 +31,8 @@ import { App } from 'YOUR_NPM_PACKAGE_NAME'
 import { App } from '../bin/App.mjs'
 ```
 
+---
+
 ## 实例化与销毁
 
 ```js
@@ -43,6 +47,8 @@ const app = new App({
 ```js
 app.dispose()
 ```
+
+---
 
 ## 切换场景
 
@@ -66,6 +72,8 @@ app.changeScene('LOCAL_SCENE_2')
 初始化 PolarisApp 后切换到`初始化场景`，配置在 `config.app.initialScene` 中。
 若未设置，将使用 `'LOCAL_SCENE_DEFAULT'` 作为初始化场景。
 
+---
+
 ## 配置管理
 
 ### 获取当前配置
@@ -85,7 +93,7 @@ const currentConfig = app.configManager.getConfig()
 app.configManager.setConfig(newConfig)
 ```
 
-#### 注意 ⚠️
+### 注意 ⚠️
 
 构造函数和 setConfig 传入的 config 对象都应该被视为 `immutable`，即:
 
@@ -126,7 +134,7 @@ newConfig.app.debug = true
 app.configManager.setConfig(newConfig)
 ```
 
-#### 使用原则
+### 使用原则
 
 **PolarisApp 保证响应 config 的任何变化，尽最大努力得到正确的结果。但不保证该过程的性能和时效。**
 
@@ -141,6 +149,8 @@ app.configManager.setConfig(newConfig)
 -   永远不要用 setConfig 来做动画.
 -   如果 config 变动巨大，建议销毁掉 PolarisApp 实例，重新实例化。
 -   setConfig 后，一些操作过程可能需要重做，例如切换场景、更新数据、监听事件等，来保证结果正确。
+
+---
 
 ## 数据接入
 
@@ -183,11 +193,13 @@ setInterval(async () => {
 app.updateDataStub('LOCAL_DATA_0', staticData)
 ```
 
-### 注意
+### 注意 ⚠️
 
 传入的数据都会直接交给数据的使用者（通常是 layer），PolarisApp 不会做额外处理和过滤，数据变化、传入 null/undefined 的影响完全由使用者决定。
 
 所有传入的数据都应视为 readonly，传入后不得再修改。
+
+---
 
 ## 事件系统
 
@@ -234,30 +246,29 @@ interface EventBase {
 
 内部事件代表 PolarisApp 的标准行为，target 都是 PolarisApp 实例，目前包括:
 
--   tick
-    -   每帧 render 前的某个时刻
--   afterInit
-    -   实例构造完成后
--   dispose
--   beforeSceneChange
-    -   场景切换前，用于拦截切换效果
+-   `tick`
+    -   每帧 render 前的某个时刻触发
+-   `afterInit`
+    -   实例构造完成后触发
+-   `dispose`
+-   `beforeSceneChange`
+    -   场景切换前触发，用于拦截切换效果
     -   包括初始化场景切换
--   afterSceneChange
-    -   场景切换后
+-   `afterSceneChange`
+    -   场景切换后触发
     -   包括初始化场景切换
--   beforeUpdateData
-    -   数据输入后，传给数据使用者前，用于拦截数据并修改
+-   `beforeUpdateData`
+    -   数据输入后、传给数据使用者前触发，用于拦截数据并修改
     -   ？是否处理初始化数据？
 
-自定义事件是用户自己规定、自己触发的，可以用来实现自定义交互。事件名以 `$` 开头（暂定），例如 `$custom:foo`。
+自定义事件由用户自己规定、自己触发，可以用来实现自定义交互。事件名以 `$` 开头（暂定），例如 `$custom:foo`。
 
--   $xxx
-    -   自定义事件，可以由 Layer、脚本、或 PolarisApp 的使用者 自由触发
-    -   需要与内置事件隔离，避免用户触发内部事件，（校验 $ 前缀）
-    -   target: 触发事件的脚本所挂载的对象 / 触发事件的 Layer / 触发事件的外部应用
-    -   currentTarget: 监听事件的脚本挂载的对象 / 监听事件的 Layer / 监听事件的外部应用
+-   `$xxx`
+    -   由 Layer、脚本、或 PolarisApp 的使用者主动触发
+    -   `.target`: 触发事件的脚本所挂载的对象 / 触发事件的 Layer / 触发事件的外部应用
+    -   `.currentTarget`: 监听事件的脚本挂载的对象 / 监听事件的 Layer / 监听事件的外部应用
 
-### 事件监听
+### 监听事件
 
 ```js
 eventBus.on('afterInit', (event) => {
@@ -276,10 +287,13 @@ eventBus.on('$custom:foo', (event) => {
 监听器会自动回收，但是如果有必要，也可以手动移除：
 
 ```js
-eventBus.off('tick', listener)
+eventBus.on('tick', listener)
+eventBus.on('$stop', (event) => {
+    eventBus.off('tick', listener)
+})
 ```
 
-### 事件触发
+### 触发自定义事件
 
 ```js
 eventBus.emit('$custom:bar', { bar: 123 })
