@@ -54,7 +54,7 @@ app.dispose()
 
 `场景(scene)`是 Polaris App 的核心概念，一个 App 实例可以包含多个场景，每个场景控制其开启的 Layer 实例和相机参数。
 
-可用的场景配置在 config 的 `scenes` 字段中:
+可用的场景配置在 config 的 `scenes` 字段中，调用 `app.changeScene(sceneId)` 切换场景:
 
 ```js
 // config
@@ -66,6 +66,7 @@ app.dispose()
     ]
 }
 
+// change scene
 app.changeScene('LOCAL_SCENE_2')
 ```
 
@@ -284,7 +285,7 @@ eventBus.on('$custom:foo', (event) => {
 })
 ```
 
-监听器会自动回收，但是如果有必要，也可以手动移除：
+监听器会被自动回收，如有必要也可以主动移除：
 
 ```js
 eventBus.on('tick', listener)
