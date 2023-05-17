@@ -2,15 +2,13 @@
  * @class EventDispatcher
  * @description A fully-typed, extendable event dispatcher with similar api of DOM:EventTarget.
  * @author Simon
- * @note copy from @polaris.gl/base, add dispatchEvent method type check
+ * @note copy from @polaris.gl/base,
+ * @edit add `dispatchEvent` method type check
+ * @edit rm `dispatchAnEvent` method
+ * @edit disable `target` override, `type` is the only resolved property
+ * @edit disable event frozen. alow listeners to modify the event object
+ * @todo merge back to @polaris.gl/base
  */
-
-export interface EventBase {
-	type: string
-}
-
-export type EventMapBase = Record<string, EventBase>
-export type DefaultEventMap = Record<string, never>
 
 /**
  * An object that dispatches events.
@@ -102,20 +100,13 @@ export class EventDispatcher<TEventTypes extends EventMapBase = any> {
 		const listenerArray = listeners[event.type]
 
 		if (listenerArray !== undefined) {
-			const eventOut = event as any
-
-			eventOut.target = this
-
-			// for safety
-			Object.freeze(eventOut)
-
 			// Make a copy, in case listeners are removed while iterating.
 			const array = listenerArray.slice(0)
 
 			for (let i = 0, l = array.length; i < l; i++) {
 				const listener = array[i]
 
-				listener.call(this, eventOut)
+				listener.call(this, event)
 
 				if (this._options.get(listener)?.once) {
 					this.removeEventListener(event.type, listener)
@@ -129,38 +120,6 @@ export class EventDispatcher<TEventTypes extends EventMapBase = any> {
 
 		if (listeners[type] !== undefined) {
 			listeners[type] = []
-		}
-	}
-
-	/**
-	 * dispatch an event to a specific listener
-	 * @node use this only if you know what you're doing
-	 * @deprecated may be removed in future versions
-	 */
-	protected dispatchAnEvent<TEventTypeName extends string>(
-		event: {
-			/**
-			 * assign the event type
-			 */
-			type: TEventTypeName
-		} & Record<string, any>,
-		listener: ListenerCbk<TEventTypes, TEventTypeName>
-	): void {
-		if (!event.type) {
-			throw new Error('event.type is required')
-		}
-
-		const eventOut = event as any
-
-		eventOut.target = this
-
-		// for safety
-		Object.freeze(eventOut)
-
-		listener.call(this, eventOut)
-
-		if (this._options.get(listener)?.once) {
-			this.removeEventListener(event.type, listener)
 		}
 	}
 }
@@ -194,6 +153,13 @@ export type ListenerCbk<
 	// }
 	event: TEventTypes[TName]
 ) => void
+
+export interface EventBase {
+	type: string
+}
+
+export type EventMapBase = Record<string, EventBase>
+export type DefaultEventMap = Record<string, never>
 
 // type test code
 // const e = new EventDispatcher<{
