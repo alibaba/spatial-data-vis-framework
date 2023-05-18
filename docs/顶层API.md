@@ -207,10 +207,11 @@ app.updateDataStub('LOCAL_DATA_0', staticData)
 PolarisApp 通过事件系统与外部应用进行高级交互。每个 PolarisApp 实例包含一个事件总线，通过 `getEventBusAgent` 来获取事件总线的代理。
 
 ```js
-// `me` 代表该代理的使用者
-// 用来告知事件的接收方，这个事件是谁触发的（`event.target`）
-// 如果不触发事件，或者不需要这个信息，可以传入 null
-const eventBus = app.getEventBusAgent(me)
+// `target` 代表该代理的使用者
+// - 接收事件时，作为 `event.currentTarget`
+// - 发送事件时，将作为接收方得到的 `event.target`
+// 如果不触发事件，或者不需要这个信息，可以忽略
+const eventBus = app.getEventBusAgent(target)
 ```
 
 目前所有事件都在总线上广播，在 PolarisApp 实例范围内全局可见。
@@ -318,8 +319,7 @@ eventBus.emit('$custom:bar', { bar: 123 })
 
 ### 注意 ⚠️
 
--   TODO: setConfig 后可能会造成事件总线重建，需要重新调用 getEventBusAgent 更新代理
-    -   需要修复掉该行为
+-   TODO: setConfig 后可能会造成事件总线重建，目前可能需要重新调用 getEventBusAgent 更新代理，之后要修掉这个问题
 -   为了避免用户触发内部事件，自定义事件名必须以 `$` 开头（暂定）
 -   事件总线使用`发布/订阅模式`:
     -   发布者并不知道事件被谁接收、是否被接收

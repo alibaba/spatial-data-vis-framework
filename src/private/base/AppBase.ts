@@ -177,8 +177,10 @@ export class AppBase extends EventDispatcher<EventMap> {
 
 	/**
 	 * 获取 EventBus 代理对象
+	 * @param target 接收事件时的 currentTarget 和 发送事件后接收方得到的 target
+	 * @note 若不关心，target 可以传入 this 或 null
 	 */
-	getEventBusAgent(target: any) {
+	getEventBusAgent(target: any = null) {
 		return new EventBusAgent(this, target)
 	}
 
