@@ -6,7 +6,7 @@
 
 ## 引入
 
-Polaris App 的打包系统提供 ESM 标准的 `.mjs` 文件，使用较新的语法特性，包含所有外部依赖。
+Polaris App 的打包系统提供 ESM 标准的 `.mjs` 文件，使用 `ES2022` 语法，包含所有依赖。
 
 在现代浏览器中，可以用原生 import 动态引入，方便快捷，无需转译、打包、polyfill 等：
 
@@ -99,9 +99,9 @@ app.configManager.setConfig(newConfig)
 构造函数和 setConfig 传入的 config 对象都应该被视为 `immutable`，即:
 
 -   传入后，不可再原地修改其中的值或者引用
--   你可以复用其中未变的子树，但是变化的部分应该同时更新所有父节点
+-   你可以复用其中未变的子树，但是变化的部分应该更新所有父节点引用
 
-该要求与 react 和 vue 相似. 你也可以使用 `immutable.js` 或者 `immer.js` 来管理 config 对象。
+该要求与 react/vue 相同. 因此可以使用 `immutable.js` 或者 `immer.js` 来管理 config 对象。
 
 ```js
 // ❌ bad, 会导致脏检查失效
@@ -137,19 +137,19 @@ app.configManager.setConfig(newConfig)
 
 ### 使用原则
 
-**PolarisApp 保证响应 config 的任何变化，尽最大努力得到正确的结果。但不保证该过程的性能和时效。**
+**PolarisApp 响应 config 的任何变化，尽最大努力得到正确的结果。但不保证该过程的性能和时效。**
 
 实现上，PolarisApp 为了响应配置变化，默认会重建所有受影响的对象，需要开发者主动标出可以复用的资源和计算过程。因此：
 
--   你**可以**假设 PolarisApp 能响应任何 config 修改，包括整个场景的重建
--   你**应该**假设 setConfig 都会很慢，包含许多冗余计算和内存溢出，并且包含异步流程。
+-   你**可以**假设 PolarisApp 能响应任何 config 修改，包括整个场景的彻底重建
+-   你**应该**假设 setConfig 都会很慢，包含冗余计算和内存溢出，并且包含异步流程
 
 建议：
 
--   setConfig 只应出现在开发和设计阶段，而非生产环境运行时（除非你确信该操作足够高效）。
--   永远不要用 setConfig 来做动画.
--   如果 config 变动巨大，建议销毁掉 PolarisApp 实例，重新实例化。
--   setConfig 后，一些操作过程可能需要重做，例如切换场景、更新数据、监听事件等，来保证结果正确。
+-   setConfig 只应出现在开发和设计阶段，而非生产环境运行时（除非你测试过该操作足够高效）
+-   永远不要用 setConfig 来做动画
+-   如果 config 变动巨大，建议销毁掉 PolarisApp 实例，重新实例化，性能反而更好
+-   setConfig 后，一些操作过程可能需要重做，例如切换场景、更新数据、监听事件等 (@TODO:详细规则)
 
 ---
 
@@ -186,9 +186,9 @@ setInterval(async () => {
 
 ### 静态数据
 
-对于不会更新的数据，你可以直接作为 `initialValue` 配置到数据插槽中。
+对于不会更新的数据，可以直接作为 `initialValue` 配置到数据插槽中。
 
-如果担心该字段导致 config 体积过大，也可以将 `initialValue` 设为 null，实例化后调用一次 `updateDataStub` 来传入数据：
+如果担心该字段导致 config 体积过大，也可以将 `initialValue` 设为 `null`，实例化后调用一次 `updateDataStub` 来传入数据：
 
 ```js
 app.updateDataStub('LOCAL_DATA_0', staticData)
@@ -267,6 +267,7 @@ interface EventBase {
 -   `beforeUpdateData`
     -   数据输入后、传给数据使用者前触发，用于拦截数据并修改
     -   初始化数据不会触发
+-   ...
 
 > 最新列表与语义解释请参考 [src/private/event/events.ts](../src/private/event/events.ts)
 
@@ -293,7 +294,7 @@ eventBus.on('$custom:foo', (event) => {
 })
 ```
 
-监听器会随 PolarisApp 的销毁而自动清除，如有必要也可以提前清除：
+监听器会随 PolarisApp 的销毁而自动清除，也可以提前清除：
 
 ```js
 eventBus.on('tick', listener)
@@ -315,14 +316,13 @@ eventBus.emit('$custom:bar', { bar: 123 })
 // }
 ```
 
-`EventBusAgent.emit` 只能触发自定义事件，否则将直接抛错
+`emit` 只能触发 "$"前缀的自定义事件，否则将直接抛错
 
 ### 注意 ⚠️
 
--   TODO: setConfig 后可能会造成事件总线重建，目前可能需要重新调用 getEventBusAgent 更新代理，之后要修掉这个问题
--   为了避免用户触发内部事件，自定义事件名必须以 `$` 开头（暂定）
+-   setConfig 后可能会造成事件总线重建，可能需要重新调用 getEventBusAgent 更新代理 (TODO:修掉这个问题)
 -   事件总线使用`发布/订阅模式`:
     -   发布者并不知道事件被谁接收、是否被接收
     -   事件可以被多个监听者接收
     -   不应该假设接收的先后顺序
-    -   总线不会记录历史事件，因此监听者必须在事件触发前订阅，不然会错过
+    -   总线不会记录历史事件，因此监听者必须在事件触发前订阅，不然会错过事件
