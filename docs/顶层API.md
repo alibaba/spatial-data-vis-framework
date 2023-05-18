@@ -281,6 +281,8 @@ interface EventBase {
 ### 监听事件
 
 ```js
+// 监听内置事件
+
 eventBus.on('afterInit', (event) => {
     console.log('app init-ed', event)
 })
@@ -288,6 +290,8 @@ eventBus.on('afterInit', (event) => {
 eventBus.on('tick', (event) => {
     console.log('app tick', event)
 })
+
+// 监听自定义事件
 
 eventBus.on('$custom:foo', (event) => {
     console.log('$custom:foo', event)
@@ -310,7 +314,7 @@ eventBus.emit('$custom:bar', { bar: 123 })
 // 监听者将收到如下Event对象
 // {
 //     type: '$custom:bar',
-//     target: me,
+//     target: me, // getEventBusAgent 的第一个参数
 //     currentTarget: 监听器的挂载对象,
 //     bar: 123
 // }
@@ -320,9 +324,11 @@ eventBus.emit('$custom:bar', { bar: 123 })
 
 ### 注意 ⚠️
 
--   setConfig 后可能会造成事件总线重建，可能需要重新调用 getEventBusAgent 更新代理 (TODO:修掉这个问题)
 -   事件总线使用`发布/订阅模式`:
-    -   发布者并不知道事件被谁接收、是否被接收
-    -   事件可以被多个监听者接收
-    -   不应该假设接收的先后顺序
-    -   总线不会记录历史事件，因此监听者必须在事件触发前订阅，不然会错过事件
+
+    -   `解耦`: 发布者并不知道事件被谁接收、是否被接收
+    -   `广播`: 事件可以被多个监听者接收
+    -   `异步`: 除非明确规定，否则不应该假设接收的先后顺序和时机
+    -   `可错过`: 总线不会记录历史事件，事件触发后添加订阅，会错过事件
+
+-   setConfig 后可能会造成事件总线重建，可能需要重新调用 getEventBusAgent 更新代理 (TODO:修掉这个问题)
