@@ -15,7 +15,6 @@ import {
 	LinearFilter,
 	RGBAFormat,
 	DepthTexture,
-	Vector2,
 	AmbientLight,
 	DirectionalLight,
 	PointLight,
@@ -35,7 +34,6 @@ export type RendererConfig = {
 	 */
 	root: IR.Node
 
-	enableReflection?: boolean
 	reflectionRatio?: number
 	castShadow?: boolean
 } & Required<
@@ -52,7 +50,6 @@ export type RendererConfig = {
 		| 'lights'
 		| 'cameraNear'
 		| 'cameraFar'
-		| 'postprocessing'
 		| 'matrixProcessor'
 		| 'boundingProcessor'
 		| 'graphProcessor'
@@ -112,12 +109,6 @@ export class LiteRenderer extends Renderer {
 	camera: PerspectiveCamera
 
 	/**
-	 * Postprocessing
-	 */
-	effectComposer: any // postprocessing.EffectComposer
-	passes: any // { [name: string]: PolarisPass }
-
-	/**
 	 * Picking
 	 */
 	// raycaster: Raycaster
@@ -132,18 +123,6 @@ export class LiteRenderer extends Renderer {
 		maxVaryingVectors: number
 		[name: string]: any
 	}
-
-	/**
-	 * 反射相关FBO、Pass
-	 */
-	reflectionTexture?: WebGLRenderTarget
-	reflectionTextureRough?: WebGLRenderTarget
-	// private reflectionTextureFXAA: WebGLRenderTarget
-	// private reflectionDrawPass: Pass
-	// private reflectionFxaaPass: Pass
-	// private reflectionBlurPass: Pass
-	// private reflector: Mesh
-	// private reflectionTexMatrix: Matrix4
 
 	constructor(props: RendererConfig) {
 		super()
@@ -270,10 +249,6 @@ export class LiteRenderer extends Renderer {
 		 * @stage_2 只兼容桌面端，考虑是否放到 GL2 renderer 里，IE 是否需要？
 		 */
 
-		// init shadow
-
-		// this.initReflection()
-
 		// init pp
 		this.frame = new WebGLRenderTarget(canvasWidth, canvasHeight, {
 			minFilter: LinearFilter,
@@ -283,8 +258,6 @@ export class LiteRenderer extends Renderer {
 			depthBuffer: true,
 		})
 		this.frame.depthTexture = new (DepthTexture as any)()
-
-		// this.initPostprocessing()
 	}
 
 	render() {
@@ -337,17 +310,10 @@ export class LiteRenderer extends Renderer {
 
 	dispose() {
 		this.renderer.dispose()
+		this.renderer.forceContextLoss()
 		this.conv.dispose()
-		if (this.effectComposer) {
-			this.effectComposer.dispose()
-		}
-		for (const key in this.passes) {
-			this.passes[key].dispose()
-		}
 		this.frame && this.frame.dispose()
-		if (this.canvas.parentElement) {
-			this.canvas.parentElement.removeChild(this.canvas)
-		}
+		this.canvas.remove()
 	}
 
 	updateCamera(cam: CameraProxy): void {
@@ -396,31 +362,6 @@ export class LiteRenderer extends Renderer {
 			this.camera.far = Math.min(far, this.config.cameraFar as number)
 			this.camera.updateProjectionMatrix()
 		}
-
-		// Update postprocessing
-		if (this.effectComposer) {
-			// The drawing buffer size takes the device pixel ratio into account.
-			const vec2 = new Vector2()
-			const { width, height } = this.renderer.getDrawingBufferSize(vec2)
-			this.frame.setSize(width, height)
-			this.effectComposer.inputBuffer.setSize(width, height)
-			this.effectComposer.outputBuffer.setSize(width, height)
-			for (const pass of this.effectComposer.passes) {
-				pass.setSize(width, height)
-				pass.onViewChange && pass.onViewChange(cam)
-			}
-		}
-
-		/** Update reflectionTexture */
-		// const canvasSize = this.renderer.getSize(vec2)
-		// const reflectionWidth = Math.floor(canvasSize.width * (this.config.reflectionRatio ?? 1.0))
-		// const reflectionHeight = Math.floor(canvasSize.height * (this.config.reflectionRatio ?? 1.0))
-		// this.reflectionTexture.setSize(reflectionWidth, reflectionHeight)
-		// this.reflectionTextureFXAA.setSize(reflectionWidth, reflectionHeight)
-		// this.reflectionTextureRough.setSize(reflectionWidth / 2, reflectionHeight / 2)
-		// this.reflectionDrawPass.resize(reflectionWidth, reflectionHeight)
-		// this.reflectionFxaaPass.resize(reflectionWidth, reflectionHeight)
-		// this.reflectionBlurPass.resize(reflectionWidth, reflectionHeight)
 	}
 
 	updateConfig(props) {
@@ -462,14 +403,6 @@ export class LiteRenderer extends Renderer {
 		this.camera.updateProjectionMatrix()
 
 		this.initLights()
-
-		if (this.config.postprocessing && this.config.postprocessing.length > 0) {
-			/** @QianXun 目前先采用全部替换pass的方式来更新pp props */
-			// this.initPostprocessing()
-		} else {
-			this.config.renderToFBO = false
-			this.renderer.autoClear = true
-		}
 	}
 
 	getNDC(worldPosition: { x: number; y: number; z: number }): number[] {
