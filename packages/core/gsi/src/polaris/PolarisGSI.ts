@@ -148,6 +148,7 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 		this.view.html.element.style.overflow = 'hidden'
 		this.view.html.element.className = 'polaris-wrapper'
 		container.appendChild(this.view.html.element)
+		this.addEventListener('dispose', () => this.view.html.element.remove())
 
 		// pointer 事件
 		this._initPointerEvents()
@@ -166,6 +167,8 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 				})
 			}
 			this.cameraControl.scale = 1.0 / (this.ratio ?? 1.0)
+
+			this.addEventListener('dispose', () => this.cameraControl?.dispose())
 		}
 
 		/**
@@ -289,15 +292,6 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 
 		if (this.renderer) {
 			this.renderer.dispose()
-		}
-
-		// Dispose layers
-		this.traverse((base) => {
-			base !== this && base.dispose && base.dispose()
-		})
-
-		if (this.view.html.element.parentElement) {
-			this.view.html.element.parentElement.removeChild(this.view.html.element)
 		}
 
 		if (this._resizeListener) {

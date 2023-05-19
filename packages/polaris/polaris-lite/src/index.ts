@@ -36,6 +36,8 @@ export class PolarisLite extends PolarisGSI {
 			matrixProcessor: this.matrixProcessor,
 		})
 
+		this.addEventListener('dispose', () => this.raycaster.dispose())
+
 		// Renderer props update listener
 		const rendererProps = [
 			'background',

@@ -48,6 +48,7 @@ export abstract class AbstractLayer<
 
 	#inited = false
 	#visible = true
+	#disposed = false
 	#propsManager = new PropsManager<TProps>()
 
 	// 本地传入
@@ -159,8 +160,17 @@ export abstract class AbstractLayer<
 	): PickInfo | undefined
 
 	dispose() {
+		if (this.#disposed) return
+
+		this.#disposed = true
+
 		// trigger before deconstruction incase use needs some of them in the callback
 		this.dispatchEvent({ type: 'dispose' })
+
+		// Dispose layers
+		this.traverse((layer) => {
+			if (layer !== this) layer.dispose()
+		})
 
 		// @todo Is it necessary?
 		// this.#propsManager.dispose()

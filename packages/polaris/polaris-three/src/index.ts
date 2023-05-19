@@ -52,20 +52,25 @@ export class PolarisThree extends PolarisGSI {
 			matrixProcessor: this.matrixProcessor,
 		})
 
+		this.addEventListener('dispose', () => this.raycaster.dispose())
+
 		if (this.enableReflection) {
-			this.reflector = new Reflector({
+			const reflector = new Reflector({
 				textureWidth: (this.getProp('width') as number) * this.reflectionRatio,
 				textureHeight: (this.getProp('height') as number) * this.reflectionRatio,
 				debugBlur: false,
 			})
+			this.reflector = reflector
 
-			this.renderer['scene'].add(this.reflector)
+			this.addEventListener('dispose', () => reflector.dispose())
+
+			this.renderer['scene'].add(reflector)
 
 			this.reflectionTexture = specifyTexture({
 				image: {
 					uri: 'https://img.alaassicdn.com/imgextra/i1/O1CN01V6Tl3V1dzC8hdgJdi_!!6000000003806-2-tps-4096-4096.png',
 				},
-				extensions: { EXT_ref_threejs: this.reflector.texture },
+				extensions: { EXT_ref_threejs: reflector.texture },
 			})
 			this.reflectionTexture['name'] = 'reflectionTexture'
 
@@ -73,14 +78,14 @@ export class PolarisThree extends PolarisGSI {
 				image: {
 					uri: 'https://img.alicdn.com/imgextra/i1/O1CN01V6Tl3V1dzC8hdgJdi_!!6000000003806-2-tps-4096-4096.png',
 				},
-				extensions: { EXT_ref_threejs: this.reflector.textureBlur },
+				extensions: { EXT_ref_threejs: reflector.textureBlur },
 			})
 			this.reflectionTextureBlur['name'] = 'reflectionTextureBlur'
 
-			this.reflectionMatrix = this.reflector.reflectionMatrix.elements
+			this.reflectionMatrix = reflector.reflectionMatrix.elements
 
 			this.watchProps(['width', 'height'], (e) => {
-				this.reflector?.resize(
+				reflector.resize(
 					(this.getProp('width') as number) * this.reflectionRatio,
 					(this.getProp('height') as number) * this.reflectionRatio
 				)

@@ -337,6 +337,7 @@ export class ThreeRenderer extends Renderer {
 
 	dispose() {
 		this.renderer.dispose()
+		this.renderer.forceContextLoss()
 		this.conv.dispose()
 		if (this.effectComposer) {
 			this.effectComposer.dispose()
@@ -345,9 +346,7 @@ export class ThreeRenderer extends Renderer {
 			this.passes[key].dispose()
 		}
 		this.frame && this.frame.dispose()
-		if (this.canvas.parentElement) {
-			this.canvas.parentElement.removeChild(this.canvas)
-		}
+		this.canvas.remove()
 	}
 
 	updateCamera(cam: CameraProxy): void {
