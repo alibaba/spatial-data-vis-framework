@@ -130,6 +130,35 @@ export const BPConfig = {
 	],
 
 	/**
+	 * 脚本系统
+	 * @experimental
+	 */
+	$scripts: [
+		{
+			name: 'script 0',
+			id: 'LOCAL_SCRIPT_0',
+			type: 'bus' as const,
+			eventType: 'scriptInit' as const,
+			handler: /* javascript */ `
+				/**
+				 * 这里是 scriptInit 事件的回调函数体
+				 * @context
+				 * 环境变量包括：
+				 * - event: ScriptInitEvent
+				 */
+
+				console.log('I am a init-ing script!')
+				const eventType = event.type // 'scriptInit'
+				const busAgent = event.busAgent
+				
+				busAgent.on('beforeSceneChange', (event) => {
+					console.log('beforeSceneChange', event) // BeforeSceneChangeEvent
+				})
+			`,
+		},
+	],
+
+	/**
 	 * readonly config
 	 *
 	 * 静态只读配置项，
