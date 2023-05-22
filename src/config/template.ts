@@ -155,6 +155,7 @@ export const BPConfig = {
 					console.log('beforeSceneChange', event) // BeforeSceneChangeEvent
 				})
 			`,
+			targets: [],
 		},
 	],
 
