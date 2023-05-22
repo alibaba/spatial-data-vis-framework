@@ -4,7 +4,7 @@ import { PolarisThree } from '@polaris.gl/three'
 
 import { EventDispatcher } from '../config/EventDispatcher'
 import { EventBusAgent } from '../event/bus'
-import type { EventMap } from '../event/events'
+import type { BusEventMap } from '../event/events'
 import type { AppConfig } from '../schema/config'
 import type { AppMeta } from '../schema/meta'
 import { partialFreeze } from '../utils/partialFreeze'
@@ -16,7 +16,7 @@ import type { StageBase } from './StageBase'
 /**
  * Entry class
  */
-export class AppBase extends EventDispatcher<EventMap> {
+export class AppBase extends EventDispatcher<BusEventMap> {
 	readonly polaris: PolarisThree
 	// readonly layers = [] as StandardLayer[]
 

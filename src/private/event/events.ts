@@ -1,6 +1,6 @@
 /**
  * @file
- * 事件格式，内部事件列表
+ * Bus Event Types
  */
 import type { AppBase } from '../base/AppBase'
 
@@ -15,11 +15,14 @@ export type EventBase = {
 
 	/**
 	 * 事件触发者
+	 * - the object that dispatches the event (aka. the emitter)
 	 */
 	readonly target: unknown
 
 	/**
 	 * 事件监听者/事件监听器挂载的对象
+	 * - the listener
+	 * - the object that this listener is attached to
 	 */
 	readonly currentTarget?: any
 }
@@ -58,8 +61,8 @@ export type DisposeEvent = InternalEventBase & {
 
 /**
  * 场景切换前触发 (包括初始化场景切换)
- * 用于拦截和修改切换效果
- * @rule 以 `Before` 开头的事件为同步事件，其处理器可以修改输入值以改变后续行为
+ * @usage 用于拦截和修改切换效果
+ * @rule An Event starts width `Before` is a synchronous event. Its handler can edit the input value to change the behavior after.
  */
 export type BeforeSceneChangeEvent = InternalEventBase & {
 	readonly type: 'beforeSceneChange'
@@ -122,7 +125,7 @@ export type CustomEvent<T extends CustomEventType = CustomEventType> = EventBase
 	[key: string]: any
 }
 
-export type EventMap = EventsMap<InternalEvent | CustomEvent>
+export type BusEventMap = EventsMap<InternalEvent | CustomEvent>
 
 // utilities
 

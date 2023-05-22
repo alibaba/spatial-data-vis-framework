@@ -1,6 +1,7 @@
 import type { PolarisThreeProps } from '@polaris.gl/three'
 
 import type { LayerClassesShape } from './meta'
+import type { ScriptConfig } from './scripts'
 
 // L0
 
@@ -17,6 +18,12 @@ export type AppConfig<TLayerClasses extends LayerClassesShape = any> = {
 	scenes: ScenesConfig
 
 	dataStubs?: DataStubsConfig
+
+	/**
+	 * @experimental
+	 * 脚本列表
+	 */
+	$scripts?: ScriptConfig[]
 
 	/**
 	 * @experimental

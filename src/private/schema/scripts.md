@@ -63,7 +63,7 @@ type BusEventScript = {
 }
 ```
 
-复杂脚本可能涉及多个事件，例如：一个脚本里既有 onSceneChange，又有 onCustomEvent，或者有准备性的 onStart，又有实时性的 onTick。
+问题：复杂脚本可能涉及多个事件，例如：一个脚本里既有 onSceneChange，又有 onCustomEvent，或者有准备性的 onStart，又有实时性的 onTick。
 
 #### Plan B
 
@@ -230,10 +230,11 @@ type LayerConfig = {
 	// ...
 	scripts: string[]
 }
-type SceneConfig = {
-	// ...
-	scripts: string[]
-}
+// 没有实体，不能依附脚本
+// type SceneConfig = {
+// 	// ...
+// 	scripts: string[]
+// }
 type StageConfig = {
 	// ...
 	scripts: string[]
@@ -242,10 +243,11 @@ type AppConfig = {
 	// ...
 	scripts: string[]
 }
-type DataStubConfig = {
-	// ...
-	scripts: string[]
-}
+// 没有实体，不能依附脚本
+// type DataStubConfig = {
+// 	// ...
+// 	scripts: string[]
+// }
 ```
 
 优点：设计上规整，谁的就挂谁下面
@@ -259,7 +261,7 @@ type DataStubConfig = {
 
 ### Plan B
 
-集中记录 scriptAttachments 配对关系
+集中记录 scriptAttachments 依附关系
 
 ```typescript
 type AppConfig = {
@@ -276,6 +278,35 @@ type AppConfig = {
 无论如何：
 
 - 对 script 的任何修改都应该重建整个 App
+
+### Plan C
+
+将依附关系记录在脚本里
+
+```typescript
+type ScriptConfig = {
+	name: string
+	// id: string
+	type: 'bus'
+
+	eventType: string
+	entry: string
+
+	targets: { type: 'layer' | 'stage' | 'app'; id: string }[]
+}
+```
+
+和 Plan B 等效，但不新增字段。
+
+语义上，相当于整个脚本系统都是额外附加上的。
+
+缺点：获取所有的配对关系需要两级遍历，例如删除某个实例后，需要遍历所有脚本，再遍历所有脚本的 targets，找到相关的配对，再删除
+
+缺点：与 UI 差别较大，UI 是在实例中填脚本，这里是在脚本中填实例
+
+然而：UI 可能也得在脚本中集中管理实例
+
+不如：规定在脚本中管理实例
 
 ## 脚本自身的生命周期
 

@@ -246,32 +246,32 @@ interface EventBase {
 
 事件分为“内部事件”（`internal event`）和“自定义事件”（`custom event`）.
 
-内部事件代表 PolarisApp 的标准行为，target 都是 PolarisApp 实例，目前包括:
+`内部事件`代表 PolarisApp 的标准行为，target 都是 PolarisApp 实例，目前包括:
 
--   `tick`
-    -   每帧 render 前的某个时刻触发
 -   `afterInit`
-    -   实例构造完成时触发
--   `start`
+    -   实例构造完成时（构造函数结尾）触发
+-   `tick` 🌟
+    -   每帧 render 前的某个时刻触发
+-   `start` 🌟
     -   App 开始运行后、首次 tick 前触发
     -   该事件不会错过，在 App 开始运行后添加监听，将**立刻触发**该事件
     -   用于广义的表达 应用、layer 或脚本 生命周期的开始
 -   `dispose`
     -   实例销毁过程中触发
--   `beforeSceneChange`
-    -   场景切换前触发，用于拦截切换效果
+-   `beforeSceneChange` 🌟
+    -   场景切换前触发，可拦截和修改切换效果
     -   包括初始化场景切换
 -   `afterSceneChange`
     -   场景切换后触发
     -   包括初始化场景切换
--   `beforeUpdateData`
-    -   数据输入后、传给数据使用者前触发，用于拦截数据并修改
-    -   初始化数据不会触发
+-   `beforeUpdateData` 🌟
+    -   数据输入后、传给数据使用者前触发，可拦截数据并修改
+    -   初始化数据不会触发，多次修改会相互覆盖
 -   ...
 
-> 最新列表与语义解释请参考 [src/private/event/events.ts](../src/private/event/events.ts)
+> 💡 最新列表与语义解释请参考 [src/private/event/events.ts](../src/private/event/events.ts)
 
-自定义事件由用户自己规定、自己触发，可以用来实现自定义交互。事件名以 `$` 开头（暂定），例如 `$custom:foo`。
+`自定义事件`由用户自己规定、自己触发，可以用来实现自定义交互。事件名以 `$` 开头（暂定），例如 `$custom:foo`。
 
 -   `$xxx`
     -   由 Layer、脚本、或 PolarisApp 的使用者主动触发
@@ -320,7 +320,7 @@ eventBus.emit('$custom:bar', { bar: 123 })
 // }
 ```
 
-`emit` 只能触发 "$"前缀的自定义事件，否则将直接抛错
+`emit` 只能触发 "$" 前缀的自定义事件，否则将抛错
 
 ### 注意 ⚠️
 

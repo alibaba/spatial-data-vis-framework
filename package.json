@@ -1,9 +1,6 @@
 {
-  "name": "bp-base",
-  "version": "1.0.0",
+  "name": "polaris-app-project",
   "private": true,
-  "description": "",
-  "author": "",
   "license": "MIT",
   "type": "module",
   "repository": "https://github.com/alibaba/spatial-data-vis-framework.git",

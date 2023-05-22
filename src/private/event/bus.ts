@@ -1,6 +1,6 @@
 import type { AppBase } from '../base/AppBase'
 import type { EventDispatcher } from '../config/EventDispatcher'
-import type { CustomEvent, CustomEventType, EventMap } from './events'
+import type { BusEventMap, CustomEvent, CustomEventType } from './events'
 
 /**
  * 事件总线代理
@@ -18,9 +18,9 @@ export class EventBusAgent {
 	/**
 	 * 监听事件
 	 */
-	on<T extends keyof EventMap>(
+	on<T extends keyof BusEventMap>(
 		type: T,
-		handler: (e: T extends CustomEventType ? CustomEvent<T> : EventMap[T]) => void
+		handler: (e: T extends CustomEventType ? CustomEvent<T> : BusEventMap[T]) => void
 	) {
 		const app = this.#app
 		const target = this.#target
@@ -58,7 +58,7 @@ export class EventBusAgent {
 	 * 停止监听事件
 	 * @note 只允许通过同一个 EventBusAgent 注册的 handler
 	 */
-	off<T extends keyof EventMap>(type: T, handler: (e: EventMap[T]) => void) {
+	off<T extends keyof BusEventMap>(type: T, handler: (e: BusEventMap[T]) => void) {
 		const app = this.#app
 		const handlerWrappers = this.#handlerWrappers
 
