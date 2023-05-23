@@ -1,5 +1,4 @@
 import type { AppBase } from '../base/AppBase'
-import type { EventDispatcher } from '../config/EventDispatcher'
 import type { BusEventMap, CustomEvent, CustomEventType } from './events'
 
 /**
@@ -9,6 +8,8 @@ export class EventBusAgent {
 	#app: AppBase
 	#target: any
 	#handlerWrappers = new WeakMap<Fun, Fun>()
+	#listeners = [] as { type; handlerWrapper }[]
+	#autoDisposers = [] as Fun[]
 
 	constructor(app: AppBase, target: any) {
 		this.#app = app
@@ -41,12 +42,13 @@ export class EventBusAgent {
 		handlerWrappers.set(handler, handlerWrapper)
 
 		app.addEventListener(type, handlerWrapper)
+		this.#listeners.push({ type, handlerWrapper })
 
 		// 自动清除
 		// @note dispatcher 必须有 dispose 事件才能生效
-		app.addEventListener('dispose', () => {
-			app.removeEventListener(type, handlerWrapper)
-		})
+		const autoDisposer = () => app.removeEventListener(type, handlerWrapper)
+		app.addEventListener('dispose', autoDisposer)
+		this.#autoDisposers.push(autoDisposer)
 
 		// start 事件的特殊处理
 		if (type === 'start' && app.started) {
@@ -73,6 +75,18 @@ export class EventBusAgent {
 	emit<T extends CustomEventType>(type: T, data: Omit<CustomEvent[T], 'type' | 'target'>) {
 		validateCustomEventType(type)
 		this.#app.dispatchEvent({ ...data, type, target: this.#target })
+	}
+
+	dispose() {
+		// 清除所有handler
+		this.#listeners.forEach((listener) => {
+			this.#app.removeEventListener(listener.type, listener.handlerWrapper)
+		})
+
+		// 清除所有自动清除器
+		this.#autoDisposers.forEach((autoDisposer) => {
+			this.#app.removeEventListener('dispose', autoDisposer)
+		})
 	}
 }
 
