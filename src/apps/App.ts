@@ -91,6 +91,7 @@ export class App extends AppBase {
 		this.scripts = scriptsConfig.map((scriptConfig) => {
 			return new ScriptBase(this, scriptConfig)
 		})
+		this.addEventListener('dispose', () => this.scripts.forEach((s) => s.dispose()))
 
 		if (config.app.debug) {
 			// safe check. throw if config not immutable

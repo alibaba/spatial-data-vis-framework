@@ -1,6 +1,6 @@
 # Polaris App Usage
 
-这里假设你已经有一个开发好、打包好的 `Polaris App`，包含一个 `App.mjs` 文件和若干个 `config.json` 文件。本文介绍如何使用。
+这里假设你已经有一个开发好的 `Polaris App`，打包产物包含一个 `App.mjs` 文件和若干个 `config.json` 文件。本文介绍如何使用。
 
 ---
 
