@@ -321,3 +321,121 @@ test('rm a used data stub', () => {
 		})
 	})
 })
+
+test('script: add & remove', () => {
+	m.action({
+		type: 'script:add',
+		payload: {
+			name: 'script 0',
+			id: 'LOCAL_SCRIPT_0',
+			type: 'bus' as const,
+			eventType: 'scriptInit' as const,
+			handler: /* javascript */ `console.log('foo')`,
+			targets: [],
+		},
+	})
+	shouldThrow(() => {
+		m.action({
+			type: 'script:add',
+			payload: {
+				name: 'script 0',
+				id: 'LOCAL_SCRIPT_0',
+				type: 'bus' as const,
+				eventType: 'scriptInit' as const,
+				handler: /* javascript */ `console.log('foo')`,
+				targets: [],
+			},
+		})
+	})
+
+	m.action({
+		type: 'script:add',
+		payload: {
+			name: 'script 1',
+			id: 'LOCAL_SCRIPT_1',
+			type: 'bus' as const,
+			eventType: 'scriptInit' as const,
+			handler: /* javascript */ `console.log('foo 1')`,
+			targets: [
+				{
+					type: 'layer',
+					id: 'LOCAL_LAYER_0',
+				},
+			],
+		},
+	})
+})
+
+test('script: change name/eventType/handler', () => {
+	m.action({
+		type: 'script:change:name',
+		payload: {
+			id: 'LOCAL_SCRIPT_0',
+			name: 'script 1',
+		},
+	})
+
+	m.action({
+		type: 'script:change:eventType',
+		payload: {
+			id: 'LOCAL_SCRIPT_0',
+			eventType: 'start' as const,
+		},
+	})
+
+	m.action({
+		type: 'script:change:handler',
+		payload: {
+			id: 'LOCAL_SCRIPT_0',
+			handler: /* javascript */ `console.log('bar')`,
+		},
+	})
+})
+
+test('script: change targets', () => {
+	m.action({
+		type: 'script:change:targets',
+		payload: {
+			id: 'LOCAL_SCRIPT_0',
+			targets: [
+				{
+					type: 'layer',
+					id: 'LOCAL_LAYER_0',
+				},
+			],
+		},
+	})
+	m.action({
+		type: 'script:change:targets',
+		payload: {
+			id: 'LOCAL_SCRIPT_0',
+			targets: [
+				{
+					type: 'layer',
+					id: 'LOCAL_LAYER_2',
+				},
+			],
+		},
+	})
+	m.action({
+		type: 'script:change:targets',
+		payload: {
+			id: 'LOCAL_SCRIPT_0',
+			targets: [
+				{
+					type: 'stage',
+					id: 'LOCAL_STAGE_MAIN',
+				},
+			],
+		},
+	})
+
+	console.log('should warn:')
+	m.action({
+		type: 'script:change:targets',
+		payload: {
+			id: 'LOCAL_SCRIPT_0',
+			targets: [],
+		},
+	})
+})

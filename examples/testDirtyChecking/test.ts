@@ -400,7 +400,7 @@ test('script: change targets', () => {
 				type: 'bus' as const,
 				eventType: 'scriptInit' as const,
 				handler: /* javascript */ `console.log('foo')`,
-				targets: [{ type: 'stage', id: 'LOCAL_STAGE_DEFAULT' }],
+				targets: [{ type: 'stage', id: 'LOCAL_STAGE_MAIN' }],
 			},
 		]
 		m.setConfig(structuredClone(CONFIG3))

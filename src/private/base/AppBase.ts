@@ -10,7 +10,6 @@ import type { AppMeta } from '../schema/meta'
 import { partialFreeze } from '../utils/partialFreeze'
 import { randomString } from '../utils/random'
 import type { SceneBase } from './SceneBase'
-import type { ScriptBase } from './ScriptBase'
 import type { StageBase } from './StageBase'
 
 /**
@@ -18,7 +17,6 @@ import type { StageBase } from './StageBase'
  */
 export class AppBase extends EventDispatcher<BusEventMap> {
 	readonly polaris: PolarisThree
-	// readonly layers = [] as StandardLayer[]
 
 	disposed = false
 	started = false
@@ -32,7 +30,8 @@ export class AppBase extends EventDispatcher<BusEventMap> {
 		container: HTMLDivElement,
 		config: AppConfig,
 		readonly stages: StageBase[] = [],
-		readonly scenes: SceneBase[] = []
+		readonly scenes: SceneBase[] = [],
+		readonly layers: { layer: StandardLayer; name: string; id: string }[]
 	) {
 		super()
 

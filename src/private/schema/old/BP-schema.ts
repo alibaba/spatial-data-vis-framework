@@ -79,9 +79,7 @@ interface CustomLayer extends Layer {
  */
 interface LayerInstance {}
 
-interface Scene extends SceneBase {
-	scripts: string[]
-}
+interface Scene extends SceneBase {}
 
 interface Stage {}
 
