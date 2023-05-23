@@ -147,7 +147,7 @@ export const BPConfig = {
 					console.log('beforeSceneChange', event) // BeforeSceneChangeEvent
 				})
 			`,
-			targets: [],
+			targets: [] as { type: 'layer' | 'stage' | 'app'; id: string }[],
 		},
 	],
 }

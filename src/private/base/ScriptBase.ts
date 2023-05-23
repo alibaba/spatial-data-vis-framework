@@ -133,7 +133,7 @@ export class ScriptBase {
 			}
 
 			try {
-				fun(event)
+				fun(e)
 			} catch (error: any) {
 				error.message = `ScriptBase: Script(${this.#name}) execution failed: ${error.message}`
 				throw error
