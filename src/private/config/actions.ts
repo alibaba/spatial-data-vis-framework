@@ -305,6 +305,82 @@ export function configReducer(
 				break
 			}
 
+			case 'script:add': {
+				if (!draft.$scripts) {
+					draft.$scripts = [action.payload]
+				} else if (draft.$scripts.some((script) => script.id === action.payload.id)) {
+					throw new Error(`Script id ${action.payload.id} already exists`)
+				} else {
+					draft.$scripts.push(action.payload)
+				}
+				break
+			}
+
+			case 'script:remove': {
+				if (!draft.$scripts) {
+					throw new Error(`Script id ${action.payload.id} not found`)
+				} else {
+					const index = draft.$scripts.findIndex((script) => script.id === action.payload.id)
+
+					if (index === -1) throw new Error(`Script id ${action.payload.id} not found`)
+
+					draft.$scripts.splice(index, 1)
+				}
+				break
+			}
+
+			case 'script:change:name': {
+				if (!draft.$scripts) {
+					throw new Error(`Script id ${action.payload.id} not found`)
+				} else {
+					const script = draft.$scripts.find((script) => script.id === action.payload.id)
+
+					if (!script) throw new Error(`Script id ${action.payload.id} not found`)
+
+					script.name = action.payload.name
+				}
+				break
+			}
+
+			case 'script:change:eventType': {
+				if (!draft.$scripts) {
+					throw new Error(`Script id ${action.payload.id} not found`)
+				} else {
+					const script = draft.$scripts.find((script) => script.id === action.payload.id)
+
+					if (!script) throw new Error(`Script id ${action.payload.id} not found`)
+
+					script.eventType = action.payload.eventType
+				}
+				break
+			}
+
+			case 'script:change:handler': {
+				if (!draft.$scripts) {
+					throw new Error(`Script id ${action.payload.id} not found`)
+				} else {
+					const script = draft.$scripts.find((script) => script.id === action.payload.id)
+
+					if (!script) throw new Error(`Script id ${action.payload.id} not found`)
+
+					script.handler = action.payload.handler
+				}
+				break
+			}
+
+			case 'script:change:targets': {
+				if (!draft.$scripts) {
+					throw new Error(`Script id ${action.payload.id} not found`)
+				} else {
+					const script = draft.$scripts.find((script) => script.id === action.payload.id)
+
+					if (!script) throw new Error(`Script id ${action.payload.id} not found`)
+
+					script.targets = action.payload.targets
+				}
+				break
+			}
+
 			default:
 				throw new Error('ConfigReducer: Invalid action type: ' + action['type'])
 		}

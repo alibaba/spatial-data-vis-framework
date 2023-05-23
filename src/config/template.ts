@@ -1,16 +1,8 @@
-// import type { AppConfig } from '../apps/App'
-
 /**
  * Polaris App 的 runtime config
  */
 export const BPConfig = {
 	version: '0.0.1' as const,
-
-	/**
-	 * runtime mutable config
-	 *
-	 * 运行时可以编辑的配置，可以在搭建工具中直接修改，也可以由第三方平台，通过高级接口运行时控制
-	 */
 
 	/** 应用全局配置 @note 命名待定: 'app' or 'polaris' ? */
 	app: {
@@ -158,31 +150,6 @@ export const BPConfig = {
 			targets: [],
 		},
 	],
-
-	/**
-	 * readonly config
-	 *
-	 * 静态只读配置项，
-	 * 该部分配置项的修改对应着源文件的修改，由本地脚本操作，需要重新打包应用才能生效。
-	 *
-	 * 这部分可以放到 app 里，做一个 getter，而非放到这个配置项里，因为他并不是施加给app的，而是app内在的
-	 */
 }
 
 export default BPConfig
-
-/**
- * @QA layerClasses
- *
- * @Q 是否需要从这个配置出码？如果不需要，则不需要 dependence 相关的信息
- * @A 这部分配置是为了能找到一个class的工厂函数或者constructor，不出码，可以假设同一个函数可以找到对应的类
- *
- * @Q 如何找到这个class？是否要求标准目录？还是在生成阶段就挂到全局变量上？
- * @A 要看如何实例化这些类
- * - 用法A：过程实例化，
- * 即 从 layers 和 stages 出码，这样可以得到更可读的代码，而且可以 tree shaking，
- * 问题是 修改 layer 和 stages 需要重新打包。目前不朝这个方向做。
- * - 用法B：配置动态实例化
- * 需要把所有的工厂函数挂到一个统一的地方，在 private 里根据 stages 和 layers 动态创建。
- * @A 目前使用*用法B*
- */

@@ -122,6 +122,13 @@ const m = new ConfigManager<typeof LayerClasses>()
 	m.addEventListener('data:remove', (e) => console.log('data:remove', e))
 	m.addEventListener('data:change:name', (e) => console.log('data:change:name', e))
 	m.addEventListener('data:change:initialValue', (e) => console.log('data:change:initialValue', e))
+
+	m.addEventListener('script:add', (e) => console.log('script:add', e))
+	m.addEventListener('script:remove', (e) => console.log('script:remove', e))
+	m.addEventListener('script:change:name', (e) => console.log('script:change:name', e))
+	m.addEventListener('script:change:eventType', (e) => console.log('script:change:eventType', e))
+	m.addEventListener('script:change:handler', (e) => console.log('script:change:handler', e))
+	m.addEventListener('script:change:targets', (e) => console.log('script:change:targets', e))
 }
 
 // dirt check
@@ -258,4 +265,159 @@ test('dataStub: change initialValue', () => {
 		},
 	]
 	m.setConfig(structuredClone(CONFIG3))
+})
+
+test('script: add & remove', () => {
+	m.init(structuredClone(CONFIG1))
+	const CONFIG2 = structuredClone(CONFIG1) as AppConfig
+	CONFIG2.$scripts = [
+		{
+			name: 'script 0',
+			id: 'LOCAL_SCRIPT_0',
+			type: 'bus' as const,
+			eventType: 'scriptInit' as const,
+			handler: /* javascript */ `console.log('foo')`,
+			targets: [],
+		},
+	]
+	m.setConfig(structuredClone(CONFIG2))
+
+	m.setConfig(structuredClone(CONFIG1))
+})
+
+test('script: change name/eventType/handler', () => {
+	const CONFIG2 = structuredClone(CONFIG1) as AppConfig
+	CONFIG2.$scripts = [
+		{
+			name: 'script 0',
+			id: 'LOCAL_SCRIPT_0',
+			type: 'bus' as const,
+			eventType: 'scriptInit' as const,
+			handler: /* javascript */ `console.log('foo')`,
+			targets: [],
+		},
+	]
+	m.init(structuredClone(CONFIG2))
+
+	{
+		// change name
+		const CONFIG3 = structuredClone(CONFIG1) as AppConfig
+		CONFIG3.$scripts = [
+			{
+				name: 'script 1',
+				id: 'LOCAL_SCRIPT_0',
+				type: 'bus' as const,
+				eventType: 'scriptInit' as const,
+				handler: /* javascript */ `console.log('foo')`,
+				targets: [],
+			},
+		]
+		m.setConfig(structuredClone(CONFIG3))
+	}
+	{
+		// change eventType
+		const CONFIG3 = structuredClone(CONFIG1) as AppConfig
+		CONFIG3.$scripts = [
+			{
+				name: 'script 1',
+				id: 'LOCAL_SCRIPT_0',
+				type: 'bus' as const,
+				eventType: 'start' as const,
+				handler: /* javascript */ `console.log('foo')`,
+				targets: [],
+			},
+		]
+		m.setConfig(structuredClone(CONFIG3))
+	}
+	{
+		// change handler
+		const CONFIG3 = structuredClone(CONFIG1) as AppConfig
+		CONFIG3.$scripts = [
+			{
+				name: 'script 1',
+				id: 'LOCAL_SCRIPT_0',
+				type: 'bus' as const,
+				eventType: 'start' as const,
+				handler: /* javascript */ `console.log('bar')`,
+				targets: [],
+			},
+		]
+		m.setConfig(structuredClone(CONFIG3))
+	}
+})
+
+test('script: change targets', () => {
+	const CONFIG2 = structuredClone(CONFIG1) as AppConfig
+	CONFIG2.$scripts = [
+		{
+			name: 'script 0',
+			id: 'LOCAL_SCRIPT_0',
+			type: 'bus' as const,
+			eventType: 'scriptInit' as const,
+			handler: /* javascript */ `console.log('foo')`,
+			targets: [],
+		},
+	]
+	m.init(structuredClone(CONFIG2))
+
+	{
+		// add
+		const CONFIG3 = structuredClone(CONFIG1) as AppConfig
+		CONFIG3.$scripts = [
+			{
+				name: 'script 0',
+				id: 'LOCAL_SCRIPT_0',
+				type: 'bus' as const,
+				eventType: 'scriptInit' as const,
+				handler: /* javascript */ `console.log('foo')`,
+				targets: [{ type: 'layer', id: 'LOCAL_LAYER_0' }],
+			},
+		]
+		m.setConfig(structuredClone(CONFIG3))
+	}
+	{
+		// change id
+		const CONFIG3 = structuredClone(CONFIG1) as AppConfig
+		CONFIG3.$scripts = [
+			{
+				name: 'script 0',
+				id: 'LOCAL_SCRIPT_0',
+				type: 'bus' as const,
+				eventType: 'scriptInit' as const,
+				handler: /* javascript */ `console.log('foo')`,
+				targets: [{ type: 'layer', id: 'LOCAL_LAYER_2' }],
+			},
+		]
+		m.setConfig(structuredClone(CONFIG3))
+	}
+	{
+		// change type
+		const CONFIG3 = structuredClone(CONFIG1) as AppConfig
+		CONFIG3.$scripts = [
+			{
+				name: 'script 0',
+				id: 'LOCAL_SCRIPT_0',
+				type: 'bus' as const,
+				eventType: 'scriptInit' as const,
+				handler: /* javascript */ `console.log('foo')`,
+				targets: [{ type: 'stage', id: 'LOCAL_STAGE_DEFAULT' }],
+			},
+		]
+		m.setConfig(structuredClone(CONFIG3))
+	}
+	{
+		// rm
+		const CONFIG3 = structuredClone(CONFIG1) as AppConfig
+		CONFIG3.$scripts = [
+			{
+				name: 'script 0',
+				id: 'LOCAL_SCRIPT_0',
+				type: 'bus' as const,
+				eventType: 'scriptInit' as const,
+				handler: /* javascript */ `console.log('foo')`,
+				targets: [],
+			},
+		]
+		m.setConfig(structuredClone(CONFIG3))
+	}
 })

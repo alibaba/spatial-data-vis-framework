@@ -1,3 +1,5 @@
+import type { ScriptConfig } from '../../schema/scripts'
+
 /**
  * deep compare two objects/arrays
  */
@@ -118,4 +120,28 @@ export function deepDiff(a: Record<any, any>, b: Record<any, any>) {
 		}
 	}
 	return diff
+}
+
+/**
+ * script targets equal
+ */
+export function scriptTargetsEqual(
+	a: ScriptConfig['targets'],
+	b: ScriptConfig['targets']
+): boolean {
+	if (a === b) return true
+
+	if (a.length !== b.length) return false
+
+	for (let i = 0; i < a.length; i++) {
+		const targetA = a[i]
+
+		const targetB = b.find((target) => {
+			return target.type === targetA.type && target.id === targetA.id
+		})
+
+		if (!targetB) return false
+	}
+
+	return true
 }

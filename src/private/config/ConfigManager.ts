@@ -7,6 +7,7 @@ import type {
 	StageConfig,
 } from '../schema/config'
 import type { LayerClassesShape } from '../schema/meta'
+import type { ScriptConfig } from '../schema/scripts'
 import { EventDispatcher } from './EventDispatcher'
 import { ConfigActions, configReducer } from './actions'
 import { deepFreeze } from './utils/deepFreeze'
@@ -148,34 +149,39 @@ export class ConfigManager<TLayerClasses extends LayerClassesShape> extends Even
 export type ConfigEventData<TLayerClasses extends LayerClassesShape = any> = {
 	'init': AppConfig<TLayerClasses>
 
-	// change: {} // any kind of change (except for init)
-
 	'app:change': AppPolarisConfig
 
 	'layer:add': LayerConfig<TLayerClasses>
 	'layer:remove': { id: string }
-	'layer:change:name': { id: string; name: string /* prev: string */ }
+	'layer:change:name': { id: string; name: string }
 	// 在callback中对比详细，如果 mutable，就调用layer.setProps，否则就重建layer
-	'layer:change:props': { id: string; props: any; changedKeys?: string[] /* prev: any */ }
-	'layer:change:dataProps': { id: string; dataProps: any /* prev: any */ }
+	'layer:change:props': { id: string; props: any; changedKeys?: string[] }
+	'layer:change:dataProps': { id: string; dataProps: any }
 
 	'scene:add': SceneConfig
 	'scene:remove': { id: string }
-	'scene:change:name': { id: string; name: string /* prev: string */ }
-	'scene:change:stage': { id: string; stage: string /* prev: string */ }
-	'scene:change:layers': { id: string; layers: string[] /* prev: string[] */ }
-	'scene:change:cameraStateCode': { id: string; cameraStateCode: string /* prev: string */ }
+	'scene:change:name': { id: string; name: string }
+	'scene:change:stage': { id: string; stage: string }
+	'scene:change:layers': { id: string; layers: string[] }
+	'scene:change:cameraStateCode': { id: string; cameraStateCode: string }
 
 	'stage:add': StageConfig
 	'stage:remove': { id: string }
-	'stage:change:name': { id: string; name: string /* prev: string */ }
-	'stage:change:layers': { id: string; layers: string[] /* prev: string[] */ }
-	'stage:change:projection': { id: string; projection?: string /* prev?: string */ }
+	'stage:change:name': { id: string; name: string }
+	'stage:change:layers': { id: string; layers: string[] }
+	'stage:change:projection': { id: string; projection?: string }
 
 	'data:add': DataStub
 	'data:remove': { id: string }
-	'data:change:name': { id: string; name: string /* prev: string */ }
-	'data:change:initialValue': { id: string; initialValue: any /* prev: any */ }
+	'data:change:name': { id: string; name: string }
+	'data:change:initialValue': { id: string; initialValue: any }
+
+	'script:add': ScriptConfig
+	'script:remove': { id: string }
+	'script:change:name': { id: string; name: string }
+	'script:change:eventType': { id: string; eventType: ScriptConfig['eventType'] }
+	'script:change:handler': { id: string; handler: string }
+	'script:change:targets': { id: string; targets: ScriptConfig['targets'] }
 }
 
 /**

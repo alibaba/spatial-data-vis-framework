@@ -2,7 +2,7 @@ import type { AppConfig } from '../../schema/config'
 import type { LayerClassesShape } from '../../schema/meta'
 import type { ConfigEvents } from '../ConfigManager'
 import type { EventDispatcher } from '../EventDispatcher'
-import { deepEqual, idsEqual, propsDiff, propsEqual } from './compare'
+import { deepEqual, idsEqual, propsDiff, propsEqual, scriptTargetsEqual } from './compare'
 
 /**
  * compare new config with the old one, dispatch events to update the old one
@@ -295,6 +295,68 @@ export function digest<TLayerClasses extends LayerClassesShape = any>(
 					id: nextDataStub.id,
 					initialValue: nextDataStub.initialValue,
 				},
+			})
+		}
+	}
+
+	// scripts
+	const prevScriptIds = prev.$scripts?.map((script) => script.id) || []
+	const nextScriptIds = next.$scripts?.map((script) => script.id) || []
+
+	// remove scripts
+	for (const prevScriptId of prevScriptIds) {
+		if (!nextScriptIds.includes(prevScriptId)) {
+			batch.dispatchEvent({
+				type: 'script:remove',
+				data: { id: prevScriptId },
+			})
+		}
+	}
+
+	// add scripts
+	for (const nextScript of next.$scripts || []) {
+		if (!prevScriptIds.includes(nextScript.id)) {
+			batch.dispatchEvent({
+				type: 'script:add',
+				data: nextScript,
+			})
+		}
+	}
+
+	// update scripts
+	for (const nextScript of next.$scripts || []) {
+		const prevScript = prev.$scripts?.find((script) => script.id === nextScript.id)
+		if (!prevScript) continue
+
+		// name
+		if (prevScript.name !== nextScript.name) {
+			batch.dispatchEvent({
+				type: 'script:change:name',
+				data: { id: nextScript.id, name: nextScript.name },
+			})
+		}
+
+		// eventType
+		if (prevScript.eventType !== nextScript.eventType) {
+			batch.dispatchEvent({
+				type: 'script:change:eventType',
+				data: { id: nextScript.id, eventType: nextScript.eventType },
+			})
+		}
+
+		// handler
+		if (prevScript.handler !== nextScript.handler) {
+			batch.dispatchEvent({
+				type: 'script:change:handler',
+				data: { id: nextScript.id, handler: nextScript.handler },
+			})
+		}
+
+		// targets
+		if (!scriptTargetsEqual(prevScript.targets, nextScript.targets)) {
+			batch.dispatchEvent({
+				type: 'script:change:targets',
+				data: { id: nextScript.id, targets: nextScript.targets },
 			})
 		}
 	}
