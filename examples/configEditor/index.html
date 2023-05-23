@@ -6,6 +6,37 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Example</title>
 		<link rel="shortcut icon" href="#" />
+		<link
+			rel="stylesheet"
+			data-name="vs/editor/editor.main"
+			href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/editor/editor.main.min.css"
+			integrity="sha512-4NEblFMNWFhMblfSYEN42smVgSrpZpFArYPcc3L++DEPDq0fJL76rHBGpUxDHXNAdvWowZCl9YUota2JgURP/A=="
+			crossorigin="anonymous"
+			referrerpolicy="no-referrer"
+		/>
+		<script>
+			var require = {
+				paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs' },
+			}
+		</script>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/loader.min.js"
+			integrity="sha512-A+6SvPGkIN9Rf0mUXmW4xh7rDvALXf/f0VtOUiHlDUSPknu2kcfz1KzLpOJyL2pO+nZS13hhIjLqVgiQExLJrw=="
+			crossorigin="anonymous"
+			referrerpolicy="no-referrer"
+		></script>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/editor/editor.main.nls.min.js"
+			integrity="sha512-Wh1IqsQjsDh/6M05PcBe/zv9zaVbzZgRHXADM1Plk9bx491+vTqSy6TOU2fFhMNMRkWG56wcW0rYJuVqQUiqxw=="
+			crossorigin="anonymous"
+			referrerpolicy="no-referrer"
+		></script>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/editor/editor.main.js"
+			integrity="sha512-qqldfuKGLz7DiKx5P1fMP2r6Zs2PlKqUiaXmkel8/PWghyoNWStvPPRI/1YbvuBviQP6ZlMCgFssqnqVfgqdsw=="
+			crossorigin="anonymous"
+			referrerpolicy="no-referrer"
+		></script>
 		<style>
 			* {
 				margin: 0;
@@ -47,6 +78,8 @@
 				position: absolute;
 				top: 10px;
 				right: 10px;
+
+				z-index: 999999;
 			}
 
 			#configViewer {
@@ -100,7 +133,8 @@
 		<div class="wrapper">
 			<section>
 				<button id="applyConfig">使用该配置</button>
-				<textarea id="configViewer"></textarea>
+				<!-- <textarea id="configViewer"></textarea> -->
+				<div id="configViewer"></div>
 			</section>
 			<section>
 				<div id="container"></div>
@@ -116,23 +150,30 @@
 
 			const polarisApp = new App(container, BPConfig)
 
+			const editor = monaco.editor.create(configViewer, {
+				value: JSON.stringify(BPConfig, null, '\t'),
+				language: 'json',
+				theme: 'vs-dark',
+			})
+
 			// 现实 config json
-			configViewer.value = JSON.stringify(BPConfig, null, '\t')
+			// configViewer.value = JSON.stringify(BPConfig, null, '\t')
 
 			// 调试用，手工修改 FBI 侧配置
 			applyConfig.onclick = () => {
 				try {
-					JSON.parse(configViewer.value)
+					JSON.parse(editor.getValue())
 				} catch (error) {
 					console.error(error)
 					alert('配置格式错误')
 				}
-				const newConfig = JSON.parse(configViewer.value)
-				// root.render(ReactApp(newConfig))
+				const newConfig = JSON.parse(editor.getValue())
 				polarisApp.configManager.setConfig(newConfig)
 			}
 
 			// enjoy✨
 		</script>
+
+		<script></script>
 	</body>
 </html>
