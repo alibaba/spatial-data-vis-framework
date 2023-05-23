@@ -48,10 +48,9 @@ export class ScriptBase {
 		this.init()
 	}
 
-	// 如果这是个 scriptInit 类型的事件脚本，就直接执行
 	private init() {
-		// 如果是 scriptInit 类型的事件脚本，就直接执行
-		// 否则，就监听全局事件并转发给每个target
+		// 如果是 scriptInit 类型的事件脚本，就直接在每个target上执行
+		// 否则，就监听全局事件，并转发给每个target
 
 		if (this.#eventType === 'scriptInit') {
 			// 立即运行 handler
@@ -78,6 +77,7 @@ export class ScriptBase {
 
 				// 运行 handler
 
+				// @note 如果用eval会直接暴露当前的闭包
 				// eslint-disable-next-line @typescript-eslint/ban-types
 				let fun: Function
 				try {

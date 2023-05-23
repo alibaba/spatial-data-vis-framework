@@ -57,6 +57,13 @@ const m = polarisApp.configManager
 	m.addEventListener('data:remove', (e) => console.log('data:remove', e))
 	m.addEventListener('data:change:name', (e) => console.log('data:change:name', e))
 	m.addEventListener('data:change:initialValue', (e) => console.log('data:change:initialValue', e))
+
+	m.addEventListener('script:add', (e) => console.log('script:add', e))
+	m.addEventListener('script:remove', (e) => console.log('script:remove', e))
+	m.addEventListener('script:change:name', (e) => console.log('script:change:name', e))
+	m.addEventListener('script:change:eventType', (e) => console.log('script:change:eventType', e))
+	m.addEventListener('script:change:handler', (e) => console.log('script:change:handler', e))
+	m.addEventListener('script:change:targets', (e) => console.log('script:change:targets', e))
 }
 
 test('resize', () => {
