@@ -132,13 +132,13 @@ scriptConfig = {
 }
 
 /**
- * 接收自定义事件
+ * 响应自定义事件
  * @template
  */
 
 scriptConfig = {
 	// ...
-	eventType: 'start',
+	eventType: 'start', // Layer 和 App 都实例化完成并开始运行后触发
 	target: [
 		{ type: 'layer', id: 'LOCAL_LAYER_1' },
 		{ type: 'layer', id: 'LOCAL_LAYER_2' },
@@ -169,7 +169,7 @@ app.getBusAgent().emit('$foo', { abc: 'LOCAL_LAYER_2' })
 
 scriptConfig = {
 	// ...
-	eventType: 'start',
+	eventType: 'start', // Layer 和 App 都实例化完成并开始运行后触发
 	target: [
 		{ type: 'layer', id: 'LOCAL_LAYER_1' },
 		{ type: 'layer', id: 'LOCAL_LAYER_2' },
@@ -197,14 +197,15 @@ scriptConfig = {
 		const layer = event.currentTarget
 
 		const div = document.createElement('div')
+		div.innerHTML = '我是脚本加进来的内容!'
 		layer.element.appendChild(div)
 
-		// TODO: 三方依赖如何注入
+		// TODO: 外部依赖如何注入
 		// layer.group.add(buildMesh())
 
 		layer.addEventListener('viewChange', (event) => {
 			if (event.camera.zoom > 10) {
-				// @note layer.visible 由 场景切换逻辑管理，不要修改以免相互覆盖
+				// @note layer.visible 由场景切换逻辑管理，不要修改，以免相互覆盖
 				layer.group.visible = false
 			} else {
 				layer.group.visible = true
