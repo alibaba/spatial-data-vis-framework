@@ -96,7 +96,7 @@ export class ScriptBase {
 			})
 		} else {
 			// 监听事件
-			const busAgent = this.#app.getEventBusAgent(null)
+			const busAgent = this.#app.getEventBusAgent(null) // 会分发给多个target，分发时修改 target 和 currentTarget
 			this.#busAgents.push(busAgent)
 			busAgent.on(this.#eventType, (e) => this.run(e))
 		}
@@ -116,10 +116,12 @@ export class ScriptBase {
 				throw new Error(`ScriptBase: Can not find target ${targetInfo.type} ${targetInfo.id}`)
 
 			// 构造 Event
-			const e = Object.freeze({
-				...event,
-				target: this.#app,
-				currentTarget: target,
+			// @note 这里的 event 是只读的，不能直接修改
+			Object.defineProperty(event, 'currentTarget', {
+				value: target,
+				writable: false,
+				enumerable: true,
+				configurable: true,
 			})
 
 			// 运行 handler
@@ -133,7 +135,7 @@ export class ScriptBase {
 			}
 
 			try {
-				fun(e)
+				fun(event)
 			} catch (error: any) {
 				error.message = `ScriptBase: Script(${this.#name}) execution failed: ${error.message}`
 				throw error
