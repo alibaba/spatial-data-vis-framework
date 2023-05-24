@@ -106,6 +106,9 @@ const polarisApp = new App(container, BPConfig)
 setTimeout(() => {
 	polarisApp.changeScene('LOCAL_SCENE_2')
 }, 1000)
+setTimeout(() => {
+	polarisApp.changeScene('LOCAL_SCENE_DEFAULT')
+}, 2000)
 
 setTimeout(() => {
 	setInterval(() => {
