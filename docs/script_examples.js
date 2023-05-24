@@ -11,8 +11,8 @@
 var scriptConfig
 
 /**
- * 监听 App 的生命周期
- * @name 监听生命周期
+ * 监听生命周期
+ * @template
  */
 
 scriptConfig = {
@@ -39,7 +39,7 @@ scriptConfig = {
 }
 
 /**
- * or
+ * 监听特定生命周期
  */
 
 scriptConfig = {
@@ -52,8 +52,8 @@ scriptConfig = {
 }
 
 /**
- * 拦截数据更新
- * @name 拦截数据更新(scriptInit)
+ * 拦截数据更新(scriptInit)
+ * @template
  */
 
 scriptConfig = {
@@ -77,8 +77,8 @@ scriptConfig = {
 }
 
 /**
- * or
- * @name 拦截数据更新(beforeUpdateData)
+ * 拦截数据更新(beforeUpdateData)
+ * @template
  */
 
 scriptConfig = {
@@ -96,8 +96,8 @@ scriptConfig = {
 }
 
 /**
- * 拦截场景切换
- * @name 拦截场景切换(scriptInit)
+ * 拦截场景切换(scriptInit)
+ * @template
  */
 
 scriptConfig = {
@@ -117,8 +117,8 @@ scriptConfig = {
 }
 
 /**
- * or
- * @name 拦截场景切换(beforeSceneChange)
+ * 拦截场景切换(beforeSceneChange)
+ * @template
  */
 
 scriptConfig = {
@@ -132,8 +132,8 @@ scriptConfig = {
 }
 
 /**
- * 接收外部自定义指令
- * @接收自定义事件
+ * 接收自定义事件
+ * @template
  */
 
 scriptConfig = {
@@ -163,8 +163,8 @@ const app = new PolarisApp(config)
 app.getBusAgent().emit('$foo', { abc: 'LOCAL_LAYER_2' })
 
 /**
- * 发送外部自定义指令
- * @发送自定义事件
+ * 发送自定义事件
+ * @template
  */
 
 scriptConfig = {
