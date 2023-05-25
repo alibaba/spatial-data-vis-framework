@@ -61,7 +61,9 @@ polaris 继承自 [`PolarisGSI`](https://github.com/alibaba/spatial-data-vis-fra
 
 PolarisGL 出于对 3D 引擎的包容性和对可复用性的最大化追求，没有在 AbstractLayer 中规定要使用哪种 3D 框架，而只是抽象地定义了 Layer 的生命周期以及作为一个地理数据组件的空间属性。而作为根节点的 Polaris 实例则可以使用多种 3D 框架和渲染器、多种渲染等级来渲染整个 Layer 树。
 
-Polaris App 工程出于简化，规定使用 GSI + three.js 的方案作为 3D 开发框架。因此 Polaris 实例使用 基于公版 three.js 的 [PolarisThree](https://github.com/alibaba/spatial-data-vis-framework/blob/dev/packages/polaris/polaris-three/src/index.ts)，Layer 全部继承使用 GSI 和 three 定义场景树的 [`StandardLayer`](https://github.com/alibaba/spatial-data-vis-framework/blob/dev/packages/core/gsi/src/layer/StandardLayer.ts)。
+Polaris App 出于简化，规定使用 GSI + three.js 的方案作为 3D 开发框架。因此 Polaris 实例使用 [PolarisThree](https://github.com/alibaba/spatial-data-vis-framework/blob/dev/packages/polaris/polaris-three/src/index.ts)（基于公版 three.js），Layer 全部继承 [`StandardLayer`](https://github.com/alibaba/spatial-data-vis-framework/blob/dev/packages/core/gsi/src/layer/StandardLayer.ts)（使用 GSI 和 three 定义场景树）。
+
+Polaris App 屏蔽掉了 Polaris 和渲染器的细节、Layer 的创建和管理，因此开发者只需要在 Layer 模版的基础上修改 Layer 。你不需要关注 `src/layers/你的Layer` 以外的任何代码。
 
 ## Layer 基类接口
 
@@ -77,7 +79,7 @@ Polaris App 工程出于简化，规定使用 GSI + three.js 的方案作为 3D 
 
 ### 派生类
 
-### 工厂函数
+### 基于生命周期的工厂函数
 
 ## 在 Polaris App 工程中开发 Layer
 
