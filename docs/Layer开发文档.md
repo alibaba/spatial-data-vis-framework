@@ -79,9 +79,9 @@ polaris 继承自 [`PolarisGSI`](https://github.com/alibaba/spatial-data-vis-fra
 
 ### 工厂函数
 
-## 在 Polaris App 工程中管理 Layer
+## 在 Polaris App 工程中开发 Layer
 
-## 在 Polaris App 工程中编写 Layer 代码
+### 增删改
 
 ### Prop 描述
 
@@ -91,7 +91,7 @@ polaris 继承自 [`PolarisGSI`](https://github.com/alibaba/spatial-data-vis-fra
 
 ### HTML 接口
 
-### 2D 元素的 3D 对位
+### 2D 元素的 3D 空间对位
 
 ## Layer 中的 3D 开发
 
