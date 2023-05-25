@@ -150,7 +150,7 @@ polaris 作为根节点，默认使用 以 本初子午线和赤道为中心的 
 
 建议通过 layer 的 InitEvent 获取投影。
 
-#### 多种投影的自动对齐机制
+#### 多种投影的对齐机制
 
 PolarisGL 原生支持多中心/多类型投影的自动对齐，每个 layer 可以选择最适合自己的投影，Polaris 会根据用户视角来对齐视觉中心。并且用合理的相切关系来对齐 球面 和 平面 投影。
 
@@ -241,7 +241,7 @@ polaris.add(l)
 
 ## 在 Polaris App 工程中开发 Layer
 
-Polaris App 的工程脚手架会帮你自动化管理和引入 Layer 类，并且规定了 描述 Props （Layer）
+Polaris App 的工程脚手架会帮你自动化管理和引入 Layer 类，并且规定了 描述 Props （Layer 参数）的接口。
 
 ### 从模版新建 Layer
 
@@ -278,17 +278,19 @@ node scripts/layer.mjs remove {LayerClassName}
 
 ### 响应 Props 变化
 
-PolarisGL 中使用 prop manager 来做脏检查，layer 用户通过 setProps 来更新 props, layer 内通过 watchProps 来监听 props 变化并做出精确响应。
+PolarisGL 中使用 [props manager](https://github.com/alibaba/spatial-data-vis-framework/blob/dev/packages/core/props-manager/src/PropsManager.ts) 来管理参数，layer 用户通过 setProps 来更新参数, layer 内通过 watchProps 来监听具体的参数变化，并做出精确响应。
 
-该方案的开发成本比较高，响应的逻辑容易出错，也容易有时序问题。
+该方案的开发成本比较高，响应的逻辑容易出错，如果涉及异步操作或多种变化组合，很容易有时序问题。
 
-Polaris App 中，我们增加了一种更简单的函数化方案：
+**因此 Polaris App 中，我们增加了一种更简单的函数化方案：**
+
+在 layer 提供的 props desc 中有一个 mutable 字段，表达这个参数如果变化，能否被动态响应，默认为 false。
 
 Polaris App 中所有 Layer 的 props 都由 AppConfig 提供，通过 `app.configManager.setConfig()` 来更新 layer 的 props.
 
-在 props desc 中有一个 mutable 字段，默认为 false，当 Polaris App 发现一个 non-mutable 的 props 发生变化时，会 dispose 掉老的 layer 实例，重新运行工厂函数，替换为一个新的 layer 实例。使用这种方案来保证响应结果的正确性。由于 props 的变化主要发生在 `搭建与调参` 环节，这种性能上的损耗通常是可以接受的。
+当 Polaris App 发现有 non-mutable 的 props 发生变化时，会 dispose 掉老的 layer 实例，重新运行工厂函数，替换为一个新的 layer 实例。使用这种方案来保证响应结果的正确性。由于 props 的变化主要发生在 `搭建与调参` 环节，这种性能上的损耗通常是可以接受的。
 
-但如果改变化需要发生在运行环节，或者重建 Layer 的性能成本实在太高，你有两个途径来优化这种性能：
+但如果 props 变化需要发生在运行环节，或者重建 Layer 的性能成本实在太高，对搭建人员造成障碍时，你有两个途径来优化性能：
 
 -   Plan A: 使用函数式编程的思路，对昂贵步骤进行缓存
 
