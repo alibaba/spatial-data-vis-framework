@@ -306,13 +306,20 @@ Polaris App 建议使用 DataStub 由外部传入数据。详见 [《DataStub �
 
 当然你可以直接在 layer 生命周期中自行取数。或者直接调用 setProps 来更新数据。这些做法将无法从 Polaris App 的结构和工具中受益。
 
-## Layer 中的 2D 开发
+## Layer 中的 2D 内容
+
+Polaris App 建议直接使用 layer.element （HTML DIV 标签）挂载 2D 内容。
 
 ### HTML 接口
 
+layer.element 是用户可以直接操作的 HTML 元素，被挂在内部的 wrapper element 上，每个 layer 的 wrapper element 都是一个 div 元素，使用 absolute 定位，大小与 Polaris 画布一致。
+
+> wrapper 以 layer 树相同的树状结构组织，挂到 Polaris 的 container 元素中。
+> ⚠️ layer 树的兄弟节点是有前后顺序的，但是随着 Polaris App 对 layer 的自动重建，这种顺序会变得不可预测，因此建议使用 z-index 来显示的控制层级。
+
 ### 2D 元素的 3D 空间对位
 
-## Layer 中的 3D 开发
+## Layer 中的 3D 内容
 
 ### 基于 GSI 的 3D 开发
 
