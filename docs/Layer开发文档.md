@@ -177,7 +177,7 @@ Polaris App 中，出于简化，提供了以下固定 view:
 
 ### 生命周期
 
-请仔细阅读 `生命周期` 和 `生命周期事件` 的 [‼️ 重要文档 ‼️](https://github.com/alibaba/spatial-data-vis-framework/blob/dev/packages/core/base/src/events.ts) 这些生命周期事件是整个 Polaris GL 运转的关键。
+请仔细阅读 `生命周期` 和 `生命周期事件` 的 [‼️ 《重要文档》 ‼️](https://github.com/alibaba/spatial-data-vis-framework/blob/dev/packages/core/base/src/events.ts) 。这些生命周期事件是整个 Polaris GL 运转的关键。
 
 ## 实现一种新的 Layer
 
@@ -302,7 +302,7 @@ Polaris App 中所有 Layer 的 props 都由 AppConfig 提供，通过 `app.conf
 
 ### 接入实时数据
 
-Polaris App 建议使用 DataStub 由外部传入数据。详见 [《DataStub 数据源/数据插槽》](./核心概念.md).
+Polaris App 建议使用 DataStub 由外部传入数据。详见 [《DataStub 数据源/数据插槽》](./核心概念.md#datastub-数据源数据插槽).
 
 当然你可以直接在 layer 生命周期中自行取数。或者直接调用 setProps 来更新数据。这些做法将无法从 Polaris App 的结构和工具中受益。
 
