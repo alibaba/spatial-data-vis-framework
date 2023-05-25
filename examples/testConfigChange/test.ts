@@ -26,6 +26,24 @@ function shouldThrow(f: () => void) {
 	}
 }
 
+function shouldWarn(f: () => void) {
+	const _warn = console.warn
+	try {
+		let warned = false
+
+		console.warn = (...args) => {
+			console.log('warns as expected: \n\t', ...args)
+			warned = true
+		}
+
+		f()
+
+		if (!warned) console.error('should warn, but did not')
+	} finally {
+		console.warn = _warn
+	}
+}
+
 const m = polarisApp.configManager
 
 {
@@ -437,12 +455,13 @@ test('script: change targets', () => {
 		},
 	})
 
-	console.log('should warn:')
-	m.action({
-		type: 'script:change:targets',
-		payload: {
-			id: 'LOCAL_SCRIPT_0',
-			targets: [],
-		},
-	})
+	shouldWarn(() =>
+		m.action({
+			type: 'script:change:targets',
+			payload: {
+				id: 'LOCAL_SCRIPT_0',
+				targets: [],
+			},
+		})
+	)
 })

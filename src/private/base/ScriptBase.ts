@@ -54,6 +54,17 @@ export class ScriptBase {
 
 		if (this.#eventType === 'scriptInit') {
 			// 立即运行 handler
+
+			// @note 如果用eval会直接暴露当前的闭包
+			// eslint-disable-next-line @typescript-eslint/ban-types
+			let fun: Function
+			try {
+				fun = new Function('event', this.#handlerCode)
+			} catch (error: any) {
+				error.message = `ScriptBase: Script(${this.#name}) init failed: ${error.message}`
+				throw error
+			}
+
 			this.#targets.forEach((targetInfo) => {
 				let target: any
 				if (targetInfo.type === 'app') target = this.#app
@@ -77,16 +88,6 @@ export class ScriptBase {
 
 				// 运行 handler
 
-				// @note 如果用eval会直接暴露当前的闭包
-				// eslint-disable-next-line @typescript-eslint/ban-types
-				let fun: Function
-				try {
-					fun = new Function('event', this.#handlerCode)
-				} catch (error: any) {
-					error.message = `ScriptBase: Script(${this.#name}) init failed: ${error.message}`
-					throw error
-				}
-
 				try {
 					fun(event)
 				} catch (error: any) {
@@ -104,6 +105,15 @@ export class ScriptBase {
 
 	// 监听到全局事件后，在每个 target 上执行
 	private run(event: Record<string, any>) {
+		// eslint-disable-next-line @typescript-eslint/ban-types
+		let fun: Function
+		try {
+			fun = new Function('event', this.#handlerCode)
+		} catch (error: any) {
+			error.message = `ScriptBase: Script(${this.#name}) init failed: ${error.message}`
+			throw error
+		}
+
 		this.#targets.forEach((targetInfo) => {
 			let target: any
 			if (targetInfo.type === 'app') target = this.#app
@@ -125,14 +135,6 @@ export class ScriptBase {
 			})
 
 			// 运行 handler
-			// eslint-disable-next-line @typescript-eslint/ban-types
-			let fun: Function
-			try {
-				fun = new Function('event', this.#handlerCode)
-			} catch (error: any) {
-				error.message = `ScriptBase: Script(${this.#name}) init failed: ${error.message}`
-				throw error
-			}
 
 			try {
 				fun(event)
