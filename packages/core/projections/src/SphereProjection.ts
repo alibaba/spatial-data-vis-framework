@@ -107,7 +107,7 @@ function unprojRaw(xyz, R) {
 	// 	theta = Math.asin(z / radius / Math.sin( phi ))
 	// }
 
-	let theta = Math.atan2(y, x)
+	const theta = Math.atan2(y, x)
 
 	// console.log(phi, theta);
 

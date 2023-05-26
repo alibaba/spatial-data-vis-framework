@@ -10,18 +10,6 @@
 	"csharp": "csharp",
 	"author": "西萌",
 	"description": "",
-	"lint-staged": {
-		"src/**/*.js": [
-			"prettier --write",
-			"eslint --fix",
-			"git add"
-		]
-	},
-	"husky": {
-		"hooks": {
-			"pre-commit": "lint-staged"
-		}
-	},
 	"type": "module",
 	"license": "MIT",
 	"publishConfig": {
@@ -39,8 +27,6 @@
 		"dist": "npm run rebuild && webpack --config webpack.config.prod.js && npm run test",
 		"start": "node --max-old-space-size=8192 server.js",
 		"test": "jest",
-		"autofix": "eslint --fix ./",
-		"lint": "eslint ./",
 		"v": "webpack -v"
 	},
 	"devDependencies": {

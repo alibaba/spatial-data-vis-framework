@@ -60,7 +60,7 @@ export default class MercatorProjection extends Projection {
 
 		const xy = [x / R + this._xyz0[0], y / R + this._xyz0[1]]
 
-		let lnglat = unprojRaw(xy)
+		const lnglat = unprojRaw(xy)
 		return [lnglat[0] / DEG2RAD, lnglat[1] / DEG2RAD, z + this._xyz0[2] || 0]
 	}
 }
