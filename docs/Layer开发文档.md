@@ -102,7 +102,7 @@ b.add(a)
 b.remove(a)
 ```
 
-### projection
+### 地理投影
 
 PolarisGL 是用户可视化空间数据的框架，所有数据源要么是经纬度坐标，要么也能映射的经纬度坐标上。（我们用 `lng` 代指经度，`lat` 代指维度，`lat` 代指海拔）
 
@@ -124,7 +124,7 @@ PolarisGL 是用户可视化空间数据的框架，所有数据源要么是经�
 
 > 在和其他软件交互时，可能要绕 x 旋转或反转 y。
 
-PolarisGL 中提供了一套常用的 projection 类，作为 layer 的核心接口，用于处理 layer 中的数据，也用于将不同 projection 的 layer 在地图中合理对齐。如有需要，也可以集成 Projection 基类，实现自己的 project 和 unproject 接口，得到新的投影类型。
+PolarisGL 中提供了 [Projection 类库](https://github.com/alibaba/spatial-data-vis-framework/tree/dev/packages/core/projections)，包含常见的地理投影，作为 layer 的核心接口，用于处理 layer 中的数据，也用于将不同 projection 的 layer 在地图中合理对齐。如有需要，也可以集成 Projection 基类，实现自己的 project 和 unproject 接口，得到新的投影类型。
 
 #### 指定 layer 的 projection
 
@@ -156,15 +156,17 @@ PolarisGL 原生支持多中心/多类型投影的自动对齐，每个 layer �
 
 详见 [coordinator](https://github.com/alibaba/spatial-data-vis-framework/tree/dev/packages/core/coordinator)
 
-### timeline
+### Timeline
 
 Timeline 是 PolarisGL 中所有动画和时间相关行为的基础，使用 Track 时间轨道 来规划和管理所有时间相关的行为，包括渲染动作、动画、交互等。
 
 详见 [timeline](https://github.com/alibaba/timeline)
 
-### view
+与 Projection 一样，从 layer 的 InitEvent 中获取 timeline。
 
-Polaris GL 的 Layer 提供的视觉元素放在自己的 view 中，view 可以自定义扩展。
+### 视图
+
+> Polaris GL 的 Layer 提供的视觉元素放在自己的 view 中，view 可以自定义扩展。
 
 Polaris App 中，出于简化，提供了以下固定 view:
 
@@ -195,6 +197,9 @@ class MyLayer extends StandardLayer {
         do_something_here()
 
         this.addEventListener('init', (e) => {
+            const timeline = e.timeline
+            const projection = e.projection
+            const polaris = e.polaris
             and_something_here()
         })
 
@@ -224,6 +229,9 @@ function createMyLayer(props: any) {
     do_something_here()
 
     layer.addEventListener('init', (e) => {
+        const timeline = e.timeline
+        const projection = e.projection
+        const polaris = e.polaris
         and_something_here()
     })
 
@@ -245,7 +253,7 @@ Polaris App 的工程脚手架会帮你自动化管理和引入 Layer 类，并�
 
 ### 从模版新建 Layer
 
-Polaris App 脚手架提供了快速创建 layer 模版的功能。GUI 中有对应的按钮，也可以通过命令行来使用。
+Polaris App 脚手架提供了快速创建 layer 模版的脚本。
 
 #### Add New Layer Classes
 
@@ -278,29 +286,104 @@ node scripts/layer.mjs remove {LayerClassName}
 
 ### 响应 Props 变化
 
-PolarisGL 中使用 [props manager](https://github.com/alibaba/spatial-data-vis-framework/blob/dev/packages/core/props-manager/src/PropsManager.ts) 来管理参数，layer 用户通过 setProps 来更新参数, layer 内通过 watchProps 来监听具体的参数变化，并做出精确响应。
+PolarisGL 中使用 [props manager](https://github.com/alibaba/spatial-data-vis-framework/blob/dev/packages/core/props-manager/src/PropsManager.ts) 来管理 Layer 参数，layer 用户通过 setProps 来更新参数, layer 内通过 watchProps 来监听具体的参数变化，并做出精确响应。
 
 该方案的开发成本比较高，响应的逻辑容易出错，如果涉及异步操作或多种变化组合，很容易有时序问题。
 
 **因此 Polaris App 中，我们增加了一种更简单的函数化方案：**
 
-在 layer 提供的 props desc 中有一个 mutable 字段，表达这个参数如果变化，能否被动态响应，默认为 false。
+在 layer 提供的 props desc 中有一个 `mutable` 字段，代表`“这个参数如果变化，能否被动态响应”`，默认为 `false。`
 
 Polaris App 中所有 Layer 的 props 都由 AppConfig 提供，通过 `app.configManager.setConfig()` 来更新 layer 的 props.
 
 当 Polaris App 发现有 non-mutable 的 props 发生变化时，会 dispose 掉老的 layer 实例，重新运行工厂函数，替换为一个新的 layer 实例。使用这种方案来保证响应结果的正确性。由于 props 的变化主要发生在 `搭建与调参` 环节，这种性能上的损耗通常是可以接受的。
 
-但如果 props 变化需要发生在运行环节，或者重建 Layer 的性能成本实在太高，对搭建人员造成障碍时，你有两个途径来优化性能：
+#### 性能优化
 
--   Plan A: 使用函数式编程的思路，对昂贵步骤进行缓存
+如果 props 变化需要发生在运行环节，或者重建 Layer 的性能成本实在太高，对搭建人员造成障碍时，你有两个途径来优化性能：
+
+##### Plan A
+
+使用函数式编程的思路，对昂贵步骤进行缓存。
 
 可以参照 react hooks，使用 memorize 包装昂贵步骤，每次重新调用时检查是否需要重新计算。
 
--   Plan B: 将 props 的 mutable 字段设置为 true，这样 Polaris App 将不会 dispose 掉老的 layer 实例，而是直接调用 layer 的 `setProps` 方法来更新 props.
+```typescript
+// 缓存系统
+
+const WRAPPERS = new WeakMap()
+
+function argsEqual(a, b) {
+    if (a === b) return true
+    if (a.length !== b.length) return false
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) {
+            return false
+        }
+    }
+    return true
+}
+
+function memorize(fn) {
+    if (!WRAPPERS.has(fn)) {
+        let lastInput
+        let lastOutput
+        function wrapper(...input) {
+            if (argsEqual(lastInput, input)) {
+                return lastOutput
+            } else {
+                const result = fn(...input)
+                lastInput = input
+                lastOutput = result
+                return result
+            }
+        }
+
+        WRAPPERS.set(fn, wrapper)
+    }
+    return WRAPPERS.get(fn)
+}
+
+// 被缓存的函数
+
+const cal = memorize((a) => {
+    // do something heavy lifting here
+    return a * 2
+})
+
+// 参数描述
+
+export const propsDesc = [
+    {
+        name: 'myProp',
+        type: 'number',
+        // mutable: false // default
+    },
+]
+
+// 工厂函数
+
+export function createMyLayer(props: DescToType<typeof propsDesc>) {
+    const layer = new StandardLayer(props)
+
+    // myProp 变化时，才会重新计算 res
+    const res = cal(props.myProp)
+
+    layer.addEventListener('init', (e) => {
+        layer.elements.innerHTML = res
+    })
+
+    return layer
+}
+```
+
+##### Plan B
+
+将 props 的 mutable 字段设置为 true，这样 Polaris App 将不会 dispose 掉老的 layer 实例，而是直接调用 layer 的 `setProps` 方法来更新 props。
 
 使用这种方法的话，你需要通过 `watchProps`/`watchProp` 来监听 props 的变化，自行响应。
 
-### 接入实时数据
+### 接入数据
 
 Polaris App 建议使用 DataStub 由外部传入数据。详见 [《DataStub 数据源/数据插槽》](./核心概念.md#datastub-数据源数据插槽).
 
@@ -312,14 +395,104 @@ Polaris App 建议直接使用 layer.element （HTML DIV 标签）挂载 2D 内�
 
 ### HTML 接口
 
-layer.element 是用户可以直接操作的 HTML 元素，被挂在内部的 wrapper element 上，每个 layer 的 wrapper element 都是一个 div 元素，使用 absolute 定位，大小与 Polaris 画布一致。
+layer.element 是用户可以直接操作的 HTML 元素，被挂在内部的 wrapperDiv 上，wrapperDiv 使用 absolute 定位，大小与 Polaris 画布一致。
 
 > wrapper 以 layer 树相同的树状结构组织，挂到 Polaris 的 container 元素中。
+>
+> ```
+> layerA
+>   ├── layerB
+>   │   ├── layerC
+>   │   └── layerD
+>   └── layerE
+>
+> 对应的DOM树:
+>
+> wrapperDivA -> layerA.element
+>   ├── wrapperDivB -> layerB.element
+>   │   ├── wrapperDivC -> layerC.element
+>   │   └── wrapperDivD -> layerD.element
+>   └── wrapperDivE -> layerE.element
+> ```
+
 > ⚠️ layer 树的兄弟节点是有前后顺序的，但是随着 Polaris App 对 layer 的自动重建，这种顺序会变得不可预测，因此建议使用 z-index 来显示的控制层级。
 
 ### 2D 元素的 3D 空间对位
 
+如果 2D 元素需要放在 3D 空间中的坐标位置上，需要在 3D 空间中放一个 空 3D 物体作为`锚 ⚓️`，每次视图变化后获取这个`锚`的屏幕 2D 坐标，更新到 2D 元素的定位上。
+
+```typescript
+// 参数描述
+export const propsDesc = [
+    {
+        key: 'lnglatalt',
+        name: '经纬度海拔',
+        type: 'vec3',
+        defaultValue: { x: 120, y: 30, z: 0 },
+        range: {
+            min: { x: -180, y: -85, z: -10000 },
+            max: { x: 180, y: 85, z: 1000000 },
+        },
+    },
+    {
+        key: 'image' as const,
+        type: 'string' as const,
+        defaultValue:
+            'https://img.alicdn.com/imgextra/i1/O1CN01V6Tl3V1dzC8hdgJdi_!!6000000003806-2-tps-4096-4096.png',
+        name: '你要绘制的图片链接',
+    },
+]
+
+// 工厂函数
+export function createImageMarkerLayer(props: DescToType<typeof propsDesc>) {
+    // 补全缺省值，并检查必要性、类型和值范围
+    const parsedProps = parseProps(props, propsDesc)
+
+    const layer = new StandardLayer({ name: 'ImageMarkerLayer' })
+
+    // 你要绘制的2D元素
+    const img = document.createElement('img')
+    img.src = parsedProps.image
+
+    // 控制地理定位的wrapper
+    const geoWrapper = document.createElement('div')
+    geoWrapper.appendChild(img)
+    geoWrapper.style.position = 'absolute'
+    geoWrapper.style.left = '0'
+    geoWrapper.style.top = '0'
+
+    // 加入视图
+    layer.element.appendChild(geoWrapper)
+    layer.element.style.position = 'relative'
+
+    // 定位锚，这里以 GSI 为例，three js 的用法相似
+    const anchor = new Mesh()
+    layer.group.add(anchor)
+
+    // 获取锚的屏幕位置，并更新 geoWrapper 元素
+    const updateHtmlPos = () => {
+        // GSI 中这样获取屏幕空间位置
+        const matPro = e.polaris['matrixProcessor']
+        const worldMatrix = matPro.getWorldMatrix(anchor)
+        const worldPos = { x: worldMatrix[12], y: worldMatrix[13], z: worldMatrix[14] }
+        const screenPos = e.polaris.getScreenXY(worldPos.x, worldPos.y, worldPos.z)
+
+        // ✨
+        geoWrapper.style.transform = `translate(${screenPos[0]}px, ${
+            e.polaris.height - screenPos[1]
+        }px)`
+    }
+
+    // 监听视图变化，自动更新
+    layer.addEventListener('viewChange', (e) => {
+        updateHtmlPos()
+    })
+}
+```
+
 ## Layer 中的 3D 内容
+
+TODO
 
 ### 基于 GSI 的 3D 开发
 
