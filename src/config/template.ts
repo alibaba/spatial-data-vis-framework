@@ -120,36 +120,6 @@ export const BPConfig = {
 			dynamic: false,
 		},
 	],
-
-	/**
-	 * 脚本系统
-	 * @experimental
-	 */
-	$scripts: [
-		{
-			name: 'script 0',
-			id: 'LOCAL_SCRIPT_0',
-			type: 'bus' as const,
-			eventType: 'scriptInit' as const,
-			handler: /* javascript */ `
-				/**
-				 * 这里是 scriptInit 事件的回调函数体
-				 * @context
-				 * 环境变量包括：
-				 * - event: ScriptInitEvent
-				 */
-
-				console.log('I am a init-ing script!')
-				const eventType = event.type // 'scriptInit'
-				const busAgent = event.busAgent
-				
-				busAgent.on('beforeSceneChange', (event) => {
-					console.log('beforeSceneChange', event) // BeforeSceneChangeEvent
-				})
-			`,
-			targets: [] as { type: 'layer' | 'stage' | 'app'; id: string }[],
-		},
-	],
 }
 
 export default BPConfig
