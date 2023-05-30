@@ -47,6 +47,9 @@ export const propsDesc = [
 	// 🔨 your stuffs
 ] as const
 
+// @note type check. will be removed when compile.
+propsDesc as readonly PropDescription[]
+
 /**
  * $LAYER_NAME$ Props
  */
