@@ -40,7 +40,6 @@ export class AppBase extends EventDispatcher<BusEventMap> {
 		// this.polaris.timeline.updateMaxFPS(30)
 		// @workaround flatten output breaks visibility inheritance
 		this.polaris.renderer.conv.config.keepTopology = true
-		this.polaris.renderer.renderer.outputEncoding = 3001 // sRGB
 
 		this.stages.forEach((stage) => {
 			this.polaris.add(stage)
