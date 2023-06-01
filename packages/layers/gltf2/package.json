@@ -1,6 +1,6 @@
 {
 	"name": "@polaris.gl/layer-std-gltf2",
-	"version": "0.1.0-alpha.43",
+	"version": "0.2.0-alpha",
 	"description": "",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -20,10 +20,10 @@
 		"build:umd": "npx webpack"
 	},
 	"dependencies": {
-		"@gs.i/frontend-gltf2": "0.2.1-alpha.34",
-		"@gs.i/schema-scene": "0.2.1-alpha.34",
-		"@gs.i/utils-gltf2": "0.2.1-alpha.34",
-		"@polaris.gl/gsi": "0.1.0-alpha.43"
+		"@gs.i/frontend-gltf2": "0.3.0-alpha",
+		"@gs.i/schema-scene": "0.3.0-alpha",
+		"@gs.i/utils-gltf2": "0.3.0-alpha",
+		"@polaris.gl/gsi": "0.2.0-alpha"
 	},
 	"devDependencies": {
 		"typescript": ">4.4.0"

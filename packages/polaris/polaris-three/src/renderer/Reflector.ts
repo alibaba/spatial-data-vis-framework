@@ -14,7 +14,7 @@ import {
 	Vector3,
 	Vector4,
 	WebGLRenderTarget,
-	PlaneBufferGeometry,
+	PlaneGeometry,
 	Texture,
 } from 'three'
 
@@ -40,6 +40,7 @@ class PureMesh extends Mesh<BufferGeometry, MeshBasicMaterial> {
 }
 
 export class Reflector extends PureMesh {
+	readonly name = 'Reflector' as const
 	readonly isReflector = true
 
 	private readonly camera = new PerspectiveCamera()
@@ -64,8 +65,6 @@ export class Reflector extends PureMesh {
 		debugBlur?: boolean
 	}) {
 		super()
-
-		this.type = 'Reflector'
 
 		const textureWidth = options.textureWidth || 512
 		const textureHeight = options.textureHeight || 512
@@ -246,7 +245,7 @@ export class Reflector extends PureMesh {
 
 			// Render
 
-			this.renderTarget.texture.encoding = renderer.outputEncoding
+			this.renderTarget.texture.colorSpace = renderer.outputColorSpace
 
 			this.visible = false
 
@@ -331,13 +330,13 @@ export class Reflector extends PureMesh {
 /**
  * debug the reflection texture
  */
-class DebugPlaneMesh extends Mesh<PlaneBufferGeometry, ShaderMaterial> {
+class DebugPlaneMesh extends Mesh<PlaneGeometry, ShaderMaterial> {
 	constructor(reflectionMatrix: Matrix4, rt: WebGLRenderTarget) {
 		super()
 
 		const shader = DebugPlaneMesh.Shader
 
-		this.geometry = new PlaneBufferGeometry(100000, 100000)
+		this.geometry = new PlaneGeometry(100000, 100000)
 		this.material = new ShaderMaterial({
 			uniforms: UniformsUtils.clone(shader.uniforms),
 			fragmentShader: shader.fragmentShader,

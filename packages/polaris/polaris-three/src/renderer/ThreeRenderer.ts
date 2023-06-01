@@ -19,6 +19,7 @@ import {
 	AmbientLight,
 	DirectionalLight,
 	PointLight,
+	ACESFilmicToneMapping,
 } from 'three'
 import { Renderer, PolarisGSIProps } from '@polaris.gl/gsi'
 import { Converter } from '@gs.i/backend-three'
@@ -189,9 +190,7 @@ export class ThreeRenderer extends Renderer {
 		})
 		this.context = this.renderer.getContext()
 		this.renderer.setClearAlpha(1.0)
-		/** @FIXME gamma correction未生效 */
-		// this.renderer.gammaOutput = true
-		// this.renderer.gammaFactor = 2.2
+		this.renderer.toneMapping = ACESFilmicToneMapping
 
 		/**
 		 * init webgl capabilities
@@ -222,7 +221,7 @@ export class ThreeRenderer extends Renderer {
 		 * - 如果要在场景中加入 three native object，必须手动调用 updateMatrix
 		 * @note 应该在 standard layer 中提示这一点
 		 */
-		this.scene.autoUpdate = false
+		this.scene.matrixWorldAutoUpdate = false
 		this.scene.matrixAutoUpdate = false
 
 		this.rootWrapper = new SDK.Mesh()
@@ -330,8 +329,9 @@ export class ThreeRenderer extends Renderer {
 
 	capture() {
 		// https://stackoverflow.com/questions/32556939/saving-canvas-to-image-via-canvas-todataurl-results-in-black-rectangle/32641456#32641456
-		this.renderer.context.flush()
-		this.renderer.context.finish()
+		const context = this.renderer.getContext()
+		context.flush()
+		context.finish()
 		return this.canvas.toDataURL('image/png')
 	}
 
@@ -362,7 +362,7 @@ export class ThreeRenderer extends Renderer {
 			cam.position[1] - cam.center[1],
 			cam.position[2] - cam.center[2]
 		)
-		this.camera.rotation.fromArray(cam.rotationEuler)
+		this.camera.rotation.fromArray(cam.rotationEuler as any)
 
 		this.camera.updateMatrix()
 		this.camera.updateMatrixWorld(true)

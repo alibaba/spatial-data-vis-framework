@@ -81,7 +81,7 @@ export class PolarisLite extends PolarisGSI {
 
 		const cam = this.renderer.camera
 
-		_threeRaycaster.setFromCamera(ndcCoords, cam)
+		_threeRaycaster.setFromCamera(ndcCoords as any, cam)
 		this.raycaster.set(
 			_threeRaycaster.ray.origin as Vec3, // safe to assert here
 			_threeRaycaster.ray.direction as Vec3 // safe to assert here

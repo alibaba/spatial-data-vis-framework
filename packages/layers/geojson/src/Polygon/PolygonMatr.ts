@@ -9,10 +9,10 @@ export class PolygonMatr extends PbrMaterial {
 	metallicFactor = 0.1
 	roughnessFactor = 1.0
 	opacity = 1
-	alphaMode = 'OPAQUE' as const
 
 	constructor(props = {}) {
 		super()
+		this.alphaMode = 'OPAQUE'
 		// @note these are setters. setters can not use class property syntax
 		this.uniforms = {
 			uHeightScale: { value: 1 },
