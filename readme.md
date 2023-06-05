@@ -66,7 +66,9 @@ Make sure you have `nodejs` and `lerna@4` installed.
 ```sh
 node -v # v14 or higher.
 
-npx lerna -v # v4.x only. v5 is not yet supported.
+npm -v # v9 or higher. v6 is not supported.
+
+npx lerna -v # v4.x only. v5 is not supported.
 ```
 
 ### Setup

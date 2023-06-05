@@ -14,6 +14,33 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 console.log(__dirname)
 
+// env check
+{
+	// check version of nodejs. must be >= 14
+	const nodeVersion = process.versions.node.split('.')[0]
+	console.log('node version', nodeVersion)
+	if (nodeVersion < 14) {
+		console.error('node version must be >= 14')
+		process.exit(1)
+	}
+
+	// check version of npm. must be >= 9
+	const npmVersion = execSync('npm --version').toString().split('.')[0]
+	console.log('npm version', npmVersion)
+	if (npmVersion < 9) {
+		console.error('npm version must be >= 9')
+		process.exit(1)
+	}
+
+	// check version of lerna. must be 4
+	const lernaVersion = execSync('lerna --version').toString().split('.')[0]
+	console.log('lerna version', lernaVersion)
+	if (lernaVersion !== '4') {
+		console.error('lerna version must be 4')
+		process.exit(1)
+	}
+}
+
 // 是否使用本地 GSI 代码库
 const localGSIArgv = argv.filter((a) => a.includes('--gsi='))[0]
 
