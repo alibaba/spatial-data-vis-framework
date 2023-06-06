@@ -5,6 +5,7 @@ import { Mesh, UnlitMaterial } from '@gs.i/frontend-sdk'
 import { specifyTexture } from '@gs.i/utils-specify'
 
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
+import { EquirectangularProjection } from '@polaris.gl/projection'
 
 import type { PropDescription } from '../../private/schema/meta'
 import {
@@ -15,6 +16,7 @@ import {
 } from '../../private/utils/props'
 import { genFlatEarthSurface } from './genEarthSurface'
 import { reArrange } from './reArrange'
+import { reProject } from './reProject'
 
 export const info = {
 	name: 'Global Image Map',
@@ -104,7 +106,12 @@ export function createGlobalImageMapLayer(props: GlobalImageMapLayerProps) {
 		if (!parsedProps.map) return
 
 		// 生成一个铺满经纬度的平面
-		const geom = genFlatEarthSurface(projection, -180, 360, -90, 180, 10, 20)
+		// 这里使用的 投影 要和 图片中的投影一致，全球地图图片通常使用矩形投影
+		const eqPro = new EquirectangularProjection({})
+		const geom = genFlatEarthSurface(eqPro, -180, 360, -90, 180, 10, 20)
+
+		// 重新投影到当前的地理投影中
+		reProject(geom, eqPro, projection)
 
 		// 如果有需要，将太平洋置于中心
 		if (parsedProps.pdc) reArrange(geom, projection)
