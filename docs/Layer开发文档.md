@@ -174,7 +174,7 @@ Polaris App 中，出于简化，提供了以下固定 view:
     -   HTML DIV ELEMENT, 所有挂载该元素下的元素随 layer 一起展示
 -   `layer.group`
     -   GSI Node，所有用 GSI 定义的 3D 场景放在该对象中，随 layer 一起展示
--   `layer.threeRef` `@TODO`
+-   `layer.threeGroup` `@TODO`
     -   THREE.Group，所有用 THREE 定义的 3D 场景放在该对象中，随 layer 一起展示
 
 ### 生命周期
@@ -255,10 +255,12 @@ Polaris App 的工程脚手架会帮你自动化管理和引入 Layer 类，并�
 
 Polaris App 脚手架提供了快速创建 layer 模版的脚本。
 
+> Editor 中可通过 GUI 选择模版，非 Editor 环境可通过命令行
+
 #### Add New Layer Classes
 
 ```bash
-node scripts/layer.mjs add {LayerClassName} # Upper Camel Case ending with `Layer`
+node scripts/layer.mjs --action=add --layerName={LayerClassName} --flavor=html # Upper Camel Case ending with `Layer`
 ```
 
 The new Layer Class (factory-pattern template code) will be added to `src/layers/{LayerClassName}/index.ts`.
@@ -266,7 +268,7 @@ The new Layer Class (factory-pattern template code) will be added to `src/layers
 #### Remove Layer Classes
 
 ```bash
-node scripts/layer.mjs remove {LayerClassName}
+node scripts/layer.mjs --action=delete -layerName={LayerClassName}
 ```
 
 ### 编写 Prop 描述
@@ -417,98 +419,83 @@ layer.element 是用户可以直接操作的 HTML 元素，被挂在内部的 wr
 
 > ⚠️ layer 树的兄弟节点是有前后顺序的，但是随着 Polaris App 对 layer 的自动重建，这种顺序会变得不可预测，因此建议使用 z-index 来显示的控制层级。
 
+> 可以创建 `HTML` flavor 的 Layer 模版，查看实现细节。
+>
+> -   Editor: 创建 Layer 时，模版选择 html
+> -   CLI: `node scripts/layer.mjs --action=add --layerName=ALayer --flavor=html`
+>
+> 或者直接查看 [template](../src/private/templates/layer/index.html.ts)
+
 ### 2D 元素的 3D 空间对位
 
 如果 2D 元素需要放在 3D 空间中的坐标位置上，需要在 3D 空间中放一个 空 3D 物体作为`锚 ⚓️`，每次视图变化后获取这个`锚`的屏幕 2D 坐标，更新到 2D 元素的定位上。
 
-可以直接使用 `node scripts/layer.mjs --action=delete --layerName=ALayer --flavor=marker` 生成改功能模版
-
-```typescript
-// 参数描述
-export const propsDesc = [
-    {
-        key: 'lla',
-        name: '经纬度海拔',
-        type: 'vec3',
-        defaultValue: { x: 120, y: 30, z: 0 },
-        range: {
-            min: { x: -180, y: -85, z: -10000 },
-            max: { x: 180, y: 85, z: 1000000 },
-        },
-    },
-    {
-        key: 'image' as const,
-        type: 'string' as const,
-        defaultValue:
-            'https://img.alicdn.com/imgextra/i1/O1CN01V6Tl3V1dzC8hdgJdi_!!6000000003806-2-tps-4096-4096.png',
-        name: '你要绘制的图片链接',
-    },
-]
-
-// 工厂函数
-export function createImageMarkerLayer(props: DescToType<typeof propsDesc>) {
-    // 补全缺省值，并检查必要性、类型和值范围
-    const parsedProps = parseProps(props, propsDesc)
-
-    const layer = new StandardLayer({ name: 'ImageMarkerLayer' })
-
-    layer.addEventListener('init', async (e) => {
-      const { projection, timeline, polaris } = e
-
-      // 你要绘制的2D元素
-      const img = document.createElement('img')
-      img.src = parsedProps.image
-
-      // 控制地理定位的wrapper
-      const geoWrapper = document.createElement('div')
-      geoWrapper.appendChild(img)
-      geoWrapper.style.position = 'absolute'
-      geoWrapper.style.left = '0'
-      geoWrapper.style.top = '0'
-
-      // 加入视图
-      layer.element.appendChild(geoWrapper)
-      layer.element.style.position = 'relative'
-
-      // 定位锚，这里以 GSI 为例，three js 的用法相似
-      const anchor = new Mesh()
-      const lla = parsedProps.lla
-      const pos = projection.project(lla.x, lla.y, lla.z)
-      anchor.transform.position.set(pos[0], pos[1], pos[2])
-      layer.group.add(anchor)
-
-      // 获取锚的屏幕位置，并更新 geoWrapper 元素
-      const updateHtmlPos = () => {
-        // GSI 中这样获取屏幕空间位置
-        const matPro = e.polaris['matrixProcessor']
-        const worldMatrix = matPro.getWorldMatrix(anchor)
-        const worldPos = { x: worldMatrix[12], y: worldMatrix[13], z: worldMatrix[14] }
-        const screenPos = e.polaris.getScreenXY(worldPos.x, worldPos.y, worldPos.z)
-
-        // ✨
-        geoWrapper.style.transform = `translate(${screenPos[0]}px, ${
-          e.polaris.height - screenPos[1]
-        }px)`
-      }
-
-      // 监听视图变化，自动更新
-      layer.addEventListener('viewChange', (e) => {
-        updateHtmlPos()
-      })
-
-      layer.useProp('image', (e) => {
-        img.src = e.props.image
-      })
-    })
-    
-    return layer
-}
-```
+> 可以创建 `Marker` flavor 的 Layer 模版，查看实现细节。
+>
+> -   Editor: 创建 Layer 时，模版选择 marker
+> -   CLI: `node scripts/layer.mjs --action=add --layerName=ALayer --flavor=marker`
+>
+> 或者直接查看 [template](../src/private/templates/layer/index.marker.ts)
 
 ## Layer 中的 3D 内容
 
-TODO
-
 ### 基于 GSI 的 3D 开发
 
+PolarisGL 核心库不依赖任何渲染引擎，而是使用 GSI 来描述 3D 场景树。使用 GSI 接口开发的 Polaris Layer 拥有夸端、跨引擎的能力，并且能随 Polaris 一起升级底层渲染能力，无需额外开发。
+
+GSI 是与 glTF 2.0 相似的场景描述接口，作为一种高效中间表达态（IR），可以和 glTF 互转，只需词法映射。也可以实时转换为 three.js 等渲染引擎的场景树，然后用对应的渲染器渲染。以此来利用多种平台、多个生态的能力。
+
+> GSI 的范畴不只是场景描述（GSIR），还包含许多有用的 3D 开发工具集，详情见 [GSI](https://github.com/alibaba/general-scene-interface)。
+
+需要复用的 Layer 应该使用 GSI 开发。
+
+直接书写 GSIR 比较冗长，GSI 提供了 `frontend-sdk` 和 众多的 `utils` 模块来简化开发。详见模版。
+
+> 可以创建 `GSI` flavor 的 Layer 模版，查看实现细节。
+>
+> -   Editor: 创建 Layer 时，模版选择 gsi
+> -   CLI: `node scripts/layer.mjs --action=add --layerName=ALayer --flavor=gsi`
+>
+> 或者直接查看 [template](../src/private/templates/layer/index.gsi.ts)
+
 ### 基于 three.js 的 3D 开发
+
+当使用 threejs 作为底层渲染引擎时（目前 PolarisApp 都使用 three 底层），GSI 允许在场景树中插入 threejs 的 Object3D 构成的子树，直接交给 three 渲染。
+
+使用这种机制，可以在 Layer 中用 three js 的标准接口实现 3D 内容，并且可以使用 three 社区丰富的插件。
+
+##### 使用流程
+
+使用 three flavor 创建模版 Layer，用 three js 接口实现 3D 场景，挂在提供的 `threeGroup` 对象中，即可。
+
+> 创建 `threejs` flavor 的 Layer 模版。
+>
+> -   Editor: 创建 Layer 时，模版选择 three.js
+> -   CLI: `node scripts/layer.mjs --action=add --layerName=ALayer --flavor=three`
+>
+> 或者直接查看 [template](../src/private/templates/layer/index.three.ts)
+
+##### ⚠️ 限制
+
+-   仅特定 `Polaris` 版本支持该特性
+-   如果你的功能依赖了特定的 `three` 版本（例如使用了 `ShaderMaterial`等低级接口 ），可能导致该工程无法升级渲染底层、该 Layer 将无法在项目间迁移复用
+    -   不要在需要持续升级的工程中使用 three 低级接口
+-   修改 `Object3D` 的 position/rotation 等 transform 属性后，需要调用 `threeGroup.updateMatrixWorld(true)` 才会生效
+-   three 子树 和 gsi 场景树 需要隔离开，不要用 `Object3D.parent` 或 `Object3D.updateWorldMatrix(true, true)` 等接口读取或操作 `threeGroup` 以外的树节点
+    -   使用社区插件时，尤其注意插件有没有依赖整个场景树或者全局状态，否则插件可能无法正常工作
+-   polaris 不管理 three 对象的生命周期，请在 `dispose` 事件中使用 three 接口主动回收内存
+-   three 社区通常使用 `xz` 平面作为地面, `y` 朝向天空，而 polaris 使用 `xy` 平面作为地面, `z` 朝向天空，因此需要注意坐标系的转换
+
+##### 使用场景
+
+-   需要快速实现业务需求
+-   业务不涉及渲染效果的持续升级
+-   定制开发一次性的业务 Layer
+-   three 社区恰好有用得上的插件
+-   开发人员不熟悉 GSI 接口
+
+##### three.js 学习资料
+
+-   [Three js 基础知识](https://threejs.org/manual/#zh/fundamentals)
+-   [Three js 入门文档](https://threejs.org/docs/index.html#manual/zh/introduction/Creating-a-scene)
+-   [Three js 官方示例](https://threejs.org/examples/)

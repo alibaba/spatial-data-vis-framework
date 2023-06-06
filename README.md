@@ -40,7 +40,7 @@ npm start
 ### Add New Layer Classes
 
 ```bash
-node scripts/layer.mjs add {LayerClassName} # Upper Camel Case ending with `Layer`
+node scripts/layer.mjs --action=add --layerName={LayerClassName} --flavor=html # Upper Camel Case ending with `Layer`
 ```
 
 The new Layer Class (factory-pattern template code) will be added to `src/layers/{LayerClassName}/index.ts`.
@@ -48,7 +48,7 @@ The new Layer Class (factory-pattern template code) will be added to `src/layers
 ### Remove Layer Classes
 
 ```bash
-node scripts/layer.mjs remove {LayerClassName}
+node scripts/layer.mjs --action=delete -layerName={LayerClassName}
 ```
 
 ### Update project scaffold
