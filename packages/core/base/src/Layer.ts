@@ -203,19 +203,49 @@ export abstract class AbstractLayer<
 	watchProps<TKeys extends ReadonlyArray<keyof TProps>>(
 		keys: TKeys,
 		callback: Callback<Partial<TProps>, TKeys[number]>,
+		/**
+		 * pass `true` if you want this to be called immediately
+		 */
 		options?: ListenerOptions
 	): void {
 		this.#propsManager.addListener(keys, callback, options)
 	}
 
+	/**
+	 * listen to change of a specific prop.
+	 */
 	watchProp<TKey extends keyof TProps>(
 		key: TKey,
 		callback: Callback<TProps, TKey>,
+		/**
+		 * pass `true` if you want this to be called immediately
+		 */
 		options?: ListenerOptions
 	): void {
 		this.#propsManager.addListener([key], callback, options)
 	}
 
+	/**
+	 * Equal to {@link watchProp} with options `{ immediate: true }`
+	 */
+	useProp<TKey extends keyof TProps>(key: TKey, callback: Callback<TProps, TKey>): void {
+		this.#propsManager.addListener([key], callback, true)
+	}
+
+	/**
+	 * Equal to {@link watchProps} with options `{ immediate: true }`
+	 */
+	useProps<TKeys extends ReadonlyArray<keyof TProps>>(
+		keys: TKeys,
+		callback: Callback<Partial<TProps>, TKeys[number]>
+	): void {
+		this.#propsManager.addListener(keys, callback, true)
+	}
+
+	/**
+	 * update props
+	 * @note This is incremental update. Input should only contains changed props
+	 */
 	setProps(props: Partial<TProps | LayerProps>) {
 		this.#propsManager.set(props as any)
 	}
@@ -229,14 +259,21 @@ export abstract class AbstractLayer<
 		})
 	}
 
+	/**
+	 * @deprecated will be removed
+	 */
 	resolveTimeline() {
 		return resolveTimeline(this)
 	}
+
+	/**
+	 * @deprecated will be removed
+	 */
 	resolveProjection() {
 		return resolveProjection(this)
 	}
 
-	// #region legacy apis
+	// #region legacy apis. Will be removed in a future version.
 
 	/**
 	 * @deprecated use {@link isAbstractLayer}
@@ -303,13 +340,12 @@ export abstract class AbstractLayer<
 
 	/**
 	 * update props
-	 * @todo whether rename to setProps?
 	 * @deprecated
 	 */
 	updateProps = this.setProps
 
 	/**
-	 * @deprecated use {@link watchProps} instead. with `{immediate: true}` as options
+	 * @deprecated use {@link useProps} instead.
 	 */
 	protected listenProps<TKeys extends ReadonlyArray<keyof TProps>>(
 		keys: TKeys,
