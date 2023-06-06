@@ -104,7 +104,7 @@ b.remove(a)
 
 ### 地理投影
 
-PolarisGL 是用户可视化空间数据的框架，所有数据源要么是经纬度坐标，要么也能映射的经纬度坐标上。（我们用 `lng` 代指经度，`lat` 代指维度，`lat` 代指海拔）
+PolarisGL 是用户可视化空间数据的框架，所有数据源要么是经纬度坐标，要么也能映射的经纬度坐标上。（我们用 `lng` 代指经度，`lat` 代指维度，`alt` 代指海拔）
 
 然而 3D 渲染使用的笛卡尔坐标（即直角坐标系中的三维坐标 `vec3(x,y,z)` ）。
 
@@ -421,11 +421,13 @@ layer.element 是用户可以直接操作的 HTML 元素，被挂在内部的 wr
 
 如果 2D 元素需要放在 3D 空间中的坐标位置上，需要在 3D 空间中放一个 空 3D 物体作为`锚 ⚓️`，每次视图变化后获取这个`锚`的屏幕 2D 坐标，更新到 2D 元素的定位上。
 
+可以直接使用 `node scripts/layer.mjs --action=delete --layerName=ALayer --flavor=marker` 生成改功能模版
+
 ```typescript
 // 参数描述
 export const propsDesc = [
     {
-        key: 'lnglatalt',
+        key: 'lla',
         name: '经纬度海拔',
         type: 'vec3',
         defaultValue: { x: 120, y: 30, z: 0 },
@@ -450,27 +452,33 @@ export function createImageMarkerLayer(props: DescToType<typeof propsDesc>) {
 
     const layer = new StandardLayer({ name: 'ImageMarkerLayer' })
 
-    // 你要绘制的2D元素
-    const img = document.createElement('img')
-    img.src = parsedProps.image
+    layer.addEventListener('init', async (e) => {
+      const { projection, timeline, polaris } = e
 
-    // 控制地理定位的wrapper
-    const geoWrapper = document.createElement('div')
-    geoWrapper.appendChild(img)
-    geoWrapper.style.position = 'absolute'
-    geoWrapper.style.left = '0'
-    geoWrapper.style.top = '0'
+      // 你要绘制的2D元素
+      const img = document.createElement('img')
+      img.src = parsedProps.image
 
-    // 加入视图
-    layer.element.appendChild(geoWrapper)
-    layer.element.style.position = 'relative'
+      // 控制地理定位的wrapper
+      const geoWrapper = document.createElement('div')
+      geoWrapper.appendChild(img)
+      geoWrapper.style.position = 'absolute'
+      geoWrapper.style.left = '0'
+      geoWrapper.style.top = '0'
 
-    // 定位锚，这里以 GSI 为例，three js 的用法相似
-    const anchor = new Mesh()
-    layer.group.add(anchor)
+      // 加入视图
+      layer.element.appendChild(geoWrapper)
+      layer.element.style.position = 'relative'
 
-    // 获取锚的屏幕位置，并更新 geoWrapper 元素
-    const updateHtmlPos = () => {
+      // 定位锚，这里以 GSI 为例，three js 的用法相似
+      const anchor = new Mesh()
+      const lla = parsedProps.lla
+      const pos = projection.project(lla.x, lla.y, lla.z)
+      anchor.transform.position.set(pos[0], pos[1], pos[2])
+      layer.group.add(anchor)
+
+      // 获取锚的屏幕位置，并更新 geoWrapper 元素
+      const updateHtmlPos = () => {
         // GSI 中这样获取屏幕空间位置
         const matPro = e.polaris['matrixProcessor']
         const worldMatrix = matPro.getWorldMatrix(anchor)
@@ -479,14 +487,21 @@ export function createImageMarkerLayer(props: DescToType<typeof propsDesc>) {
 
         // ✨
         geoWrapper.style.transform = `translate(${screenPos[0]}px, ${
-            e.polaris.height - screenPos[1]
+          e.polaris.height - screenPos[1]
         }px)`
-    }
+      }
 
-    // 监听视图变化，自动更新
-    layer.addEventListener('viewChange', (e) => {
+      // 监听视图变化，自动更新
+      layer.addEventListener('viewChange', (e) => {
         updateHtmlPos()
+      })
+
+      layer.useProp('image', (e) => {
+        img.src = e.props.image
+      })
     })
+    
+    return layer
 }
 ```
 
