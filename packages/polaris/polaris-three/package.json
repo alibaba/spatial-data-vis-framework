@@ -21,17 +21,17 @@
 		"rebuild": "npm run clean && npm run build"
 	},
 	"dependencies": {
-		"@gs.i/backend-three": "0.3.0-alpha",
-		"@gs.i/frontend-sdk": "0.3.0-alpha",
-		"@gs.i/processor-raycast": "0.3.0-alpha",
-		"@gs.i/schema-scene": "0.3.0-alpha",
+		"@gs.i/backend-three": "0.3.1-alpha",
+		"@gs.i/frontend-sdk": "0.3.1-alpha",
+		"@gs.i/processor-raycast": "0.3.1-alpha",
+		"@gs.i/schema-scene": "0.3.1-alpha",
 		"@polaris.gl/gsi": "0.2.0-alpha",
 		"@types/three": "^0.152.1",
 		"three": "^0.152.2"
 	},
 	"devDependencies": {
-		"@gs.i/processor-indicator": "0.3.0-alpha",
-		"@gs.i/utils-random-scene": "0.3.0-alpha",
+		"@gs.i/processor-indicator": "0.3.1-alpha",
+		"@gs.i/utils-random-scene": "0.3.1-alpha",
 		"@types/offscreencanvas": "latest",
 		"@types/webvr-api": "latest",
 		"typescript": ">4.4.0",

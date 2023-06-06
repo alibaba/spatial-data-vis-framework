@@ -7,11 +7,11 @@
 		"start": "vite"
 	},
 	"dependencies": {
-		"@gs.i/processor-indicator": "0.3.0-alpha",
-		"@gs.i/utils-geom-builders": "0.3.0-alpha",
-		"@gs.i/utils-random-scene": "0.3.0-alpha",
-		"@gs.i/utils-specify": "0.3.0-alpha",
-		"@gs.i/utils-traverse": "0.3.0-alpha",
+		"@gs.i/processor-indicator": "0.3.1-alpha",
+		"@gs.i/utils-geom-builders": "0.3.1-alpha",
+		"@gs.i/utils-random-scene": "0.3.1-alpha",
+		"@gs.i/utils-specify": "0.3.1-alpha",
+		"@gs.i/utils-traverse": "0.3.1-alpha",
 		"@polaris.gl/gsi": "0.2.0-alpha",
 		"@polaris.gl/layer-amap": "0.2.0-alpha",
 		"@polaris.gl/layer-flyline": "0.2.0-alpha",
