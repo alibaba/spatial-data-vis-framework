@@ -10,6 +10,10 @@
 /**
  * $LAYER_NAME$
  */
+import { Mesh, UnlitMaterial } from '@gs.i/frontend-sdk'
+import { buildSphere } from '@gs.i/utils-geom-builders'
+import { specifyTexture } from '@gs.i/utils-specify'
+
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 
 import type { PropDescription } from '../../private/schema/meta'
@@ -31,17 +35,18 @@ import {
 export const propsDesc = [
 	// example: mutable prop
 	{
-		name: 'foo',
-		key: 'foo',
+		name: 'Map',
+		key: 'map',
 		type: 'string',
-		defaultValue: 'foo-0',
+		defaultValue:
+			'https://img.alicdn.com/imgextra/i1/O1CN01V6Tl3V1dzC8hdgJdi_!!6000000003806-2-tps-4096-4096.png',
 	},
 	// example: immutable prop
 	{
-		name: 'bar',
-		key: 'bar',
-		type: 'string',
-		defaultValue: 'bar-0',
+		key: 'offset',
+		name: '位置偏移',
+		type: 'vec3',
+		defaultValue: { x: 0, y: 0, z: 0 },
 		mutable: true,
 	},
 ] as const
@@ -86,17 +91,37 @@ export function create$LAYER_NAME$(props: $LAYER_NAME$Props) {
 
 		// example: immutable props
 
-		const foo = document.createElement('div')
-		layer.element.appendChild(foo)
-		foo.innerHTML = `Hello from $LAYER_NAME$. 🎉 foo:${parsedProps.foo}`
+		if (!parsedProps.map) return
+
+		// 	几何体
+		const geom = buildSphere({
+			radius: 1000,
+			widthSegments: 64,
+			heightSegments: 64,
+			normal: true,
+			uv: true,
+		})
+
+		// 材质
+		const matr = new UnlitMaterial({
+			alphaMode: 'BLEND',
+			baseColorTexture: specifyTexture({
+				// 如果原图是 sRGB 空间，则需要明确指定，否则会造成色偏
+				image: { uri: parsedProps.map, extensions: { EXT_image_encoding: 'SRGB' } },
+			}),
+		})
+
+		// 可渲染节点
+		const renderable = new Mesh({ geometry: geom, material: matr })
+
+		// 添加到 layer 的 GSI 视图容器 中
+		layer.group.add(renderable)
 
 		// example: mutable props
 
-		const bar = document.createElement('div')
-		layer.element.appendChild(bar)
-		// reactions to props change
-		layer.useProps(['bar'], (event) => {
-			bar.innerHTML = `Hello from $LAYER_NAME$. 🎉 bar:${event.props.bar}`
+		layer.useProp('offset', (e) => {
+			const offset = e.props.offset
+			renderable.transform.position.set(offset.x, offset.y, offset.z)
 		})
 	})
 

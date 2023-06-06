@@ -10,13 +10,14 @@ import { hideBin } from 'yargs/helpers'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const argv = yargs(hideBin(rawArgv)).argv
-console.log(__dirname, argv)
+// console.log(__dirname, argv)
 
 const action = argv.action
 const layerName = argv.layerName
 let flavor = argv.flavor
 
 if (action !== 'add' && action !== 'delete') throw new Error('需要指定 add 还是 delete 操作')
+if (!layerName) throw new Error('需要指定 layerName')
 
 if (layerName[0] !== layerName[0].toUpperCase())
 	throw new Error('Layer Name 应使用大驼峰(class 命名)')
@@ -24,12 +25,21 @@ if (layerName[0] !== layerName[0].toUpperCase())
 // 检查只包含字母和数字
 if (!/^[a-zA-Z0-9]+$/.test(layerName)) throw new Error('Layer Name 只能包含字母和数字')
 
+const TEMPL = {
+	class: '../src/private/templates/layer/index.class.ts',
+	factory: '../src/private/templates/layer/index.factory.ts',
+	gsi: '../src/private/templates/layer/index.gsi.ts',
+	three: '../src/private/templates/layer/index.three.ts',
+	marker: '../src/private/templates/layer/index.marker.ts',
+}
+
+const FLAVORS = Object.keys(TEMPL)
+
 if (!flavor) {
-	console.log('未指定 flavor, 默认为 factory (工厂函数风格，可选 class, factory)')
+	console.log(`未指定 flavor, 默认为 factory (工厂函数风格，可选 ${FLAVORS})`)
 	flavor = 'factory'
 } else {
-	if (flavor !== 'class' && flavor !== 'factory')
-		throw new Error('flavor 只能选择 class 或 factory')
+	if (!FLAVORS.includes(flavor)) throw new Error(`flavor 只能选择 ${FLAVORS}`)
 }
 
 console.log('action:', action, ', layerName:', layerName, ', flavor:', flavor)
@@ -39,12 +49,7 @@ console.log('action:', action, ', layerName:', layerName, ', flavor:', flavor)
 const layersRoot = resolve(__dirname, '../src/layers')
 const layerFolder = resolve(layersRoot, layerName)
 const layerIndexFile = resolve(layerFolder, 'index.ts')
-const templateFile = resolve(
-	__dirname,
-	flavor === 'class'
-		? '../src/private/templates/layer/index.class.ts'
-		: '../src/private/templates/layer/index.factory.ts'
-)
+const templateFile = resolve(__dirname, TEMPL[flavor])
 
 if (action === 'add') {
 	if (existsSync(layerFolder)) throw new Error('Layer Name already exists.')

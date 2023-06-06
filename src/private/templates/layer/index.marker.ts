@@ -10,6 +10,10 @@
 /**
  * $LAYER_NAME$
  */
+import { Mesh, UnlitMaterial } from '@gs.i/frontend-sdk'
+import { buildSphere } from '@gs.i/utils-geom-builders'
+import { specifyTexture } from '@gs.i/utils-specify'
+
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 
 import type { PropDescription } from '../../private/schema/meta'
@@ -31,17 +35,22 @@ import {
 export const propsDesc = [
 	// example: mutable prop
 	{
-		name: 'foo',
-		key: 'foo',
-		type: 'string',
-		defaultValue: 'foo-0',
+		key: 'lla',
+		name: '经纬度海拔',
+		type: 'vec3',
+		defaultValue: { x: 120, y: 30, z: 0 },
+		range: {
+			min: { x: -180, y: -85, z: -10000 },
+			max: { x: 180, y: 85, z: 1000000 },
+		},
 	},
 	// example: immutable prop
 	{
-		name: 'bar',
-		key: 'bar',
-		type: 'string',
-		defaultValue: 'bar-0',
+		key: 'image' as const,
+		type: 'string' as const,
+		defaultValue:
+			'https://img.alicdn.com/imgextra/i1/O1CN01V6Tl3V1dzC8hdgJdi_!!6000000003806-2-tps-4096-4096.png',
+		name: '你要绘制的图片链接',
 		mutable: true,
 	},
 ] as const
@@ -84,19 +93,50 @@ export function create$LAYER_NAME$(props: $LAYER_NAME$Props) {
 	layer.addEventListener('init', async (e) => {
 		const { projection, timeline, polaris } = e
 
-		// example: immutable props
+		// 你要绘制的2D元素
+		const img = document.createElement('img')
+		img.src = parsedProps.image
+		img.style.width = '100px'
 
-		const foo = document.createElement('div')
-		layer.element.appendChild(foo)
-		foo.innerHTML = `Hello from $LAYER_NAME$. 🎉 foo:${parsedProps.foo}`
+		// 控制地理定位的wrapper
+		const geoWrapper = document.createElement('div')
+		geoWrapper.appendChild(img)
+		geoWrapper.style.position = 'absolute'
+		geoWrapper.style.left = '0'
+		geoWrapper.style.top = '0'
 
-		// example: mutable props
+		// 加入视图
+		layer.element.appendChild(geoWrapper)
+		layer.element.style.position = 'relative'
 
-		const bar = document.createElement('div')
-		layer.element.appendChild(bar)
-		// reactions to props change
-		layer.useProps(['bar'], (event) => {
-			bar.innerHTML = `Hello from $LAYER_NAME$. 🎉 bar:${event.props.bar}`
+		// 定位锚，这里以 GSI 为例，three js 的用法相似
+		const anchor = new Mesh()
+		const lla = parsedProps.lla
+		const pos = projection.project(lla.x, lla.y, lla.z)
+		anchor.transform.position.set(pos[0], pos[1], pos[2])
+		layer.group.add(anchor)
+
+		// 获取锚的屏幕位置，并更新 geoWrapper 元素
+		const updateHtmlPos = () => {
+			// GSI 中这样获取屏幕空间位置
+			const matPro = e.polaris['matrixProcessor']
+			const worldMatrix = matPro.getWorldMatrix(anchor)
+			const worldPos = { x: worldMatrix[12], y: worldMatrix[13], z: worldMatrix[14] }
+			const screenPos = e.polaris.getScreenXY(worldPos.x, worldPos.y, worldPos.z)
+
+			// ✨
+			geoWrapper.style.transform = `translate(${screenPos[0]}px, ${
+				e.polaris.height - screenPos[1]
+			}px)`
+		}
+
+		// 监听视图变化，自动更新
+		layer.addEventListener('viewChange', (e) => {
+			updateHtmlPos()
+		})
+
+		layer.useProp('image', (e) => {
+			img.src = e.props.image
 		})
 	})
 

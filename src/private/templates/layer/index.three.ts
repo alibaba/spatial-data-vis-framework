@@ -10,7 +10,13 @@
 /**
  * $LAYER_NAME$
  */
+import { specifyNode } from '@gs.i/utils-specify'
+
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
+
+// three 的场景树元素和插件基本都可以使用，注意引入时避免破坏脏检查
+import { Group } from 'three'
+import { Sky } from 'three/addons/objects/Sky.js'
 
 import type { PropDescription } from '../../private/schema/meta'
 import {
@@ -31,18 +37,18 @@ import {
 export const propsDesc = [
 	// example: mutable prop
 	{
-		name: 'foo',
-		key: 'foo',
-		type: 'string',
-		defaultValue: 'foo-0',
+		key: 'objectColor',
+		name: 'objectColor',
+		type: 'color',
+		defaultValue: '#ffffff',
+		mutable: true,
 	},
 	// example: immutable prop
 	{
-		name: 'bar',
-		key: 'bar',
-		type: 'string',
-		defaultValue: 'bar-0',
-		mutable: true,
+		name: 'lightColor',
+		key: 'lightColor',
+		type: 'color',
+		defaultValue: '#ff0000',
 	},
 ] as const
 
@@ -81,22 +87,56 @@ export function create$LAYER_NAME$(props: $LAYER_NAME$Props) {
 		...parsedProps,
 	})
 
+	/**
+	 * three 内容全部放该 group 下
+	 *
+	 * 该部分将 bypass GSI 的转换逻辑，直接放在最终的 three 场景树中，由 PolarisThree 创建 THREE.WebGLRenderer 渲染
+	 *
+	 * ## 🌞 💐 🪐 `three in GSI` 使用说明 👈
+	 *
+	 * @experimental 实验特性，请关注后续更新
+	 *
+	 * @note 仅部分 Polaris 版本支持该特性
+	 * @note 如果依赖特定的 three 版本，将导致无法向后兼容或在项目间迁移
+	 *
+	 * @note 修改 object3D 的 transform（position/rotation等）后，需要调用 threeGroup.updateMatrixWorld(true) 才会生效
+	 * @note 不要用 Object3D.parent 或 updateWorldMatrix(true, true) 等接口读取或操作 threeGroup 以外的节点
+	 * @note polaris 不管理 three对象的生命周期，请在 dispose 事件中使用 three 接口主动回收内存
+	 *
+	 */
+	const threeGroup = new Group()
+
+	// three object 放入 GSI 场景树
+	layer.group.add(
+		specifyNode({
+			name: 'gsi three ref',
+			extensions: { EXT_ref_threejs: threeGroup },
+		})
+	)
+
 	layer.addEventListener('init', async (e) => {
 		const { projection, timeline, polaris } = e
 
-		// example: immutable props
+		const threeRenderer = polaris['renderer'].renderer
 
-		const foo = document.createElement('div')
-		layer.element.appendChild(foo)
-		foo.innerHTML = `Hello from $LAYER_NAME$. 🎉 foo:${parsedProps.foo}`
+		const sky = new Sky()
+		sky.scale.setScalar(10000000000)
+		threeGroup.add(sky)
 
-		// example: mutable props
+		const skyUniforms = sky.material.uniforms
 
-		const bar = document.createElement('div')
-		layer.element.appendChild(bar)
-		// reactions to props change
-		layer.useProps(['bar'], (event) => {
-			bar.innerHTML = `Hello from $LAYER_NAME$. 🎉 bar:${event.props.bar}`
+		skyUniforms['turbidity'].value = 10
+		skyUniforms['rayleigh'].value = 2
+		skyUniforms['mieCoefficient'].value = 0.005
+		skyUniforms['mieDirectionalG'].value = 0.8
+		const up = skyUniforms['up'].value
+		up.y = 0
+		up.z = 1
+
+		threeGroup.updateMatrixWorld(true)
+
+		layer.addEventListener('beforeRender', () => {
+			threeGroup.updateMatrixWorld(true)
 		})
 	})
 
