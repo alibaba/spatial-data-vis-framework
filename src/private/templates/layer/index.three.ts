@@ -109,7 +109,7 @@ export function create$LAYER_NAME$(props: $LAYER_NAME$Props) {
 	// three object 放入 GSI 场景树
 	layer.group.add(
 		specifyNode({
-			name: 'gsi three ref',
+			name: 'gsi-three-linker',
 			extensions: { EXT_ref_threejs: threeGroup },
 		})
 	)
