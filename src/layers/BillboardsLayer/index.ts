@@ -10,6 +10,13 @@ import { propsDesc } from './propsDesc'
 
 export { propsDesc }
 
+export const info = {
+	name: 'Billboards Scatters',
+	description:
+		'Draw Mass amount of billboards that face the camera. Used for markers, heatmap, deco, particle effects etc.',
+	category: 'Internal',
+}
+
 interface Props extends StandardLayerProps {
 	/**
 	 * 锚点，0-1

@@ -63,6 +63,14 @@ export const BPConfig = {
 			class: 'RuntimeWidgetLayer' as const,
 			props: {},
 		},
+		{
+			name: 'global map',
+			id: 'LOCAL_LAYER_4' as const,
+			class: 'GlobalImageMapLayer' as const,
+			props: {
+				opacity: 0.3,
+			},
+		},
 	],
 	/** 所有 stage（layer 实例的容器） */
 	stages: [
@@ -81,7 +89,7 @@ export const BPConfig = {
 		{
 			id: 'LOCAL_SCENE_DEFAULT',
 			name: 'DefaultScene',
-			cameraStateCode: '1|-0.000500|0.001524|0.000000|1.06540|0.20000|17.66000',
+			cameraStateCode: '1|-0.000484|0.001513|0.000000|1.06540|0.20000|17.66000',
 			stage: 'LOCAL_STAGE_MAIN' as const,
 			layers: ['*' /* 显示该stage的所有layer */],
 		},

@@ -37,6 +37,10 @@ export class AppBase extends EventDispatcher<BusEventMap> {
 
 		this.polaris = new PolarisThree({ container, ...config.app })
 
+		// 色调映射
+		this.polaris.renderer.renderer.toneMapping = 0 // NoToneMapping
+		// this.polaris.renderer.renderer.toneMappingExposure = 1 // default: 1
+
 		// this.polaris.timeline.updateMaxFPS(30)
 		// @workaround flatten output breaks visibility inheritance
 		this.polaris.renderer.conv.config.keepTopology = true
