@@ -19,7 +19,6 @@ import {
 	AmbientLight,
 	DirectionalLight,
 	PointLight,
-	ACESFilmicToneMapping,
 } from 'three'
 import { Renderer, PolarisGSIProps } from '@polaris.gl/gsi'
 import { Converter } from '@gs.i/backend-three'
@@ -190,7 +189,6 @@ export class ThreeRenderer extends Renderer {
 		})
 		this.context = this.renderer.getContext()
 		this.renderer.setClearAlpha(1.0)
-		this.renderer.toneMapping = ACESFilmicToneMapping
 
 		/**
 		 * init webgl capabilities
