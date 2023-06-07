@@ -1,6 +1,6 @@
 {
 	"name": "@polaris.gl/three",
-	"version": "0.2.2-alpha",
+	"version": "0.2.3-alpha",
 	"description": "",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -25,7 +25,7 @@
 		"@gs.i/frontend-sdk": "0.3.2-alpha",
 		"@gs.i/processor-raycast": "0.3.2-alpha",
 		"@gs.i/schema-scene": "0.3.2-alpha",
-		"@polaris.gl/gsi": "0.2.2-alpha",
+		"@polaris.gl/gsi": "0.2.3-alpha",
 		"@types/three": "^0.152.1",
 		"three": "^0.152.2"
 	},

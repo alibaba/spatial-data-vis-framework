@@ -1,6 +1,6 @@
 {
 	"name": "@polaris.gl/utils-animation",
-	"version": "0.2.2-alpha",
+	"version": "0.2.3-alpha",
 	"description": "",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -19,8 +19,8 @@
 		"rebuild": "npm run clean && npm run build"
 	},
 	"dependencies": {
-		"@polaris.gl/base": "0.2.2-alpha",
-		"@polaris.gl/utils-easing": "0.2.2-alpha",
+		"@polaris.gl/base": "0.2.3-alpha",
+		"@polaris.gl/utils-easing": "0.2.3-alpha",
 		"ani-timeline": "alpha"
 	},
 	"devDependencies": {
