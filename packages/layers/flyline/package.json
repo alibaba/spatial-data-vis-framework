@@ -1,6 +1,6 @@
 {
 	"name": "@polaris.gl/layer-flyline",
-	"version": "0.2.3-alpha",
+	"version": "0.2.4-alpha",
 	"description": "",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -24,8 +24,8 @@
 		"@gs.i/schema-scene": "0.3.3-alpha",
 		"@gs.i/utils-math": "0.3.3-alpha",
 		"@gs.i/utils-specify": "0.3.3-alpha",
-		"@polaris.gl/gsi": "0.2.3-alpha",
-		"@polaris.gl/projection": "0.2.3-alpha",
+		"@polaris.gl/gsi": "0.2.4-alpha",
+		"@polaris.gl/projection": "0.2.4-alpha",
 		"ani-timeline": "alpha"
 	},
 	"devDependencies": {

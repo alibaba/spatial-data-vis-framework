@@ -1,6 +1,6 @@
 {
 	"name": "@polaris.gl/layer-amap",
-	"version": "0.2.3-alpha",
+	"version": "0.2.4-alpha",
 	"description": "",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -20,7 +20,7 @@
 		"build:umd": "npx webpack"
 	},
 	"dependencies": {
-		"@polaris.gl/gsi": "0.2.3-alpha"
+		"@polaris.gl/gsi": "0.2.4-alpha"
 	},
 	"devDependencies": {
 		"typescript": ">4.4.0"
