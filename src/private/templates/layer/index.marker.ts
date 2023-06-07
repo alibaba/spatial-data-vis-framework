@@ -139,8 +139,8 @@ export function create$LAYER_NAME$(props: $LAYER_NAME$Props) {
 			updateHtmlPos()
 		})
 
-		layer.useProp('image', (e) => {
-			img.src = e.props.image
+		layer.useProp('image', (image) => {
+			img.src = image
 		})
 	})
 

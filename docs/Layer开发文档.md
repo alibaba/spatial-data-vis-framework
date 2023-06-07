@@ -464,13 +464,13 @@ GSI 是与 glTF 2.0 相似的场景描述接口，作为一种高效中间表达
 
 ### 基于 three.js 的 3D 开发
 
-当使用 threejs 作为底层渲染引擎时（目前 PolarisApp 都使用 three 底层），GSI 允许在场景树中插入 threejs 的 Object3D 构成的子树，直接交给 three 渲染。
+当使用 threejs 作为底层渲染引擎时（目前 PolarisApp 都使用 three 底层），GSI 允许在场景树中插入 `three::Object3D` 构成的子树，直接交给 three 渲染。
 
 使用这种机制，可以在 Layer 中用 three js 的标准接口实现 3D 内容，并且可以使用 three 社区丰富的插件。
 
 ##### 使用流程
 
-使用 three flavor 创建模版 Layer，用 three js 接口实现 3D 场景，挂在提供的 `threeGroup` 对象中，即可。
+使用 three flavor 创建模版 Layer，用 three 接口实现 3D 场景，放入模版中提供的 `threeGroup`，即可。
 
 > 创建 `threejs` flavor 的 Layer 模版。
 >
@@ -483,9 +483,7 @@ GSI 是与 glTF 2.0 相似的场景描述接口，作为一种高效中间表达
 
 -   仅特定 `Polaris` 版本支持该特性
 -   如果你的功能依赖了特定的 `three` 版本（例如使用了 `ShaderMaterial`等低级接口 ），可能导致该工程无法升级渲染底层、该 Layer 将无法在项目间迁移复用
-    -   不要在需要持续升级的工程中使用 three 低级接口
 -   three 子树 和 gsi 场景树 需要隔离开，不要用 `Object3D.parent` `traverseAncestors` `Object3D.updateWorldMatrix(true, true)` 等接口读取或操作 `threeGroup` 以外的树节点
-    -   使用社区插件时，尤其注意插件有没有依赖整个场景树或者全局状态，否则插件可能无法正常工作
 -   polaris 不管理 three 对象的生命周期，请在 `dispose` 事件中使用 three 接口主动回收内存
 -   three 社区通常使用 `xz` 平面作为地面, `y` 朝向天空，而 polaris 使用 `xy` 平面作为地面, `z` 朝向天空，因此需要注意坐标系的转换
 -   `threeGroup`中不应包含 Camera Scene Fog Renderer 等全局元素（这些元素被 polaris 接管）
@@ -497,6 +495,11 @@ GSI 是与 glTF 2.0 相似的场景描述接口，作为一种高效中间表达
 -   定制开发一次性的业务 Layer
 -   three 社区恰好有用得上的插件
 -   开发人员不熟悉 GSI 接口
+
+##### 已知问题
+
+-   three 的几乎所有 Helper 类（如 PointLightHelper）都会操作父节点的世界矩阵，破坏 Polaris 封装，不能直接使用
+-   three 的部分插件（如 Water）强制要求坐标系使用 z 轴朝上，不能直接使用
 
 ##### three.js 学习资料
 

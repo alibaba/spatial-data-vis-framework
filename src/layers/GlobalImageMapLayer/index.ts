@@ -133,13 +133,11 @@ export function createGlobalImageMapLayer(props: GlobalImageMapLayerProps) {
 			material: matr,
 		})
 
-		layer.useProp('offset', (e) => {
-			const offset = e.props.offset
+		layer.useProp('offset', (offset) => {
 			mesh.transform.position.set(offset.x, offset.y, offset.z)
 		})
 
-		layer.useProp('opacity', (e) => {
-			const opacity = e.props.opacity
+		layer.useProp('opacity', (opacity) => {
 			matr.opacity = opacity
 		})
 

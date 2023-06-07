@@ -125,8 +125,7 @@ export function create$LAYER_NAME$(props: $LAYER_NAME$Props) {
 
 		// example: mutable props
 
-		layer.useProp('offset', (e) => {
-			const offset = e.props.offset
+		layer.useProp('offset', (offset) => {
 			renderable.transform.position.set(offset.x, offset.y, offset.z)
 		})
 	})

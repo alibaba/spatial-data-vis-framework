@@ -101,9 +101,13 @@ export function create$LAYER_NAME$(props: $LAYER_NAME$Props) {
 		const bar = document.createElement('div')
 		layer.element.appendChild(bar)
 		// reactions to props change
-		layer.useProps(['bar'], (event) => {
-			bar.innerHTML = `Hello from $LAYER_NAME$. 🎉 bar:${event.props.bar}`
-		})
+		layer.watchProp(
+			'bar',
+			(event) => {
+				bar.innerHTML = `Hello from $LAYER_NAME$. 🎉 bar:${event.props.bar}`
+			},
+			true
+		)
 	})
 
 	return layer
