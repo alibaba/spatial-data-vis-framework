@@ -138,12 +138,6 @@ export function create$LAYER_NAME$(props: $LAYER_NAME$Props) {
 		const up = skyUniforms['up'].value
 		up.y = 0
 		up.z = 1
-
-		threeGroup.updateMatrixWorld(true)
-
-		layer.addEventListener('beforeRender', () => {
-			threeGroup.updateMatrixWorld(true)
-		})
 	})
 
 	return layer

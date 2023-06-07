@@ -484,8 +484,7 @@ GSI 是与 glTF 2.0 相似的场景描述接口，作为一种高效中间表达
 -   仅特定 `Polaris` 版本支持该特性
 -   如果你的功能依赖了特定的 `three` 版本（例如使用了 `ShaderMaterial`等低级接口 ），可能导致该工程无法升级渲染底层、该 Layer 将无法在项目间迁移复用
     -   不要在需要持续升级的工程中使用 three 低级接口
--   修改 `Object3D` 的 position/rotation 等 transform 属性后，需要调用 `threeGroup.updateMatrixWorld(true)` 才会生效
--   three 子树 和 gsi 场景树 需要隔离开，不要用 `Object3D.parent` 或 `Object3D.updateWorldMatrix(true, true)` 等接口读取或操作 `threeGroup` 以外的树节点
+-   three 子树 和 gsi 场景树 需要隔离开，不要用 `Object3D.parent` `traverseAncestors` `Object3D.updateWorldMatrix(true, true)` 等接口读取或操作 `threeGroup` 以外的树节点
     -   使用社区插件时，尤其注意插件有没有依赖整个场景树或者全局状态，否则插件可能无法正常工作
 -   polaris 不管理 three 对象的生命周期，请在 `dispose` 事件中使用 three 接口主动回收内存
 -   three 社区通常使用 `xz` 平面作为地面, `y` 朝向天空，而 polaris 使用 `xy` 平面作为地面, `z` 朝向天空，因此需要注意坐标系的转换
