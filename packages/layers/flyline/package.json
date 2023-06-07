@@ -20,10 +20,10 @@
 		"build:umd": "npx webpack"
 	},
 	"dependencies": {
-		"@gs.i/frontend-gline": "0.3.1-alpha",
-		"@gs.i/schema-scene": "0.3.1-alpha",
-		"@gs.i/utils-math": "0.3.1-alpha",
-		"@gs.i/utils-specify": "0.3.1-alpha",
+		"@gs.i/frontend-gline": "0.3.2-alpha",
+		"@gs.i/schema-scene": "0.3.2-alpha",
+		"@gs.i/utils-math": "0.3.2-alpha",
+		"@gs.i/utils-specify": "0.3.2-alpha",
 		"@polaris.gl/gsi": "0.2.2-alpha",
 		"@polaris.gl/projection": "0.2.2-alpha",
 		"ani-timeline": "alpha"
