@@ -126,7 +126,7 @@ export function create$LAYER_NAME$(props: $LAYER_NAME$Props) {
 			const matPro = e.polaris['matrixProcessor']
 			const worldMatrix = matPro.getWorldMatrix(anchor)
 			const worldPos = { x: worldMatrix[12], y: worldMatrix[13], z: worldMatrix[14] }
-			const screenPos = e.polaris.getScreenXY(worldPos.x, worldPos.y, worldPos.z)
+			const screenPos = e.polaris.getScreenXY(worldPos.x, worldPos.y, worldPos.z)!
 
 			// ✨
 			geoWrapper.style.transform = `translate(${screenPos[0]}px, ${
