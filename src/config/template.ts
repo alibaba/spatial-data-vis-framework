@@ -14,9 +14,6 @@ export const BPConfig = {
 		autoResize: false,
 		pitchLimit: [0, Math.PI * 0.7],
 		initialScene: 'LOCAL_SCENE_DEFAULT' as const,
-		lights: {
-			ambientLight: { type: 'ambient', intensity: 1.0 },
-		},
 		debug: true,
 	},
 	/** 所有 layer 实例，以及每个的配置项 */
