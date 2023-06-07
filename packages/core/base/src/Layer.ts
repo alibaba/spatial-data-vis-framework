@@ -226,20 +226,10 @@ export abstract class AbstractLayer<
 	}
 
 	/**
-	 * Equal to {@link watchProp} with options `{ immediate: true }`
+	 * Equal to {@link watchProp} with options `{ immediate: true }`. Simplify callback parameter.
 	 */
-	useProp<TKey extends keyof TProps>(key: TKey, callback: Callback<TProps, TKey>): void {
-		this.#propsManager.addListener([key], callback, true)
-	}
-
-	/**
-	 * Equal to {@link watchProps} with options `{ immediate: true }`
-	 */
-	useProps<TKeys extends ReadonlyArray<keyof TProps>>(
-		keys: TKeys,
-		callback: Callback<Partial<TProps>, TKeys[number]>
-	): void {
-		this.#propsManager.addListener(keys, callback, true)
+	useProp<TKey extends keyof TProps>(key: TKey, callback: (prop: TProps[TKey]) => any): void {
+		this.#propsManager.addListener([key], (e) => callback(e.props[key]), true)
 	}
 
 	/**
