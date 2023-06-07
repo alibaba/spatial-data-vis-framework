@@ -15,6 +15,7 @@ await test(true, 'PolarisLite', () => {
 	const p = new PolarisLite({
 		container: document.querySelector('#container') as HTMLDivElement,
 		background: 'transparent',
+		lights: { ambientLight: { type: 'ambient', intensity: 1 } },
 		// autoplay: false,
 	})
 

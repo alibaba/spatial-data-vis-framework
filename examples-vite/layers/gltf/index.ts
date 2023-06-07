@@ -26,6 +26,7 @@ const center3D = [119.315693, 26.070336, 0] as const // 模型中心经纬度,�
 await test(true, 'PolarisLite', () => {
 	const p = new PolarisLite({
 		container: document.querySelector('#container') as HTMLDivElement,
+		lights: { ambientLight: { type: 'ambient', intensity: 1 } },
 		// background: 'transparent',
 		// autoplay: false,
 	})

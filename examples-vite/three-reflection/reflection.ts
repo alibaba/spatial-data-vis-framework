@@ -21,6 +21,7 @@ const p = new PolarisThree({
 	container,
 	autoResize: true,
 	enableReflection: true,
+	lights: { ambientLight: { type: 'ambient', intensity: 1 } },
 	// reflectionRatio: 1.0,
 })
 

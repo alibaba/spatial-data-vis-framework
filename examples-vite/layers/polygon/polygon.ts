@@ -17,6 +17,7 @@ const indicator = new IndicatorProcessor({
 const container = document.querySelector('#container') as HTMLDivElement
 const p = new PolarisLite({
 	container,
+	lights: { ambientLight: { type: 'ambient', intensity: 1 } },
 	// background: 'transparent',
 	// autoplay: false,
 	// asyncRendering: true,
