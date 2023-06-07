@@ -20,9 +20,9 @@
 		"build:umd": "npx webpack"
 	},
 	"dependencies": {
-		"@gs.i/frontend-gltf2": "0.3.2-alpha",
-		"@gs.i/schema-scene": "0.3.2-alpha",
-		"@gs.i/utils-gltf2": "0.3.2-alpha",
+		"@gs.i/frontend-gltf2": "0.3.3-alpha",
+		"@gs.i/schema-scene": "0.3.3-alpha",
+		"@gs.i/utils-gltf2": "0.3.3-alpha",
 		"@polaris.gl/gsi": "0.2.3-alpha"
 	},
 	"devDependencies": {

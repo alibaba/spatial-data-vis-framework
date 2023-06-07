@@ -20,7 +20,7 @@
 		"build:umd": "npx webpack"
 	},
 	"dependencies": {
-		"@gs.i/utils-math": "0.3.2-alpha",
+		"@gs.i/utils-math": "0.3.3-alpha",
 		"@polaris.gl/gsi": "0.2.3-alpha",
 		"@polaris.gl/layer-std-marker": "0.2.3-alpha"
 	},

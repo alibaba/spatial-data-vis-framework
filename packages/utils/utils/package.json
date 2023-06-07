@@ -19,9 +19,9 @@
 		"rebuild": "npm run clean && npm run build"
 	},
 	"dependencies": {
-		"@gs.i/frontend-sdk": "0.3.2-alpha",
-		"@gs.i/schema-scene": "0.3.2-alpha",
-		"@gs.i/utils-math": "0.3.2-alpha",
+		"@gs.i/frontend-sdk": "0.3.3-alpha",
+		"@gs.i/schema-scene": "0.3.3-alpha",
+		"@gs.i/utils-math": "0.3.3-alpha",
 		"@polaris.gl/base": "0.2.3-alpha",
 		"@polaris.gl/projection": "0.2.3-alpha",
 		"is-touch-device": "^1.0.1"

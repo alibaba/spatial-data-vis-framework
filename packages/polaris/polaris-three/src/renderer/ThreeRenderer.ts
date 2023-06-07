@@ -174,6 +174,8 @@ export class ThreeRenderer extends Renderer {
 			boundingProcessor: this.config.boundingProcessor,
 			graphProcessor: this.config.graphProcessor,
 			cullingProcessor: this.config.cullingProcessor,
+			// 牺牲一部分性能来保证多层结构可用，同时保证 three_ref 可用
+			keepTopology: true,
 		})
 
 		/**
