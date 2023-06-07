@@ -497,6 +497,14 @@ export class ThreeRenderer extends Renderer {
 				aLight.intensity = this.config.lights.ambientLight.intensity ?? 1.0
 				aLight.name = name
 				aLight.matrixAutoUpdate = false
+			} else {
+				// remove
+				const name = 'AmbientLight'
+				const aLight: AmbientLight = this.lights.getObjectByName(name) as AmbientLight
+				if (aLight) {
+					aLight.dispose()
+					this.lights.remove(aLight)
+				}
 			}
 			if (this.config.lights.directionalLights) {
 				const dLights = this.config.lights.directionalLights

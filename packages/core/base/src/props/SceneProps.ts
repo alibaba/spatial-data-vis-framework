@@ -13,9 +13,7 @@ import { SceneProps } from '@gs.i/schema-ext-scene'
 
 export const defaultSceneProps: SceneProps = {
 	background: '#333',
-	lights: {
-		ambientLight: { type: 'ambient', intensity: 1.0 },
-	},
+	lights: {},
 	antialias: 'msaa',
 }
 

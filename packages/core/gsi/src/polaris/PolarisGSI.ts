@@ -9,9 +9,7 @@ import {
 	PolarisProps,
 	defaultProps as defaultPolarisProps,
 	PickEventResult,
-	PickInfo,
 	CoordV2,
-	AbstractPolarisEvents,
 } from '@polaris.gl/base'
 import { Renderer } from './Renderer'
 import { PointerControl, TouchControl, Cameraman } from 'camera-proxy'
