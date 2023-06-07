@@ -63,3 +63,8 @@ export function createRuntimeWidgetLayer(
  * Props Description. Used to generate the props editor UI.
  */
 export const propsDesc = [] as PropDescription[]
+
+export const info = {
+	name: 'Example Widget',
+	category: 'Internal',
+}

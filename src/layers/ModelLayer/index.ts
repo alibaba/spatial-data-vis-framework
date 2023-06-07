@@ -7,6 +7,11 @@ import { createFromDesc } from '@polaris.gl/projection'
 
 import { DescToParsedType, DescToType, parseProps } from '../../private/utils/props'
 
+export const info = {
+	name: 'Basic Model Loader',
+	category: 'Internal',
+}
+
 /**
  * Props Description. Used to generate the props editor UI.
  */

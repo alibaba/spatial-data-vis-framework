@@ -26,6 +26,12 @@ import {
 	parseProps,
 } from '../../private/utils/props'
 
+export const info = {
+	name: '',
+	description: '',
+	category: 'Unknown',
+}
+
 /**
  * 详见 @see {@link [PropDescription](../../private/schema/meta.ts)}
  *

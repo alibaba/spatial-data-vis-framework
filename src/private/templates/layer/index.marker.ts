@@ -10,9 +10,7 @@
 /**
  * $LAYER_NAME$
  */
-import { Mesh, UnlitMaterial } from '@gs.i/frontend-sdk'
-import { buildSphere } from '@gs.i/utils-geom-builders'
-import { specifyTexture } from '@gs.i/utils-specify'
+import { Mesh } from '@gs.i/frontend-sdk'
 
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 
@@ -23,6 +21,12 @@ import {
 	DescToTypeMutable,
 	parseProps,
 } from '../../private/utils/props'
+
+export const info = {
+	name: '',
+	description: '',
+	category: 'Unknown',
+}
 
 /**
  * 详见 @see {@link [PropDescription](../../private/schema/meta.ts)}

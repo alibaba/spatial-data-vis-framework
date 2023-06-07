@@ -7,6 +7,8 @@ import { fileURLToPath } from 'url'
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 
+import { genLayerIndex } from './utils/genLayerIndex.mjs'
+
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const argv = yargs(hideBin(rawArgv)).argv
@@ -21,6 +23,8 @@ if (!layerName) throw new Error('需要指定 layerName')
 
 if (layerName[0] !== layerName[0].toUpperCase())
 	throw new Error('Layer Name 应使用大驼峰(class 命名)')
+
+if (!layerName.endsWith('Layer')) throw new Error('Layer Name 应以 Layer 结尾')
 
 // 检查只包含字母和数字
 if (!/^[a-zA-Z0-9]+$/.test(layerName)) throw new Error('Layer Name 只能包含字母和数字')
@@ -79,105 +83,4 @@ if (action === 'add') {
 
 // update Layer List
 
-const indexFile = resolve(__dirname, '../src/layers/index.ts')
-const indexCode = await readFile(indexFile, 'utf-8')
-
-let lines = indexCode.split('\n')
-lines = lines.map((line) => line.trim())
-
-// import
-{
-	const START = lines.findIndex((l) => l.includes('pragma: BP_GEN LAYERS_IMPORT START'))
-	const END = lines.findIndex((l) => l.includes('pragma: BP_GEN LAYERS_IMPORT END'))
-
-	let LAYERS_IMPORT = lines.slice(START + 1, END)
-
-	if (action === 'add') {
-		LAYERS_IMPORT.push(
-			`import { create${layerName}, propsDesc as propsDesc${layerName} } from './${layerName}'`
-		)
-	} else {
-		LAYERS_IMPORT = LAYERS_IMPORT.filter((l) => !l.includes(`'./${layerName}'`))
-	}
-
-	lines.splice(START + 1, END - START - 1, LAYERS_IMPORT)
-}
-
-// export
-{
-	const START = lines.findIndex((l) => l.includes('pragma: BP_GEN LAYERS_EXPORT START'))
-	const END = lines.findIndex((l) => l.includes('pragma: BP_GEN LAYERS_EXPORT END'))
-
-	const LAYERS_EXPORT = lines.slice(START + 1, END)
-
-	const sections = []
-	let currName = null
-	let currLines = null
-	LAYERS_EXPORT.forEach((l) => {
-		const testStart = /\/\/\spragma:\s(.*)\sSTART/g.exec(l)
-		if (testStart) {
-			const name = testStart[1]
-			// console.log('found start', name)
-
-			currName = name
-			currLines = []
-
-			currLines.push(l)
-
-			return
-		}
-
-		const testEnd = /\/\/\spragma:\s(.*)\sEND/g.exec(l)
-		if (testEnd) {
-			const name = testEnd[1]
-			if (name !== currName) {
-				throw new Error('名字匹配错误')
-			}
-			// console.log('found end', name)
-
-			currLines.push(l)
-
-			if (action === 'add' || layerName !== currName) sections.push(currLines)
-
-			currName = null
-			currLines = null
-
-			return
-		}
-
-		if (currName) {
-			// console.log(currName, '->', l)
-			currLines.push(l)
-		}
-	})
-
-	// console.log(sections)
-
-	if (action === 'add') {
-		sections.push([
-			`// pragma: ${layerName} START`,
-			`${layerName}: {`,
-			`factory: create${layerName},`,
-			`propsDescription: propsDesc${layerName},`,
-			'},',
-			`// pragma: ${layerName} END`,
-		])
-	}
-
-	// console.log(sections)
-
-	// console.log(LAYERS_EXPORT)
-
-	lines.splice(START + 1, END - START - 1, sections)
-}
-
-let newCode = lines.flat(2).join('\n')
-
-newCode = prettier.format(newCode, {
-	...(await prettier.resolveConfig(indexFile)),
-	filepath: indexFile,
-})
-
-// console.log(newCode)
-
-await writeFile(indexFile, newCode)
+await genLayerIndex()

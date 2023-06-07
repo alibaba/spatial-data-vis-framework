@@ -26,6 +26,7 @@ export const info = {
 	nameCN: '地面网格',
 	description: 'A grid layer that can be used as a background or visual aid',
 	descriptionCN: '铺在地面上的网格，用于背景装饰或者视觉辅助',
+	category: 'Internal',
 }
 
 type GridLayerProps = DescToType<typeof propsDesc>
