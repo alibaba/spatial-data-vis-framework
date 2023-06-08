@@ -1,0 +1,23 @@
+name: auto publish on tag
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build_pub:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      # Setup .npmrc file to publish to npm
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm i -g lerna@4
+      - run: npm run setup
+      - run: npm run build
+      - run: lerna publish from-package --registry https://registry.npmjs.org --yes
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_CI }}
