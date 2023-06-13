@@ -61,7 +61,7 @@ export function genFlatEarthSurface(
 		}
 	}
 
-	;(geom.extensions as any).EXT_geometry_bounds = {}
+	// ;(geom.extensions as any).EXT_geometry_bounds = {}
 
 	// const geom = buildSphere({
 	// 	radius: R,

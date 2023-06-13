@@ -133,6 +133,9 @@ export function createGlobalImageMapLayer(props: GlobalImageMapLayerProps) {
 			material: matr,
 		})
 
+		mesh.renderOrder = -1000
+		matr.depthWrite = false
+
 		layer.useProp('offset', (offset) => {
 			mesh.transform.position.set(offset.x, offset.y, offset.z)
 		})
