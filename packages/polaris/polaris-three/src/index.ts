@@ -1,21 +1,32 @@
-import { specifyTexture } from '@gs.i/utils-specify'
 /**
  * Copyright (C) 2021 Alibaba Group Holding Limited
  * All rights reserved.
  */
 
-import { isRenderable, RenderableNode, Vec3 } from '@gs.i/schema-scene'
-import { PolarisGSI, PolarisGSIProps } from '@polaris.gl/gsi'
-import { ThreeRenderer } from './renderer/ThreeRenderer'
 import { Raycaster as ThreeRaycaster } from 'three'
+
+import { Texture, Matrix, Vec3, isRenderable, RenderableNode } from '@gs.i/schema-scene'
+import { specifyTexture } from '@gs.i/utils-specify'
 import { Raycaster, RaycastInfo } from '@gs.i/processor-raycast'
+
+import { PolarisGSI, PolarisGSIProps } from '@polaris.gl/gsi'
+
+import { ThreeRenderer } from './renderer/ThreeRenderer'
 import { Reflector } from './renderer/Reflector'
 
 export type PolarisThreeProps = PolarisGSIProps & {
 	/**
-	 * @deprecated not implemented yet.
+	 * 是否生成地面反射器
+	 * @note 反射器提供一个铺在 XY 平面上、铺满视图的反射贴图，以及使用它的矩阵
+	 * @default false
 	 */
-	castShadow?: boolean
+	enableReflection?: boolean
+	/**
+	 * 反射贴图分辨率比例
+	 * @note 反射贴图相对于画布的分辨率缩放, 根据性能选择合适的分辨率
+	 * @default 0.5
+	 */
+	reflectionRatio?: number
 }
 
 export class PolarisThree extends PolarisGSI {
@@ -24,15 +35,17 @@ export class PolarisThree extends PolarisGSI {
 
 	private readonly enableReflection: boolean
 	private readonly reflectionRatio: number
-	private readonly castShadow: boolean
 	private readonly reflector?: Reflector
+
+	declare readonly reflectionTexture?: Texture
+	declare readonly reflectionTextureBlur?: Texture
+	declare readonly reflectionMatrix?: Matrix
 
 	constructor(props: PolarisThreeProps) {
 		super(props)
 
 		this.enableReflection = !!props.enableReflection
 		this.reflectionRatio = props.reflectionRatio || 0.5
-		this.castShadow = !!props.castShadow
 
 		this.renderer = new ThreeRenderer({
 			...this.getRendererConfig(),
@@ -172,7 +185,6 @@ export class PolarisThree extends PolarisGSI {
 		const config = {
 			enableReflection: this.enableReflection,
 			reflectionRatio: this.reflectionRatio,
-			castShadow: this.castShadow,
 			matrixProcessor: this.matrixProcessor,
 			boundingProcessor: this.boundingProcessor,
 			graphProcessor: this.graphProcessor,

@@ -3,7 +3,6 @@
  * All rights reserved.
  */
 
-import * as IR from '@gs.i/schema-scene'
 import {
 	AbstractPolaris,
 	PolarisProps,
@@ -54,11 +53,10 @@ export interface PolarisGSI {
 	traverse(handler: (node: PolarisGSI | StandardLayer) => void): void
 }
 
-export const DefaultPolarisGSIProps = {
+const defaultPolarisGSIProps = {
 	...(defaultPolarisProps as Required<typeof defaultPolarisProps>),
+
 	enablePicking: true,
-	enableReflection: false,
-	reflectionRatio: 0.5,
 
 	/**
 	 * @note safe to share globally @simon
@@ -78,7 +76,7 @@ export const DefaultPolarisGSIProps = {
 	cullingProcessor: defaultCullingProcessor,
 }
 
-export type PolarisGSIProps = PolarisProps & Partial<typeof DefaultPolarisGSIProps>
+export type PolarisGSIProps = PolarisProps & Partial<typeof defaultPolarisGSIProps>
 
 export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 	readonly isPolarisGSI = true
@@ -104,10 +102,6 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 	declare readonly graphProcessor: GraphProcessor
 	declare readonly cullingProcessor: CullingProcessor
 
-	declare reflectionTexture?: IR.Texture
-	declare reflectionTextureBlur?: IR.Texture
-	declare reflectionMatrix?: IR.Matrix
-
 	/**
 	 * Container resize listener
 	 */
@@ -115,7 +109,7 @@ export abstract class PolarisGSI extends AbstractPolaris<PolarisGSIProps> {
 
 	constructor(props: PolarisGSIProps) {
 		const mergedProps = {
-			...DefaultPolarisGSIProps,
+			...defaultPolarisGSIProps,
 			...props,
 		}
 		super(mergedProps)

@@ -34,10 +34,6 @@ export type RendererConfig = {
 	 * will be added to rootWrapper which correspond to the camera view center.
 	 */
 	root: IR.Node
-
-	enableReflection: boolean
-	reflectionRatio: number
-	castShadow: boolean
 } & Required<
 	Pick<
 		PolarisGSIProps,
@@ -60,11 +56,7 @@ export type RendererConfig = {
 	>
 >
 
-export const defaultProps = {
-	enableReflection: true,
-	reflectionRatio: 1.0,
-	castShadow: false,
-}
+export const defaultProps = {}
 
 export class ThreeRenderer extends Renderer {
 	private config: Required<RendererConfig>
