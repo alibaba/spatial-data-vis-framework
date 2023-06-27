@@ -1,5 +1,5 @@
 {
-	"version": "0.2.7-alpha",
+	"version": "0.2.8-alpha",
 	"npmClient": "npm",
 	"npmClientArgs": [
 		"--no-lockfile",

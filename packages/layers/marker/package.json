@@ -1,6 +1,6 @@
 {
 	"name": "@polaris.gl/layer-std-marker",
-	"version": "0.2.7-alpha",
+	"version": "0.2.8-alpha",
 	"description": "",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -24,10 +24,10 @@
 		"@gs.i/schema-scene": "0.3.5-alpha",
 		"@gs.i/utils-geometry": "0.3.5-alpha",
 		"@gs.i/utils-math": "0.3.5-alpha",
-		"@polaris.gl/base": "0.2.7-alpha",
-		"@polaris.gl/gsi": "0.2.7-alpha",
-		"@polaris.gl/projection": "0.2.7-alpha",
-		"@polaris.gl/utils": "0.2.7-alpha"
+		"@polaris.gl/base": "0.2.8-alpha",
+		"@polaris.gl/gsi": "0.2.8-alpha",
+		"@polaris.gl/projection": "0.2.8-alpha",
+		"@polaris.gl/utils": "0.2.8-alpha"
 	},
 	"devDependencies": {
 		"typescript": ">4.4.0"
