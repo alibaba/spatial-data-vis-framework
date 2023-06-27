@@ -24,4 +24,5 @@ export const STATIC_PROPS = [
 	'container' as const,
 	'timeline' as const,
 	'projection' as const,
+	'cameraControl' as const,
 ]

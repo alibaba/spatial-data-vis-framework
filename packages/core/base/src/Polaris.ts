@@ -73,7 +73,7 @@ export abstract class AbstractPolaris<
 				// pauseWhenInvisible: false, // 检测标签页是否隐藏，已知在一些环境中不可用，建议关闭
 				openStats: false,
 				autoRelease: true, // 自动回收过期的track
-				maxStep: 100, // 最大帧长
+				maxStep: 1000, // 最大帧长
 				maxFPS: 30, // 最大帧率
 				// ignoreErrors: true, // 出错后是否停止
 			})
@@ -118,8 +118,6 @@ export abstract class AbstractPolaris<
 		const cameraProxy = new AnimatedCameraProxy({
 			cameraFOV: fov as number,
 			timeline: timeline as any, // AnimatedCameraProxy use old version of timeline but only unchanged api
-			/** @LIMIT 开启inert会影响的部分：SphereProject同步，Animations的结束时间，暂时关闭inert */
-			inert: false,
 			canvasWidth: this.canvasWidth,
 			canvasHeight: this.canvasHeight,
 			ratio: this.#ratio,

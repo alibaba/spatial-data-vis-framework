@@ -27,12 +27,15 @@ export const defaultCameraProps = {
 
 	/**
 	 * camera rotation
+	 * @deprecated set camera state after creation
 	 */
 	rotation: 0,
 	/**
 	 * camera lookat center [lng, lat]
+	 * @deprecated set camera state after creation
 	 */
 	center: [0, 0],
+
 	/**
 	 * camera view offset
 	 * see https://threejs.org/docs/#api/en/cameras/PerspectiveCamera.setViewOffset
@@ -40,12 +43,6 @@ export const defaultCameraProps = {
 	viewOffset: [0, 0],
 	cameraNear: 100,
 	cameraFar: 10000000000,
-	/**
-	 * 相机运动惰性
-	 *
-	 * @todo inert会导致projection在每帧绘制前同步不及时，画面会抖动
-	 */
-	cameraInert: 1.0,
 
 	/**
 	 * 鼠标/触控
