@@ -176,10 +176,10 @@ export class ThreeRenderer extends Renderer {
 
 		this.renderer = new WebGLRenderer({
 			canvas: this.canvas,
-			// context: this.context,
 			alpha: true,
 			antialias: this.config.antialias === 'msaa',
 			stencil: false,
+			premultipliedAlpha: this.config.background === 'transparent' ? false : true,
 		})
 		this.context = this.renderer.getContext()
 		this.renderer.setClearAlpha(1.0)
@@ -267,11 +267,10 @@ export class ThreeRenderer extends Renderer {
 
 		// init pp
 		this.frame = new WebGLRenderTarget(canvasWidth, canvasHeight, {
-			minFilter: LinearFilter,
-			magFilter: LinearFilter,
 			format: RGBAFormat,
 			stencilBuffer: false,
 			depthBuffer: true,
+			samples: this.config.antialias === 'msaa' ? 4 : 0,
 		})
 		this.frame.depthTexture = new (DepthTexture as any)()
 
