@@ -97,6 +97,7 @@ export class AppBase extends EventDispatcher<BusEventMap> {
 		// 	return
 		// }
 
+		const prevID = this.currentSceneID || id // 首次切换，从 undefined 切换到 DEFAULT
 		this.currentSceneID = id
 		const targetScene = this.scenes.find((scene) => scene.id === id)
 		if (!targetScene) throw new Error(`AppBase: Can not find scene ${id}`)
@@ -123,7 +124,7 @@ export class AppBase extends EventDispatcher<BusEventMap> {
 			{
 				type: 'beforeSceneChange' as const,
 				target: this,
-				prevScene: this.currentSceneID,
+				prevScene: prevID,
 				nextScene: id,
 				duration,
 				skipCamera,
