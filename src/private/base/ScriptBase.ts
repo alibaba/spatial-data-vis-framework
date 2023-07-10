@@ -177,9 +177,7 @@ export class ScriptBase {
 }
 
 const POLYFILL = /* javascript */ `
-/**
- * @deprecated use \`e\` instead
- */
+// Script Polyfill Start
 const event = e
-
+// Script Polyfill End
 `
