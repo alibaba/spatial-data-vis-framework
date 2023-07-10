@@ -100,7 +100,7 @@ export type TickEvent = InternalEventBase & {
  * - 不要假设多个 listener 之间的执行顺序
  * - 应将 value 视为 immutable，避免原地修改
  */
-export type BeforeUpdateData = InternalEventBase & {
+export type BeforeUpdateDataEvent = InternalEventBase & {
 	readonly type: 'beforeUpdateData'
 	readonly dataStubID: string
 	value: any
@@ -116,7 +116,7 @@ export type InternalEvent =
 	| BeforeSceneChangeEvent
 	| AfterSceneChangeEvent
 	| TickEvent
-	| BeforeUpdateData
+	| BeforeUpdateDataEvent
 
 export type CustomEventType = `$${string}`
 

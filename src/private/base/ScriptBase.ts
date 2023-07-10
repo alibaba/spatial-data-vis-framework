@@ -2,6 +2,12 @@ import type { ScriptConfig } from '../schema/scripts'
 import type { EventBusAgent } from './../event/bus'
 import type { AppBase } from './AppBase'
 
+/**
+ * Event Based Script System
+ * - one script instance per event config
+ * - one listener (on event bus) per script instance
+ * - execute handler on each target
+ */
 export class ScriptBase {
 	readonly id: string
 
@@ -59,7 +65,7 @@ export class ScriptBase {
 			// eslint-disable-next-line @typescript-eslint/ban-types
 			let fun: Function
 			try {
-				fun = new Function('event', this.#handlerCode)
+				fun = new Function('e', POLYFILL + this.#handlerCode)
 			} catch (error: any) {
 				error.message = `ScriptBase: Script(${this.#name}) init failed: ${error.message}`
 				throw error
@@ -108,7 +114,7 @@ export class ScriptBase {
 		// eslint-disable-next-line @typescript-eslint/ban-types
 		let fun: Function
 		try {
-			fun = new Function('event', this.#handlerCode)
+			fun = new Function('e', POLYFILL + this.#handlerCode)
 		} catch (error: any) {
 			error.message = `ScriptBase: Script(${this.#name}) init failed: ${error.message}`
 			throw error
@@ -169,3 +175,11 @@ export class ScriptBase {
 		this.#busAgents = []
 	}
 }
+
+const POLYFILL = /* javascript */ `
+/**
+ * @deprecated use \`e\` instead
+ */
+const event = e
+
+`
