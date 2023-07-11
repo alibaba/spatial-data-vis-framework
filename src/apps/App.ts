@@ -55,7 +55,7 @@ export class App extends AppBase {
 			const initialProps = getInitialProps(layer, config.dataStubs)
 
 			return {
-				layer: createLayer(LayerClasses, layer.class, initialProps),
+				layer: createLayer(LayerClasses, layer.class, initialProps, layer),
 				name: layer.name,
 				id: occupyID(scope, layer.id),
 			}
@@ -165,7 +165,7 @@ export class App extends AppBase {
 
 		m.addEventListener('layer:add', (e) => {
 			const initialProps = getInitialProps(e.data, m.getConfig().dataStubs)
-			const layer = createLayer(LayerClasses, e.data.class, initialProps)
+			const layer = createLayer(LayerClasses, e.data.class, initialProps, e.data)
 			this.layers.push({ layer, name: e.data.name, id: occupyID(this[SCOPE_KEY], e.data.id, true) })
 
 			// @note 目前仅支持 default stage
@@ -476,7 +476,7 @@ export class App extends AppBase {
 
 		// create a new instance of this layer
 		const initialProps = getInitialProps(layerConfig, config.dataStubs)
-		const newLayerInstance = createLayer(LayerClasses, layerConfig.class, initialProps)
+		const newLayerInstance = createLayer(LayerClasses, layerConfig.class, initialProps, layerConfig)
 
 		// replace the old one
 		const layer = this.layers.find((l) => l.id === layerConfig.id)
@@ -528,12 +528,16 @@ function createLayer<
 >(
 	classes: TLayerClasses,
 	className: TClassName,
-	props: Parameters<TLayerClasses[TClassName]['factory']>[0]
+	props: Parameters<TLayerClasses[TClassName]['factory']>[0],
+	config: LayerConfig
 ): ReturnType<TLayerClasses[TClassName]['factory']> {
 	const factory = classes[className]?.factory as TLayerClasses[TClassName]['factory']
 	if (!factory) throw new Error(`Cannot find layer type: ${String(className)}.`)
 
-	return factory(props as any) as ReturnType<TLayerClasses[TClassName]['factory']>
+	const namedProps = { name: config.name, ...props } as any
+	const instance = factory(namedProps) as ReturnType<TLayerClasses[TClassName]['factory']>
+
+	return instance
 }
 
 function findLayerIDsRelatedToDataStub(layersConfig: LayerConfig[], id: string) {
