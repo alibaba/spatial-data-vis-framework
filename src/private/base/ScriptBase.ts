@@ -79,8 +79,11 @@ export class ScriptBase {
 				if (targetInfo.type === 'layer')
 					target = this.#app.layers.find((layer) => layer.id === targetInfo.id)?.layer
 
-				if (!target)
-					throw new Error(`ScriptBase: Can not find target ${targetInfo.type} ${targetInfo.id}`)
+				if (!target) {
+					console.error(`ScriptBase: Can not find target ${targetInfo.type} ${targetInfo.id}.`)
+					return
+					// throw new Error(`ScriptBase: Can not find target ${targetInfo.type} ${targetInfo.id}`)
+				}
 
 				// 构造 Script Init Event
 				const busAgent = this.#app.getEventBusAgent(target)
