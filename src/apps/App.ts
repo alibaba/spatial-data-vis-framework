@@ -107,50 +107,7 @@ export class App extends AppBase {
 
 		ViteHot: if (import.meta.hot) {
 			// @note 仅在开发环境下启用热更新, label 用于让 rollup 删除这段代码
-
-			// 用于显示错误信息的mask
-			const { errorMask, errorMaskText } = getErrorMask()
-			container.appendChild(errorMask)
-
-			// 处理bug
-			import.meta.hot.on('vite:error', (e) => {
-				console.error('vite syntax error', e)
-			})
-
-			// 处理自身更新
-			import.meta.hot.accept((newModule) => {
-				if (newModule) {
-					errorMask.style.display = 'none'
-
-					// newModule is undefined when SyntaxError happened
-					const reloadAppMod = globalThis.__Polaris_Dev_Reload_App_Module
-
-					if (reloadAppMod) {
-						console.log('received newModule. will call reloadAppMod.')
-						reloadAppMod(newModule)
-					} else {
-						console.warn('refreshApp not found. should reload page.')
-						location.reload()
-					}
-				} else {
-					errorMask.style.display = 'flex'
-					errorMaskText.innerText = 'SyntaxError. Check console for details.'
-				}
-			})
-
-			// 处理 layer 更新
-			// import.meta.hot.accept('../layers/index.ts', (newModule) => {
-			// 	console.log('updated: layers', newModule)
-			// 	if (newModule) {
-			// 		const newLayerClasses = newModule.LayerClasses
-			// 		// find whats changed
-			// 		const changed = Object.keys(LayerClasses).filter((key) => {
-			// 			return LayerClasses[key] !== newLayerClasses[key]
-			// 		})
-			// 		console.log('changed', changed)
-			// 	}
-			// 	// @todo 重新创建 layers
-			// })
+			handleViteHot(container)
 		}
 	}
 
@@ -580,4 +537,56 @@ function layerShouldRecreate<
 	const immutableKeys = propsDescription.filter((p) => !p.mutable).map((p) => p.key)
 
 	return changedKeys.some((key) => immutableKeys.includes(key))
+}
+
+//
+
+function handleViteHot(container: HTMLDivElement) {
+	ViteHot: if (import.meta.hot) {
+		// @note 仅在开发环境下启用热更新, label 用于让 rollup 删除这段代码
+
+		// 用于显示错误信息的mask
+		const { errorMask, errorMaskText } = getErrorMask()
+		container.appendChild(errorMask)
+
+		// 处理bug
+		import.meta.hot.on('vite:error', (e) => {
+			console.error('vite syntax error', e)
+		})
+
+		// 处理自身更新
+		import.meta.hot.accept((newModule) => {
+			if (newModule) {
+				errorMask.style.display = 'none'
+
+				// newModule is undefined when SyntaxError happened
+				const reloadAppMod = globalThis.__Polaris_Dev_Reload_App_Module
+
+				if (reloadAppMod) {
+					console.log('received newModule. will call reloadAppMod.')
+					reloadAppMod(newModule)
+				} else {
+					console.warn('refreshApp not found. should reload page.')
+					location.reload()
+				}
+			} else {
+				errorMask.style.display = 'flex'
+				errorMaskText.innerText = 'SyntaxError. Check console for details.'
+			}
+		})
+
+		// 处理 layer 更新
+		// import.meta.hot.accept('../layers/index.ts', (newModule) => {
+		// 	console.log('updated: layers', newModule)
+		// 	if (newModule) {
+		// 		const newLayerClasses = newModule.LayerClasses
+		// 		// find whats changed
+		// 		const changed = Object.keys(LayerClasses).filter((key) => {
+		// 			return LayerClasses[key] !== newLayerClasses[key]
+		// 		})
+		// 		console.log('changed', changed)
+		// 	}
+		// 	// @todo 重新创建 layers
+		// })
+	}
 }
