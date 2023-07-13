@@ -164,7 +164,10 @@ export class ScriptBase {
 		// 重建相关的 layer 实例，暂时不重建 stage 和 app 实例
 		this.#targets.forEach((targetInfo) => {
 			if (targetInfo.type === 'layer') {
-				this.#app['recreateLayer'](targetInfo.id, 'script_dispose')
+				// 重建 layer 实例，仅当 layer 实例依然存在时
+				if (this.#app.layers.find((layer) => layer.id === targetInfo.id)) {
+					this.#app['recreateLayer'](targetInfo.id, 'script_dispose')
+				}
 			} else {
 				console.warn(
 					'ScriptBase: 挂载在 app 或 stage 上的脚本暂时不支持清除，请注意是否存在副作用，可能需要重载应用已清除'
