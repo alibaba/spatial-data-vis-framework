@@ -20,7 +20,7 @@ if (!fs.existsSync(distPath)) {
 
 const glob = require('glob')
 
-glob(srcPath + '/**/*.glsl', {}, (err, files) => {
+glob(srcPath + '/**/*.glsl', { windowsPathsNoEscape: true }, (err, files) => {
 	if (files.length === 0) {
 		console.log(`[glsl-processor] - No glsl files found.`)
 	}
