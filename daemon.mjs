@@ -194,6 +194,9 @@ app.put('/config/:preset', async (req, res) => {
 
 		const newConfigPreset = req.body
 
+		// 配置标准化，避免无意义的 git 冲突
+		uniformConfig(newConfigPreset)
+
 		await writeFile(configPresetPath, JSON.stringify(newConfigPreset, null, 2))
 
 		res.send({
@@ -237,3 +240,22 @@ process.on('uncaughtException', () => {
 	console.error(`Daemon service stopped by uncaught exception.`)
 	process.exit()
 })
+
+function uniformConfig(config) {
+	const layerTree = config.$editor?.layerTree
+	if (layerTree) {
+		traverseComponents(layerTree.components || [], (c) => {
+			if (c.components) c._isFold = true
+		})
+		layerTree.activeKeys = []
+	}
+}
+
+function traverseComponents(components, callback) {
+	for (const component of components) {
+		callback(component)
+		if (component.components) {
+			traverseComponents(component.components, callback)
+		}
+	}
+}
