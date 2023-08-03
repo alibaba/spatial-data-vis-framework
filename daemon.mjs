@@ -9,7 +9,7 @@ import colors from 'colors/safe.js'
 import cors from 'cors'
 import express from 'express'
 import { existsSync } from 'fs'
-import { readdir, writeFile } from 'fs/promises'
+import { readdir, unlink, writeFile } from 'fs/promises'
 import { dirname, extname, resolve } from 'path'
 import process, { argv as rawArgv } from 'process'
 import { fileURLToPath } from 'url'
@@ -198,6 +198,47 @@ app.put('/config/:preset', async (req, res) => {
 		uniformConfig(newConfigPreset)
 
 		await writeFile(configPresetPath, JSON.stringify(newConfigPreset, null, 2))
+
+		res.send({
+			success: true,
+		})
+	} catch (error) {
+		res.send({
+			success: false,
+			error,
+			name: error.name,
+			errorMessage: error.message,
+			stack: error.stack,
+
+			message: 'Failed to edit config preset.(Unknown error)',
+		})
+	}
+})
+
+// delete an existing config preset
+app.delete('/config/:preset', async (req, res) => {
+	try {
+		if (extname(req.params.preset) !== '.json') {
+			res.send({
+				success: false,
+				message: 'Invalid config preset name. Only *.json is supported.',
+			})
+
+			return
+		}
+
+		const configPresetPath = resolve(__dirname, 'src/config', `${req.params.preset}`)
+
+		if (!existsSync(configPresetPath)) {
+			res.send({
+				success: false,
+				message: 'Config preset does not exist.',
+			})
+
+			return
+		}
+
+		await unlink(configPresetPath)
 
 		res.send({
 			success: true,
