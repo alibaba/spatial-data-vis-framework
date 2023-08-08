@@ -20,7 +20,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const argv = yargs(hideBin(rawArgv)).argv
 
-console.log(__dirname, argv)
+// console.log(__dirname, argv)
 
 if (!argv.host) console.log(colors.bgYellow('No host specified, using localhost'))
 if (!argv.port) console.log(colors.bgYellow('No port specified, using 3000'))
@@ -262,25 +262,32 @@ app.listen(port, host, () => {
 	status = 'idle'
 })
 
-function handleKill() {
-	console.warn(`Daemon service killed by parent.`)
-	process.exit()
+// exit handlers
+{
+	function handleKill() {
+		console.warn(`Daemon service killed by parent.`)
+		process.exit()
+	}
+
+	// catches ctrl+c event
+	process.on('SIGINT', () => {
+		console.warn(`Daemon service stopped by user.`)
+		process.exit()
+	})
+	// catches "kill pid" (for example: nodemon restart)
+	process.on('SIGUSR1', handleKill)
+	process.on('SIGUSR2', handleKill)
+	process.on('SIGTERM', handleKill)
+	//catches uncaught exceptions
+	process.on('uncaughtException', () => {
+		console.error(`Daemon service stopped by uncaught exception.`)
+		process.exit()
+	})
+
+	// TODO 心跳检测，如果长时间失去连接，自动退出，避免parent意外退出导致daemon成为僵尸进程
 }
 
-// catches ctrl+c event
-process.on('SIGINT', () => {
-	console.warn(`Daemon service stopped by user.`)
-	process.exit()
-})
-// catches "kill pid" (for example: nodemon restart)
-process.on('SIGUSR1', handleKill)
-process.on('SIGUSR2', handleKill)
-process.on('SIGTERM', handleKill)
-//catches uncaught exceptions
-process.on('uncaughtException', () => {
-	console.error(`Daemon service stopped by uncaught exception.`)
-	process.exit()
-})
+// utils
 
 function uniformConfig(config) {
 	const layerTree = config.$editor?.layerTree

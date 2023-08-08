@@ -1,5 +1,5 @@
 import { existsSync } from 'fs'
-import { copyFile, mkdir, readFile, rm, writeFile } from 'fs/promises'
+import { copyFile, cp, mkdir, readFile, rm, writeFile } from 'fs/promises'
 import { dirname, resolve } from 'path'
 import prettier from 'prettier'
 import { argv as rawArgv } from 'process'
@@ -12,13 +12,39 @@ import { genLayerIndex } from './utils/genLayerIndex.mjs'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const argv = yargs(hideBin(rawArgv)).argv
-// console.log(__dirname, argv)
+
+// man
+if (argv.help || argv.h) {
+	console.log(`
+Polaris App Layer Operator:
+
+Usage: node scripts/layer.mjs --action=<action> --layerName=<layerName> [--targetLayerName <targetLayerName>] [--flavor <flavor>]
+
+	- action: add | delete | clone | import
+	- layerName: Layer Name, e.g. MyLayer
+	- flavor: factory | class | gsi | three | marker
+
+Requied for clone action:
+
+	- targetLayerName: Target Layer Name, e.g. MyLayer
+
+Requied for import action:
+
+	- sourceFolder: Source Folder, e.g. ../../anotherProject/src/layers
+`)
+
+	process.exit(0)
+}
 
 const action = argv.action
 const layerName = argv.layerName
+const targetLayerName = argv.targetLayerName || ''
+const sourceFolder = argv.sourceFolder || ''
 let flavor = argv.flavor
 
-if (action !== 'add' && action !== 'delete') throw new Error('需要指定 add 还是 delete 操作')
+const alowedActions = ['add', 'delete', 'clone', 'import']
+
+if (!alowedActions.includes(action)) throw new Error('需要指定 action {add|delete|clone}')
 if (!layerName) throw new Error('需要指定 layerName')
 
 if (layerName[0] !== layerName[0].toUpperCase())
@@ -29,6 +55,9 @@ if (!layerName.endsWith('Layer')) throw new Error('Layer Name 应以 Layer 结�
 // 检查只包含字母和数字
 if (!/^[a-zA-Z0-9]+$/.test(layerName)) throw new Error('Layer Name 只能包含字母和数字')
 
+/**
+ * Flavor 对应的模板文件
+ */
 const TEMPL = {
 	class: '../src/private/templates/layer/index.class.ts',
 	factory: '../src/private/templates/layer/index.factory.ts',
@@ -37,6 +66,9 @@ const TEMPL = {
 	marker: '../src/private/templates/layer/index.marker.ts',
 }
 
+/**
+ * 支持的 Flavor 列表
+ */
 const FLAVORS = Object.keys(TEMPL)
 
 if (!flavor) {
@@ -46,12 +78,21 @@ if (!flavor) {
 	if (!FLAVORS.includes(flavor)) throw new Error(`flavor 只能选择 ${FLAVORS}`)
 }
 
+if (action === 'clone') {
+	if (!targetLayerName) throw new Error('clone 操作需要指定 targetLayerName')
+}
+
+if (action === 'import') {
+	if (!sourceFolder) throw new Error('import 操作需要指定 sourceFolder')
+}
+
 console.log('action:', action, ', layerName:', layerName, ', flavor:', flavor)
 
 // gen class code
 
 const layersRoot = resolve(__dirname, '../src/layers')
 const layerFolder = resolve(layersRoot, layerName)
+const targetLayerFolder = resolve(layersRoot, targetLayerName)
 const layerIndexFile = resolve(layerFolder, 'index.ts')
 const templateFile = resolve(__dirname, TEMPL[flavor])
 
@@ -75,6 +116,19 @@ if (action === 'add') {
 	codeText = prettier.format(codeText, { ...prettierConfig, filepath: layerIndexFile })
 
 	await writeFile(layerIndexFile, codeText)
+} else if (action === 'clone') {
+	await cp(layerFolder, targetLayerFolder, { recursive: true })
+	const code = await readFile(resolve(targetLayerFolder, 'index.ts'), 'utf-8')
+	const newCode = code.replace(new RegExp(layerName, 'g'), targetLayerName)
+	await writeFile(resolve(targetLayerFolder, 'index.ts'), newCode)
+} else if (action === 'import') {
+	const layersRoot = resolve(sourceFolder)
+	const layerFolder = resolve(layersRoot, layerName)
+
+	await cp(layerFolder, targetLayerFolder, { recursive: true })
+	const code = await readFile(resolve(targetLayerFolder, 'index.ts'), 'utf-8')
+	const newCode = code.replace(new RegExp(layerName, 'g'), targetLayerName)
+	await writeFile(resolve(targetLayerFolder, 'index.ts'), newCode)
 } else {
 	if (!existsSync(layerFolder)) throw new Error('Layer Name does not exists.')
 
