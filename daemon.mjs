@@ -264,7 +264,7 @@ app.listen(port, host, () => {
 
 // exit handlers
 {
-	function handleKill() {
+	const handleKill = () => {
 		console.warn(`Daemon service killed by parent.`)
 		process.exit()
 	}
