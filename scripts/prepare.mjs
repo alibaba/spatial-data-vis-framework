@@ -1,3 +1,4 @@
+/* eslint-env node */
 import { existsSync } from 'fs'
 import { mkdir } from 'fs/promises'
 import { dirname, resolve } from 'path'

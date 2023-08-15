@@ -3,6 +3,7 @@
  * All rights reserved.
  */
 
+/* eslint-env node */
 /* eslint-disable no-undef */
 /* eslint-disable @typescript-eslint/no-var-requires */
 const fs = require('fs')
