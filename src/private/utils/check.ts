@@ -11,6 +11,8 @@ export function checkIDs(objects: { id: string }[], shouldThrow = true) {
 
 	ids.sort()
 
+	if (ids.length < 2) return
+
 	let last = ids[0]
 	for (let i = 1; i < ids.length; i++) {
 		const curr = ids[i]
