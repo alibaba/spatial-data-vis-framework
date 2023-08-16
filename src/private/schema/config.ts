@@ -111,5 +111,5 @@ export type DataStub = {
 	// - mutable 如果只是用于提示 editor，那么编写的 Layer 就只能在 Editor 中安全运行
 	// - 如果 PropsDescription 不是Layer接口的一部分，那 Layer 接口里面是否需要明确提出 那些 props mutable？
 	// - 这似乎是个 Polaris Layer 接口的设计问题，可以先不在这里考虑
-	dynamic?: boolean
+	// dynamic?: boolean
 }
