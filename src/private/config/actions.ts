@@ -388,22 +388,33 @@ export function configReducer(
 }
 
 /**
- * change * to specific layer ids
+ * - * and specific layer ids are mutually exclusive
+ * - remove non-existent layer ids
  */
 function cleanUpLayerFilters(config: AppConfig) {
 	// const layers = config.layers
 	const scenes = config.scenes
 	const stages = config.stages
 
+	const layerIds = config.layers.map((l) => l.id)
+
 	for (const scene of scenes) {
 		if (scene.layers.includes('*')) {
 			scene.layers = ['*']
+		} else {
+			const cleanedLayers = scene.layers.filter((layerId) => layerIds.includes(layerId))
+			// 避免不必要的更新
+			if (cleanedLayers.length !== scene.layers.length) scene.layers = cleanedLayers
 		}
 	}
 
 	for (const stage of stages) {
 		if (stage.layers.includes('*')) {
 			stage.layers = ['*']
+		} else {
+			const cleanedLayers = stage.layers.filter((layerId) => layerIds.includes(layerId))
+			// 避免不必要的更新
+			if (cleanedLayers.length !== stage.layers.length) stage.layers = cleanedLayers
 		}
 	}
 }
