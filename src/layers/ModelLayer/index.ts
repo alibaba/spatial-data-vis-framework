@@ -6,6 +6,7 @@ import { StandardLayer } from '@polaris.gl/gsi'
 import { createFromDesc } from '@polaris.gl/projection'
 
 import { DescToParsedType, DescToType, parseProps } from '../../private/utils/props'
+import { fetchAsset } from '../../utils/AppKit'
 
 export const info = {
 	name: 'Basic Model Loader',
@@ -62,7 +63,7 @@ export function createModelLayer(_config: ModelLayerConfig): StandardLayer {
 			return
 		}
 
-		const modelRes = await fetch(config.glb)
+		const modelRes = await fetchAsset(config.glb)
 		const bin = await modelRes.arrayBuffer()
 
 		const glm = loader.glbToGLM(bin)
