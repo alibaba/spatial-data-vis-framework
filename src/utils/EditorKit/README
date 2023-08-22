@@ -1,0 +1,16 @@
+# Polaris Editor Kit ( prototype )
+
+## Introduction
+
+Layer 开发工具包。为 Layer 提供 编辑器 相关的辅助工具。
+
+- 目的：让 Layer 能够与 Polaris Editor 交互，以扩展编辑器功能
+- 前提：保持低耦合，有限通讯，在 没有 Polaris Editor 的环境中可以降级工作
+
+## usage
+
+直接从 Layer 代码中引入需要的模块，例如：
+
+```js
+import { LOG, editorMode } from '../../utils/EditorKit'
+```

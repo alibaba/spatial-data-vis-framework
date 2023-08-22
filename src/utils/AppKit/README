@@ -1,0 +1,16 @@
+# Polaris App Kit ( prototype )
+
+## Introduction
+
+Layer 开发工具包。为用于 Polaris App 的 Layer 提供框架相关的辅助工具。
+
+- 目的：让 Layer 能够与 Polaris App runtime 交互，例如：生命周期、事件、通讯、静态资源管理、状态上报等
+- 前提：保持 Layer 和 App 低耦合，有限通讯，在没有 Polaris App 的环境中可以降级工作
+
+## usage
+
+直接从 Layer 代码中引入需要的模块，例如：
+
+```js
+import { fetchAsset } from '../../utils/AppKit'
+```
