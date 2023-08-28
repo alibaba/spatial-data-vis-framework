@@ -126,7 +126,6 @@ export class BillboardsMaterial extends UnlitMaterial {
 			varying float v_random;
 		`
 		extensions.EXT_matr_programmable.fragOutput = /* glsl */ `
-
 			float localP = fract(time * flickerSpeed + v_random);
 			float showTime = density;
 			// float hideTime = max(1.0 - showTime - showTime * 0.2, 0.0);

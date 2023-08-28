@@ -38,6 +38,7 @@ export const propsDesc = [
 		range: { min: { x: -1, y: -1 }, max: { x: 1000000, y: 1000000 } },
 		name: '尺寸',
 		info: '单位米',
+		$editor: { exponential: true },
 	},
 	{
 		key: 'texture' as const,
@@ -45,6 +46,13 @@ export const propsDesc = [
 		defaultValue: 'https://img.alicdn.com/tfs/TB1tvfvMlr0gK0jSZFnXXbRRXXa-512-512.png',
 		mutable: true,
 		name: '纹理',
+	},
+	{
+		key: 'color' as const,
+		type: 'color' as const,
+		defaultValue: { r: 1, g: 1, b: 1 },
+		mutable: true,
+		name: '颜色',
 	},
 
 	// data

@@ -1,5 +1,6 @@
 import { Mesh } from '@gs.i/frontend-sdk'
 import { Texture, isTexture } from '@gs.i/schema-scene'
+import { Color } from '@gs.i/utils-math'
 import { specifyTexture } from '@gs.i/utils-specify'
 
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
@@ -37,6 +38,7 @@ interface Props extends StandardLayerProps {
 	size?: { x: number; y: number }
 
 	texture: Texture | string
+	color?: { r: number; g: number; b: number } | string
 
 	data?: Data
 }
@@ -46,23 +48,24 @@ type Data = { lng: number; lat: number }[]
 export function createBillboardsLayer(props: Props): StandardLayer {
 	const layer = new StandardLayer(props)
 
-	const mater = new BillboardsMaterial()
+	const matr = new BillboardsMaterial()
 
 	// 材质动态修改
 	layer.watchProps(
-		['flickerSpeed', 'density', 'size', 'texture'],
+		['flickerSpeed', 'density', 'size', 'texture', 'color'],
 		({ props }) => {
-			if (props.flickerSpeed !== undefined) mater.uniforms.flickerSpeed.value = props.flickerSpeed
-			if (props.density !== undefined) mater.uniforms.density.value = props.density
+			if (props.flickerSpeed !== undefined) matr.uniforms.flickerSpeed.value = props.flickerSpeed
+			if (props.density !== undefined) matr.uniforms.density.value = props.density
 			if (props.size !== undefined)
-				mater.uniforms.size = { value: { x: props.size.x, y: props.size.y } }
+				matr.uniforms.size = { value: { x: props.size.x, y: props.size.y } }
+			if (props.color !== undefined) matr.baseColorFactor = new Color(props.color as any)
 
 			if (props.texture !== undefined) {
 				const texture = props.texture as any
 				if (isTexture(texture)) {
-					mater.baseColorTexture = texture
+					matr.baseColorTexture = texture
 				} else if (typeof texture === 'string') {
-					mater.baseColorTexture = specifyTexture({
+					matr.baseColorTexture = specifyTexture({
 						image: { uri: texture },
 						sampler: { magFilter: 'LINEAR', minFilter: 'LINEAR_MIPMAP_LINEAR' },
 					})
@@ -103,7 +106,7 @@ export function createBillboardsLayer(props: Props): StandardLayer {
 				const geom = buildBillboardsGeometry(pos, { pivot: layer.getProp('pivot') })
 
 				const mesh = new Mesh({
-					material: mater,
+					material: matr,
 					geometry: geom,
 				})
 
@@ -125,7 +128,7 @@ export function createBillboardsLayer(props: Props): StandardLayer {
 		const timeline = e.timeline
 		timeline.add({
 			onUpdate: (t, p) => {
-				mater.uniforms.time.value = t * 0.001
+				matr.uniforms.time.value = t * 0.001
 			},
 		})
 	})

@@ -117,6 +117,14 @@ export interface PropDescription {
 		 * - 但是如果用户通过修改配置代码或者点击按钮新增Layer，则应该保留 lla 的原始默认值
 		 */
 		autoDefaultValue?: boolean
+
+		/**
+		 * 数值相关的进度条是否使用指数分布
+		 * @usage
+		 * - 更多的精度分配数值范围的下边界
+		 * - 适用于 scale zoom size 等
+		 */
+		exponential?: boolean
 	}
 }
 
@@ -128,7 +136,6 @@ export type PropTypeMap = {
 	string: string
 	boolean: boolean
 	number: number
-	any: any
 
 	// internal structure
 	color: string | { r: number; g: number; b: number }
@@ -136,10 +143,13 @@ export type PropTypeMap = {
 	vec3: { x: number; y: number; z: number }
 	vec4: { x: number; y: number; z: number; w: number }
 
+	// unknown type
+	any: any
+
 	/**
 	 * @deprecated
 	 */
-	data: any
+	// data: any
 }
 
 /**

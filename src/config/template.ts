@@ -124,7 +124,6 @@ export const BPConfig = {
 				}
 				return res
 			})(),
-			dynamic: false,
 		},
 	],
 }

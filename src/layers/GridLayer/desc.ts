@@ -7,34 +7,27 @@ export const propsDesc = [
 		type: 'number',
 		defaultValue: 100000,
 		mutable: true,
-		range: {
-			min: 1,
-			max: 10000000,
-		},
+		range: { min: 1, max: 10000000 },
 		name: 'Width',
 		info: 'Width of the grid field',
+		$editor: { exponential: true },
 	},
 	{
 		key: 'height',
 		type: 'number',
 		defaultValue: 100000,
 		mutable: true,
-		range: {
-			min: 1,
-			max: 10000000,
-		},
+		range: { min: 1, max: 10000000 },
 		name: 'Height',
 		info: 'Height of the grid field',
+		$editor: { exponential: true },
 	},
 	{
 		key: 'widthSegments',
 		type: 'number',
 		defaultValue: 100,
 		mutable: true,
-		range: {
-			min: 1,
-			max: 1000,
-		},
+		range: { min: 1, max: 1000 },
 		name: 'Horizontal Segment Number',
 	},
 	{
@@ -42,10 +35,7 @@ export const propsDesc = [
 		type: 'number',
 		defaultValue: 100,
 		mutable: true,
-		range: {
-			min: 1,
-			max: 1000,
-		},
+		range: { min: 1, max: 1000 },
 		name: 'Vertical Segment Number',
 	},
 	{
@@ -53,11 +43,9 @@ export const propsDesc = [
 		type: 'number',
 		defaultValue: 10,
 		mutable: true,
-		range: {
-			min: 1,
-			max: 1000,
-		},
+		range: { min: 1, max: 1000 },
 		name: 'Line Width',
+		$editor: { exponential: true },
 	},
 	{
 		key: 'fixOverlap',
@@ -79,18 +67,19 @@ export const propsDesc = [
 		type: 'number',
 		defaultValue: 1,
 		mutable: true,
-		range: {
-			min: 0,
-			max: 1,
-		},
+		range: { min: 0, max: 1 },
 		name: 'Opacity',
 	},
 	{
 		key: 'centerLLA',
-		type: 'string',
-		defaultValue: '[0, 0, 0]',
+		type: 'vec3',
+		defaultValue: { x: 0, y: 0, z: 0 },
 		mutable: true,
 		name: 'Center lng/lat/alt',
+		$editor: {
+			subtype: 'lla',
+			autoDefaultValue: true,
+		},
 	},
 	{
 		key: 'showCircles',
@@ -103,10 +92,7 @@ export const propsDesc = [
 		type: 'number',
 		defaultValue: 10,
 		mutable: true,
-		range: {
-			min: 1,
-			max: 1000,
-		},
+		range: { min: 1, max: 1000 },
 	},
 	{
 		key: 'circleSegments',
@@ -125,9 +111,6 @@ export const propsDesc = [
 		type: 'number',
 		defaultValue: 1,
 		mutable: true,
-		range: {
-			min: 0,
-			max: 1,
-		},
+		range: { min: 0, max: 1 },
 	},
 ] as const

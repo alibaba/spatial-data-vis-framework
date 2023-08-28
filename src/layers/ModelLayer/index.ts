@@ -22,24 +22,22 @@ export const propsDesc = [
 		key: 'glb',
 		type: 'string',
 		defaultValue: '',
-		mutable: false,
 	},
 	{
 		name: 'scale',
 		key: 'scale',
 		type: 'number',
 		defaultValue: 1,
-		range: { min: 0, max: 1000 },
-		mutable: false,
+		range: { min: 0, max: 10000 },
+		$editor: { exponential: true },
 	},
 	{
 		name: '投影描述',
 		key: 'projectionDesc',
 		type: 'string',
 		defaultValue: 'desc0|MercatorProjection|right|meters|0,0,0',
-		mutable: false,
 		$editor: {
-			subtype: 'projection',
+			subtype: 'projectionDesc',
 		},
 	},
 ] as const

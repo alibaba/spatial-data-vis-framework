@@ -61,6 +61,7 @@ export const propsDesc = [
 		name: '位置偏移',
 		type: 'vec3',
 		defaultValue: { x: 0, y: 0, z: -1000 },
+		info: 'meters',
 		mutable: true,
 	},
 ] as const
