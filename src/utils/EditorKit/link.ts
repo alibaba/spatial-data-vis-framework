@@ -94,7 +94,6 @@ class EditorAgent {
 	 * - 链接编辑器时，日志会同时输出到日志面板和 devtool
 	 * - 未链接编辑器时，日志只会输出到 devtool
 	 */
-	log(log: any)
 	log(log: {
 		level?: 'info' | 'error'
 		message?: string
@@ -129,9 +128,13 @@ class EditorAgent {
 		}
 	}
 
-	// info(msg: string) {
-	// 	this.log({ title: msg.slice(0, 10) + '...', message: msg, level: 'info' })
-	// }
+	info(msg: string) {
+		this.log({
+			title: msg.slice(0, 10) + (msg.length > 10 ? '...' : ''),
+			message: msg,
+			level: 'info',
+		})
+	}
 
 	/**
 	 * @experimental
