@@ -70,7 +70,7 @@ export async function genLayerIndex() {
 	await writeFile(indexFile, formattedCode)
 }
 
-async function getLayerNames() {
+export async function getLayerNames() {
 	const layerDir = resolve(__root, './src/layers')
 	console.log('genLayerIndex: layerDir', layerDir)
 	const files = await readdir(layerDir)
