@@ -1,9 +1,10 @@
 /* eslint-env node */
 import { readdirSync, statSync } from 'fs'
+import { readFile } from 'fs/promises'
 import * as path from 'path'
 import { dirname } from 'path'
-import { fileURLToPath, pathToFileURL } from 'url'
 import { argv } from 'process'
+import { fileURLToPath, pathToFileURL } from 'url'
 
 import { getLayerNames } from './utils/genLayerIndex.mjs'
 
@@ -27,7 +28,7 @@ export async function listUnusedLayers() {
 				continue
 			}
 
-			entries.push( `src/config/${filename}`)
+			entries.push(`src/config/${filename}`)
 		}
 		return entries
 	}
@@ -35,8 +36,9 @@ export async function listUnusedLayers() {
 	const entries = getConfigEntries()
 
 	for (let i = 0; i < entries.length; i++) {
-		const presetName = entries[i];
-		const { default: preset } = await import(path.resolve(presetName), { assert: { type: "json" } })
+		const presetName = entries[i]
+		const text = await readFile(path.resolve(presetName))
+		const preset = JSON.parse(text)
 		preset.layers.forEach((layer) => {
 			if (!usedLayers.includes(layer.class)) {
 				usedLayers.push(layer.class)
