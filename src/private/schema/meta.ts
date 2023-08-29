@@ -26,7 +26,7 @@ export interface PropDescription {
 	 * default value of this value
 	 * @note When `defaultValue` is not provided. This prop is `required` when creating a instance.
 	 * @note_cn 如果不提供改字段，则该 prop 必须在创建 layer 时提供，否则抛错
-	 * @recommended 在使用可视化编辑器的环境中，建议总是提供该字段
+	 * @recommended 在使用可视化编辑器的环境中，必须提供该字段
 	 */
 	defaultValue?: any
 

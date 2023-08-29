@@ -67,4 +67,5 @@ export const propsDesc = [] as PropDescription[]
 export const info = {
 	name: 'Example Widget',
 	category: 'Internal',
+	experimental: true,
 }

@@ -11,6 +11,7 @@ import { fetchAsset } from '../../utils/AppKit'
 export const info = {
 	name: 'Basic Model Loader',
 	category: 'Internal',
+	deprecated: true,
 }
 
 /**
