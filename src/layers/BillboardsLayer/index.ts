@@ -5,6 +5,7 @@ import { specifyTexture } from '@gs.i/utils-specify'
 
 import { StandardLayer, StandardLayerProps } from '@polaris.gl/gsi'
 
+import { parseProps } from '../../private/utils/props'
 import { buildBillboardsGeometry } from './BillboardsGeom'
 import { BillboardsMaterial } from './BillboardsMatr'
 import { propsDesc } from './propsDesc'
@@ -46,7 +47,8 @@ interface Props extends StandardLayerProps {
 type Data = { lng: number; lat: number }[]
 
 export function createBillboardsLayer(props: Props): StandardLayer {
-	const layer = new StandardLayer(props)
+	const parsedProps = parseProps(props, propsDesc)
+	const layer = new StandardLayer(parsedProps)
 
 	const matr = new BillboardsMaterial()
 
