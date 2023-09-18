@@ -42,7 +42,9 @@ const SCOPE_KEY = Symbol('scopeKey')
 export class App extends AppBase {
 	readonly configManager = new ConfigManager<typeof LayerClasses>()
 
-	private readonly scripts: ScriptBase[]
+	private declare readonly scripts: ScriptBase[]
+
+	private readonly latestData = new Map<string, any>()
 
 	private readonly [SCOPE_KEY] = {}
 
@@ -387,6 +389,8 @@ export class App extends AppBase {
 
 		const newValue = event.value
 
+		this.latestData.set(stub.id, newValue)
+
 		// @todo dynamic limit
 
 		// @todo @perf cache this
@@ -432,7 +436,7 @@ export class App extends AppBase {
 		if (cause) console.log(' \\_caused by', cause)
 
 		// create a new instance of this layer
-		const initialProps = getInitialProps(layerConfig, config.dataStubs)
+		const initialProps = getInitialProps(layerConfig, config.dataStubs, this.latestData)
 		const newLayerInstance = createLayer(LayerClasses, layerConfig.class, initialProps, layerConfig)
 
 		// replace the old one
@@ -503,7 +507,20 @@ function findLayerIDsRelatedToDataStub(layersConfig: LayerConfig[], id: string) 
 		.map((l) => l.id)
 }
 
-function getInitialProps(layerConfig: LayerConfig, dataStubs?: DataStub[]) {
+function getInitialProps(
+	/**
+	 * Layer Config
+	 */
+	layerConfig: LayerConfig,
+	/**
+	 * DataStub List
+	 */
+	dataStubs?: DataStub[],
+	/**
+	 * updated DataStub values
+	 */
+	latestData?: Map<string, any>
+) {
 	const initialProps = { ...layerConfig.props }
 
 	if (layerConfig.dataProps) {
@@ -518,6 +535,10 @@ function getInitialProps(layerConfig: LayerConfig, dataStubs?: DataStub[]) {
 
 			if (dataStub.initialValue !== undefined) {
 				initialProps[propKey] = dataStub.initialValue
+			}
+
+			if (latestData?.has(dataStubID)) {
+				initialProps[propKey] = latestData.get(dataStubID)
 			}
 		})
 	}
