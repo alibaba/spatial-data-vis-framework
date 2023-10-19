@@ -83,8 +83,12 @@ export interface PropDescription {
 		 * - `json`
 		 * - `html`
 		 * - `css`
+		 *
 		 * - `curve` 曲线描述
+		 * - `colorArray` 颜色数组，形如 `["#fff", "#000"]`
+		 * - `gradient` 颜色渐变，需要配合 utils/gradient.ts :: parseGradientImg 使用
 		 * - `projectionDesc` 投影描述
+		 *
 		 * - `geojson` 任意类型的 geojson 地图数据
 		 * - `geojson<linestring>`
 		 * - `geojson<polygon>`
@@ -92,6 +96,9 @@ export interface PropDescription {
 		 *
 		 * type 为 `vec3` 时，有效类型：
 		 * - `lla` 经纬度+海拔描述的地理位置
+		 *
+		 * type 为 `vec2` 时，有效类型：
+		 * - `range` 范围拖动条，x 为最小值，y 为最大值（需要给出 prop.range 才能显示）
 		 *
 		 * type 为 `any` 时，有效类型：
 		 * - `json` 使用 json 描述的 js 对象
@@ -125,6 +132,11 @@ export interface PropDescription {
 		 * - 适用于 scale zoom size 等
 		 */
 		exponential?: boolean
+
+		/**
+		 * 新手模式隐藏该字段
+		 */
+		hideFromRookie: boolean
 	}
 }
 
