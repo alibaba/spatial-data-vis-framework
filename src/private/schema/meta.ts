@@ -136,7 +136,7 @@ export interface PropDescription {
 		/**
 		 * 新手模式隐藏该字段
 		 */
-		hideFromRookie: boolean
+		hideFromRookie?: boolean
 	}
 }
 
