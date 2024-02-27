@@ -4,6 +4,7 @@ const fs = require('fs')
 const { defineConfig } = require('vite')
 // import { viteCommonjs } from '@originjs/vite-plugin-commonjs'
 const basicSsl = require('@vitejs/plugin-basic-ssl')
+const react = require('@vitejs/plugin-react')
 
 const entries = getDemoEntries()
 
@@ -28,7 +29,7 @@ module.exports = defineConfig({
 	esbuild: {
 		target: 'esnext',
 	},
-	plugins: [basicSsl(), importGlsl()],
+	plugins: [basicSsl(), importGlsl(), react()],
 	clearScreen: false,
 	optimizeDeps: {
 		force: true,

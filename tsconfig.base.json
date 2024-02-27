@@ -34,7 +34,7 @@
 		"resolveJsonModule": true,
 		// "skipLibCheck": true,
 		"typeRoots": ["./node_modules/@types/"], // 这样来避免所有 上级目录的 @types 都被包含进去
-		"jsx": "react" // Emit .js files with JSX changed to the equivalent React.createElement calls
+		"jsx": "react-jsx" // Emit .js files with JSX changed to the equivalent React.createElement calls
 	},
 	"include": ["typings"] // 如果 child config 有这个字段，该值会被忽略
 }

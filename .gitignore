@@ -148,7 +148,9 @@ dist
 
 # runtime generated
 /src/layers/index.ts
+/src/react/index.ts
+/src/react/layers
+
 
 # temporary config
-
 /src/config/_tmp_*
