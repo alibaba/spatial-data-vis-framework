@@ -31,13 +31,16 @@ let isViteDev: boolean | undefined
  */
 let assetBaseUrl: string | undefined
 
-try {
+// label it so that it can be removed during rollup. some downstream projects may not support import.meta
+$asset: try {
 	const moduleURL = import.meta.url
 	isViteDev = !!import.meta.env?.DEV
 
 	assetBaseUrl = moduleURL
 } catch (error) {
-	console.log('PolarisAppKit: 无法获取 import.meta.url, 尝试使用全局变量 __ASSET_BASE_URL__')
+	const msg = `PolarisAppKit: 无法获取 import.meta.url, 将尝试使用全局变量 __ASSET_BASE_URL__, \nCause: ${error}`
+	console.log(msg)
+
 	if (typeof __ASSET_BASE_URL__ === 'string') {
 		assetBaseUrl = __ASSET_BASE_URL__
 	} else {
