@@ -171,10 +171,6 @@ export type PropType = keyof PropTypeMap
 
 export type TsType<T extends PropType> = PropTypeMap[T]
 
-export type DescToType<T extends readonly PropDescription[]> = {
-	[Desc in T[number] as Desc['key']]: TsType<Desc['type']>
-}
-
 /**
  * All Layer Classes Supported by the App
  */
