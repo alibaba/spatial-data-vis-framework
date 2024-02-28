@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 
 import { ConfigManager } from '../../private/config/ConfigManager'
 import { AppPolarisConfig, LayerConfig } from '../../private/schema/config'
@@ -103,6 +103,23 @@ export const ConfigAssemblerContext = createContext<ConfigAssembler | null>(null
 export function useLayer(name: string, layerClass: string, props: any) {
 	const configAssembler = useContext(ConfigAssemblerContext)
 
+	const disposed = useRef(false)
+
+	const [id, setId] = useState<string | null>(null)
+
+	const propsRef = useRef(props)
+	useEffect(() => {
+		propsRef.current = props
+	}, [props])
+
+	useEffect(() => {
+		if (!configAssembler || !id) return
+
+		if (disposed.current) return
+
+		configAssembler.updateLayerProps(id, props)
+	}, [configAssembler, id, props])
+
 	useEffect(() => {
 		if (!configAssembler) {
 			// throw new Error(
@@ -115,15 +132,18 @@ export function useLayer(name: string, layerClass: string, props: any) {
 		// console.log('%cadd Layer', 'color: green', name, layerClass, props)
 
 		const id = configAssembler.genLayerID()
+		setId(id)
+
 		configAssembler.addLayer({
 			name,
 			id,
 			class: layerClass,
-			props,
+			props: propsRef.current,
 		})
 
 		return () => {
 			configAssembler.removeLayer(id)
+			disposed.current = true
 		}
 	}, [configAssembler, name, layerClass])
 }

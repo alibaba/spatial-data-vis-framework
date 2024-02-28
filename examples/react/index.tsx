@@ -9,16 +9,14 @@ import {
 	GlobalImageMapLayerComp,
 	GridLayerComp,
 	ModelLayerComp,
-	PolarisAppComp,
+	PolarisAppComp, // root
 } from '../../src/react'
-
-// import { PolarisAppComp } from './PolarisAppComp'
-
-// import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
 	<React.StrictMode>
-		<PolarisAppComp>
+		<PolarisAppComp
+			config={{ background: 'black' }}
+			statesCode="1|-0.000484|0.001513|0.000000|1.01980|0.19261|15.96550">
 			<GridLayerComp
 				layerProps={{
 					width: 10000,

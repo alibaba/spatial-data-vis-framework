@@ -5,7 +5,7 @@
   "type": "module",
   "repository": "https://github.com/alibaba/spatial-data-vis-framework.git",
   "scripts": {
-    "prepare": "node scripts/prepare.mjs",
+    "prepare": "node scripts/prepare.mjs && node scripts/utils/genReact.mjs",
     "genLayerIndex": "node scripts/utils/genLayerIndex.mjs",
     "prestart": "npm run genLayerIndex",
     "start": "npx vite",

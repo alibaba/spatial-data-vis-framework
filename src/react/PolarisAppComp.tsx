@@ -1,58 +1,43 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { App } from '../apps/App'
-// import { BPConfig } from '../config/template'
-// import { ConfigManager } from '../private/config/ConfigManager'
+import { deepFreeze } from '../private/config/utils/deepFreeze'
 import { AppConfig } from '../private/schema/config'
 import { ConfigAssembler, ConfigAssemblerContext } from './controller/ConfigAssembler'
 
-// const container = document.getElementById('container') as any
+type Props = {
+	/**
+	 * AppConfig.app
+	 * 画布宽高等配置
+	 */
+	config?: AppConfig['app']
 
-// console.log(BPConfig)
+	/**
+	 * 相机状态码
+	 * - 形如 `1|-0.000484|0.001513|0.000000|1.06540|0.20000|17.66000`
+	 * - 其中 `1|longitude|latitude|altitude|pitch|rotation|zoom`
+	 */
+	statesCode?: string
 
-// const polarisApp = new App(container, BPConfig)
+	/**
+	 * layers config
+	 */
+	children?: any
+}
 
-export function PolarisAppComp(props: { config?: AppConfig['app']; children?: any }) {
+export function PolarisAppComp(props: Props) {
 	const polarisApp = useRef<App | null>(null)
 	const container = useRef<HTMLDivElement>(null!)
 
 	const [configAssembler, setConfigAssembler] = useState<ConfigAssembler | null>(null)
 
-	const initialConfig = useRef<AppConfig>({
-		version: '0.0.1',
-		app: {
-			width: 1000,
-			height: 700,
-			fov: 20,
-			antialias: 'msaa' as const,
-			background: 'transparent',
-			autoResize: false,
-			pitchLimit: [0, Math.PI * 0.7],
-			initialScene: 'LOCAL_SCENE_DEFAULT' as const,
-		},
-		layers: [],
-		stages: [
-			{
-				name: 'MainStage',
-				id: 'LOCAL_STAGE_MAIN',
-				layers: ['*'],
-				projection: undefined,
-			},
-		],
-		scenes: [
-			{
-				id: 'LOCAL_SCENE_DEFAULT',
-				name: 'DefaultScene',
-				cameraStateCode: '1|-0.000484|0.001513|0.000000|1.06540|0.20000|17.66000',
-				stage: 'LOCAL_STAGE_MAIN' as const,
-				layers: ['*' /* 显示该stage的所有layer */],
-			},
-		],
-		dataStubs: [],
-	})
+	const initialConfig = useRef<AppConfig>(INITIAL_CONFIG)
 
 	useEffect(() => {
-		initialConfig.current.app = { ...initialConfig.current.app, ...(props.config || {}) }
+		initialConfig.current = {
+			...initialConfig.current,
+			app: { ...initialConfig.current.app, ...(props.config || {}) },
+		}
 	}, [props.config])
 
 	// main
@@ -81,9 +66,18 @@ export function PolarisAppComp(props: { config?: AppConfig['app']; children?: an
 		if (!configAssembler) return
 
 		console.log('%cPolarisAppComp::config.app updated', 'color: blue', props.config)
-		configAssembler.updateApp({ ...initialConfig.current.app, ...(props.config || {}) })
+		configAssembler.updateApp({ ...INITIAL_CONFIG.app, ...(props.config || {}) })
 	}, [configAssembler, props.config])
 
+	// update camera state
+	useEffect(() => {
+		const app = polarisApp.current
+		if (!app) return
+		if (!props.statesCode) return
+
+		console.log('%cPolarisAppComp::camera state updated', 'color: blue', props.statesCode)
+		app.polaris.setStatesCode(props.statesCode)
+	}, [props.statesCode])
 	return (
 		<ConfigAssemblerContext.Provider value={configAssembler}>
 			<div ref={container}></div>
@@ -92,3 +86,39 @@ export function PolarisAppComp(props: { config?: AppConfig['app']; children?: an
 		</ConfigAssemblerContext.Provider>
 	)
 }
+
+/**
+ * 默认配置
+ */
+const INITIAL_CONFIG: AppConfig = deepFreeze({
+	version: '0.0.1',
+	app: {
+		width: 1000,
+		height: 700,
+		fov: 20,
+		antialias: 'msaa' as const,
+		background: 'transparent',
+		autoResize: false,
+		pitchLimit: [0, Math.PI * 0.7],
+		initialScene: 'LOCAL_SCENE_DEFAULT' as const,
+	},
+	layers: [],
+	stages: [
+		{
+			name: 'MainStage',
+			id: 'LOCAL_STAGE_MAIN',
+			layers: ['*'],
+			projection: undefined,
+		},
+	],
+	scenes: [
+		{
+			id: 'LOCAL_SCENE_DEFAULT',
+			name: 'DefaultScene',
+			cameraStateCode: '1|-0.000484|0.001513|0.000000|1.06540|0.20000|17.66000',
+			stage: 'LOCAL_STAGE_MAIN' as const,
+			layers: ['*' /* 显示该stage的所有layer */],
+		},
+	],
+	dataStubs: [],
+})
