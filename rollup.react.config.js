@@ -24,6 +24,7 @@ function getAppEntries() {
 				'process.env.NODE_ENV': JSON.stringify('production'),
 			}),
 		],
+		external: ['react', 'react-dom'],
 	})
 
 	// react ts declaration
@@ -31,6 +32,7 @@ function getAppEntries() {
 		input: `intermediate/jsm/react/index.d.ts`,
 		output: [{ file: `intermediate/bundled-react/index.d.ts`, format: 'es' }],
 		plugins: [dts()],
+		external: ['react', 'react-dom'],
 	})
 
 	return entries
