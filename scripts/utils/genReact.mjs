@@ -2,7 +2,7 @@
  * generate /layers/index.mjs
  */
 import { existsSync } from 'fs'
-import { mkdir, readdir, rmdir, writeFile } from 'fs/promises'
+import { mkdir, readdir, rm, writeFile } from 'fs/promises'
 import { dirname, resolve } from 'path'
 import prettier from 'prettier'
 import { argv } from 'process'
@@ -18,7 +18,7 @@ export async function genReact() {
 	// wrappers
 	const wrapperDir = resolve(__root, './src/react/layers')
 	// 删除目录重建
-	await rmdir(wrapperDir, { recursive: true })
+	await rm(wrapperDir, { recursive: true, force: true })
 	// 创建目录
 	await mkdir(wrapperDir, { recursive: true })
 
