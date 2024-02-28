@@ -1,6 +1,3 @@
-/**
- * 线运行 npm run buildReact 来生成 react wrapper，然后才能运行，可能需要 reload ts 语言服务来避免语法高亮错误
- */
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 
@@ -35,7 +32,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 					projectionDesc: 'desc0|MercatorProjection|right|meters|0,0,0',
 				}}
 			/>
-
 			<BillboardsLayerComp
 				layerProps={{
 					texture: 'https://img.alicdn.com/tfs/TB1tvfvMlr0gK0jSZFnXXbRRXXa-512-512.png',
