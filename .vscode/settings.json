@@ -2,9 +2,9 @@
 	"typescript.validate.enable": true,
 	"editor.defaultFormatter": "esbenp.prettier-vscode",
 	"editor.rulers": [80 /* js and doc */, 100 /* ts */],
-	"[json]": {
-		"editor.defaultFormatter": "vscode.json-language-features"
-	},
+	// "[json]": {
+	// 	"editor.defaultFormatter": "vscode.json-language-features"
+	// },
 	"[javascript]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
 	},
