@@ -1,7 +1,9 @@
-/**
- * DO NOT EDIT
- * AUTO COPIED FROM ROOT/shared
- */
+import { accessSync, constants } from 'fs'
+import { readFile, writeFile } from 'fs/promises'
+import glob from 'glob'
+import { dirname } from 'path'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
 /**
  * fix es module file extensions
@@ -36,14 +38,7 @@ if (!String.prototype.replaceAll) {
 	}
 }
 
-import { dirname } from 'path'
-import { fileURLToPath } from 'url'
-
 const __dirname = dirname(fileURLToPath(import.meta.url))
-
-import { accessSync, constants } from 'fs'
-import { readFile, writeFile } from 'fs/promises'
-import path from 'path'
 
 // https://regex101.com/r/UK27wD/1
 const reImport = /(import(?:["'\s\w*{}/\n\r\t, ]+from\s*)?\s*["']\s*)([./@\w_-]+)(["'\s].*)$/gm
@@ -122,8 +117,6 @@ async function editFile(file) {
 	const newText2 = newText.replace(reExport, replacement)
 	await writeFile(file, newText2)
 }
-
-import glob from 'glob'
 
 glob(path.resolve(__dirname, '../intermediate/jsm') + '/**/*.js', {}, (err, files) => {
 	// console.log(files)
