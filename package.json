@@ -12,7 +12,7 @@
     "backend": "npx vite -c ./vite.config.bare.cjs",
     "prebuild": "npm run genLayerIndex",
     "build": "npm run tsc && node ./scripts/glsl-processor.cjs && npx rollup -c ./rollup.config.js && node scripts/configToJson.mjs",
-    "buildReact": "node scripts/utils/genReact.mjs && npm run tsc && node ./scripts/glsl-processor.cjs && npx rollup -c ./rollup.react.config.js",
+    "build:react": "node scripts/utils/genReact.mjs && npm run tsc && node ./scripts/glsl-processor.cjs && npx rollup -c ./rollup.react.config.js",
     "tsc": "npx tsc -p ./tsconfig.build.json",
     "updateScaffold": "git pull upstream BP/base"
   },

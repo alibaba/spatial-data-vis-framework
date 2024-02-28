@@ -121,8 +121,18 @@ app.dispose()
 
 ## Polaris App Config Specification
 
-TODO
+- [schema](./src/private/schema/config.ts)
 
 ## Polaris App Class API
 
 - CN [顶层 API](./docs/顶层API.md)
+
+## React wrapper (experimental)
+
+```bash
+npm run build:react
+```
+
+This script will generate a react wrapper in `src/react` folder. And build a bundle in `intermediate/bundled-react` folder.
+
+Usage: [react examples](./examples/react/index.tsx) folder.
