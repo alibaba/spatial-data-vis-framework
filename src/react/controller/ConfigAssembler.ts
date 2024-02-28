@@ -24,6 +24,21 @@ export class ConfigAssembler {
 		})
 	}
 
+	updateProjectionDesc(desc: string) {
+		if (this.disposed) {
+			console.error('ConfigAssembler is disposed')
+			return
+		}
+
+		this.configManager.action({
+			type: 'stage:change:projection',
+			payload: {
+				id: 'LOCAL_STAGE_MAIN',
+				projection: desc,
+			},
+		})
+	}
+
 	addLayer(config: LayerConfig) {
 		if (this.disposed) {
 			console.error('ConfigAssembler is disposed')

@@ -14,10 +14,17 @@ type Props = {
 
 	/**
 	 * 相机状态码
-	 * - 形如 `1|-0.000484|0.001513|0.000000|1.06540|0.20000|17.66000`
-	 * - 其中 `1|longitude|latitude|altitude|pitch|rotation|zoom`
+	 * - default `1|-0.000484|0.001513|0.000000|1.06540|0.20000|17.66000`
+	 * - 其中 `1|{longitude}|{latitude}|{altitude}|{pitch}|{rotation}|{zoom}`
 	 */
 	statesCode?: string
+
+	/**
+	 * 投影描述
+	 * - default `desc0|MercatorProjection|right|meters|0,0,0`
+	 * - 其中 `desc0|{投影类型}|right|meters|{中心点的经纬度海拔}`
+	 */
+	projectionDesc?: string
 
 	/**
 	 * layers config
@@ -70,6 +77,7 @@ export function PolarisAppComp(props: Props) {
 	}, [configAssembler, props.config])
 
 	// update camera state
+	const statesCodeRef = useRef<string | undefined>(props.statesCode)
 	useEffect(() => {
 		const app = polarisApp.current
 		if (!app) return
@@ -77,7 +85,22 @@ export function PolarisAppComp(props: Props) {
 
 		console.log('%cPolarisAppComp::camera state updated', 'color: blue', props.statesCode)
 		app.polaris.setStatesCode(props.statesCode)
+		statesCodeRef.current = props.statesCode
 	}, [props.statesCode])
+
+	// update projection
+	useEffect(() => {
+		const app = polarisApp.current
+		if (!app) return
+		if (!configAssembler) return
+		if (!props.projectionDesc) return
+
+		console.log('%cPolarisAppComp::projection updated', 'color: blue', props.projectionDesc)
+		configAssembler.updateProjectionDesc(props.projectionDesc)
+
+		// 恢复相机机位，以免 stage 重建后恢复初始机位
+		if (statesCodeRef.current) app.polaris.setStatesCode(statesCodeRef.current)
+	}, [configAssembler, props.projectionDesc])
 	return (
 		<ConfigAssemblerContext.Provider value={configAssembler}>
 			<div ref={container}></div>
