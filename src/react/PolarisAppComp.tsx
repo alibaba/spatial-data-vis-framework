@@ -77,14 +77,6 @@ export function PolarisAppComp(props: Props) {
 		}
 	}, [])
 
-	// update app config
-	useEffect(() => {
-		if (!configAssembler) return
-
-		console.log('%cPolarisAppComp::config.app updated', 'color: blue', props.config)
-		configAssembler.updateApp({ ...INITIAL_CONFIG.app, ...(props.config || {}) })
-	}, [configAssembler, props.config])
-
 	// update camera state
 	const statesCodeRef = useRef<string | undefined>(props.statesCode)
 	useEffect(() => {
@@ -96,6 +88,17 @@ export function PolarisAppComp(props: Props) {
 		app.polaris.setStatesCode(props.statesCode)
 		statesCodeRef.current = props.statesCode
 	}, [props.statesCode])
+
+	// update app config
+	useEffect(() => {
+		if (!configAssembler) return
+
+		console.log('%cPolarisAppComp::config.app updated', 'color: blue', props.config)
+		configAssembler.updateApp({ ...INITIAL_CONFIG.app, ...(props.config || {}) })
+		if (statesCodeRef.current) {
+			polarisApp.current!.polaris.setStatesCode(statesCodeRef.current)
+		}
+	}, [configAssembler, props.config])
 
 	// update projection
 	// useEffect(() => {
