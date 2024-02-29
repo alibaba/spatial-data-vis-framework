@@ -5,6 +5,8 @@ import { deepFreeze } from '../private/config/utils/deepFreeze'
 import { AppConfig } from '../private/schema/config'
 import { ConfigAssembler, ConfigAssemblerContext } from './controller/ConfigAssembler'
 
+export { App }
+
 type Props = {
 	/**
 	 * AppConfig.app
