@@ -13,7 +13,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 	<React.StrictMode>
 		<PolarisAppComp
 			config={{ background: 'black' }}
-			statesCode="1|-0.000484|0.001513|0.000000|1.01980|0.19261|15.96550">
+			statesCode="1|-0.000484|0.001513|0.000000|1.01980|0.19261|15.96550"
+			projectionDesc="desc0|MercatorProjection|right|meters|0,0,0">
 			<GridLayerComp
 				layerProps={{
 					width: 10000,

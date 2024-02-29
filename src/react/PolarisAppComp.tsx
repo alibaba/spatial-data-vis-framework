@@ -23,6 +23,7 @@ type Props = {
 	 * 投影描述
 	 * - default `desc0|MercatorProjection|right|meters|0,0,0`
 	 * - 其中 `desc0|{投影类型}|right|meters|{中心点的经纬度海拔}`
+	 * - @note 请在初始化时设置好，一旦设置不得修改
 	 */
 	projectionDesc?: string
 
@@ -44,8 +45,14 @@ export function PolarisAppComp(props: Props) {
 		initialConfig.current = {
 			...initialConfig.current,
 			app: { ...initialConfig.current.app, ...(props.config || {}) },
+			stages: [
+				{
+					...initialConfig.current.stages[0],
+					projection: props.projectionDesc,
+				},
+			],
 		}
-	}, [props.config])
+	}, [props.config, props.projectionDesc])
 
 	// main
 	useEffect(() => {
@@ -89,18 +96,18 @@ export function PolarisAppComp(props: Props) {
 	}, [props.statesCode])
 
 	// update projection
-	useEffect(() => {
-		const app = polarisApp.current
-		if (!app) return
-		if (!configAssembler) return
-		if (!props.projectionDesc) return
+	// useEffect(() => {
+	// 	const app = polarisApp.current
+	// 	if (!app) return
+	// 	if (!configAssembler) return
+	// 	if (!props.projectionDesc) return
 
-		console.log('%cPolarisAppComp::projection updated', 'color: blue', props.projectionDesc)
-		configAssembler.updateProjectionDesc(props.projectionDesc)
+	// 	console.log('%cPolarisAppComp::projection updated', 'color: blue', props.projectionDesc)
+	// 	configAssembler.updateProjectionDesc(props.projectionDesc)
 
-		// 恢复相机机位，以免 stage 重建后恢复初始机位
-		if (statesCodeRef.current) app.polaris.setStatesCode(statesCodeRef.current)
-	}, [configAssembler, props.projectionDesc])
+	// 	// 恢复相机机位，以免 stage 重建后恢复初始机位
+	// 	if (statesCodeRef.current) app.polaris.setStatesCode(statesCodeRef.current)
+	// }, [configAssembler, props.projectionDesc])
 	return (
 		<ConfigAssemblerContext.Provider value={configAssembler}>
 			<div ref={container}></div>
